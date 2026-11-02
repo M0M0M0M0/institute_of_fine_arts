@@ -131,7 +131,7 @@ Mức độ khó: ⭐ dễ · ⭐⭐ trung bình · ⭐⭐⭐ khó. Khuyến ngh
 | **ASP.NET Core Identity** | Quản lý người dùng | Xem mục 1.4 | ⭐⭐⭐ | **Bỏ qua** |
 | Repository pattern riêng | Bọc DbContext | `DbContext` đã là Unit of Work + Repository | ⭐⭐ | **Bỏ qua** – Service dùng `AppDbContext` trực tiếp |
 | Swagger / Web API | Tài liệu REST API | App render server-side, gần như không có API | ⭐ | **Bỏ qua** |
-| Docker | Chạy SQL Server trong container | Máy đã cài SQL Server | ⭐⭐ | **Bỏ qua** |
+| **Docker** (`docker-compose.yml`) | Chạy SQL Server 2022 trong container | Thành viên không cài SQL Server vẫn có CSDL giống hệt nhau bằng 1 lệnh; ứng dụng web vẫn chạy ngoài Docker | ⭐ | **Tùy chọn** – dùng khi máy không cài SQL Server (hướng dẫn trong README) |
 
 ### 3.2. Thư viện frontend (đặt trong `wwwroot/lib/`)
 | Công nghệ | Mục đích | Độ khó | Khuyến nghị |
@@ -155,7 +155,8 @@ Mức độ khó: ⭐ dễ · ⭐⭐ trung bình · ⭐⭐⭐ khó. Khuyến ngh
 ### 3.4. Tóm tắt khuyến nghị
 - **Dùng ngay từ tuần 1:** EF Core Migrations, EFCore.NamingConventions, BCrypt.Net-Next, BackgroundService, SkiaSharp, Serilog, Chart.js, SweetAlert2, GitHub + Projects, draw.io, xUnit + Moq, Selenium IDE, SonarQube for IDE.
 - **Tùy chọn (tuần 4):** ClosedXML (Excel) → QuestPDF (PDF) → MailKit + Mailtrap → DataTables, Figma, Postman.
-- **Bỏ qua:** FluentValidation, AutoMapper, ASP.NET Core Identity, Repository pattern riêng, Swagger, Docker.
+- **Bỏ qua:** FluentValidation, AutoMapper, ASP.NET Core Identity, Repository pattern riêng, Swagger.
+- **Docker:** chỉ dùng để chạy SQL Server khi máy không cài (`docker-compose.yml`), không đóng gói ứng dụng web.
 
 ---
 
@@ -1164,7 +1165,7 @@ Quy ước: danh sách `GET /xxx?keyword=&page=&size=`; form tạo `GET /xxx/new
 | **.NET SDK 10** | Cả nhóm | `dotnet --version` → 10.x |
 | **Visual Studio Community** (workload *ASP.NET and web development*) **hoặc** VS Code + C# Dev Kit | Cả nhóm | Tester có thể chỉ cần VS Code |
 | Công cụ EF Core | BE, FE | `dotnet tool install --global dotnet-ef` |
-| **SQL Server 2022/2025 Developer** (hoặc Express) + **SSMS** | Cả nhóm | Mặc định dùng Windows Authentication |
+| **SQL Server 2022/2025 Developer** (hoặc Express) + **SSMS** – hoặc **Docker Desktop** chạy `docker-compose.yml` | Cả nhóm | Mặc định dùng Windows Authentication; dùng Docker thì đặt chuỗi kết nối bằng User Secrets (README) |
 | Git for Windows + tài khoản GitHub | Cả nhóm | |
 | Trình duyệt Chrome/Edge + **Selenium IDE** | Tester | |
 | draw.io Desktop, WPS/Word | Docs | |
