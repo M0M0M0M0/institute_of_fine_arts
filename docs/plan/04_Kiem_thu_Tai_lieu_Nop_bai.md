@@ -385,9 +385,9 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 | STUDENT | `student01` | `Student@123` | Nộp/sửa bài, xem kết quả, tranh triển lãm |
 | STUDENT | `student02` … `student09` | `Student@123` | |
 | STUDENT (bị khóa) | `student10` | `Student@123` | Test tài khoản bị khóa |
-| SQL Server | `sa` (hoặc user `finearts`) | ghi trong `appsettings.json` / User Secrets – nhóm tự đặt, ghi lại trong README | Kết nối DB |
+| SQL Server | Windows Authentication (mặc định trong `appsettings.json`); nếu dùng tài khoản SQL thì đặt bằng User Secrets – ghi lại trong README | – | Kết nối DB |
 
-> Đây là mật khẩu **test** chỉ dùng cho bản nộp bài; mật khẩu lưu trong DB dạng BCrypt (seed phải mã hóa bằng `PasswordEncoder`).
+> Đây là mật khẩu **test** chỉ dùng cho bản nộp bài; mật khẩu lưu trong DB dạng BCrypt (seed mã hóa bằng `BCrypt.Net.BCrypt.HashPassword` trong `Data/Seed/DbSeeder.Accounts.cs`).
 
 ---
 
