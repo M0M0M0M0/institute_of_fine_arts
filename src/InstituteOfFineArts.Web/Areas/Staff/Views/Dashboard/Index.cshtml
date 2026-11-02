@@ -1,0 +1,18 @@
+@using InstituteOfFineArts.Web.Infrastructure.Security
+@*
+    Trang chính tạm của phân hệ Giáo viên (/staff).
+    BE1 tạo để chạy thử đăng nhập; FE làm giao diện thật (khi có _ViewStart của Area thì bỏ dòng Layout bên dưới).
+*@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Giáo viên";
+}
+
+<h1 class="h3">Xin chào, @User.GetFullName()</h1>
+<p>Bạn đang ở trang chính của phân hệ <strong>Giáo viên</strong> (vai trò STAFF).</p>
+
+@* Đăng xuất bằng POST kèm anti-forgery token *@
+<form method="post" action="/logout">
+    @Html.AntiForgeryToken()
+    <button type="submit" class="btn btn-outline-secondary">Đăng xuất</button>
+</form>
