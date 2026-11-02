@@ -1,12 +1,12 @@
 namespace InstituteOfFineArts.Web.Exceptions;
 
 /// <summary>
-/// Lỗi vi phạm luật nghiệp vụ (ví dụ: "Đã quá hạn nộp bài").
-/// Service ném lỗi này; Controller bắt và hiển thị thông báo cho người dùng.
+/// Business rule violation (e.g. "The submission deadline has passed").
+/// Services throw it; controllers catch it and show the message to the user.
 /// </summary>
 public class BusinessException : Exception
 {
-    /// <summary>Tạo lỗi nghiệp vụ với thông báo tiếng Việt hiển thị cho người dùng.</summary>
+    /// <summary>Creates a business error with a user-facing (English) message.</summary>
     public BusinessException(string message) : base(message)
     {
     }

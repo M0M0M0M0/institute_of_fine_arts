@@ -62,6 +62,7 @@ Phần BA (file 01) là **nguồn chuẩn cho quy tắc nghiệp vụ**. Nếu c
 | Xếp loại | `BEST`, `BETTER`, `GOOD`, `MODERATE`, `NORMAL`, `DISQUALIFIED`, kèm điểm mạnh / điểm yếu / cần cải thiện. Mỗi bài 1 Evaluation. Chỉ chấm khi cuộc thi đã `CLOSED`. Học viên chỉ thấy kết quả sau `GRADED` |
 | Trao giải | Chỉ trao cho bài `BEST`. Mỗi học viên tối đa 1 giải/cuộc thi. Số giải không vượt `quantity` |
 | Tranh triển lãm | Chỉ nhận bài `BEST`/`BETTER` của cuộc thi đã `GRADED`. Trạng thái: `PENDING` (học viên đề xuất giá `asking_price`) → `ACCEPTED`/`REJECTED` (Staff duyệt; nếu Staff tự tạo thì vào thẳng `ACCEPTED`) → `SOLD`/`UNSOLD`. Khi SOLD phải có giá bán, ngày bán và khách mua. Trả học viên 100% tiền bán, ghi vào `paid_to_student`, `paid_amount`, `paid_date` |
+| Ngôn ngữ | **Giao diện, thông báo, dữ liệu mẫu và comment trong code: tiếng Anh** (team nước ngoài chấm). Tiền tệ **USD**. Tên người mẫu tiếng Việt không dấu. Tiếng Việt là tính năng phụ (M19). Tài liệu hiện viết tiếng Việt, dịch sang tiếng Anh khi chốt |
 | Tài khoản | Chỉ Admin tạo tài khoản. Tài khoản đã có dữ liệu thì **khóa** (`active = 0`), không xóa hẳn |
 | Dữ liệu mẫu | Theo **file 04 mục 4**: 15 tài khoản, 7 cuộc thi, 27 bài nộp, 2 triển lãm/8 tranh, 3 khách mua. Bảng seed ở file 02 chỉ là bản tối thiểu |
 | CRS | **Day 3** chốt nội dung yêu cầu (file 03). Tài liệu CRS hoàn chỉnh: nháp Day 4, bản chốt **Day 6** (file 04) |

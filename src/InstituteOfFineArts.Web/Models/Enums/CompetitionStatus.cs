@@ -1,23 +1,23 @@
 namespace InstituteOfFineArts.Web.Models.Enums;
 
 /// <summary>
-/// Trạng thái cuộc thi. UPCOMING/ONGOING/CLOSED tính theo ngày (BR-07); GRADED chỉ khi Staff công bố kết quả (BR-08).
+/// Competition status. UPCOMING/ONGOING/CLOSED are derived from the dates (BR-07); GRADED is set only when staff publish the results (BR-08).
 /// </summary>
 /// <remarks>
-/// Tên giá trị viết HOA để khớp đúng chuỗi lưu trong CSDL (cột VARCHAR + CHECK constraint)
-/// và tên vai trò dùng trong [Authorize(Roles = "...")].
+/// Member names are UPPER CASE so they match the strings stored in the database (VARCHAR column + CHECK constraint)
+/// and the role names used in [Authorize(Roles = "...")].
 /// </remarks>
 public enum CompetitionStatus
 {
-    /// <summary>Sắp diễn ra (trước ngày bắt đầu)</summary>
+    /// <summary>Not started yet (before the start date)</summary>
     UPCOMING,
 
-    /// <summary>Đang diễn ra – học viên được nộp/sửa/xóa bài</summary>
+    /// <summary>Open – students can submit, edit and delete entries</summary>
     ONGOING,
 
-    /// <summary>Đã hết hạn nộp, đang chấm</summary>
+    /// <summary>Submission deadline has passed, grading in progress</summary>
     CLOSED,
 
-    /// <summary>Đã công bố kết quả</summary>
+    /// <summary>Results have been published</summary>
     GRADED
 }

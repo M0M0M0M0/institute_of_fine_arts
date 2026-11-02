@@ -1,23 +1,23 @@
 namespace InstituteOfFineArts.Web.Models.Enums;
 
 /// <summary>
-/// Loại phần chữ đi kèm bức tranh (BR-19).
+/// Type of text attached to a painting (BR-19).
 /// </summary>
 /// <remarks>
-/// Tên giá trị viết HOA để khớp đúng chuỗi lưu trong CSDL (cột VARCHAR + CHECK constraint)
-/// và tên vai trò dùng trong [Authorize(Roles = "...")].
+/// Member names are UPPER CASE so they match the strings stored in the database (VARCHAR column + CHECK constraint)
+/// and the role names used in [Authorize(Roles = "...")].
 /// </remarks>
 public enum TextType
 {
-    /// <summary>Thơ</summary>
+    /// <summary>Poem</summary>
     POEM,
 
-    /// <summary>Trích dẫn</summary>
+    /// <summary>Quotation</summary>
     QUOTATION,
 
-    /// <summary>Câu chuyện</summary>
+    /// <summary>Story</summary>
     STORY,
 
-    /// <summary>Khác</summary>
+    /// <summary>Other</summary>
     OTHER
 }

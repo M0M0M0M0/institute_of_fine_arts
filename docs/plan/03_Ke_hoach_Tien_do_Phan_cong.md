@@ -105,7 +105,7 @@ Cột: `Backlog` → `Ready` → `In Progress` → `In Review (PR)` → `Testing
 - [ ] Code chạy được bằng `dotnet run` (hoặc F5), không lỗi biên dịch, không lỗi console khi dùng chức năng.
 - [ ] **Mọi khối mã đều có chú thích (comment)** – yêu cầu bắt buộc của đặc tả.
 - [ ] Phân quyền đúng: vai trò khác truy cập URL sẽ bị chặn (403/redirect).
-- [ ] Validation phía server (Bean Validation) + thông báo lỗi tiếng Việt/Anh thống nhất theo GUI Standards.
+- [ ] Validation phía server (Bean Validation) + giao diện và thông báo lỗi **tiếng Anh** thống nhất theo GUI Standards.
 - [ ] PR đã được review và merge vào `develop`.
 - [ ] QA đã chạy test case của thẻ → Pass; bug (nếu có) đã sửa hoặc ghi nhận.
 - [ ] Đã có ảnh chụp màn hình lưu vào `docs/screenshots/<module>/`.

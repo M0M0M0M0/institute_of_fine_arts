@@ -3,12 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace InstituteOfFineArts.Web.Areas.Manager.Controllers;
 
 /// <summary>
-/// Trang chính của phân hệ Quản lý (/manager) – nơi chuyển tới sau khi đăng nhập.
-/// Hiện là trang tạm; nội dung thật làm ở các task xem tổng hợp, quản lý triển lãm (BE2-13).
+/// Home page of the Manager area (/manager) – where the user lands after logging in.
+/// Temporary page for now; the real content comes with the tasks for overview pages, exhibition management (BE2-13).
 /// </summary>
 public class DashboardController : ManagerBaseController
 {
-    /// <summary>Hiển thị trang chính của phân hệ.</summary>
+    /// <summary>Shows the home page of the area.</summary>
     public IActionResult Index()
     {
         return View();

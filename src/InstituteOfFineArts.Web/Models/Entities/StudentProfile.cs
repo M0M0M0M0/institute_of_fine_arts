@@ -3,34 +3,34 @@ using InstituteOfFineArts.Web.Models.Enums;
 namespace InstituteOfFineArts.Web.Models.Entities;
 
 /// <summary>
-/// Thông tin nhập học của học viên (bảng student_profile).
+/// Admission details of a student (table student_profile).
 /// </summary>
 public class StudentProfile : BaseEntity
 {
-    /// <summary>Khóa ngoại tới tài khoản (quan hệ 1–1).</summary>
+    /// <summary>Foreign key to the account (one-to-one).</summary>
     public long AccountId { get; set; }
 
-    /// <summary>Mã học viên, duy nhất. Ví dụ: HV0001.</summary>
+    /// <summary>Student code, unique. Example: HV0001.</summary>
     public string StudentCode { get; set; } = string.Empty;
 
-    /// <summary>Ngày nhập học.</summary>
+    /// <summary>Admission date.</summary>
     public DateOnly EnrollmentDate { get; set; }
 
-    /// <summary>Khóa học: Hội họa, Hoạt hình…</summary>
+    /// <summary>Course: Painting, Animation…</summary>
     public string CourseName { get; set; } = string.Empty;
 
-    /// <summary>Lớp.</summary>
+    /// <summary>Class.</summary>
     public string? ClassName { get; set; }
 
-    /// <summary>Tình trạng học tập.</summary>
+    /// <summary>Study status.</summary>
     public EnrollmentStatus EnrollmentStatus { get; set; } = EnrollmentStatus.STUDYING;
 
-    /// <summary>Ghi chú.</summary>
+    /// <summary>Remarks.</summary>
     public string? Notes { get; set; }
 
-    /// <summary>Tài khoản đăng nhập.</summary>
+    /// <summary>Login account.</summary>
     public Account Account { get; set; } = null!;
 
-    /// <summary>Các bài dự thi của học viên.</summary>
+    /// <summary>Submissions made by this student.</summary>
     public ICollection<Submission> Submissions { get; set; } = new List<Submission>();
 }

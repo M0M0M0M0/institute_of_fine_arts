@@ -3,55 +3,55 @@ using InstituteOfFineArts.Web.Models.Enums;
 namespace InstituteOfFineArts.Web.Models.Entities;
 
 /// <summary>
-/// Cuộc thi vẽ tranh (bảng competition).
+/// Painting competition (table competition).
 /// </summary>
 public class Competition : BaseEntity
 {
-    /// <summary>Mã cuộc thi, duy nhất. Ví dụ: CT2026-01.</summary>
+    /// <summary>Competition code, unique. Example: CT2026-01.</summary>
     public string Code { get; set; } = string.Empty;
 
-    /// <summary>Tên cuộc thi.</summary>
+    /// <summary>Title.</summary>
     public string Title { get; set; } = string.Empty;
 
-    /// <summary>Mô tả chi tiết.</summary>
+    /// <summary>Detailed description.</summary>
     public string? Description { get; set; }
 
-    /// <summary>Thể lệ / điều kiện.</summary>
+    /// <summary>Rules / conditions.</summary>
     public string? Rules { get; set; }
 
-    /// <summary>Ngày bắt đầu nhận bài (từ 00:00).</summary>
+    /// <summary>First day submissions are accepted (from 00:00).</summary>
     public DateOnly StartDate { get; set; }
 
-    /// <summary>Ngày kết thúc – hạn nộp là 23:59:59 ngày này (BR-06).</summary>
+    /// <summary>End date – the submission deadline is 23:59:59 on this day (BR-06).</summary>
     public DateOnly EndDate { get; set; }
 
-    /// <summary>Trạng thái (BR-07, BR-08).</summary>
+    /// <summary>Status (BR-07, BR-08).</summary>
     public CompetitionStatus Status { get; set; } = CompetitionStatus.UPCOMING;
 
-    /// <summary>Thời điểm công bố kết quả.</summary>
+    /// <summary>Time the results were published.</summary>
     public DateTime? PublishedAt { get; set; }
 
-    /// <summary>Id hồ sơ nhân sự đã công bố kết quả.</summary>
+    /// <summary>Id of the staff profile that published the results.</summary>
     public long? PublishedBy { get; set; }
 
-    /// <summary>Đường dẫn tương đối ảnh bìa (lưu bằng File I/O).</summary>
+    /// <summary>Relative path of the cover image (saved with File I/O).</summary>
     public string? CoverImagePath { get; set; }
 
-    /// <summary>Nhận xét chung về cuộc thi.</summary>
+    /// <summary>General remarks about the competition.</summary>
     public string? ResultRemarks { get; set; }
 
-    /// <summary>Id hồ sơ nhân sự tạo cuộc thi.</summary>
+    /// <summary>Id of the staff profile that created the competition.</summary>
     public long CreatedBy { get; set; }
 
-    /// <summary>Nhân sự tạo cuộc thi.</summary>
+    /// <summary>Staff member who created the competition.</summary>
     public StaffProfile CreatedByStaff { get; set; } = null!;
 
-    /// <summary>Nhân sự công bố kết quả.</summary>
+    /// <summary>Staff member who published the results.</summary>
     public StaffProfile? PublishedByStaff { get; set; }
 
-    /// <summary>Các giải thưởng dự kiến của cuộc thi.</summary>
+    /// <summary>Planned awards of the competition.</summary>
     public ICollection<CompetitionAward> Awards { get; set; } = new List<CompetitionAward>();
 
-    /// <summary>Các bài dự thi.</summary>
+    /// <summary>Submissions.</summary>
     public ICollection<Submission> Submissions { get; set; } = new List<Submission>();
 }

@@ -1,29 +1,29 @@
 namespace InstituteOfFineArts.Web.Models.Enums;
 
 /// <summary>
-/// Xếp loại bài dự thi do giáo viên chấm.
+/// Rating given to a submission by staff.
 /// </summary>
 /// <remarks>
-/// Tên giá trị viết HOA để khớp đúng chuỗi lưu trong CSDL (cột VARCHAR + CHECK constraint)
-/// và tên vai trò dùng trong [Authorize(Roles = "...")].
+/// Member names are UPPER CASE so they match the strings stored in the database (VARCHAR column + CHECK constraint)
+/// and the role names used in [Authorize(Roles = "...")].
 /// </remarks>
 public enum Rating
 {
-    /// <summary>Xuất sắc nhất</summary>
+    /// <summary>Best</summary>
     BEST,
 
-    /// <summary>Rất tốt</summary>
+    /// <summary>Better</summary>
     BETTER,
 
-    /// <summary>Tốt</summary>
+    /// <summary>Good</summary>
     GOOD,
 
-    /// <summary>Trung bình</summary>
+    /// <summary>Moderate</summary>
     MODERATE,
 
-    /// <summary>Bình thường</summary>
+    /// <summary>Normal</summary>
     NORMAL,
 
-    /// <summary>Bị loại (vi phạm thể lệ hoặc nộp sau hạn)</summary>
+    /// <summary>Disqualified (rule violation or late submission)</summary>
     DISQUALIFIED
 }

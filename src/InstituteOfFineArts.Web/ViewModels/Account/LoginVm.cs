@@ -3,26 +3,26 @@ using System.ComponentModel.DataAnnotations;
 namespace InstituteOfFineArts.Web.ViewModels.Account;
 
 /// <summary>
-/// Dữ liệu form đăng nhập (trang /login).
+/// Data of the login form (/login).
 /// </summary>
 public class LoginVm
 {
-    /// <summary>Tên đăng nhập.</summary>
-    [Required(ErrorMessage = "Vui lòng nhập tên đăng nhập")]
-    [StringLength(50, ErrorMessage = "Tên đăng nhập tối đa 50 ký tự")]
-    [Display(Name = "Tên đăng nhập")]
+    /// <summary>Username.</summary>
+    [Required(ErrorMessage = "Please enter your username")]
+    [StringLength(50, ErrorMessage = "Username must be at most 50 characters")]
+    [Display(Name = "Username")]
     public string Username { get; set; } = string.Empty;
 
-    /// <summary>Mật khẩu (chưa băm).</summary>
-    [Required(ErrorMessage = "Vui lòng nhập mật khẩu")]
+    /// <summary>Password (plain text).</summary>
+    [Required(ErrorMessage = "Please enter your password")]
     [DataType(DataType.Password)]
-    [Display(Name = "Mật khẩu")]
+    [Display(Name = "Password")]
     public string Password { get; set; } = string.Empty;
 
-    /// <summary>Ghi nhớ đăng nhập 7 ngày.</summary>
-    [Display(Name = "Ghi nhớ đăng nhập")]
+    /// <summary>Keep the user signed in for 7 days.</summary>
+    [Display(Name = "Remember me")]
     public bool RememberMe { get; set; }
 
-    /// <summary>Trang người dùng định mở trước khi bị yêu cầu đăng nhập (chỉ chấp nhận đường dẫn nội bộ).</summary>
+    /// <summary>Page the user wanted before being asked to log in (only local paths are accepted).</summary>
     public string? ReturnUrl { get; set; }
 }

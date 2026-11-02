@@ -1,19 +1,19 @@
 @model InstituteOfFineArts.Web.ViewModels.Account.LoginVm
 @*
-    Trang đăng nhập (/login) – dùng cho mọi vai trò.
-    Bản tối thiểu do BE1 tạo để chạy được chức năng; FE1 làm giao diện thật trong task FE1-02.
+    Login page (/login) – used by every role.
+    Minimal version created by BE1 so the feature works; FE1 builds the real design in task FE1-02.
 *@
 @{
-    ViewData["Title"] = "Đăng nhập";
+    ViewData["Title"] = "Log in";
 }
 
 <div class="row justify-content-center">
     <div class="col-md-5 col-lg-4">
-        <h1 class="h3 mb-3">Đăng nhập</h1>
+        <h1 class="h3 mb-3">Log in</h1>
 
-        @* Form gửi về POST /login; asp-* tự chèn anti-forgery token *@
+        @* Form posts to POST /login; the asp-* tag helpers add the anti-forgery token *@
         <form asp-controller="Account" asp-action="Login" method="post" novalidate>
-            @* Lỗi chung: sai tài khoản / mật khẩu, tài khoản bị khóa *@
+            @* General errors: wrong username/password, locked account *@
             <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
             <input type="hidden" asp-for="ReturnUrl" />
 
@@ -34,7 +34,7 @@
                 <label asp-for="RememberMe" class="form-check-label"></label>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100">Đăng nhập</button>
+            <button type="submit" class="btn btn-primary w-100">Log in</button>
         </form>
     </div>
 </div>

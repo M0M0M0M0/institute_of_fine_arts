@@ -6,29 +6,29 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace InstituteOfFineArts.Web.Data.Configurations;
 
 /// <summary>
-/// Cấu hình EF Core cho bảng award_issued: kiểu cột, khóa, ràng buộc CHECK, index, quan hệ.
-/// Thiết kế chi tiết: docs/plan/02_Kien_truc_Cong_nghe_CSDL.md mục 6.2.
+/// EF Core configuration of table award_issued: column types, keys, CHECK constraints, indexes and relationships.
+/// Design: docs/plan/02_Kien_truc_Cong_nghe_CSDL.md section 6.2.
 /// </summary>
 public class AwardIssuedConfiguration : IEntityTypeConfiguration<AwardIssued>
 {
-    /// <summary>Áp dụng cấu hình cho entity AwardIssued.</summary>
+    /// <summary>Applies the configuration to the AwardIssued entity.</summary>
     public void Configure(EntityTypeBuilder<AwardIssued> b)
     {
         b.ToTable("award_issued");
 
-        // Ngày trao mặc định là hôm nay
+        // Issue date defaults to today
         b.Property(x => x.IssuedDate).HasDefaultValueSql("CAST(SYSDATETIME() AS date)");
 
-        // Giải nào
+        // Which award
         b.HasOne(x => x.CompetitionAward).WithMany(a => a.IssuedAwards)
             .HasForeignKey(x => x.CompetitionAwardId).OnDelete(DeleteBehavior.Restrict);
 
-        // Bài nào – submission_id duy nhất ⇒ tối đa 1 giải / học viên / cuộc thi (BR-31)
+        // Which submission – submission_id unique ⇒ at most one award per student per competition (BR-31)
         b.HasOne(x => x.Submission).WithOne(s => s.AwardIssued)
             .HasForeignKey<AwardIssued>(x => x.SubmissionId).OnDelete(DeleteBehavior.Restrict);
         b.HasIndex(x => x.SubmissionId).IsUnique().HasDatabaseName("UX_award_issued_submission");
 
-        // Người trao giải
+        // Staff member who issued the award
         b.HasOne(x => x.IssuedByStaff).WithMany()
             .HasForeignKey(x => x.IssuedBy).OnDelete(DeleteBehavior.Restrict);
     }

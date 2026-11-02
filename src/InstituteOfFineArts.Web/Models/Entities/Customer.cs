@@ -1,25 +1,25 @@
 namespace InstituteOfFineArts.Web.Models.Entities;
 
 /// <summary>
-/// Khách mua tranh tại triển lãm (bảng customer).
+/// Customer who bought a painting at an exhibition (table customer).
 /// </summary>
 public class Customer : BaseEntity
 {
-    /// <summary>Họ và tên.</summary>
+    /// <summary>Full name.</summary>
     public string FullName { get; set; } = string.Empty;
 
     /// <summary>Email.</summary>
     public string? Email { get; set; }
 
-    /// <summary>Số điện thoại.</summary>
+    /// <summary>Phone number.</summary>
     public string? Phone { get; set; }
 
-    /// <summary>Địa chỉ.</summary>
+    /// <summary>Address.</summary>
     public string? Address { get; set; }
 
-    /// <summary>Ghi chú.</summary>
+    /// <summary>Notes.</summary>
     public string? Notes { get; set; }
 
-    /// <summary>Các tranh khách đã mua.</summary>
+    /// <summary>Paintings bought by this customer.</summary>
     public ICollection<ExhibitionEntry> Purchases { get; set; } = new List<ExhibitionEntry>();
 }

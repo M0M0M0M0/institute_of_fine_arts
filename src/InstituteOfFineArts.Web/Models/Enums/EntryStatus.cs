@@ -1,26 +1,26 @@
 namespace InstituteOfFineArts.Web.Models.Enums;
 
 /// <summary>
-/// Trạng thái tranh gửi triển lãm.
+/// Status of a painting sent to an exhibition.
 /// </summary>
 /// <remarks>
-/// Tên giá trị viết HOA để khớp đúng chuỗi lưu trong CSDL (cột VARCHAR + CHECK constraint)
-/// và tên vai trò dùng trong [Authorize(Roles = "...")].
+/// Member names are UPPER CASE so they match the strings stored in the database (VARCHAR column + CHECK constraint)
+/// and the role names used in [Authorize(Roles = "...")].
 /// </remarks>
 public enum EntryStatus
 {
-    /// <summary>Học viên đề xuất, chờ giáo viên duyệt</summary>
+    /// <summary>Proposed by the student, waiting for staff approval</summary>
     PENDING,
 
-    /// <summary>Đã được nhận vào triển lãm</summary>
+    /// <summary>Accepted into the exhibition</summary>
     ACCEPTED,
 
-    /// <summary>Bị từ chối (có lý do)</summary>
+    /// <summary>Rejected (with a reason)</summary>
     REJECTED,
 
-    /// <summary>Đã bán</summary>
+    /// <summary>Sold</summary>
     SOLD,
 
-    /// <summary>Triển lãm kết thúc nhưng không bán được</summary>
+    /// <summary>Exhibition finished without a sale</summary>
     UNSOLD
 }

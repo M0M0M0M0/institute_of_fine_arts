@@ -1,20 +1,20 @@
 namespace InstituteOfFineArts.Web.Models.Enums;
 
 /// <summary>
-/// Trạng thái triển lãm, tính tự động theo ngày (BR-42).
+/// Exhibition status, derived from the dates (BR-42).
 /// </summary>
 /// <remarks>
-/// Tên giá trị viết HOA để khớp đúng chuỗi lưu trong CSDL (cột VARCHAR + CHECK constraint)
-/// và tên vai trò dùng trong [Authorize(Roles = "...")].
+/// Member names are UPPER CASE so they match the strings stored in the database (VARCHAR column + CHECK constraint)
+/// and the role names used in [Authorize(Roles = "...")].
 /// </remarks>
 public enum ExhibitionStatus
 {
-    /// <summary>Sắp diễn ra</summary>
+    /// <summary>Upcoming</summary>
     UPCOMING,
 
-    /// <summary>Đang diễn ra</summary>
+    /// <summary>Ongoing</summary>
     ONGOING,
 
-    /// <summary>Đã kết thúc</summary>
+    /// <summary>Finished</summary>
     FINISHED
 }

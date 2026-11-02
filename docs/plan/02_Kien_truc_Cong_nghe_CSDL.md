@@ -231,7 +231,7 @@ sequenceDiagram
         S->>FS: Delete(relativePath) – dọn file mồ côi
     end
     S-->>C: Id bài mới
-    C-->>St: RedirectToAction("Details") + TempData "Nộp bài thành công"
+    C-->>St: RedirectToAction("Details") + TempData "Submission created successfully"
 ```
 
 ### 4.3. Thiết kế xử lý file (File I/O) – đáp ứng yêu cầu bắt buộc của đề bài
@@ -285,7 +285,7 @@ public async Task<StoredFile> SaveSubmissionImageAsync(IFormFile file, long comp
 
     // 3. Đảm bảo đường dẫn đích vẫn nằm trong thư mục gốc uploads/
     if (!target.StartsWith(_rootPath, StringComparison.OrdinalIgnoreCase))
-        throw new FileStorageException("Đường dẫn file không hợp lệ");
+        throw new FileStorageException("Invalid file path");
 
     // 4. Tạo thư mục nếu chưa có rồi ghi file xuống đĩa bằng FileStream
     Directory.CreateDirectory(dir);
@@ -358,7 +358,7 @@ Mã luật lấy **đúng theo tài liệu BA** (`01_Phan_tich_nghiep_vu_BA.md`,
 | BR-44 | SOLD bắt buộc `sold_price` > 0, `sold_date` (trong khoảng ngày triển lãm), `customer_id` | CHECK + `ExhibitionEntryService` |
 | BR-45 | Trả toàn bộ tiền cho học viên: `paid_to_student = 1`, `paid_amount` (mặc định = `sold_price`), `paid_date ≥ sold_date`; chỉ khi SOLD | CHECK + `ExhibitionEntryService` |
 | BR-46 | Học viên sửa giá/rút đề xuất chỉ khi entry **PENDING** | `ExhibitionEntryService` |
-| BR-47 | Tiền VNĐ `DECIMAL(18,2)`, không âm | CHECK |
+| BR-47 | Tiền USD `DECIMAL(18,2)`, không âm | CHECK |
 
 **Trạng thái hiển thị của Submission** (SUBMITTED / LOCKED / EVALUATED / AWARDED / DISQUALIFIED – BA mục 4.7b) **được suy ra** từ dữ liệu (cuộc thi, Evaluation, AwardIssued) → **không lưu cột `status`** trong bảng `submission`.
 
@@ -427,7 +427,7 @@ institute-of-fine-arts/                         ← thư mục gốc repo
 
 ## 6. Thiết kế cơ sở dữ liệu
 
-- **Tên CSDL:** `IFA_DB` · **Collation:** `Vietnamese_100_CI_AS_SC_UTF8` (hoặc mặc định + dùng `NVARCHAR` cho mọi cột chữ tiếng Việt).
+- **Tên CSDL:** `IFA_DB` · **Collation:** `Vietnamese_100_CI_AS_SC_UTF8` – dữ liệu chính là tiếng Anh nhưng collation UTF-8 này vẫn sắp xếp/tìm kiếm tiếng Anh bình thường và lưu đúng nội dung tiếng Việt người dùng nhập; mọi cột chữ dùng `NVARCHAR`.
 - **Quy ước:** tên bảng/cột `snake_case` số ít, khóa chính `id BIGINT IDENTITY(1,1)`, khóa ngoại `<bảng>_id`, thời gian `DATETIME2(0)`, tiền `DECIMAL(18,2)` (VND), cờ `BIT`.
 - **Enum:** lưu dạng `VARCHAR` + `CHECK` constraint (C#: enum + `.HasConversion<string>()` trong EF Core) – dễ đọc trong SSMS, không cần bảng lookup.
 - **Audit:** mọi bảng có `created_at DATETIME2(0) NOT NULL DEFAULT SYSDATETIME()` và `updated_at DATETIME2(0) NULL` (gán tự động trong `AppDbContext.SaveChangesAsync` cho mọi entity kế thừa `BaseEntity`).
@@ -800,7 +800,7 @@ CREATE TABLE account (
     id             BIGINT IDENTITY(1,1) NOT NULL CONSTRAINT PK_account PRIMARY KEY,
     username       VARCHAR(50)   NOT NULL CONSTRAINT UX_account_username UNIQUE,
     password_hash  VARCHAR(100)  NOT NULL,              -- BCrypt hash, không lưu mật khẩu thô
-    full_name      NVARCHAR(100) NOT NULL,              -- NVARCHAR để lưu tiếng Việt có dấu
+    full_name      NVARCHAR(100) NOT NULL,              -- NVARCHAR để lưu Unicode (người dùng có thể nhập tiếng Việt có dấu)
     email          VARCHAR(100)  NOT NULL CONSTRAINT UX_account_email UNIQUE,
     phone          VARCHAR(20)   NULL,
     date_of_birth  DATE          NULL,
@@ -1133,21 +1133,22 @@ Quy ước: danh sách `GET /xxx?keyword=&page=&size=`; form tạo `GET /xxx/new
   ```powershell
   dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost;Database=IFA_DB;User Id=ifa_app;Password=<mật khẩu>;TrustServerCertificate=True" --project src/InstituteOfFineArts.Web
   ```
-- Múi giờ: lưu thời gian theo giờ Việt Nam (`DateTimeHelper.Now` = `TimeZoneInfo.ConvertTime(DateTime.UtcNow, "SE Asia Standard Time")`) để hạn nộp 23:59:59 đúng ngày.
+- Múi giờ: lưu thời gian theo giờ của học viện (Asia/Ho_Chi_Minh – `DateTimeHelper.Now`) để hạn nộp 23:59:59 đúng ngày.
+- Ngôn ngữ & định dạng: giao diện **tiếng Anh**; văn hóa cố định `en-US` (`UseRequestLocalization` trong `Program.cs`) để số thập phân, ngày, tiền (USD) không phụ thuộc ngôn ngữ Windows của máy chạy. Tiếng Việt là tính năng phụ (M19).
 
 ### 9.4. Xử lý lỗi toàn cục
 | Loại lỗi | Cách xử lý |
 |---|---|
-| `BusinessException` (vi phạm luật nghiệp vụ, ví dụ “Đã quá hạn nộp bài”) | Controller bắt, thêm vào `ModelState` hoặc `TempData["Error"]`, hiển thị lại form |
+| `BusinessException` (vi phạm luật nghiệp vụ, ví dụ "The submission deadline has passed") | Controller bắt, thêm vào `ModelState` hoặc `TempData["Error"]`, hiển thị lại form |
 | `NotFoundException` | Trả `NotFound()` → trang 404 |
 | Không đủ quyền | `Forbid()` → trang 403 |
-| File quá lớn | Bắt lỗi giới hạn request → thông báo “Ảnh tối đa 5 MB” |
+| File quá lớn | Bắt lỗi giới hạn request → thông báo "Images must be 5 MB or smaller" |
 | Lỗi không lường trước | `UseExceptionHandler("/error/500")` → trang 500 thân thiện; chi tiết ghi vào log |
 
 ### 9.5. Validation
 - **Phía server:** DataAnnotations trên ViewModel (`[Required]`, `[StringLength]`, `[EmailAddress]`, `[Range]`, `[RegularExpression]`) + attribute tự viết (`[DateRange]`, `[JpegFile]`); controller luôn kiểm tra `ModelState.IsValid`.
 - **Phía client:** jQuery Validation Unobtrusive (có sẵn) hiện lỗi ngay khi nhập; **không thay** cho kiểm tra phía server.
-- Thông báo lỗi tiếng Việt, ghi trực tiếp trong attribute (`ErrorMessage = "Vui lòng nhập tiêu đề"`).
+- Thông báo lỗi **tiếng Anh**, ghi trực tiếp trong attribute (`ErrorMessage = "Please enter a title"`). Khi làm tính năng tiếng Việt (M19) mới chuyển sang file `.resx`.
 - Luật liên quan nhiều bảng (hạn nộp, 1 bài/cuộc thi, chỉ trao giải cho BEST…) kiểm tra trong **Service**.
 
 ### 9.6. Logging

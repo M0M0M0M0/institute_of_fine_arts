@@ -4,17 +4,17 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <!-- Mã kho User Secrets: mỗi máy tự đặt chuỗi kết nối riêng (ví dụ SQL Server trong Docker) mà không ghi mật khẩu vào repo -->
+    <!-- User Secrets store id: each machine sets its own connection string (e.g. SQL Server in Docker) without putting passwords in the repo -->
     <UserSecretsId>bec49735-9165-4447-87f1-f6b7886b0b36</UserSecretsId>
   </PropertyGroup>
 
-  <!-- Thư viện dùng trong dự án (phiên bản cố định để mọi máy trong nhóm giống nhau) -->
+  <!-- Libraries used by the project (fixed versions so every team member builds the same) -->
   <ItemGroup>
-    <!-- Băm mật khẩu BCrypt -->
+    <!-- BCrypt password hashing -->
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
-    <!-- Giữ tên bảng/cột dạng snake_case như thiết kế CSDL -->
+    <!-- Keep table/column names in snake_case as in the database design -->
     <PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />
-    <!-- EF Core: công cụ tạo migration (chỉ dùng lúc phát triển) -->
+    <!-- EF Core: migration tooling (development only) -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.14">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -24,11 +24,11 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <!-- Ghi log ra file -->
+    <!-- Logging to files -->
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
-    <!-- Tạo ảnh thu nhỏ khi tải tranh lên -->
+    <!-- Thumbnail generation when paintings are uploaded -->
     <PackageReference Include="SkiaSharp" Version="4.154.0" />
-    <!-- Nâng gói phụ của Microsoft.Data.SqlClient lên bản đã vá lỗ hổng bảo mật (bản 9.0.11 kéo theo mặc định bị cảnh báo NU1903) -->
+    <!-- Upgrades a transitive dependency of Microsoft.Data.SqlClient to a patched version (the default 9.0.11 triggers vulnerability warning NU1903) -->
     <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
   </ItemGroup>
 

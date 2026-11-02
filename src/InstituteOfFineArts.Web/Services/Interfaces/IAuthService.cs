@@ -3,45 +3,45 @@ using System.Security.Claims;
 namespace InstituteOfFineArts.Web.Services.Interfaces;
 
 /// <summary>
-/// Kết quả kiểm tra đăng nhập.
+/// Result of a login attempt.
 /// </summary>
 public enum LoginStatus
 {
-    /// <summary>Đúng tên đăng nhập và mật khẩu, tài khoản đang hoạt động.</summary>
+    /// <summary>Correct username and password, account is active.</summary>
     Success,
 
-    /// <summary>Sai tên đăng nhập hoặc sai mật khẩu (không nói rõ sai cái nào).</summary>
+    /// <summary>Wrong username or wrong password (deliberately not saying which one).</summary>
     InvalidCredentials,
 
-    /// <summary>Đúng mật khẩu nhưng tài khoản đã bị khóa (BR-05).</summary>
+    /// <summary>Correct password but the account is locked (BR-05).</summary>
     Locked,
 }
 
 /// <summary>
-/// Kết quả trả về cho AccountController sau khi kiểm tra đăng nhập.
+/// Result returned to AccountController after checking the login.
 /// </summary>
-/// <param name="Status">Trạng thái đăng nhập</param>
-/// <param name="Principal">Thông tin người dùng (Claims) để tạo cookie – chỉ có khi Status = Success</param>
+/// <param name="Status">Login status</param>
+/// <param name="Principal">User information (claims) used to create the cookie – only when Status = Success</param>
 public record LoginResult(LoginStatus Status, ClaimsPrincipal? Principal = null);
 
 /// <summary>
-/// Xác thực người dùng bằng bảng account (task BE1-02, module M01).
+/// Authenticates users against the account table (task BE1-02, module M01).
 /// </summary>
 public interface IAuthService
 {
     /// <summary>
-    /// Kiểm tra tên đăng nhập + mật khẩu; nếu đúng thì cập nhật thời điểm đăng nhập
-    /// và trả về ClaimsPrincipal để controller tạo cookie.
+    /// Checks username + password; on success updates the last login time
+    /// and returns a ClaimsPrincipal so the controller can create the cookie.
     /// </summary>
-    /// <param name="username">Tên đăng nhập người dùng nhập</param>
-    /// <param name="password">Mật khẩu người dùng nhập (chưa băm)</param>
-    /// <param name="authenticationScheme">Tên scheme xác thực dùng cho ClaimsIdentity</param>
+    /// <param name="username">Username typed by the user</param>
+    /// <param name="password">Password typed by the user (plain text)</param>
+    /// <param name="authenticationScheme">Authentication scheme name used for the ClaimsIdentity</param>
     Task<LoginResult> LoginAsync(string username, string password, string authenticationScheme);
 
     /// <summary>
-    /// Đường dẫn trang chính của từng vai trò sau khi đăng nhập
+    /// Home page path of each role after login
     /// (ADMIN → /admin, MANAGER → /manager, STAFF → /staff, STUDENT → /student).
     /// </summary>
-    /// <param name="user">Người dùng đã đăng nhập</param>
+    /// <param name="user">Signed-in user</param>
     string GetHomePath(ClaimsPrincipal user);
 }

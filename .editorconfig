@@ -1,4 +1,4 @@
-# Quy ước định dạng chung cho cả nhóm (Visual Studio / VS Code tự đọc file này)
+# Shared formatting rules for the team (Visual Studio / VS Code read this file automatically)
 root = true
 
 [*]
@@ -17,22 +17,22 @@ end_of_line = crlf
 [*.md]
 trim_trailing_whitespace = false
 
-# ----- Quy ước C# -----
+# ----- C# conventions -----
 [*.cs]
-# Dùng var khi kiểu đã rõ
+# Use var when the type is obvious
 csharp_style_var_when_type_is_apparent = true:suggestion
-# Namespace dạng file-scoped (namespace X;)
+# File-scoped namespaces (namespace X;)
 csharp_style_namespace_declarations = file_scoped:suggestion
-# Luôn dùng ngoặc nhọn cho if/for
+# Always use braces for if/for
 csharp_prefer_braces = true:suggestion
-# Interface bắt đầu bằng I
+# Interfaces start with I
 dotnet_naming_rule.interfaces_begin_with_i.symbols = interfaces
 dotnet_naming_rule.interfaces_begin_with_i.style = prefix_i
 dotnet_naming_rule.interfaces_begin_with_i.severity = suggestion
 dotnet_naming_symbols.interfaces.applicable_kinds = interface
 dotnet_naming_style.prefix_i.required_prefix = I
 dotnet_naming_style.prefix_i.capitalization = pascal_case
-# Field private bắt đầu bằng _
+# Private fields start with _
 dotnet_naming_rule.private_fields_underscore.symbols = private_fields
 dotnet_naming_rule.private_fields_underscore.style = underscore_camel
 dotnet_naming_rule.private_fields_underscore.severity = suggestion
