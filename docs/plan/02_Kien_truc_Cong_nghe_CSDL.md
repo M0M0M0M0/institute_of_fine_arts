@@ -1231,10 +1231,11 @@ Quy tắc: `git pull origin develop` mỗi sáng trước khi code; **không** c
 ### 10.4. Phân vai kỹ thuật gợi ý
 | Thành viên | Phạm vi kỹ thuật |
 |---|---|
-| Lead Backend (BE) | Kiến trúc, xác thực/phân quyền, Entity + EF Core migration, FileStorageService, Service có luật nghiệp vụ (M06–M09), review Pull Request |
-| Frontend (FE) | `_Layout`, Bootstrap, toàn bộ Razor View, Chart.js, JS xem trước ảnh; Controller đơn giản (M02, M11) khi đã quen |
-| T1 (tester) | Test case, Selenium IDE, nhập dữ liệu mẫu, Unit Testing Check List, báo lỗi bằng GitHub Issue |
-| T2 (docs) | ERD draw.io, tài liệu nộp (Problem Definition, CRS, GUI Standards, Task Sheet…), backup hằng ngày, báo cáo tiến độ |
+| BE1 (trưởng nhóm) | Kiến trúc, xác thực/phân quyền, Entity + EF Core migration (chỉ BE1 tạo migration), FileStorageService, Service có luật nghiệp vụ (cuộc thi, nộp bài, chấm, trao giải, bán tranh), review mọi Pull Request |
+| BE2 (đang học) | Dữ liệu mẫu, CRUD Admin, StatusSyncBackgroundService, Service chỉ đọc (bài nộp, kết quả, trang chủ, báo cáo, Manager), triển lãm, khách mua |
+| FE1 | `_Layout`, Bootstrap, site.css, View cho phần của BE1, JS xem trước ảnh / đếm ngược |
+| FE2 | Khung Area, `_Sidebar`, partial dùng chung, View cho phần của BE2, Chart.js |
+| QA | Test case, Selenium IDE, báo lỗi bằng GitHub Issue, trang lỗi, trang giới thiệu, print.css |
 
 ### 10.5. Backup hằng ngày (đặc tả yêu cầu)
 | Thứ cần backup | Cách | Tần suất | Người phụ trách |
