@@ -191,7 +191,7 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 | TC-M02-02 | Đếm số bài nộp đúng | Seed: "Colors of Autumn" ONGOING có 6 bài | So số hiển thị với `SELECT COUNT(*) FROM Submission WHERE competition_id = …` | | Hai con số bằng nhau | C |
 | TC-M02-03 | Cập nhật số bài sau khi nộp mới | Ghi lại số bài hiện tại | 1. `student07` nộp 1 bài vào cuộc thi ONGOING 2. Đăng xuất, tải lại trang chủ | `ok_small.jpg` | Số bài tăng thêm 1 | T |
 | TC-M02-04 | Danh sách đạt giải cuộc thi trước | Cuộc thi GRADED "Hometown Landscapes" đã trao giải | Xem khối "Awarded" | | Hiện đúng tên học viên, tên giải, tên cuộc thi theo bảng `AwardIssued` | T |
-| TC-M02-05 | Xem chi tiết cuộc thi khi chưa đăng nhập | Chưa đăng nhập | Bấm vào 1 cuộc thi UPCOMING | | Hiện mô tả, thể lệ, ngày bắt đầu/kết thúc, giải thưởng; nút "Submit" yêu cầu đăng nhập | T |
+| TC-M02-05 | Tìm kiếm & xem chi tiết cuộc thi khi chưa đăng nhập | Chưa đăng nhập | 1. Mở `/competitions`, tìm "autumn", lọc trạng thái ONGOING 2. Bấm vào 1 cuộc thi UPCOMING | | Danh sách chỉ hiện cuộc thi đã công bố (tóm tắt), kết quả lọc đúng; trang chi tiết hiện mô tả, thể lệ, ngày bắt đầu/kết thúc, giải thưởng; nút "Submit" yêu cầu đăng nhập | T |
 | TC-M02-06 | Giao diện điện thoại | Chưa đăng nhập | F12 → Toggle device → iPhone 12 | | Menu thu gọn (hamburger), không tràn ngang, ảnh co giãn | Th |
 
 ### M03 – Admin quản lý nhân viên (6 TC)

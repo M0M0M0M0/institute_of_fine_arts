@@ -198,7 +198,7 @@ Ký hiệu: **C** = Create, **R** = Read/xem, **U** = Update, **D** = Delete, **
 | F-M05-01 | Tạo cuộc thi | Tên, chủ đề, mô tả, ngày bắt đầu, ngày kết thúc (hạn nộp), thể lệ/điều kiện, ảnh banner (tùy chọn), người tạo | STAFF | Must |
 | F-M05-02 | Sửa cuộc thi | Theo BR-10 (giới hạn sửa khi đã có bài nộp) | STAFF | Must |
 | F-M05-03 | Xóa cuộc thi | Chỉ khi chưa có Submission (BR-11) | STAFF | Must |
-| F-M05-04 | Tìm kiếm & danh sách cuộc thi | Lọc theo tên, trạng thái, khoảng ngày | STAFF, MANAGER, ADMIN, STUDENT | Must |
+| F-M05-04 | Tìm kiếm & danh sách cuộc thi | Lọc theo tên, trạng thái, khoảng ngày. GUEST dùng trang công khai `/competitions`: chỉ thấy cuộc thi đã công bố, dạng tóm tắt | STAFF, MANAGER, ADMIN, STUDENT, GUEST (pub, tóm tắt) | Must |
 | F-M05-05 | Xem chi tiết cuộc thi | Thông tin, thể lệ, giải, số bài nộp, trạng thái | Tất cả đã đăng nhập | Must |
 | F-M05-06 | Quản lý giải thưởng định nghĩa (CompetitionAward) | Thêm/sửa/xóa giải cho cuộc thi: tên giải (Nhất, Nhì, Ba, Khuyến khích…), thứ hạng, giá trị (tiền), số lượng, mô tả phần thưởng | STAFF | Must |
 | F-M05-07 | Tự động xác định trạng thái | UPCOMING/ONGOING/CLOSED theo ngày hệ thống; GRADED khi công bố kết quả (BR-07) | SYSTEM | Must |
@@ -649,7 +649,7 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 | Mã | Màn hình | URL gợi ý | Chức năng liên quan |
 |---|---|---|---|
 | SCR-01 | Trang chủ | `/` | F-M02-01..04, 06, 07 |
-| SCR-02 | Chi tiết cuộc thi (công khai) | `/competitions/{id}` | F-M02-05 |
+| SCR-02 | Danh sách, tìm kiếm & chi tiết cuộc thi (công khai) | `/competitions`, `/competitions/{id}` | F-M02-05, F-M05-04 |
 | SCR-03 | Đăng nhập | `/login` | F-M01-01 |
 | SCR-04 | Hồ sơ cá nhân & đổi mật khẩu | `/profile` | F-M01-04, 05 |
 | SCR-05 | Trang lỗi 403/404/500 | `/error` | F-M01-07 |
