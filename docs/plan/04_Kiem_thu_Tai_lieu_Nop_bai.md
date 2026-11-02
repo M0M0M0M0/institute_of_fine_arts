@@ -1,8 +1,8 @@
 # PHẦN 04 – KIỂM THỬ, TÀI LIỆU, ĐÓNG GÓI & BẢO VỆ
 
 **Dự án:** Institute of Fine Arts (Học viện Mỹ thuật) – eProject Aptech Semester 3
-**Người phụ trách phần này:** QA Lead & Documentation Lead
-**Đối tượng đọc chính:** T1, T2 (người thực hiện kiểm thử thủ công & viết nháp tài liệu), BE, FE (review)
+**Người phụ trách phần này:** QA (kiểm thử & tài liệu tổng hợp), BE1 duyệt
+**Đối tượng đọc chính:** QA (kiểm thử thủ công, tài liệu tổng hợp); BE1, BE2, FE1, FE2 (tự test phần mình, viết tài liệu được giao, review)
 **Stack:** .NET 10 · ASP.NET Core MVC (C#) · Entity Framework Core · SQL Server · Razor + Bootstrap 5 · File I/O lưu ảnh vào `uploads/`
 **Mốc thời gian:** 4 tuần (Day 1 → Day 28) · **Code freeze: Day 24** · **Nộp bài: Day 28** (1 file ZIP, **chỉ được nộp 1 lần**)
 
@@ -18,7 +18,7 @@
 ## Mục lục
 
 1. [Chiến lược kiểm thử](#1-chiến-lược-kiểm-thử)
-2. [Hướng dẫn cho tester mới (T1/T2)](#2-hướng-dẫn-cho-tester-mới-t1t2)
+2. [Hướng dẫn cho tester mới (QA)](#2-hướng-dẫn-cho-tester-mới-qa)
 3. [Bộ test case mẫu (M01–M11)](#3-bộ-test-case-mẫu-m01m11)
 4. [Kế hoạch dữ liệu mẫu (seed data)](#4-kế-hoạch-dữ-liệu-mẫu-seed-data)
 5. [Unit Testing Check List & Final Check List](#5-unit-testing-check-list--final-check-list)
@@ -37,9 +37,9 @@
 |---|---|---|---|---|
 | **Unit test** | BE (FE hỗ trợ nếu có thời gian) | xUnit + Moq (+ EF Core InMemory cho dữ liệu giả) | Các service có logic quan trọng: `SubmissionService` (kiểm tra hạn nộp, quyền sở hữu), `FileStorageService` (kiểm tra JPEG, kích thước, tên file an toàn), `CompetitionService` (tính trạng thái, chặn xóa khi đã có bài nộp), `EvaluationService` (bài nộp trễ → `DISQUALIFIED`), `ExhibitionService` (bán tranh, trả tiền học viên), `ReportService` (lọc theo khoảng ngày) | Viết song song khi code, mục tiêu ≥ 25 unit test xanh trước Day 24 |
 | **Integration test** | BE | `WebApplicationFactory` (gói `Microsoft.AspNetCore.Mvc.Testing`) hoặc Postman collection | Controller ↔ Service ↔ DbContext ↔ DB; phân quyền URL theo vai trò; upload multipart | Từ Day 15, chạy lại trước code freeze |
-| **System test (thủ công)** | **T1, T2** | Trình duyệt Chrome/Edge, file test case Excel/Google Sheets, Selenium IDE (tùy chọn) | Toàn bộ chức năng M01–M11 theo test case ở mục 3 | Mỗi module xong (BE/FE báo "Ready for test") → test trong 24 giờ; vòng test đầy đủ Day 20–23 |
-| **UAT theo vai trò** | T1 đóng vai STUDENT + GUEST, T2 đóng vai STAFF + ADMIN + MANAGER; BE/FE quan sát | Kịch bản demo (mục 9) | Đi trọn luồng nghiệp vụ như người dùng thật | Day 23 (lần 1), Day 26 (lần 2 trên bản đóng gói) |
-| **Regression** | T1, T2 | Selenium IDE (ghi/phát lại) + danh sách test case ưu tiên "Cao" | Chạy lại tất cả test case mức ưu tiên Cao + các bug đã sửa | Day 24 (trước code freeze) và Day 26 (trên máy sạch) |
+| **System test (thủ công)** | **QA** (người làm chức năng tự test trước khi tạo PR) | Trình duyệt Chrome/Edge, file test case Excel/Google Sheets, Selenium IDE (tùy chọn) | Toàn bộ chức năng M01–M11 theo test case ở mục 3 | Mỗi module xong (BE/FE báo "Ready for test") → test trong 24 giờ; vòng test đầy đủ Day 20–23 |
+| **UAT theo vai trò** | QA đóng vai STUDENT + GUEST, FE1 đóng vai STAFF, FE2 đóng vai ADMIN + MANAGER; BE1/BE2 quan sát | Kịch bản demo (mục 9) | Đi trọn luồng nghiệp vụ như người dùng thật | Day 23 (lần 1), Day 26 (lần 2 trên bản đóng gói) |
+| **Regression** | QA | Selenium IDE (ghi/phát lại) + danh sách test case ưu tiên "Cao" | Chạy lại tất cả test case mức ưu tiên Cao + các bug đã sửa | Day 24 (trước code freeze) và Day 26 (trên máy sạch) |
 
 ### 1.2. Môi trường kiểm thử
 
@@ -82,7 +82,7 @@
 
 ---
 
-## 2. Hướng dẫn cho tester mới (T1/T2)
+## 2. Hướng dẫn cho tester mới (QA)
 
 ### 2.1. Cách đọc yêu cầu (5 bước)
 
@@ -99,7 +99,7 @@
 
 | ID | Module | Tiêu đề | Tiền điều kiện | Các bước | Dữ liệu | Kết quả mong đợi | Kết quả thực tế | Trạng thái | Người test | Ngày |
 |---|---|---|---|---|---|---|---|---|---|---|
-| TC-M06-03 | M06 | Upload file PNG bị từ chối | Đăng nhập `student01`; cuộc thi "Mùa thu" đang ONGOING | 1. Vào Cuộc thi → "Mùa thu" → Nộp bài<br>2. Chọn file<br>3. Nhập mô tả<br>4. Bấm "Nộp" | `image.png`; mô tả "Test" | Hiện lỗi "Chỉ chấp nhận file JPEG"; không có bài mới trong "Bài của tôi"; không có file mới trong `uploads/` | (điền khi test) | Pass / Fail / Blocked / Not run | T1 | 20/xx |
+| TC-M06-03 | M06 | Upload file PNG bị từ chối | Đăng nhập `student01`; cuộc thi "Mùa thu" đang ONGOING | 1. Vào Cuộc thi → "Mùa thu" → Nộp bài<br>2. Chọn file<br>3. Nhập mô tả<br>4. Bấm "Nộp" | `image.png`; mô tả "Test" | Hiện lỗi "Chỉ chấp nhận file JPEG"; không có bài mới trong "Bài của tôi"; không có file mới trong `uploads/` | (điền khi test) | Pass / Fail / Blocked / Not run | QA | 20/xx |
 
 **Quy tắc viết:**
 - **ID:** `TC-Mxx-yy` (xx = mã module, yy = số thứ tự). Không đổi ID sau khi đã đặt.
@@ -165,7 +165,7 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 ## 3. Bộ test case mẫu (M01–M11)
 
 > Ký hiệu cột **Ưu tiên**: C = Cao (bắt buộc chạy trong regression), T = Trung bình, Th = Thấp.
-> Mật khẩu test chung: xem mục 4.4. Cột "Kết quả thực tế / Trạng thái / Người test / Ngày" để trống – điền vào file Excel khi chạy.
+> Mật khẩu test chung: xem mục 4.5. Cột "Kết quả thực tế / Trạng thái / Người test / Ngày" để trống – điền vào file Excel khi chạy.
 > Ngày "hôm nay" được ký hiệu **D**. Cuộc thi seed có ngày tương đối với D (mục 4.2).
 
 ### M01 – Xác thực & tài khoản (10 TC)
@@ -313,9 +313,9 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 | Module | M01 | M02 | M03 | M04 | M05 | M06 | M07 | M08 | M09 | M10 | M11 | **Tổng** |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Số TC | 10 | 6 | 6 | 5 | 8 | 14 | 7 | 5 | 9 | 5 | 8 | **83** |
-| Người chạy chính | T1 | T1 | T2 | T2 | T2 | T1 | T2 | T2 | T2 | T1 | T1 | T1: 43 · T2: 40 |
+| Người chạy chính | QA | QA | QA | QA | QA | QA | QA | QA | QA | QA | QA | QA: 83 (theo 3 vòng – xem Phan_cong_task.xlsx) |
 
-> Sau khi chạy xong một lượt, T1 và T2 **đổi chéo** 10 TC ưu tiên Cao của nhau để chạy lại (phát hiện lỗi do "quen tay").
+> Sau khi QA chạy xong một vòng, **người làm chức năng** (BE/FE phụ trách module) chạy lại các TC ưu tiên Cao của module mình để kiểm tra chéo.
 
 ### Gợi ý Selenium IDE cho người mới (regression)
 
@@ -342,7 +342,7 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 
 ### 4.2. Cuộc thi (ngày tính tương đối so với ngày chạy seed **D**)
 
-> Gợi ý cho BE: viết seed bằng `CommandLineRunner`/`data.sql` dùng `GETDATE()` ± n ngày để trạng thái luôn đúng mỗi khi reset DB.
+> Gợi ý cho BE: viết seed trong `Data/Seed/DbSeeder.cs`, ngày tháng dùng `DateTimeHelper.Today.AddDays(± n)` để trạng thái luôn đúng mỗi khi reset DB.
 
 | # | Tên cuộc thi | startDate | endDate | Trạng thái | Giải thưởng | Bài nộp | Ghi chú |
 |---|---|---|---|---|---|---|---|
@@ -393,7 +393,7 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 
 ## 5. Unit Testing Check List & Final Check List
 
-### 5.1. Unit Testing Check List (tài liệu nộp – BE điền, T2 trình bày)
+### 5.1. Unit Testing Check List (tài liệu nộp – BE1/BE2 điền, QA trình bày)
 
 Mẫu bảng cho tài liệu Word:
 
@@ -420,9 +420,9 @@ Checklist nội dung tối thiểu:
 - [ ] `ExhibitionEntryService.MarkSoldAsync` – bắt buộc soldPrice > 0 và Customer
 - [ ] `ExhibitionEntryService.MarkPaidAsync` – chặn khi chưa bán
 - [ ] `ReportService.GetSubmissionReportAsync` – bao gồm 2 đầu khoảng ngày
-- [ ] `AccountService.CreateAsync` – trùng username bị từ chối; mật khẩu được mã hóa BCrypt
+- [ ] `StaffService.CreateAsync` / `StudentService.CreateAsync` – trùng username bị từ chối; mật khẩu được mã hóa BCrypt
 
-**B. Kiểm tra mức màn hình/đơn vị giao diện (T1/T2)**
+**B. Kiểm tra mức màn hình/đơn vị giao diện (QA)**
 - [ ] Mỗi form: trường bắt buộc có dấu `*` và thông báo lỗi bằng tiếng Việt/Anh thống nhất
 - [ ] Mỗi form: nhập sai không làm mất dữ liệu đã gõ
 - [ ] Mỗi danh sách: phân trang, tìm kiếm, "Không có kết quả"
@@ -473,32 +473,32 @@ Checklist nội dung tối thiểu:
 - Định dạng thống nhất: font Times New Roman 13 (hoặc Calibri 12), heading dùng Style Heading 1/2/3 (để tạo mục lục tự động), lề 2.5 cm, đánh số trang, header ghi "Institute of Fine Arts – eProject".
 - Ngôn ngữ: theo yêu cầu của trung tâm (mặc định **tiếng Anh** cho bản nộp; nháp có thể viết tiếng Việt rồi dịch). Thuật ngữ vai trò/thực thể giữ nguyên tiếng Anh như mục quy ước.
 - Tất cả tài liệu lưu trong repo thư mục `docs/` (nháp) → bản cuối ghép thành **Project Report** (có Synopsis + toàn bộ tài liệu + phụ lục code chính).
-- Quy trình: **T1/T2 viết nháp → BE/FE review (comment trong Word) → người viết sửa → QA Lead chốt**.
+- Quy trình: **người được giao viết nháp → người review góp ý (comment trong Word) → người viết sửa → QA ghép vào Project Report**.
 
 ### 6.2. Bảng phân công & hạn
 
 | # | Tài liệu | Nội dung cần có (dàn ý) | Viết nháp | Review | Hạn nháp | Hạn chốt | Công cụ |
 |---|---|---|---|---|---|---|---|
-| 1 | **Certificate of Completion** | Tên dự án, tên nhóm/khóa/nhóm, thành viên + mã HV, giảng viên hướng dẫn, ngày, chữ ký (theo mẫu trung tâm) | T2 | BE | Day 25 | Day 26 | Word |
-| 2 | **Table of Contents** | Mục lục tự động (References → Table of Contents), cập nhật cuối cùng | T2 | QA Lead | Day 26 | Day 27 | Word |
-| 3 | **Problem Definition** | 1. Giới thiệu khách hàng 2. Hiện trạng (quản lý giấy tờ, khó tra cứu) 3. Vấn đề cần giải quyết 4. Giải pháp đề xuất (website) 5. Phạm vi (trong/ngoài phạm vi) 6. Đối tượng người dùng (5 vai trò) | T1 | BE | Day 3 | Day 5 | Word |
-| 4 | **Customer Requirement Specification (CRS)** | 1. Mục đích 2. Mô tả vai trò 3. Yêu cầu chức năng theo module M01–M11 (bảng: mã YC, mô tả, vai trò, ưu tiên) 4. Yêu cầu phi chức năng (bảo mật, hiệu năng, upload JPEG ≤ 5 MB, trình duyệt) 5. Yêu cầu tài chính (giá giải, giá học viên, giá bán) 6. Sơ đồ Use Case 7. Ràng buộc & giả định | T1 | BE | Day 4 | Day 6 | Word + draw.io |
-| 5 | **Project Plan** | 1. Mục tiêu 2. Thành viên & vai trò 3. Mốc (Week 1–4, code freeze Day 24, nộp Day 28) 4. Gantt chart 5. Rủi ro & phương án 6. Công cụ & môi trường 7. Lịch status report (Day 9 và Day 25) | T2 | BE | Day 3 | Day 5 | Word + Excel (Gantt) |
-| 6 | **E-R Diagrams** | 1. ERD mức khái niệm (11 thực thể chuẩn) 2. ERD vật lý (bảng, PK/FK, kiểu dữ liệu) 3. Từ điển dữ liệu (bảng: cột, kiểu, null, mô tả) 4. Giải thích quan hệ (1-n, 1-1) | T2 (vẽ theo bản BE thiết kế) | BE | Day 6 | Day 8 (cập nhật lại Day 24 nếu đổi) | draw.io + Word |
-| 7 | **Algorithms** | Xem mục 7: pseudo-code + flowchart 5 thuật toán chính | T1 (vẽ flowchart) + BE (pseudo-code) | BE | Day 16 | Day 20 | draw.io + Word |
-| 8 | **GUI Standards Document** | 1. Bảng màu, font, logo 2. Bố cục chung (header/menu/footer) 3. Quy chuẩn nút (màu theo hành động: Lưu = primary, Xóa = danger) 4. Quy chuẩn form (nhãn, `*`, thông báo lỗi) 5. Bảng/phân trang 6. Thông báo (alert success/error) 7. Responsive Bootstrap 5 | T2 | FE | Day 6 | Day 8 | Word |
-| 9 | **Interface Design Document** | Mỗi màn hình: tên, vai trò truy cập, URL, ảnh chụp/wireframe, mô tả các trường & nút, điều hướng; sơ đồ sitemap theo vai trò | T1 (chụp màn hình) | FE | Day 12 (wireframe) | Day 25 (ảnh thật) | Word + draw.io |
-| 10 | **Task Sheet** | Bảng: STT, công việc, module, người làm, ngày bắt đầu, ngày kết thúc dự kiến/thực tế, trạng thái, ghi chú – cập nhật mỗi tuần | T2 | BE | Day 2 (tạo) | Cập nhật Day 7, 14, 21, chốt Day 27 | Excel |
-| 11 | **Project Review and Monitoring Report** | Mỗi kỳ: tiến độ % theo module, việc đã xong, việc đang làm, khó khăn & cách xử lý, kế hoạch kỳ tới, minh chứng (ảnh, script) – dùng làm nội dung 2 email STATUS | T1 | BE | Day 9 (kỳ 1), Day 24 (kỳ 2) | Day 9, Day 25 | Word |
-| 12 | **Unit Testing Check List** | Mục 5.1 + kết quả `dotnet test` + bảng tổng hợp test case Pass/Fail | T2 (trình bày) + BE (unit test) | QA Lead | Day 23 | Day 24 | Word + Excel |
-| 13 | **Final Check List** | Mục 5.2, tick & ký | T1 + T2 | BE | Day 26 | Day 27 | Word |
-| 14 | **User Guide (Hướng dẫn sử dụng)** | 1. Giới thiệu 2. Đăng nhập/đăng xuất 3. Hướng dẫn theo vai trò (GUEST, STUDENT, STAFF, MANAGER, ADMIN) – mỗi chức năng: mục đích, các bước, ảnh chụp 4. Câu hỏi thường gặp & lỗi thường gặp 5. Nguồn ảnh | T1 (STUDENT, GUEST, MANAGER) + T2 (STAFF, ADMIN) | FE | Day 22 | Day 25 | Word |
-| 15 | **Installation Guide (Hướng dẫn cài đặt)** | 1. Yêu cầu hệ thống (.NET 10 SDK, SQL Server, SSMS) 2. Restore DB từ `.bak` hoặc chạy `.sql` 3. Cấu hình `appsettings.json` (chuỗi kết nối) 4. Copy thư mục ảnh `uploads/` 5. Chạy ứng dụng (`mvn spring-boot:run` / `java -jar`) 6. Truy cập `http://localhost:5000` 7. **Bảng tài khoản đăng nhập** (mục 4.5) 8. Lỗi thường gặp (cổng 8080 bận, TCP/IP SQL Server chưa bật, sai mật khẩu `sa`) | T2 | BE | Day 24 | Day 26 (sau test máy sạch) | Word |
-| — | **Project Report (bản ghép)** | Bìa → Certificate → Mục lục → **Synopsis** (1–2 trang) → tài liệu 3–13 → User Guide → Installation Guide → Phụ lục: code chính có comment | QA Lead | BE | Day 26 | **Day 27** | Word → PDF |
+| 1 | **Certificate of Completion** | Tên dự án, tên nhóm/khóa/nhóm, thành viên + mã HV, giảng viên hướng dẫn, ngày, chữ ký (theo mẫu trung tâm) | QA | BE1 | Day 25 | Day 26 | Word |
+| 2 | **Table of Contents** | Mục lục tự động (References → Table of Contents), cập nhật cuối cùng | QA | BE1 | Day 26 | Day 27 | Word |
+| 3 | **Problem Definition** | 1. Giới thiệu khách hàng 2. Hiện trạng (quản lý giấy tờ, khó tra cứu) 3. Vấn đề cần giải quyết 4. Giải pháp đề xuất (website) 5. Phạm vi (trong/ngoài phạm vi) 6. Đối tượng người dùng (5 vai trò) | BE2 | BE1 | Day 3 | Day 5 | Word |
+| 4 | **Customer Requirement Specification (CRS)** | 1. Mục đích 2. Mô tả vai trò 3. Yêu cầu chức năng theo module M01–M11 (bảng: mã YC, mô tả, vai trò, ưu tiên) 4. Yêu cầu phi chức năng (bảo mật, hiệu năng, upload JPEG ≤ 5 MB, trình duyệt) 5. Yêu cầu tài chính (giá giải, giá học viên, giá bán) 6. Sơ đồ Use Case 7. Ràng buộc & giả định | BE2 | BE1 | Day 4 | Day 6 | Word + draw.io |
+| 5 | **Project Plan** | 1. Mục tiêu 2. Thành viên & vai trò 3. Mốc (Week 1–4, code freeze Day 24, nộp Day 28) 4. Gantt chart 5. Rủi ro & phương án 6. Công cụ & môi trường 7. Lịch status report (Day 9 và Day 25) | QA | BE1 | Day 3 | Day 5 | Word + Excel (Gantt) |
+| 6 | **E-R Diagrams** | 1. ERD mức khái niệm (11 thực thể chuẩn) 2. ERD vật lý (bảng, PK/FK, kiểu dữ liệu) 3. Từ điển dữ liệu (bảng: cột, kiểu, null, mô tả) 4. Giải thích quan hệ (1-n, 1-1) | BE2 (vẽ theo schema đã có) | BE1 | Day 6 | Day 8 (cập nhật lại Day 24 nếu đổi) | draw.io + Word |
+| 7 | **Algorithms** | Xem mục 7: pseudo-code + flowchart 5 thuật toán chính | BE1 (pseudo-code) + QA (vẽ flowchart) | BE1 | Day 16 | Day 20 | draw.io + Word |
+| 8 | **GUI Standards Document** | 1. Bảng màu, font, logo 2. Bố cục chung (header/menu/footer) 3. Quy chuẩn nút (màu theo hành động: Lưu = primary, Xóa = danger) 4. Quy chuẩn form (nhãn, `*`, thông báo lỗi) 5. Bảng/phân trang 6. Thông báo (alert success/error) 7. Responsive Bootstrap 5 | FE1 | FE2 | Day 6 | Day 8 | Word |
+| 9 | **Interface Design Document** | Mỗi màn hình: tên, vai trò truy cập, URL, ảnh chụp/wireframe, mô tả các trường & nút, điều hướng; sơ đồ sitemap theo vai trò | FE2 (QA chụp màn hình) | FE1 | Day 12 (wireframe) | Day 25 (ảnh thật) | Word + draw.io |
+| 10 | **Task Sheet** | Bảng: STT, công việc, module, người làm, ngày bắt đầu, ngày kết thúc dự kiến/thực tế, trạng thái, ghi chú – lấy từ `docs/Phan_cong_task.xlsx`, cập nhật mỗi tuần | QA (xuất từ Phan_cong_task.xlsx) | BE1 | Day 2 (tạo) | Cập nhật Day 7, 14, 21, chốt Day 27 | Excel |
+| 11 | **Project Review and Monitoring Report** | Mỗi kỳ: tiến độ % theo module, việc đã xong, việc đang làm, khó khăn & cách xử lý, kế hoạch kỳ tới, minh chứng (ảnh, script) – dùng làm nội dung 2 email STATUS | QA (số liệu từ Kanban & Phan_cong_task.xlsx) | BE1 | Day 9 (kỳ 1), Day 24 (kỳ 2) | Day 9, Day 25 | Word |
+| 12 | **Unit Testing Check List** | Mục 5.1 + kết quả `dotnet test` + bảng tổng hợp test case Pass/Fail | QA (trình bày) + BE1, BE2 (unit test) | BE1 | Day 23 | Day 24 | Word + Excel |
+| 13 | **Final Check List** | Mục 5.2, tick & ký | QA | BE1 | Day 26 | Day 27 | Word |
+| 14 | **User Guide (Hướng dẫn sử dụng)** | 1. Giới thiệu 2. Đăng nhập/đăng xuất 3. Hướng dẫn theo vai trò (GUEST, STUDENT, STAFF, MANAGER, ADMIN) – mỗi chức năng: mục đích, các bước, ảnh chụp 4. Câu hỏi thường gặp & lỗi thường gặp 5. Nguồn ảnh | FE1 (GUEST, STUDENT, STAFF) + FE2 (ADMIN, MANAGER) | QA (làm thử theo hướng dẫn) | Day 22 | Day 25 | Word |
+| 15 | **Installation Guide (Hướng dẫn cài đặt)** | 1. Yêu cầu hệ thống (.NET 10 SDK, SQL Server, SSMS) 2. Restore DB từ `.bak` hoặc chạy `.sql` 3. Cấu hình `appsettings.json` (chuỗi kết nối) 4. Copy thư mục ảnh `uploads/` 5. Chạy ứng dụng (`mvn spring-boot:run` / `java -jar`) 6. Truy cập `http://localhost:5000` 7. **Bảng tài khoản đăng nhập** (mục 4.5) 8. Lỗi thường gặp (cổng 5000 bận, TCP/IP SQL Server chưa bật, sai mật khẩu `sa`) | BE2 | QA (cài thử trên máy sạch) | Day 24 | Day 26 (sau test máy sạch) | Word |
+| — | **Project Report (bản ghép)** | Bìa → Certificate → Mục lục → **Synopsis** (1–2 trang) → tài liệu 3–13 → User Guide → Installation Guide → Phụ lục: code chính có comment | QA | BE1 | Day 26 | **Day 27** | Word → PDF |
 
-> Ghi nhớ yêu cầu spec: *mọi khối code phải có comment; phải giải thích logic chương trình; báo cáo hoàn chỉnh gồm synopsis, mã nguồn và tài liệu.* BE/FE tự rà comment code Day 22–24; T1 kiểm tra ngẫu nhiên 10 file (có Javadoc cho class/method public không) và ghi vào Final Check List.
+> Ghi nhớ yêu cầu spec: *mọi khối code phải có comment; phải giải thích logic chương trình; báo cáo hoàn chỉnh gồm synopsis, mã nguồn và tài liệu.* BE1, BE2, FE1, FE2 tự rà comment code Day 22–24; QA kiểm tra ngẫu nhiên 10 file (có XML comment `///` cho class/method public không) và ghi vào Final Check List.
 
-### 6.3. Hướng dẫn chụp ảnh màn hình (cho T1/T2)
+### 6.3. Hướng dẫn chụp ảnh màn hình (cho QA)
 
 1. Dùng dữ liệu seed đẹp (không có chữ "test", "asdf").
 2. Trình duyệt 100% zoom, cửa sổ 1366×768 hoặc 1920×1080, ẩn bookmark bar.
@@ -549,7 +549,7 @@ FUNCTION storeImage(multipartFile)
     newName ← Guid.NewGuid() + ".jpg"                    // bỏ hoàn toàn tên gốc → chống path traversal & ký tự lạ
     target ← normalize(uploadDir / newName)
     IF target NOT startsWith uploadDir THEN THROW "Đường dẫn không hợp lệ"
-    copy(file.inputStream → target)              // FileOutputStream / Files.copy
+    copy(file → target)                          // FileStream + IFormFile.CopyToAsync
     RETURN newName                               // lưu tên này vào Submission.imagePath
 END FUNCTION
 
@@ -637,7 +637,7 @@ END FUNCTION
 │   ├── UserGuide.pdf
 │   ├── InstallationGuide.pdf
 │   ├── ERD.drawio (+ .png)
-│   └── TestCases_FineArts.xlsx, TaskSheet.xlsx
+│   └── TestCases_FineArts.xlsx, Phan_cong_task.xlsx
 ├── Screenshots/                    ← ảnh màn hình theo vai trò (Mxx_ROLE_screen.png)
 └── Feedback/
     └── FeedbackForm.docx           ← phiếu phản hồi đã điền
@@ -647,11 +647,11 @@ END FUNCTION
 
 - Mẫu: **`<Batch>_<Group>_<ProjectTitle>.zip`** – không dấu, không khoảng trắng.
 - Ví dụ: `T1.2409.E1_Group3_InstituteOfFineArts.zip` (thay bằng mã khóa và số nhóm thật của lớp).
-- Dung lượng: cố gắng < 100 MB (nén ảnh seed; không đưa `target/`, file `.jar` chỉ đưa nếu trung tâm yêu cầu).
+- Dung lượng: cố gắng < 100 MB (nén ảnh seed; không đưa `bin/`, `obj/`, `.vs/`).
 
 ### 8.3. Checklist kiểm tra chéo 2 người (Day 27)
 
-Người A (T1) đóng gói, người B (T2) kiểm tra **trên máy khác**; sau đó đổi vai với Documentation.
+Người A (QA) đóng gói, người B (FE2) kiểm tra **trên máy khác**; sau đó đổi vai với Documentation.
 
 | # | Mục kiểm tra | Người A | Người B |
 |---|---|---|---|
@@ -665,13 +665,13 @@ Người A (T1) đóng gói, người B (T2) kiểm tra **trên máy khác**; sa
 | 8 | Đủ 13 tài liệu + User Guide + Installation Guide, mở được | [ ] | [ ] |
 | 9 | PDF báo cáo có mục lục đúng số trang, có Synopsis | [ ] | [ ] |
 | 10 | Feedback form đã điền | [ ] | [ ] |
-| 11 | Không có file rác (`.idea`, `target`, `~$*.docx`, `Thumbs.db`) | [ ] | [ ] |
+| 11 | Không có file rác (`.vs`, `bin`, `obj`, `~$*.docx`, `Thumbs.db`) | [ ] | [ ] |
 | 12 | Tiêu đề email nộp bắt đầu bằng `PROJECT SUBMISSION:` | [ ] | [ ] |
 | Ký tên / ngày | | | |
 
 ### 8.4. Test cài đặt lại trên máy sạch (Day 26)
 
-1. Dùng máy của FE hoặc T1 **chưa từng chạy dự án** (hoặc tạo user Windows mới / máy ảo).
+1. Dùng máy của FE2 hoặc QA **chưa từng chạy dự án** (hoặc tạo user Windows mới / máy ảo).
 2. Chỉ cài theo đúng **Installation Guide** – không hỏi BE. Ghi lại mọi bước bị vướng.
 3. Bấm giờ: mục tiêu ≤ 30 phút từ giải nén đến đăng nhập được.
 4. Chạy 10 test case ưu tiên Cao (TC-M01-01, TC-M02-01, TC-M05-06, TC-M06-01, TC-M06-03, TC-M06-10, TC-M07-02, TC-M09-05, TC-M09-07, TC-M11-06).
@@ -696,14 +696,14 @@ Người A (T1) đóng gói, người B (T2) kiểm tra **trên máy khác**; sa
 
 | Thời gian | Phần | Người trình bày | Nội dung / thao tác | Tài khoản |
 |---|---|---|---|---|
-| 0:00–1:30 | Mở đầu | BE | Giới thiệu nhóm, bài toán (quản lý giấy → website), kiến trúc (ASP.NET Core MVC + Razor + EF Core + SQL Server), ERD 1 slide | — |
-| 1:30–3:00 | GUEST – Trang chủ | T1 | Cuộc thi sắp/đang diễn ra, số bài nộp, danh sách đạt giải; xem chi tiết cuộc thi | (không đăng nhập) |
-| 3:00–5:30 | STUDENT | T1 | Đăng nhập → xem cuộc thi "Sắc màu mùa thu" → nộp JPEG + thơ → sửa bài → **thử nộp file PNG (bị chặn)** → **cuộc thi đã kết thúc: không có nút sửa** → xem kết quả/nhận xét → xem tranh triển lãm (đã bán, đã được trả tiền) | `student01` |
-| 5:30–9:00 | STAFF | T2 | Tạo cuộc thi + giải → chấm bài "Thành phố về đêm" (BEST + nhận xét) → **thử xóa cuộc thi có bài (bị chặn)** → trao giải → gửi tranh BEST đi triển lãm với giá học viên → đánh dấu đã bán + khách hàng → đã trả tiền → báo cáo BEST theo khoảng ngày | `staff01` |
-| 9:00–10:30 | ADMIN | FE | Thêm nhân viên/học viên, tìm kiếm, khóa tài khoản | `admin01` |
-| 10:30–12:00 | MANAGER | FE | Xem toàn bộ (chỉ đọc), xem xếp loại 1 bức tranh, quản lý triển lãm sắp tới | `manager01` |
-| 12:00–13:30 | Bảo mật & chất lượng | BE | STUDENT mở URL `/staff/...` → 403; mật khẩu BCrypt trong DB; upload đổi tên Guid; `dotnet test` xanh; số liệu test (83 TC) | — |
-| 13:30–15:00 | Kết luận | BE | Hạn chế & hướng phát triển (thanh toán online, email thông báo, phân trang nâng cao); cảm ơn | — |
+| 0:00–1:30 | Mở đầu | BE1 | Giới thiệu nhóm, bài toán (quản lý giấy → website), kiến trúc (ASP.NET Core MVC + Razor + EF Core + SQL Server), ERD 1 slide | — |
+| 1:30–3:00 | GUEST – Trang chủ | BE2 | Cuộc thi sắp/đang diễn ra, số bài nộp, danh sách đạt giải; xem chi tiết cuộc thi | (không đăng nhập) |
+| 3:00–5:30 | STUDENT | FE1 | Đăng nhập → xem cuộc thi "Sắc màu mùa thu" → nộp JPEG + thơ → sửa bài → **thử nộp file PNG (bị chặn)** → **cuộc thi đã kết thúc: không có nút sửa** → xem kết quả/nhận xét → xem tranh triển lãm (đã bán, đã được trả tiền) | `student01` |
+| 5:30–9:00 | STAFF | BE1 | Tạo cuộc thi + giải → chấm bài "Thành phố về đêm" (BEST + nhận xét) → **thử xóa cuộc thi có bài (bị chặn)** → trao giải → gửi tranh BEST đi triển lãm với giá học viên → đánh dấu đã bán + khách hàng → đã trả tiền → báo cáo BEST theo khoảng ngày | `staff01` |
+| 9:00–10:30 | ADMIN | FE2 | Thêm nhân viên/học viên, tìm kiếm, khóa tài khoản | `admin01` |
+| 10:30–12:00 | MANAGER | QA | Xem toàn bộ (chỉ đọc), xem xếp loại 1 bức tranh, quản lý triển lãm sắp tới | `manager01` |
+| 12:00–13:30 | Bảo mật & chất lượng | QA + BE1 | STUDENT mở URL `/staff/...` → 403; mật khẩu BCrypt trong DB; upload đổi tên Guid; `dotnet test` xanh; số liệu test (83 TC) | — |
+| 13:30–15:00 | Kết luận | BE1 | Hạn chế & hướng phát triển (thanh toán online, email thông báo, phân trang nâng cao); cảm ơn | — |
 
 **Chuẩn bị trước buổi demo:** reset DB bằng seed; mở sẵn 3 trình duyệt/tab ẩn danh cho 3 vai trò; tắt thông báo Windows; zoom trình duyệt 110–125%; có **video quay sẵn demo** (OBS/Xbox Game Bar) phòng khi máy lỗi; kiểm tra máy chiếu.
 
@@ -711,20 +711,20 @@ Người A (T1) đóng gói, người B (T2) kiểm tra **trên máy khác**; sa
 
 | # | Câu hỏi | Ai trả lời | Gợi ý trả lời |
 |---|---|---|---|
-| 1 | Làm sao chặn nộp bài sau hạn? Nếu học viên sửa HTML/gửi request trực tiếp thì sao? | BE | Kiểm tra ở **service phía server** (`canModifySubmission`) so ngày hiện tại với endDate, không chỉ ẩn nút; đã test bằng Postman (TC-M06-10/13). |
-| 2 | Ảnh lưu ở đâu? Vì sao không lưu vào DB? | BE | Lưu file bằng File I/O vào `uploads/`, DB chỉ lưu tên file → DB nhẹ, đúng yêu cầu đề "phải dùng File I/O". |
-| 3 | Làm sao biết file đúng là JPEG? | BE/T1 | Kiểm tra 3 lớp: phần mở rộng, content-type, magic bytes `FF D8 FF`; giới hạn 5 MB. |
-| 4 | Chống path traversal / trùng tên file thế nào? | BE | Bỏ tên gốc, đặt tên Guid; chuẩn hóa đường dẫn và kiểm tra nằm trong `uploads/`. |
-| 5 | Phân quyền làm thế nào? | BE | Cookie Authentication + `[Authorize(Roles = ...)]` theo Area: phân theo URL `/admin/**`, `/staff/**`, `/manager/**`, `/student/**` + kiểm tra chủ sở hữu bài trong service. |
-| 6 | Mật khẩu lưu thế nào? | BE | BCrypt qua `PasswordEncoder`, không lưu mật khẩu thô. |
-| 7 | Chống SQL injection, XSS? | BE/FE | EF Core/LINQ tự tham số hóa câu lệnh; Razor tự mã hóa HTML khi hiển thị; đã test TC-M01-06, TC-M07-06. |
-| 8 | Vì sao không cho xóa cuộc thi đã có bài nộp? | T2 | Tránh mất bài và kết quả chấm/giải của học viên; tính toàn vẹn dữ liệu (khóa ngoại). |
-| 9 | Trạng thái cuộc thi lưu trong DB hay tính? | BE | Tính từ startDate/endDate mỗi lần hiển thị → không bao giờ sai lệch, không cần job cập nhật. |
-| 10 | Bài nộp trễ xử lý thế nào? | T2 | Tự động xếp DISQUALIFIED theo đề bài. |
-| 11 | Quy trình bán tranh & trả tiền học viên? | T2 | ExhibitionEntry: giá học viên → đánh dấu đã bán + giá bán + Customer → đánh dấu đã trả học viên (chỉ khi đã bán). |
-| 12 | Nhóm kiểm thử thế nào? | T1 | 83 test case thủ công M01–M11, báo bug bằng GitHub Issues, regression bằng Selenium IDE, unit test xUnit/Moq cho service chính, test cài đặt trên máy sạch. |
-| 13 | Phân công công việc trong nhóm? | T1/T2 | Trình bày Task Sheet: BE backend & DB, FE giao diện, T1/T2 kiểm thử & tài liệu; ai cũng tham gia review. |
-| 14 | Nếu có thêm thời gian sẽ làm gì? | FE | Thanh toán online, gửi email thông báo kết quả, giao diện quản lý ảnh nâng cao, triển khai lên cloud. |
+| 1 | Làm sao chặn nộp bài sau hạn? Nếu học viên sửa HTML/gửi request trực tiếp thì sao? | BE1 | Kiểm tra ở **service phía server** (`SubmissionService` dùng `CompetitionStatusResolver.IsOpenForSubmission`) so ngày hiện tại với endDate, không chỉ ẩn nút; đã test bằng Postman (TC-M06-10/13). |
+| 2 | Ảnh lưu ở đâu? Vì sao không lưu vào DB? | BE1 | Lưu file bằng File I/O vào `uploads/`, DB chỉ lưu tên file → DB nhẹ, đúng yêu cầu đề "phải dùng File I/O". |
+| 3 | Làm sao biết file đúng là JPEG? | BE1 / QA | Kiểm tra 3 lớp: phần mở rộng, content-type, magic bytes `FF D8 FF`; giới hạn 5 MB. |
+| 4 | Chống path traversal / trùng tên file thế nào? | BE1 | Bỏ tên gốc, đặt tên Guid; chuẩn hóa đường dẫn và kiểm tra nằm trong `uploads/`. |
+| 5 | Phân quyền làm thế nào? | BE1 | Cookie Authentication + `[Authorize(Roles = ...)]` theo Area: phân theo URL `/admin/**`, `/staff/**`, `/manager/**`, `/student/**` + kiểm tra chủ sở hữu bài trong service. |
+| 6 | Mật khẩu lưu thế nào? | BE2 | Băm BCrypt (thư viện BCrypt.Net-Next) trước khi lưu; khi đăng nhập dùng `BCrypt.Verify`; không lưu mật khẩu thô. |
+| 7 | Chống SQL injection, XSS? | BE1 / FE1 | EF Core/LINQ tự tham số hóa câu lệnh; Razor tự mã hóa HTML khi hiển thị; đã test TC-M01-06, TC-M07-06. |
+| 8 | Vì sao không cho xóa cuộc thi đã có bài nộp? | BE1 | Tránh mất bài và kết quả chấm/giải của học viên; tính toàn vẹn dữ liệu (khóa ngoại). |
+| 9 | Trạng thái cuộc thi lưu trong DB hay tính? | BE2 | Cả hai: khi đọc luôn tính lại từ startDate/endDate (`CompetitionStatusResolver`) nên không sai lệch; job chạy nền (`StatusSyncBackgroundService`) đồng bộ cột status mỗi giờ để lọc/báo cáo nhanh; riêng GRADED do giáo viên công bố. |
+| 10 | Bài nộp trễ xử lý thế nào? | BE1 | Hệ thống **chặn** nộp/sửa/xóa sau 23:59:59 ngày kết thúc (kiểm tra ở server – BR-13, BR-14), nên không có bài trễ. Xếp loại DISQUALIFIED dùng khi bài vi phạm thể lệ hoặc nhập bù ngoại lệ. |
+| 11 | Quy trình bán tranh & trả tiền học viên? | BE1 / FE1 | ExhibitionEntry: giá học viên → đánh dấu đã bán + giá bán + Customer → đánh dấu đã trả học viên (chỉ khi đã bán). |
+| 12 | Nhóm kiểm thử thế nào? | QA | 83 test case thủ công M01–M11, báo bug bằng GitHub Issues, regression bằng Selenium IDE, unit test xUnit/Moq cho service chính, test cài đặt trên máy sạch. |
+| 13 | Phân công công việc trong nhóm? | QA | Trình bày Task Sheet: BE1 + FE1 phần nghiệp vụ khó (nộp bài, chấm, trao giải, bán tranh), BE2 + FE2 phần quản lý & trang xem (Admin, trang chủ, báo cáo, Manager), QA kiểm thử & tài liệu; BE1 review mọi PR. |
+| 14 | Nếu có thêm thời gian sẽ làm gì? | FE2 | Thanh toán online, gửi email thông báo kết quả, giao diện quản lý ảnh nâng cao, triển khai lên cloud. |
 | 15 | Chỉ ra đoạn code có comment / giải thích thuật toán X | Người được hỏi | Mở `FileStorageService`/`SubmissionService`, đọc comment; đối chiếu tài liệu Algorithms. |
 
-> **Luyện tập:** Diễn tập đầy đủ 2 lần (Day 26 và Day 27), bấm giờ. Mỗi người phải tự trả lời được ít nhất 5 câu trong bảng trên — T1/T2 luyện các câu 8, 10, 11, 12, 13.
+> **Luyện tập:** Diễn tập đầy đủ 2 lần (Day 26 và Day 27), bấm giờ. Mỗi người phải tự trả lời được ít nhất 5 câu trong bảng trên — BE2 luyện câu 6, 9; QA luyện câu 3, 12, 13.

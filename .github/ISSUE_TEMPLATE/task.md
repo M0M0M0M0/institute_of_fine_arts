@@ -7,7 +7,7 @@ labels: task
 
 **Module:** Mxx –
 **Chức năng liên quan (BA):** F-Mxx-yy
-**Người làm:** BE / FE / T1 / T2
+**Người làm:** BE1 / BE2 / FE1 / FE2 / QA
 **Hạn:** Day __
 
 **Mô tả:**

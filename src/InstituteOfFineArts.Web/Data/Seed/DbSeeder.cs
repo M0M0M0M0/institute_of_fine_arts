@@ -3,10 +3,14 @@ using Microsoft.EntityFrameworkCore;
 namespace InstituteOfFineArts.Web.Data.Seed;
 
 /// <summary>
-/// Tạo CSDL và dữ liệu mẫu khi chạy ở môi trường Development.
-/// Được gọi sẵn trong Program.cs – người phụ trách (task BE2-01) chỉ cần viết phần thêm dữ liệu trong file này.
+/// Tạo CSDL và dữ liệu mẫu khi chạy ở môi trường Development (được gọi sẵn trong Program.cs).
+/// Lớp được tách thành nhiều file (partial) để 2 người viết song song không đụng nhau:
+/// <list type="bullet">
+/// <item><c>DbSeeder.Accounts.cs</c> – tài khoản mẫu (task BE1-01)</item>
+/// <item><c>DbSeeder.SampleData.cs</c> – cuộc thi, bài nộp, chấm, giải, triển lãm (task BE2-01)</item>
+/// </list>
 /// </summary>
-public static class DbSeeder
+public static partial class DbSeeder
 {
     /// <summary>
     /// Áp dụng migration còn thiếu, sau đó thêm dữ liệu mẫu nếu CSDL còn trống.
@@ -21,17 +25,16 @@ public static class DbSeeder
         // Tạo CSDL (nếu chưa có) và áp dụng các migration mới
         await db.Database.MigrateAsync();
 
-        // Đã có tài khoản thì coi như đã seed, không thêm lại
-        if (await db.Accounts.AnyAsync())
+        // Bước 1: tài khoản (chỉ thêm khi bảng account còn trống)
+        if (!await db.Accounts.AnyAsync())
         {
-            return;
+            await SeedAccountsAsync(db);
         }
 
-        // TODO (BE2-01): thêm dữ liệu mẫu theo docs/plan/04 mục 4
-        //   - 15 tài khoản (mật khẩu băm bằng BCrypt.Net.BCrypt.HashPassword)
-        //   - 7 cuộc thi với ngày tương đối theo DateTimeHelper.Today
-        //   - 27 bài nộp + chép ảnh từ database/seed-images vào thư mục uploads
-        //   - đánh giá, giải đã trao, 2 triển lãm / 8 tranh, 3 khách mua
-        //   - gọi await db.SaveChangesAsync() sau mỗi nhóm dữ liệu
+        // Bước 2: dữ liệu nghiệp vụ (chỉ thêm khi chưa có cuộc thi nào)
+        if (!await db.Competitions.AnyAsync())
+        {
+            await SeedSampleDataAsync(db);
+        }
     }
 }
