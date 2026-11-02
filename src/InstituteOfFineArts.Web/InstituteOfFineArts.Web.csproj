@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <!-- Thư viện dùng trong dự án (phiên bản cố định để 4 máy giống nhau) -->
+  <ItemGroup>
+    <!-- Băm mật khẩu BCrypt -->
+    <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
+    <!-- Giữ tên bảng/cột dạng snake_case như thiết kế CSDL -->
+    <PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />
+    <!-- EF Core: công cụ tạo migration (chỉ dùng lúc phát triển) -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.14">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.14" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.14">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <!-- Ghi log ra file -->
+    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    <!-- Tạo ảnh thu nhỏ khi tải tranh lên -->
+    <PackageReference Include="SkiaSharp" Version="4.154.0" />
+    <!-- Nâng gói phụ của Microsoft.Data.SqlClient lên bản đã vá lỗ hổng bảo mật (bản 9.0.11 kéo theo mặc định bị cảnh báo NU1903) -->
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
+  </ItemGroup>
+
+</Project>

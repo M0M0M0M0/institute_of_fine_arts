@@ -1,0 +1,36 @@
+Tổng quan quy trình eProject
+
+Chào bạn học viên,
+
+Chào mừng bạn đến với eProjects.
+
+Chúng tôi rất vui được giới thiệu với bạn về eProjects. Đây là một cách học mới, giúp bổ sung thêm giá trị cho tài liệu khóa học hiện có mà bạn đã được cung cấp.
+
+Vui lòng đọc kỹ tài liệu MS-WORD/PDF, trong đó có đặc tả eProject mà bạn cần thực hiện.
+
+
+Nộp báo cáo tiến độ (Status Report)
+
+Trong thời gian thực hiện dự án, học viên phải nộp hai báo cáo tiến độ theo các khoảng thời gian bằng nhau (ví dụ: cứ mỗi 7 / 10 ngày hoặc tương ứng).
+
+Mỗi báo cáo tiến độ cần có:
+• Tiến độ tổng thể của việc phát triển dự án.
+• Các công việc đã hoàn thành và tình trạng hiện tại.
+• Các khó khăn gặp phải (nếu có).
+• Các file minh chứng như mã nguồn đã viết, script cơ sở dữ liệu, ảnh chụp màn hình hoặc các tài liệu liên quan khác để xác minh tiến độ.
+• Tất cả các file phải được gom vào một thư mục, nén thư mục đó thành file ZIP và gửi cho chúng tôi qua mục Query/Status.
+
+
+Nộp dự án cuối cùng
+
+Khi hoàn thành dự án, học viên phải chuẩn bị một thư mục nén (ZIP) duy nhất chứa toàn bộ sản phẩm của dự án, bao gồm:
+• Mã nguồn hoàn chỉnh
+• Tài liệu dự án, bao gồm thông tin đăng nhập vào dự án/cơ sở dữ liệu, v.v.
+• Bản sao lưu cơ sở dữ liệu
+• Các file liên quan khác của dự án
+
+File ZIP này sẽ được tải lên làm bài nộp dự án cuối cùng.
+
+Lưu ý: Tên thư mục ZIP phải ghi rõ Khóa (Batch), Nhóm (Group) và Tên dự án (Project Title) để dễ nhận biết khi chấm điểm.
+
+QUAN TRỌNG: MỖI NHÓM CHỈ ĐƯỢC NỘP MỘT LẦN DUY NHẤT. DO ĐÓ, SAU KHI ĐÃ NỘP SẼ KHÔNG ĐƯỢC BỔ SUNG HAY THAY ĐỔI FILE. VÌ VẬY HÃY KIỂM TRA KỸ ĐỂ ĐẢM BẢO ĐÃ CÓ ĐẦY ĐỦ CÁC FILE CẦN THIẾT TRONG BÀI NỘP.

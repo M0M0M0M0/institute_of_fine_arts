@@ -1,0 +1,5 @@
+# Chuẩn hóa xuống dòng; script Windows giữ CRLF
+* text=auto
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.sln text eol=crlf
