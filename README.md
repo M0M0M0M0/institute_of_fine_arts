@@ -11,8 +11,10 @@ giáo viên chấm & nhận xét, trao giải, đưa tranh đi triển lãm và 
 Cookie Authentication + BCrypt · SkiaSharp (thumbnail) · Serilog · xUnit + Moq
 
 ## Cài đặt lần đầu (mỗi thành viên)
-1. Cài **.NET SDK 10**, **SQL Server** (Developer/Express) + **SSMS**, **Git**, **Visual Studio Community**
-   (chọn workload *ASP.NET and web development*) hoặc VS Code + C# Dev Kit.
+1. Cài **.NET SDK 10**, **Git**, **Visual Studio Community** (chọn workload *ASP.NET and web development*)
+   hoặc VS Code + C# Dev Kit, và **một trong hai**:
+   - **SQL Server** (Developer/Express) + **SSMS** cài trên máy, hoặc
+   - **Docker Desktop** để chạy SQL Server trong Docker – xem mục [SQL Server bằng Docker](#sql-server-bằng-docker) bên dưới.
 2. Cài công cụ EF Core (1 lần):
    ```powershell
    dotnet tool install --global dotnet-ef
@@ -33,6 +35,36 @@ Cookie Authentication + BCrypt · SkiaSharp (thumbnail) · Serilog · xUnit + Mo
    dotnet run --project src/InstituteOfFineArts.Web
    ```
    Mở http://localhost:5000
+
+## SQL Server bằng Docker
+Dùng khi máy **không cài SQL Server**. Chỉ CSDL chạy trong Docker, ứng dụng web vẫn chạy bằng F5 / `dotnet run`.
+
+1. Mở Docker Desktop, chờ biểu tượng chuyển sang "Engine running".
+2. Tạo file `.env` từ mẫu rồi **đổi mật khẩu** (tối thiểu 8 ký tự, có chữ hoa, chữ thường, số, ký hiệu). File `.env` không đưa lên Git.
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+3. Khởi động SQL Server (lần đầu tải image khoảng 1,5 GB):
+   ```powershell
+   docker compose up -d
+   ```
+   Kiểm tra: `docker compose ps` thấy `ifa-sqlserver` ở trạng thái **healthy** là được.
+4. Đặt chuỗi kết nối cho máy mình bằng User Secrets (thay `<mật khẩu>` bằng mật khẩu trong `.env`):
+   ```powershell
+   dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost,1433;Database=IFA_DB;User Id=sa;Password=<mật khẩu>;TrustServerCertificate=True;MultipleActiveResultSets=true" --project src/InstituteOfFineArts.Web
+   ```
+5. Chạy ứng dụng như bình thường (F5 / `dotnet run`). Ở môi trường Development, ứng dụng tự tạo CSDL `IFA_DB` và dữ liệu mẫu.
+
+| Việc | Lệnh |
+|---|---|
+| Tắt SQL Server (giữ dữ liệu) | `docker compose stop` |
+| Bật lại | `docker compose start` |
+| Xem log khi lỗi | `docker compose logs sqlserver` |
+| Xóa sạch CSDL để seed lại từ đầu | `docker compose down -v` rồi `docker compose up -d` |
+| Kết nối bằng SSMS / Azure Data Studio | Server `localhost,1433`, SQL Server Authentication, user `sa`, mật khẩu trong `.env`, chọn *Trust server certificate* |
+
+> Máy đã có SQL Server dùng cổng 1433 thì đổi `SQL_PORT` trong `.env` (ví dụ `1434`) và sửa `localhost,1434` trong chuỗi kết nối.
+> Script `scripts/backup-db.cmd` dùng cho SQL Server cài trên máy; với Docker, backup bằng SSMS (Tasks → Back Up) hoặc chép volume.
 
 ## Lệnh thường dùng
 | Việc | Lệnh |

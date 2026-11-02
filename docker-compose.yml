@@ -1,0 +1,42 @@
+# =====================================================================
+# docker-compose.yml – Chạy SQL Server 2022 trong Docker cho môi trường phát triển
+#
+# Dùng khi máy KHÔNG cài SQL Server. Cách dùng (xem README.md, mục "SQL Server bằng Docker"):
+#   1. Copy .env.example thành .env rồi đặt mật khẩu SA (file .env không đưa lên Git)
+#   2. docker compose up -d
+#   3. Đặt chuỗi kết nối bằng User Secrets (Server=localhost,1433;User Id=sa;...)
+#
+# Ứng dụng web vẫn chạy bình thường bằng dotnet run / F5, chỉ CSDL chạy trong Docker.
+# =====================================================================
+name: institute-of-fine-arts
+
+services:
+  sqlserver:
+    # SQL Server 2022 bản Developer (miễn phí cho phát triển)
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: ifa-sqlserver
+    environment:
+      # Bắt buộc: đồng ý điều khoản sử dụng của Microsoft
+      ACCEPT_EULA: "Y"
+      # Bản Developer: đủ tính năng, không giới hạn, chỉ dùng cho phát triển/thử nghiệm
+      MSSQL_PID: "Developer"
+      # Mật khẩu tài khoản sa lấy từ file .env (tối thiểu 8 ký tự, có chữ hoa, chữ thường, số và ký hiệu)
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD:?Chua dat MSSQL_SA_PASSWORD trong file .env}"
+    ports:
+      # Cổng trên máy : cổng trong container. Đổi SQL_PORT trong .env nếu máy đã dùng 1433
+      - "${SQL_PORT:-1433}:1433"
+    volumes:
+      # Lưu dữ liệu CSDL ra volume riêng → tắt/xóa container không mất dữ liệu
+      - ifa-sqldata:/var/opt/mssql
+    healthcheck:
+      # Coi là "sẵn sàng" khi đăng nhập được bằng sa
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$$MSSQL_SA_PASSWORD\" -C -Q \"SELECT 1\" -b -o /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+
+volumes:
+  # Volume chứa file dữ liệu SQL Server
+  ifa-sqldata:

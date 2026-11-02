@@ -1,12 +1,14 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <!-- Mã kho User Secrets: mỗi máy tự đặt chuỗi kết nối riêng (ví dụ SQL Server trong Docker) mà không ghi mật khẩu vào repo -->
+    <UserSecretsId>bec49735-9165-4447-87f1-f6b7886b0b36</UserSecretsId>
   </PropertyGroup>
 
-  <!-- Thư viện dùng trong dự án (phiên bản cố định để 4 máy giống nhau) -->
+  <!-- Thư viện dùng trong dự án (phiên bản cố định để mọi máy trong nhóm giống nhau) -->
   <ItemGroup>
     <!-- Băm mật khẩu BCrypt -->
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
