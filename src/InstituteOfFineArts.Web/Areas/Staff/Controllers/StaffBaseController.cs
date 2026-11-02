@@ -5,11 +5,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace InstituteOfFineArts.Web.Areas.Staff.Controllers;
 
 /// <summary>
-/// Controller gốc của phân hệ Giáo viên (Staff): mọi controller trong Area Staff kế thừa lớp này
-/// nên chỉ người dùng có vai trò STAFF mới truy cập được (sai vai trò → /error/403).
+/// Base controller of the Staff area: every controller in the Staff area derives from this class,
+/// so only users with role STAFF can access it (wrong role → /error/403).
 /// </summary>
 /// <remarks>
-/// Không cho trình duyệt lưu cache trang sau đăng nhập: sau khi đăng xuất, bấm Back không xem lại được dữ liệu (TC-M01-08).
+/// Pages behind the login are never cached by the browser: after logging out, the Back button
+/// cannot show the data again (TC-M01-08).
 /// </remarks>
 [Area("Staff")]
 [Authorize(Roles = RoleNames.Staff)]

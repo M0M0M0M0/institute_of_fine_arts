@@ -1,20 +1,20 @@
 namespace InstituteOfFineArts.Web.Models.Enums;
 
 /// <summary>
-/// Giới tính (lưu 1 ký tự trong CSDL).
+/// Gender (stored as a single character in the database).
 /// </summary>
 /// <remarks>
-/// Tên giá trị viết HOA để khớp đúng chuỗi lưu trong CSDL (cột VARCHAR + CHECK constraint)
-/// và tên vai trò dùng trong [Authorize(Roles = "...")].
+/// Member names are UPPER CASE so they match the strings stored in the database (VARCHAR column + CHECK constraint)
+/// and the role names used in [Authorize(Roles = "...")].
 /// </remarks>
 public enum Gender
 {
-    /// <summary>Nam</summary>
+    /// <summary>Male</summary>
     M,
 
-    /// <summary>Nữ</summary>
+    /// <summary>Female</summary>
     F,
 
-    /// <summary>Khác</summary>
+    /// <summary>Other</summary>
     O
 }

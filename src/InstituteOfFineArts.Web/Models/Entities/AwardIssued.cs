@@ -1,31 +1,31 @@
 namespace InstituteOfFineArts.Web.Models.Entities;
 
 /// <summary>
-/// Giải đã trao cho một bài dự thi (bảng award_issued).
+/// Award issued to a submission (table award_issued).
 /// </summary>
 public class AwardIssued : BaseEntity
 {
-    /// <summary>Khóa ngoại tới giải của cuộc thi.</summary>
+    /// <summary>Foreign key to the competition award.</summary>
     public long CompetitionAwardId { get; set; }
 
-    /// <summary>Khóa ngoại tới bài đạt giải (duy nhất ⇒ tối đa 1 giải / học viên / cuộc thi).</summary>
+    /// <summary>Foreign key to the winning submission (unique ⇒ at most one award per student per competition).</summary>
     public long SubmissionId { get; set; }
 
-    /// <summary>Id hồ sơ nhân sự trao giải.</summary>
+    /// <summary>Id of the staff profile that issued the award.</summary>
     public long IssuedBy { get; set; }
 
-    /// <summary>Ngày trao giải.</summary>
+    /// <summary>Date the award was issued.</summary>
     public DateOnly IssuedDate { get; set; }
 
-    /// <summary>Nhận xét khi trao giải / nhận xét về cuộc thi.</summary>
+    /// <summary>Remarks about the award / the competition.</summary>
     public string? Remarks { get; set; }
 
-    /// <summary>Giải thưởng.</summary>
+    /// <summary>Competition award.</summary>
     public CompetitionAward CompetitionAward { get; set; } = null!;
 
-    /// <summary>Bài đạt giải.</summary>
+    /// <summary>Winning submission.</summary>
     public Submission Submission { get; set; } = null!;
 
-    /// <summary>Nhân sự trao giải.</summary>
+    /// <summary>Staff member who issued the award.</summary>
     public StaffProfile IssuedByStaff { get; set; } = null!;
 }

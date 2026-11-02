@@ -1,23 +1,23 @@
 namespace InstituteOfFineArts.Web.Helpers;
 
 /// <summary>
-/// Tên vai trò dạng hằng số, dùng trong [Authorize(Roles = RoleNames.Staff)] và khi tạo Claims.
-/// Giá trị trùng với enum Role và giá trị lưu trong cột account.role.
+/// Role names as constants, used in [Authorize(Roles = RoleNames.Staff)] and when creating claims.
+/// The values match the Role enum and the values stored in column account.role.
 /// </summary>
 public static class RoleNames
 {
-    /// <summary>Quản trị viên.</summary>
+    /// <summary>Administrator.</summary>
     public const string Admin = "ADMIN";
 
-    /// <summary>Quản lý.</summary>
+    /// <summary>Manager.</summary>
     public const string Manager = "MANAGER";
 
-    /// <summary>Giáo viên / nhân viên.</summary>
+    /// <summary>Staff / teacher.</summary>
     public const string Staff = "STAFF";
 
-    /// <summary>Học viên.</summary>
+    /// <summary>Student.</summary>
     public const string Student = "STUDENT";
 
-    /// <summary>Nhóm vai trò được xem báo cáo (dùng cho ReportsController).</summary>
+    /// <summary>Roles allowed to view reports (used by ReportsController).</summary>
     public const string ReportViewers = Staff + "," + Manager + "," + Admin;
 }

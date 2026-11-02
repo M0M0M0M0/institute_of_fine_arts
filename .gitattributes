@@ -1,4 +1,4 @@
-# Chuẩn hóa xuống dòng; script Windows giữ CRLF
+# Normalize line endings; Windows scripts keep CRLF
 * text=auto
 *.cmd text eol=crlf
 *.bat text eol=crlf

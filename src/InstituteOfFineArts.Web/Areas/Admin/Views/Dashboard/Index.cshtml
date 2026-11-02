@@ -1,18 +1,19 @@
 @using InstituteOfFineArts.Web.Infrastructure.Security
 @*
-    Trang chính tạm của phân hệ Quản trị viên (/admin).
-    BE1 tạo để chạy thử đăng nhập; FE làm giao diện thật (khi có _ViewStart của Area thì bỏ dòng Layout bên dưới).
+    Temporary home page of the Administrator area (/admin).
+    Created by BE1 to test the login flow; FE builds the real page
+    (remove the Layout line below once the area has its own _ViewStart).
 *@
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Quản trị viên";
+    ViewData["Title"] = "Administrator";
 }
 
-<h1 class="h3">Xin chào, @User.GetFullName()</h1>
-<p>Bạn đang ở trang chính của phân hệ <strong>Quản trị viên</strong> (vai trò ADMIN).</p>
+<h1 class="h3">Welcome, @User.GetFullName()</h1>
+<p>You are on the home page of the <strong>Administrator</strong> area (role ADMIN).</p>
 
-@* Đăng xuất bằng POST kèm anti-forgery token *@
+@* Log out with POST plus the anti-forgery token *@
 <form method="post" action="/logout">
     @Html.AntiForgeryToken()
-    <button type="submit" class="btn btn-outline-secondary">Đăng xuất</button>
+    <button type="submit" class="btn btn-outline-secondary">Log out</button>
 </form>

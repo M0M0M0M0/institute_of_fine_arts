@@ -1,32 +1,32 @@
 namespace InstituteOfFineArts.Web.Helpers;
 
 /// <summary>
-/// Lấy ngày giờ theo múi giờ Việt Nam để hạn nộp 23:59:59 tính đúng ngày,
-/// không phụ thuộc múi giờ của máy chủ.
+/// Returns the date/time in the institute's time zone (Vietnam, UTC+7) so that the
+/// 23:59:59 submission deadline is evaluated on the correct day regardless of the server time zone.
 /// </summary>
 public static class DateTimeHelper
 {
-    /// <summary>Múi giờ Việt Nam (UTC+7).</summary>
+    /// <summary>Institute time zone (UTC+7).</summary>
     private static readonly TimeZoneInfo VietnamZone = FindVietnamZone();
 
-    /// <summary>Thời điểm hiện tại theo giờ Việt Nam.</summary>
+    /// <summary>Current time in the institute time zone.</summary>
     public static DateTime Now => TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, VietnamZone);
 
-    /// <summary>Ngày hiện tại theo giờ Việt Nam.</summary>
+    /// <summary>Current date in the institute time zone.</summary>
     public static DateOnly Today => DateOnly.FromDateTime(Now);
 
     /// <summary>
-    /// Tìm múi giờ Việt Nam: thử tên chuẩn IANA trước, nếu không có thì dùng tên của Windows.
+    /// Finds the institute time zone: tries the IANA id first, then falls back to the Windows id.
     /// </summary>
     private static TimeZoneInfo FindVietnamZone()
     {
-        // .NET 6+ hiểu tên IANA trên cả Windows (khi có ICU)
+        // .NET 6+ understands IANA ids on Windows as well (when ICU is available)
         if (TimeZoneInfo.TryFindSystemTimeZoneById("Asia/Ho_Chi_Minh", out var zone))
         {
             return zone;
         }
 
-        // Dự phòng: tên múi giờ UTC+7 trên Windows
+        // Fallback: the Windows name of the UTC+7 time zone
         return TimeZoneInfo.FindSystemTimeZoneById("SE Asia Standard Time");
     }
 }

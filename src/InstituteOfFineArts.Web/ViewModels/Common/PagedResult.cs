@@ -3,46 +3,46 @@ using Microsoft.EntityFrameworkCore;
 namespace InstituteOfFineArts.Web.ViewModels.Common;
 
 /// <summary>
-/// Kết quả phân trang dùng chung cho mọi trang danh sách.
-/// View dùng partial _Pagination để vẽ thanh chuyển trang từ đối tượng này.
+/// Shared paging result for every list page.
+/// Views use the _Pagination partial to draw the pager from this object.
 /// </summary>
-/// <typeparam name="T">Kiểu của từng dòng dữ liệu</typeparam>
+/// <typeparam name="T">Type of each row</typeparam>
 public class PagedResult<T>
 {
-    /// <summary>Các dòng của trang hiện tại.</summary>
+    /// <summary>Rows of the current page.</summary>
     public IReadOnlyList<T> Items { get; init; } = Array.Empty<T>();
 
-    /// <summary>Trang hiện tại (bắt đầu từ 1).</summary>
+    /// <summary>Current page (starting at 1).</summary>
     public int Page { get; init; }
 
-    /// <summary>Số dòng mỗi trang.</summary>
+    /// <summary>Rows per page.</summary>
     public int PageSize { get; init; }
 
-    /// <summary>Tổng số dòng thỏa điều kiện lọc.</summary>
+    /// <summary>Total number of rows matching the filter.</summary>
     public int TotalCount { get; init; }
 
-    /// <summary>Tổng số trang.</summary>
+    /// <summary>Total number of pages.</summary>
     public int TotalPages => PageSize == 0 ? 0 : (int)Math.Ceiling(TotalCount / (double)PageSize);
 
-    /// <summary>Có trang trước không.</summary>
+    /// <summary>Whether there is a previous page.</summary>
     public bool HasPrevious => Page > 1;
 
-    /// <summary>Có trang sau không.</summary>
+    /// <summary>Whether there is a next page.</summary>
     public bool HasNext => Page < TotalPages;
 
     /// <summary>
-    /// Tạo kết quả phân trang từ một truy vấn EF Core: đếm tổng rồi lấy đúng trang cần xem.
+    /// Builds a paged result from an EF Core query: counts the total, then loads only the requested page.
     /// </summary>
-    /// <param name="query">Truy vấn đã lọc và sắp xếp</param>
-    /// <param name="page">Trang cần lấy (nhỏ hơn 1 sẽ coi là 1)</param>
-    /// <param name="pageSize">Số dòng mỗi trang (mặc định 10)</param>
+    /// <param name="query">Filtered and ordered query</param>
+    /// <param name="page">Requested page (values below 1 are treated as 1)</param>
+    /// <param name="pageSize">Rows per page (default 10)</param>
     public static async Task<PagedResult<T>> CreateAsync(IQueryable<T> query, int page, int pageSize = 10)
     {
-        // Chuẩn hóa tham số đầu vào
+        // Normalize the input parameters
         page = Math.Max(page, 1);
         pageSize = Math.Clamp(pageSize, 1, 100);
 
-        // Đếm tổng số dòng, sau đó lấy dữ liệu của trang hiện tại
+        // Count all rows, then load the rows of the current page
         var total = await query.CountAsync();
         var items = await query.Skip((page - 1) * pageSize).Take(pageSize).ToListAsync();
 

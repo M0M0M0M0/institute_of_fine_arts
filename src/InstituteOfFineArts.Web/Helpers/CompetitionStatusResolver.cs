@@ -4,49 +4,50 @@ using InstituteOfFineArts.Web.Models.Enums;
 namespace InstituteOfFineArts.Web.Helpers;
 
 /// <summary>
-/// Tính trạng thái cuộc thi / triển lãm theo ngày (BR-07, BR-42).
-/// Mọi nơi cần biết "cuộc thi còn nhận bài không" đều dùng lớp này để thống nhất một cách tính.
+/// Derives the status of a competition / exhibition from its dates (BR-07, BR-42).
+/// Every place that needs to know "is this competition still accepting entries" uses this class,
+/// so the rule is calculated in exactly one way.
 /// </summary>
 public static class CompetitionStatusResolver
 {
     /// <summary>
-    /// Trạng thái thực tế của cuộc thi tại ngày <paramref name="today"/>.
-    /// GRADED do giáo viên công bố nên được giữ nguyên; các trạng thái còn lại tính từ ngày.
+    /// Actual status of the competition on <paramref name="today"/>.
+    /// GRADED is set by staff when publishing results, so it is kept; the other statuses come from the dates.
     /// </summary>
-    /// <param name="competition">Cuộc thi cần tính</param>
-    /// <param name="today">Ngày hiện tại (mặc định: hôm nay theo giờ Việt Nam)</param>
+    /// <param name="competition">Competition to evaluate</param>
+    /// <param name="today">Current date (default: today in the institute time zone)</param>
     public static CompetitionStatus Resolve(Competition competition, DateOnly? today = null)
     {
         var day = today ?? DateTimeHelper.Today;
 
-        // Đã công bố kết quả thì không tính lại
+        // Results already published: never recalculate
         if (competition.Status == CompetitionStatus.GRADED)
         {
             return CompetitionStatus.GRADED;
         }
 
-        // Trước ngày bắt đầu → sắp diễn ra
+        // Before the start date → upcoming
         if (day < competition.StartDate)
         {
             return CompetitionStatus.UPCOMING;
         }
 
-        // Từ ngày bắt đầu đến hết ngày kết thúc (23:59:59) → đang diễn ra
+        // From the start date until the end of the end date (23:59:59) → ongoing
         return day <= competition.EndDate ? CompetitionStatus.ONGOING : CompetitionStatus.CLOSED;
     }
 
-    /// <summary>Cuộc thi còn cho phép nộp / sửa / xóa bài không (BR-13).</summary>
+    /// <summary>Whether the competition still allows submitting / editing / deleting entries (BR-13).</summary>
     public static bool IsOpenForSubmission(Competition competition, DateOnly? today = null)
         => Resolve(competition, today) == CompetitionStatus.ONGOING;
 
-    /// <summary>Trạng thái thực tế của triển lãm tại ngày <paramref name="today"/>.</summary>
-    /// <param name="exhibition">Triển lãm cần tính</param>
-    /// <param name="today">Ngày hiện tại (mặc định: hôm nay theo giờ Việt Nam)</param>
+    /// <summary>Actual status of the exhibition on <paramref name="today"/>.</summary>
+    /// <param name="exhibition">Exhibition to evaluate</param>
+    /// <param name="today">Current date (default: today in the institute time zone)</param>
     public static ExhibitionStatus Resolve(Exhibition exhibition, DateOnly? today = null)
     {
         var day = today ?? DateTimeHelper.Today;
 
-        // So sánh ngày hiện tại với khoảng ngày diễn ra triển lãm
+        // Compare today with the exhibition date range
         if (day < exhibition.StartDate)
         {
             return ExhibitionStatus.UPCOMING;

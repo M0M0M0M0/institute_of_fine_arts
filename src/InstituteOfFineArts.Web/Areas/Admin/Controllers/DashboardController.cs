@@ -3,12 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace InstituteOfFineArts.Web.Areas.Admin.Controllers;
 
 /// <summary>
-/// Trang chính của phân hệ Quản trị viên (/admin) – nơi chuyển tới sau khi đăng nhập.
-/// Hiện là trang tạm; nội dung thật làm ở các task quản lý nhân viên, học viên (BE2-02, BE2-03).
+/// Home page of the Administrator area (/admin) – where the user lands after logging in.
+/// Temporary page for now; the real content comes with the tasks for staff and student management (BE2-02, BE2-03).
 /// </summary>
 public class DashboardController : AdminBaseController
 {
-    /// <summary>Hiển thị trang chính của phân hệ.</summary>
+    /// <summary>Shows the home page of the area.</summary>
     public IActionResult Index()
     {
         return View();

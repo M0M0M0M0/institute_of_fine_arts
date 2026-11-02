@@ -1,11 +1,11 @@
 namespace InstituteOfFineArts.Web.Exceptions;
 
 /// <summary>
-/// Không tìm thấy dữ liệu (ví dụ: id cuộc thi không tồn tại). Controller trả về trang 404.
+/// Requested data does not exist (e.g. unknown competition id). Controllers return the 404 page.
 /// </summary>
 public class NotFoundException : Exception
 {
-    /// <summary>Tạo lỗi không tìm thấy với thông báo mô tả.</summary>
+    /// <summary>Creates a not-found error with a descriptive message.</summary>
     public NotFoundException(string message) : base(message)
     {
     }

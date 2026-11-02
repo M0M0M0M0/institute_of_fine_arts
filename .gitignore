@@ -10,11 +10,11 @@ obj/
 TestResults/
 *.DotSettings.user
 
-# ===== Cấu hình riêng từng máy (KHÔNG commit mật khẩu) =====
+# ===== Machine-specific settings (NEVER commit passwords) =====
 appsettings.*.local.json
 .env
 
-# ===== Dữ liệu chạy =====
+# ===== Runtime data =====
 src/InstituteOfFineArts.Web/uploads/*
 !src/InstituteOfFineArts.Web/uploads/.gitkeep
 logs/
@@ -25,7 +25,7 @@ logs/
 database/backups/*
 !database/backups/.gitkeep
 
-# ===== Rác hệ điều hành / Office =====
+# ===== OS / Office junk files =====
 Thumbs.db
 .DS_Store
 ~$*

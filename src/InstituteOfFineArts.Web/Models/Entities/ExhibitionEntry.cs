@@ -3,65 +3,65 @@ using InstituteOfFineArts.Web.Models.Enums;
 namespace InstituteOfFineArts.Web.Models.Entities;
 
 /// <summary>
-/// Tranh gửi triển lãm và thông tin bán tranh (bảng exhibition_entry).
+/// Painting sent to an exhibition and its sale details (table exhibition_entry).
 /// </summary>
-/// <remarks>Trạng thái thanh toán (chưa bán / chưa trả / đã trả) được suy ra từ Status và PaidToStudent, không lưu.</remarks>
+/// <remarks>The payment status (not sold / unpaid / paid) is derived from Status and PaidToStudent, it is not stored.</remarks>
 public class ExhibitionEntry : BaseEntity
 {
-    /// <summary>Khóa ngoại tới triển lãm.</summary>
+    /// <summary>Foreign key to the exhibition.</summary>
     public long ExhibitionId { get; set; }
 
-    /// <summary>Khóa ngoại tới bài dự thi (chỉ bài BEST/BETTER của cuộc thi đã công bố – BR-40).</summary>
+    /// <summary>Foreign key to the submission (only BEST/BETTER entries of a graded competition – BR-40).</summary>
     public long SubmissionId { get; set; }
 
-    /// <summary>Giá bán do học viên quyết định (BR-41).</summary>
+    /// <summary>Asking price set by the student (BR-41).</summary>
     public decimal AskingPrice { get; set; }
 
-    /// <summary>Trạng thái.</summary>
+    /// <summary>Status.</summary>
     public EntryStatus Status { get; set; } = EntryStatus.PENDING;
 
-    /// <summary>Lý do từ chối – bắt buộc khi REJECTED.</summary>
+    /// <summary>Rejection reason – required when REJECTED.</summary>
     public string? RejectReason { get; set; }
 
-    /// <summary>Giá bán thực tế.</summary>
+    /// <summary>Actual sale price.</summary>
     public decimal? SoldPrice { get; set; }
 
-    /// <summary>Ngày bán.</summary>
+    /// <summary>Sale date.</summary>
     public DateOnly? SoldDate { get; set; }
 
-    /// <summary>Khóa ngoại tới khách mua.</summary>
+    /// <summary>Foreign key to the buyer.</summary>
     public long? CustomerId { get; set; }
 
-    /// <summary>Đã trả tiền bán tranh cho học viên chưa (BR-45).</summary>
+    /// <summary>Whether the sale money has been paid to the student (BR-45).</summary>
     public bool PaidToStudent { get; set; }
 
-    /// <summary>Số tiền đã trả cho học viên.</summary>
+    /// <summary>Amount paid to the student.</summary>
     public decimal? PaidAmount { get; set; }
 
-    /// <summary>Ngày trả tiền.</summary>
+    /// <summary>Payment date.</summary>
     public DateOnly? PaidDate { get; set; }
 
-    /// <summary>Id tài khoản tạo entry (học viên đề xuất hoặc staff tạo trực tiếp).</summary>
+    /// <summary>Id of the account that created the entry (student proposal or staff).</summary>
     public long ProposedBy { get; set; }
 
-    /// <summary>Id hồ sơ nhân sự đã duyệt / từ chối / ghi nhận bán.</summary>
+    /// <summary>Id of the staff profile that approved / rejected / recorded the sale.</summary>
     public long? ReviewedBy { get; set; }
 
-    /// <summary>Ghi chú.</summary>
+    /// <summary>Notes.</summary>
     public string? Notes { get; set; }
 
-    /// <summary>Triển lãm.</summary>
+    /// <summary>Exhibition.</summary>
     public Exhibition Exhibition { get; set; } = null!;
 
-    /// <summary>Bài dự thi.</summary>
+    /// <summary>Submission.</summary>
     public Submission Submission { get; set; } = null!;
 
-    /// <summary>Khách mua.</summary>
+    /// <summary>Buyer.</summary>
     public Customer? Customer { get; set; }
 
-    /// <summary>Tài khoản tạo entry.</summary>
+    /// <summary>Account that created the entry.</summary>
     public Account ProposedByAccount { get; set; } = null!;
 
-    /// <summary>Nhân sự duyệt.</summary>
+    /// <summary>Reviewing staff member.</summary>
     public StaffProfile? ReviewedByStaff { get; set; }
 }

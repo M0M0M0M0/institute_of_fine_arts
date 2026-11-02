@@ -3,12 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 namespace InstituteOfFineArts.Web.Areas.Student.Controllers;
 
 /// <summary>
-/// Trang chính của phân hệ Học viên (/student) – nơi chuyển tới sau khi đăng nhập.
-/// Hiện là trang tạm; nội dung thật làm ở các task cuộc thi, nộp bài, kết quả.
+/// Home page of the Student area (/student) – where the user lands after logging in.
+/// Temporary page for now; the real content comes with the tasks for competitions, submissions, results.
 /// </summary>
 public class DashboardController : StudentBaseController
 {
-    /// <summary>Hiển thị trang chính của phân hệ.</summary>
+    /// <summary>Shows the home page of the area.</summary>
     public IActionResult Index()
     {
         return View();

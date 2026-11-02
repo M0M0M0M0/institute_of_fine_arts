@@ -1,23 +1,23 @@
 namespace InstituteOfFineArts.Web.Data.Seed;
 
 /// <summary>
-/// Phần dữ liệu mẫu: cuộc thi, bài nộp, đánh giá, giải, triển lãm, khách mua (task BE2-01).
-/// Chạy sau SeedAccountsAsync nên đã có sẵn tài khoản giáo viên và học viên.
+/// Sample data part: competitions, submissions, evaluations, awards, exhibitions, customers (task BE2-01).
+/// Runs after SeedAccountsAsync, so staff and student accounts already exist.
 /// </summary>
 public static partial class DbSeeder
 {
     /// <summary>
-    /// Thêm dữ liệu nghiệp vụ mẫu để các module làm việc song song mà không phải chờ nhau.
+    /// Inserts sample business data so modules can be built in parallel without waiting for each other.
     /// </summary>
-    /// <param name="db">DbContext dùng để thêm dữ liệu</param>
+    /// <param name="db">DbContext used to insert the data</param>
     private static async Task SeedSampleDataAsync(AppDbContext db)
     {
-        // TODO (BE2-01): theo docs/plan/04 mục 4.2 – 4.4
-        //   (1) 7 cuộc thi, ngày tương đối theo DateTimeHelper.Today, kèm giải thưởng
-        //   (2) 27 bài nộp; chép ảnh từ database/seed-images vào thư mục uploads
-        //   (3) đánh giá đủ 6 xếp loại; giải đã trao; công bố các cuộc thi GRADED
-        //   (4) 3 khách mua, 2 triển lãm / 8 tranh
-        //   Gọi await db.SaveChangesAsync() sau mỗi nhóm dữ liệu
+        // TODO (BE2-01): follow docs/plan/04 sections 4.2 – 4.4 (all data in English, prices in USD)
+        //   (1) 7 competitions with dates relative to DateTimeHelper.Today, plus their awards
+        //   (2) 27 submissions; copy images from database/seed-images into the uploads folder
+        //   (3) evaluations covering all 6 ratings; issued awards; publish the GRADED competitions
+        //   (4) 3 customers, 2 exhibitions / 8 entries
+        //   Call await db.SaveChangesAsync() after each group of data
         await db.SaveChangesAsync();
     }
 }

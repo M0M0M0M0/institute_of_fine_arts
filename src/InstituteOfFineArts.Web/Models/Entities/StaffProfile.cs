@@ -1,34 +1,34 @@
 namespace InstituteOfFineArts.Web.Models.Entities;
 
 /// <summary>
-/// Thông tin công việc của nhân sự: ADMIN, MANAGER, STAFF (bảng staff_profile).
+/// Employment details of ADMIN, MANAGER and STAFF members (table staff_profile).
 /// </summary>
 public class StaffProfile : BaseEntity
 {
-    /// <summary>Khóa ngoại tới tài khoản (quan hệ 1–1).</summary>
+    /// <summary>Foreign key to the account (one-to-one).</summary>
     public long AccountId { get; set; }
 
-    /// <summary>Mã nhân viên, duy nhất. Ví dụ: NV0001.</summary>
+    /// <summary>Staff code, unique. Example: NV0001.</summary>
     public string StaffCode { get; set; } = string.Empty;
 
-    /// <summary>Chức vụ: Giảng viên, Trưởng bộ môn…</summary>
+    /// <summary>Position: Lecturer, Head of Department…</summary>
     public string? Position { get; set; }
 
-    /// <summary>Ngày vào làm.</summary>
+    /// <summary>Date joined the institute.</summary>
     public DateOnly JoinedDate { get; set; }
 
-    /// <summary>Các lớp phụ trách (chuỗi, ví dụ "HH01, HH02").</summary>
+    /// <summary>Classes handled (free text, e.g. "PT01, PT02").</summary>
     public string? ClassesInCharge { get; set; }
 
-    /// <summary>Các môn phụ trách.</summary>
+    /// <summary>Subjects handled.</summary>
     public string? SubjectsInCharge { get; set; }
 
-    /// <summary>Trình độ.</summary>
+    /// <summary>Qualification.</summary>
     public string? Qualification { get; set; }
 
-    /// <summary>Ghi chú (đề bài yêu cầu có remarks).</summary>
+    /// <summary>Remarks (required by the problem statement).</summary>
     public string? Notes { get; set; }
 
-    /// <summary>Tài khoản đăng nhập.</summary>
+    /// <summary>Login account.</summary>
     public Account Account { get; set; } = null!;
 }

@@ -66,7 +66,7 @@
 | 8 | Staff/Manager quản lý triển lãm (Exhibition); quản lý tranh gửi triển lãm (ExhibitionEntry), bán tranh, khách mua (Customer), trả tiền cho học viên |
 | 9 | Manager xem toàn bộ dữ liệu (dashboard, read-only) + quản lý triển lãm |
 | 10 | Báo cáo & thống kê (lọc theo cuộc thi, khoảng thời gian, xếp loại...) |
-| 11 | Giao diện responsive (Bootstrap 5), tiếng Việt (có thể chuyển tiếng Anh – Could) |
+| 11 | Giao diện responsive (Bootstrap 5), **tiếng Anh** (ngôn ngữ chính – sản phẩm được team nước ngoài chấm); thêm giao diện tiếng Việt là tính năng phụ (Could) |
 
 **Out-of-scope (ngoài phạm vi):**
 
@@ -122,9 +122,9 @@ Ký hiệu: **C** = Create, **R** = Read/xem, **U** = Update, **D** = Delete, **
 | Account + StaffProfile (nhân viên) (M03) | – | – | – | R, S | C, R, U, D, S |
 | Account + StudentProfile (học viên) (M04) | – | R/U hạn chế (own) | R, S | R, S | C, R, U, D, S |
 | Reset mật khẩu / khóa tài khoản | – | – | – | – | U |
-| Competition (M05) | R (pub, tóm tắt) | R, S | C, R, U, D, S | R, S | R, S |
+| Competition (M05) | R, S (pub, tóm tắt) | R, S | C, R, U, D, S | R, S | R, S |
 | CompetitionAward – giải định nghĩa (M05) | R (pub) | R | C, R, U, D | R | R |
-| Submission – bài dự thi (M06) | – | C, R, U, D, S (own); R (BEST đã công bố của mọi HV) | R, S, tải ảnh | R, S, tải ảnh | – |
+| Submission – bài dự thi (M06) | R (ảnh + tên tranh của bài đạt giải/BEST đã công bố), không có phần chữ và nhận xét. | C, R, U, D, S (own); R (bài BEST đã công bố của mọi học viên, kèm nhận xét) | R, S, tải ảnh | R, S, tải ảnh | – |
 | Evaluation – chấm bài (M07) | – | R (own, sau khi công bố) | C, R, U, D, S | R, S | – |
 | AwardIssued – giải đã trao (M08) | R (pub: tên HV, giải, cuộc thi) | R, S (pub) | C, R, U, D, S | R, S | R |
 | Exhibition – triển lãm (M09) | R (sắp tới – Should) | R, S | C, R, U, D, S | C, R, U, D, S | R |
@@ -161,7 +161,7 @@ Ký hiệu: **C** = Create, **R** = Read/xem, **U** = Update, **D** = Delete, **
 | F-M02-02 | Cuộc thi đang diễn ra | Danh sách Competition ONGOING + số ngày còn lại | GUEST + tất cả | Must |
 | F-M02-03 | Tổng số bài nộp của cuộc thi đang diễn ra | Đếm Submission theo từng cuộc thi ONGOING | GUEST + tất cả | Must |
 | F-M02-04 | Học viên đạt giải cuộc thi trước | Danh sách AwardIssued của cuộc thi GRADED gần nhất (tên HV, giải, tên tranh) | GUEST + tất cả | Must |
-| F-M02-05 | Xem chi tiết cuộc thi (công khai) | Mô tả, thể lệ, giải thưởng; nút "Đăng nhập để nộp bài" | GUEST + tất cả | Should |
+| F-M02-05 | Xem chi tiết cuộc thi (công khai) | Mô tả, thể lệ, giải thưởng; nút "Log in to submit" | GUEST + tất cả | Should |
 | F-M02-06 | Triển lãm sắp tới | Danh sách Exhibition UPCOMING | GUEST + tất cả | Should |
 | F-M02-07 | Gallery tranh đạt giải | Ảnh thumbnail các tranh đạt giải (đã công bố) | GUEST + tất cả | Could |
 | F-M02-08 | Giới thiệu học viện / liên hệ | Trang tĩnh | GUEST | Could |
@@ -218,7 +218,7 @@ Ký hiệu: **C** = Create, **R** = Read/xem, **U** = Update, **D** = Delete, **
 | F-M06-07 | Xem xếp loại & nhận xét các bài của tôi | Toàn bộ bài đã tham gia: xếp loại, điểm mạnh, điểm yếu, cần cải thiện | STUDENT | Must |
 | F-M06-08 | Xem tất cả bài BEST kèm nhận xét | Gallery các bài BEST (của mọi HV, cuộc thi đã GRADED) + nhận xét của staff | STUDENT | Must |
 | F-M06-09 | Xem giải thưởng đã trao theo cuộc thi | Danh sách AwardIssued theo cuộc thi | STUDENT | Must |
-| F-M06-10 | Cảnh báo hạn nộp | Hiển thị đếm ngược, thông báo "đã hết hạn" | STUDENT | Should |
+| F-M06-10 | Cảnh báo hạn nộp | Hiển thị đếm ngược, thông báo "Deadline passed" | STUDENT | Should |
 
 ### M07 – Chấm bài / Đánh giá (Staff)
 
@@ -232,7 +232,7 @@ Ký hiệu: **C** = Create, **R** = Read/xem, **U** = Update, **D** = Delete, **
 | F-M07-06 | Tìm kiếm bài theo xếp loại | Tìm bài BEST/BETTER… để chọn gửi triển lãm | STAFF | Must |
 | F-M07-07 | Hồ sơ học tập học viên | Lịch sử toàn bộ bài + đánh giá + giải của 1 học viên | STAFF | Must |
 | F-M07-08 | Gợi ý DISQUALIFIED tự động | Bài có `submittedAt` > hạn (nhập bù/ngoại lệ) được hệ thống đề xuất DISQUALIFIED | SYSTEM | Should |
-| F-M07-09 | Tiến độ chấm | "Đã chấm 18/25 bài" cho mỗi cuộc thi | STAFF | Should |
+| F-M07-09 | Tiến độ chấm | "18/25 graded" cho mỗi cuộc thi | STAFF | Should |
 
 ### M08 – Trao giải
 
@@ -300,7 +300,7 @@ Ký hiệu: **C** = Create, **R** = Read/xem, **U** = Update, **D** = Delete, **
 | F-M16-01 | M16 Quên mật khẩu | Gửi link/token reset qua email | | Could |
 | F-M17-01 | M17 Audit log | Nhật ký: ai, làm gì, lúc nào (đăng nhập, chấm bài, xóa, bán tranh) | | Could |
 | F-M18-01 | M18 Phân trang & lọc nâng cao | Phân trang, sắp xếp mọi danh sách (`Skip/Take` trong EF Core) | Nên làm sớm vì rẻ | Could (khuyến nghị làm) |
-| F-M19-01 | M19 Đa ngôn ngữ | Chuyển UI Việt/Anh (ASP.NET Core Localization – file `.resx`) | | Could |
+| F-M19-01 | M19 Đa ngôn ngữ | Thêm giao diện tiếng Việt bên cạnh tiếng Anh mặc định, nút chuyển ngôn ngữ (ASP.NET Core Localization – file `.resx`) | | Could |
 | F-M20-01 | M20 Tự đăng ký học viên | Đăng ký + Admin duyệt | | Won't (lần này) |
 
 ---
@@ -322,9 +322,9 @@ Ký hiệu: **C** = Create, **R** = Read/xem, **U** = Update, **D** = Delete, **
 | Mã | Quy tắc |
 |---|---|
 | BR-06 | `startDate` ≤ `endDate`; khi tạo mới `endDate` ≥ ngày hiện tại. Hạn nộp = **23:59:59 ngày `endDate`** theo giờ máy chủ (Asia/Ho_Chi_Minh). |
-| BR-07 | Trạng thái cuộc thi được **tính tự động** (không nhập tay), trừ GRADED: **UPCOMING** khi now < startDate (00:00); **ONGOING** khi startDate ≤ now ≤ hạn nộp; **CLOSED** khi now > hạn nộp và chưa công bố; **GRADED** khi staff bấm "Công bố kết quả" (`resultPublished = true`). |
+| BR-07 | Trạng thái cuộc thi được **tính tự động** (không nhập tay), trừ GRADED: **UPCOMING** khi now < startDate (00:00); **ONGOING** khi startDate ≤ now ≤ hạn nộp; **CLOSED** khi now > hạn nộp và chưa công bố; **GRADED** khi staff bấm "Publish results" (`resultPublished = true`). |
 | BR-08 | Chỉ công bố kết quả (→ GRADED) khi cuộc thi đã CLOSED và **100% bài nộp đã có Evaluation**. Sau GRADED, kết quả (xếp loại, nhận xét, giải) hiển thị cho học viên và trang chủ. |
-| BR-09 | Mỗi cuộc thi phải có ≥ 1 CompetitionAward trước khi chuyển sang ONGOING (hệ thống cảnh báo khi lưu nếu chưa có). Mỗi CompetitionAward có `rank` (1 = cao nhất), `prizeValue` ≥ 0 (VNĐ), `quantity` ≥ 1. |
+| BR-09 | Mỗi cuộc thi phải có ≥ 1 CompetitionAward trước khi chuyển sang ONGOING (hệ thống cảnh báo khi lưu nếu chưa có). Mỗi CompetitionAward có `rank` (1 = cao nhất), `prizeValue` ≥ 0 (USD), `quantity` ≥ 1. |
 | BR-10 | Khi cuộc thi đã có Submission: không được sửa `startDate`; được **gia hạn** `endDate` (chỉ kéo dài, không rút ngắn); được sửa mô tả/thể lệ. Khi đã GRADED: chỉ xem. |
 | BR-11 | Chỉ xóa cuộc thi khi **chưa có Submission nào** (xóa kèm CompetitionAward). |
 | BR-12 | "Mọi học viên phải tham gia": hệ thống không bắt buộc kỹ thuật, nhưng báo cáo RPT-02 liệt kê học viên **chưa nộp bài** để nhắc nhở. Học viên không nộp = không có kết quả (coi như bị loại, không tạo Evaluation). |
@@ -334,7 +334,7 @@ Ký hiệu: **C** = Create, **R** = Read/xem, **U** = Update, **D** = Delete, **
 | Mã | Quy tắc |
 |---|---|
 | BR-13 | Chỉ được **nộp/sửa/thay ảnh/xóa** bài khi cuộc thi đang **ONGOING** (now ≤ hạn nộp). Kiểm tra ở **server** tại thời điểm request (không tin client). |
-| BR-14 | Sau hạn nộp hệ thống **từ chối** mọi upload/sửa/xóa (thông báo "Đã quá hạn nộp bài"). Bài nộp trễ không được tạo → học viên đó bị loại. Xếp loại **DISQUALIFIED** được dùng khi: (a) bài có `submittedAt`/`updatedAt` > hạn nộp (trường hợp nhập bù ngoại lệ); (b) bài vi phạm thể lệ (đạo văn, sai chủ đề, nội dung không phù hợp). |
+| BR-14 | Sau hạn nộp hệ thống **từ chối** mọi upload/sửa/xóa (thông báo "The submission deadline has passed"). Bài nộp trễ không được tạo → học viên đó bị loại. Xếp loại **DISQUALIFIED** được dùng khi: (a) bài có `submittedAt`/`updatedAt` > hạn nộp (trường hợp nhập bù ngoại lệ); (b) bài vi phạm thể lệ (đạo văn, sai chủ đề, nội dung không phù hợp). |
 | BR-15 | **Mỗi học viên chỉ có tối đa 1 bài dự thi / 1 cuộc thi** (unique `studentId + competitionId`). Muốn đổi tranh → dùng chức năng sửa/thay ảnh. |
 | BR-16 | Chỉ chấp nhận ảnh **JPEG**: đuôi `.jpg`/`.jpeg`, content-type `image/jpeg` **và** kiểm tra magic bytes `FF D8 FF`. |
 | BR-17 | Dung lượng ảnh tối đa **5 MB**/file (cấu hình `Upload:MaxFileSizeBytes` + `[RequestSizeLimit]`). Kích thước ảnh tối thiểu khuyến nghị 600 px cạnh ngắn (cảnh báo, không chặn). |
@@ -365,20 +365,20 @@ Ký hiệu: **C** = Create, **R** = Read/xem, **U** = Update, **D** = Delete, **
 | Mã | Quy tắc |
 |---|---|
 | BR-40 | Chỉ Submission **đã chấm với rating BEST hoặc BETTER** (cuộc thi đã GRADED) mới được gửi triển lãm. |
-| BR-41 | Giá bán đề xuất (`askingPrice`) **do học viên quyết định** (> 0 VNĐ). Staff có thể tạo entry trực tiếp nhưng giá phải là giá học viên đã báo (nhập kèm ghi chú nguồn). |
+| BR-41 | Giá bán đề xuất (`askingPrice`) **do học viên quyết định** (> 0 USD). Staff có thể tạo entry trực tiếp nhưng giá phải là giá học viên đã báo (nhập kèm ghi chú nguồn). |
 | BR-42 | Chỉ gửi tranh tới triển lãm **UPCOMING** (chưa bắt đầu). Exhibition: `startDate` ≤ `endDate`; trạng thái tính tự động UPCOMING / ONGOING / FINISHED. Chỉ xóa triển lãm khi chưa có ExhibitionEntry. |
 | BR-43 | Một Submission chỉ có **1 entry đang hiệu lực** (PENDING/ACCEPTED) tại một thời điểm; tranh đã **SOLD** không được gửi triển lãm nào nữa. Tranh UNSOLD/REJECTED được gửi lại triển lãm khác. |
 | BR-44 | Đánh dấu SOLD bắt buộc: `soldPrice` > 0, `soldDate` (trong khoảng ngày triển lãm), Customer. `soldPrice` mặc định = `askingPrice`, có thể khác (ghi lại giá thực tế khách trả). |
 | BR-45 | **Toàn bộ tiền bán tranh trả cho học viên** (không trích hoa hồng – giả định A-10). Khi trả: `paidToStudent = true`, `paidAmount` (mặc định = `soldPrice`), `paidDate` ≥ `soldDate`. Chỉ ghi nhận trả tiền khi entry SOLD. |
 | BR-46 | Học viên sửa giá/rút đề xuất chỉ khi entry còn PENDING. Sau ACCEPTED, mọi thay đổi do STAFF. |
-| BR-47 | Tiền tệ VNĐ, kiểu `DECIMAL(18,2)`, không âm. |
+| BR-47 | Tiền tệ **USD**, kiểu `DECIMAL(18,2)` (2 chữ số thập phân), không âm; hiển thị dạng `$1,250.00`. |
 
 ### 4.7 Vòng đời trạng thái
 
 **a) Competition**
 
 ```
-            now >= startDate           now > endDate 23:59:59        Staff "Công bố kết quả"
+            now >= startDate           now > endDate 23:59:59        Staff "Publish results"
 UPCOMING ─────────────────► ONGOING ─────────────────────► CLOSED ────────────────────────► GRADED
  (sửa/xóa tự do)           (HV nộp/sửa/xóa bài)          (Staff chấm, trao giải)       (công khai kết quả, chỉ xem)
 ```
@@ -418,7 +418,7 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 | Actor | ADMIN, MANAGER, STAFF, STUDENT |
 | Tiền điều kiện | Có Account, `active = true` |
 | Luồng chính | 1. Người dùng mở `/login`. 2. Nhập username, mật khẩu. 3. Hệ thống so khớp BCrypt. 4. Tạo session, chuyển về dashboard theo role (`/admin`, `/manager`, `/staff`, `/student`). |
-| Luồng phụ / ngoại lệ | 3a. Sai thông tin → "Tên đăng nhập hoặc mật khẩu không đúng" (không nói rõ sai trường nào). 3b. Tài khoản bị khóa → "Tài khoản đã bị khóa, liên hệ quản trị viên". 1a. Đã đăng nhập mà vào `/login` → chuyển về dashboard. |
+| Luồng phụ / ngoại lệ | 3a. Sai thông tin → "Invalid username or password." (không nói rõ sai trường nào). 3b. Tài khoản bị khóa → "Your account has been locked. Please contact the administrator.". 1a. Đã đăng nhập mà vào `/login` → chuyển về dashboard. |
 | Hậu điều kiện | Session có role; menu hiển thị theo role. |
 
 ### UC-02: Staff tạo cuộc thi & định nghĩa giải thưởng (F-M05-01, F-M05-06)
@@ -427,7 +427,7 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 |---|---|
 | Actor | STAFF |
 | Tiền điều kiện | Đã đăng nhập role STAFF |
-| Luồng chính | 1. Staff vào "Cuộc thi" → "Tạo mới". 2. Nhập tên, chủ đề, mô tả, ngày bắt đầu, ngày kết thúc, thể lệ, (banner). 3. Lưu → hệ thống kiểm tra BR-06, lưu Competition (UPCOMING hoặc ONGOING tùy ngày). 4. Staff vào tab "Giải thưởng", thêm từng CompetitionAward (tên, hạng, giá trị, số lượng, mô tả). 5. Cuộc thi xuất hiện trên trang chủ. |
+| Luồng chính | 1. Staff vào "Competitions" → "Create". 2. Nhập tên, chủ đề, mô tả, ngày bắt đầu, ngày kết thúc, thể lệ, (banner). 3. Lưu → hệ thống kiểm tra BR-06, lưu Competition (UPCOMING hoặc ONGOING tùy ngày). 4. Staff vào tab "Awards", thêm từng CompetitionAward (tên, hạng, giá trị, số lượng, mô tả). 5. Cuộc thi xuất hiện trên trang chủ. |
 | Luồng phụ / ngoại lệ | 3a. Ngày không hợp lệ → báo lỗi tại trường. 3b. Thiếu trường bắt buộc → báo lỗi. 4a. Chưa có giải nào → cảnh báo BR-09. Sửa/xóa: theo BR-10, BR-11 (có bài nộp → không cho xóa). |
 | Hậu điều kiện | Competition + CompetitionAward lưu trong DB; học viên thấy cuộc thi. |
 
@@ -437,8 +437,8 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 |---|---|
 | Actor | STUDENT |
 | Tiền điều kiện | Đăng nhập STUDENT; cuộc thi ONGOING; học viên chưa có bài trong cuộc thi này (BR-15) |
-| Luồng chính | 1. HV mở chi tiết cuộc thi ONGOING → "Nộp bài". 2. Nhập tiêu đề, mô tả, chọn loại phần chữ và nhập thơ/trích dẫn/câu chuyện. 3. Chọn file JPEG. 4. Gửi. 5. Server kiểm tra: thời hạn (BR-13), định dạng (BR-16), dung lượng (BR-17), dữ liệu bắt buộc (BR-19). 6. Ghi file bằng `Files.copy` vào `uploads/submissions/{competitionId}/{guid}.jpg` (BR-18). 7. Lưu Submission (`submittedAt = now`). 8. Thông báo thành công, chuyển tới "Bài của tôi". |
-| Luồng phụ / ngoại lệ | 5a. Quá hạn → từ chối "Đã quá hạn nộp bài" (BR-14). 5b. Không phải JPEG / > 5 MB → báo lỗi, không lưu. 5c. Đã có bài trong cuộc thi → chuyển sang màn hình sửa bài. 6a. Lỗi ghi file (IOException) → rollback, không tạo Submission, thông báo lỗi chung. 7a. Lỗi DB sau khi ghi file → xóa file vừa ghi. |
+| Luồng chính | 1. HV mở chi tiết cuộc thi ONGOING → "Submit". 2. Nhập tiêu đề, mô tả, chọn loại phần chữ và nhập thơ/trích dẫn/câu chuyện. 3. Chọn file JPEG. 4. Gửi. 5. Server kiểm tra: thời hạn (BR-13), định dạng (BR-16), dung lượng (BR-17), dữ liệu bắt buộc (BR-19). 6. Ghi file bằng `Files.copy` vào `uploads/submissions/{competitionId}/{guid}.jpg` (BR-18). 7. Lưu Submission (`submittedAt = now`). 8. Thông báo thành công, chuyển tới "My Submissions". |
+| Luồng phụ / ngoại lệ | 5a. Quá hạn → từ chối "The submission deadline has passed" (BR-14). 5b. Không phải JPEG / > 5 MB → báo lỗi, không lưu. 5c. Đã có bài trong cuộc thi → chuyển sang màn hình sửa bài. 6a. Lỗi ghi file (IOException) → rollback, không tạo Submission, thông báo lỗi chung. 7a. Lỗi DB sau khi ghi file → xóa file vừa ghi. |
 | Hậu điều kiện | Submission + file ảnh tồn tại; tổng bài nộp trên trang chủ tăng 1. |
 
 ### UC-04: Học viên sửa / thay ảnh / xóa bài (F-M06-02..04)
@@ -447,8 +447,8 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 |---|---|
 | Actor | STUDENT |
 | Tiền điều kiện | Bài thuộc học viên; cuộc thi ONGOING |
-| Luồng chính | 1. HV vào "Bài của tôi" → chọn bài → "Sửa". 2. Sửa nội dung và/hoặc chọn ảnh mới. 3. Lưu → kiểm tra BR-13, BR-16..19. 4. Nếu có ảnh mới: ghi file mới, cập nhật đường dẫn, xóa file cũ. 5. Cập nhật `updatedAt`. |
-| Luồng phụ / ngoại lệ | Xóa: 1a. HV bấm "Xóa" → xác nhận → xóa Submission + file. 3a. Quá hạn → nút Sửa/Xóa bị ẩn; nếu gọi trực tiếp URL → 403/thông báo quá hạn. 3b. Bài không thuộc HV → 403. |
+| Luồng chính | 1. HV vào "My Submissions" → chọn bài → "Edit". 2. Sửa nội dung và/hoặc chọn ảnh mới. 3. Lưu → kiểm tra BR-13, BR-16..19. 4. Nếu có ảnh mới: ghi file mới, cập nhật đường dẫn, xóa file cũ. 5. Cập nhật `updatedAt`. |
+| Luồng phụ / ngoại lệ | Xóa: 1a. HV bấm "Delete" → xác nhận → xóa Submission + file. 3a. Quá hạn → nút Sửa/Xóa bị ẩn; nếu gọi trực tiếp URL → 403/thông báo quá hạn. 3b. Bài không thuộc HV → 403. |
 | Hậu điều kiện | Bài cập nhật/bị xóa; file cũ không còn trên đĩa. |
 
 ### UC-05: Staff chấm bài (F-M07-01..04)
@@ -457,9 +457,9 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 |---|---|
 | Actor | STAFF |
 | Tiền điều kiện | Cuộc thi CLOSED (BR-21) |
-| Luồng chính | 1. Staff vào "Chấm bài" → chọn cuộc thi → danh sách bài (lọc "Chưa chấm"). 2. Mở bài: xem ảnh full, mô tả, thơ/trích dẫn, ngày nộp. 3. Chọn xếp loại, nhập điểm mạnh, điểm yếu, điểm cần cải thiện. 4. Lưu Evaluation (`evaluatedBy`, `evaluatedAt`). 5. Hệ thống chuyển tới bài chưa chấm kế tiếp, cập nhật tiến độ "x/y". |
-| Luồng phụ / ngoại lệ | 1a. Cuộc thi còn ONGOING → nút chấm bị vô hiệu, thông báo "Chưa hết hạn nộp". 3a. Chọn DISQUALIFIED mà không nhập lý do → lỗi (BR-23). 3b. Bài nộp sau hạn (dữ liệu ngoại lệ) → hệ thống gợi ý DISQUALIFIED. 4a. Cuộc thi đã GRADED → không cho sửa. |
-| Hậu điều kiện | Submission có Evaluation; khi tất cả bài đã chấm, nút "Công bố kết quả" được bật. |
+| Luồng chính | 1. Staff vào "Grade" → chọn cuộc thi → danh sách bài (lọc "Not graded"). 2. Mở bài: xem ảnh full, mô tả, thơ/trích dẫn, ngày nộp. 3. Chọn xếp loại, nhập điểm mạnh, điểm yếu, điểm cần cải thiện. 4. Lưu Evaluation (`evaluatedBy`, `evaluatedAt`). 5. Hệ thống chuyển tới bài chưa chấm kế tiếp, cập nhật tiến độ "x/y". |
+| Luồng phụ / ngoại lệ | 1a. Cuộc thi còn ONGOING → nút chấm bị vô hiệu, thông báo "The submission period has not ended yet". 3a. Chọn DISQUALIFIED mà không nhập lý do → lỗi (BR-23). 3b. Bài nộp sau hạn (dữ liệu ngoại lệ) → hệ thống gợi ý DISQUALIFIED. 4a. Cuộc thi đã GRADED → không cho sửa. |
+| Hậu điều kiện | Submission có Evaluation; khi tất cả bài đã chấm, nút "Publish results" được bật. |
 
 ### UC-06: Staff trao giải & công bố kết quả (F-M08-01, F-M05-08)
 
@@ -467,7 +467,7 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 |---|---|
 | Actor | STAFF |
 | Tiền điều kiện | Cuộc thi CLOSED, đã chấm ≥ 1 bài BEST; có CompetitionAward |
-| Luồng chính | 1. Staff mở cuộc thi → tab "Trao giải". 2. Với mỗi CompetitionAward, chọn bài từ danh sách bài BEST chưa đạt giải. 3. Nhập ngày trao, nhận xét. 4. Lưu AwardIssued (kiểm tra BR-30, BR-31). 5. Khi đã chấm 100% bài, bấm "Công bố kết quả" → GRADED (BR-08). |
+| Luồng chính | 1. Staff mở cuộc thi → tab "Issue award". 2. Với mỗi CompetitionAward, chọn bài từ danh sách bài BEST chưa đạt giải. 3. Nhập ngày trao, nhận xét. 4. Lưu AwardIssued (kiểm tra BR-30, BR-31). 5. Khi đã chấm 100% bài, bấm "Publish results" → GRADED (BR-08). |
 | Luồng phụ / ngoại lệ | 2a. Không còn suất (đủ `quantity`) → không cho chọn. 2b. Bài không phải BEST → không hiển thị. 5a. Còn bài chưa chấm → từ chối công bố, hiển thị số bài còn lại. |
 | Hậu điều kiện | Trang chủ hiển thị học viên đạt giải; học viên thấy xếp loại, nhận xét, giải. |
 
@@ -477,7 +477,7 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 |---|---|
 | Actor | STUDENT, STAFF (chính), MANAGER (tạo triển lãm) |
 | Tiền điều kiện | Có Exhibition UPCOMING; bài của HV đạt BEST/BETTER, cuộc thi GRADED (BR-40) |
-| Luồng chính | 1. HV xem triển lãm sắp tới → "Gửi tranh". 2. Chọn bài đủ điều kiện, nhập giá đề xuất → entry PENDING. 3. Staff vào "Tranh triển lãm" → duyệt → ACCEPTED. 4. Tại triển lãm, tranh bán được: Staff chọn entry → "Đã bán": nhập/chọn Customer, giá bán, ngày bán → SOLD. 5. Khi trả tiền cho HV: Staff "Đã trả tiền": số tiền, ngày trả → `paidToStudent = true`. 6. HV xem trạng thái ở "Tranh triển lãm của tôi". |
+| Luồng chính | 1. HV xem triển lãm sắp tới → "Submit to exhibition". 2. Chọn bài đủ điều kiện, nhập giá đề xuất → entry PENDING. 3. Staff vào "Exhibition Entries" → duyệt → ACCEPTED. 4. Tại triển lãm, tranh bán được: Staff chọn entry → "Sold": nhập/chọn Customer, giá bán, ngày bán → SOLD. 5. Khi trả tiền cho HV: Staff "Paid to student": số tiền, ngày trả → `paidToStudent = true`. 6. HV xem trạng thái ở "My Exhibition Entries". |
 | Luồng phụ / ngoại lệ | 2a. Bài đã có entry hiệu lực/đã bán → từ chối (BR-43). 3a. Staff từ chối → REJECTED + lý do. 3b. Staff tự tìm bài BEST (F-M07-06) và tạo entry ACCEPTED với giá HV đã báo. 4a. Triển lãm kết thúc không bán → UNSOLD. 5a. Chưa SOLD → không cho ghi nhận trả tiền. |
 | Hậu điều kiện | Entry có đầy đủ giá đề xuất, giá bán, khách mua, trạng thái trả tiền → dùng cho RPT-04, RPT-05. |
 
@@ -487,7 +487,7 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 |---|---|
 | Actor | ADMIN |
 | Tiền điều kiện | Đăng nhập ADMIN |
-| Luồng chính | 1. Admin vào "Học viên" (hoặc "Nhân viên"). 2. Tìm kiếm theo tên/mã/lớp… 3. "Thêm mới": nhập thông tin đăng nhập + cá nhân + nhập học (hoặc công việc + ghi chú). 4. Lưu: hệ thống kiểm tra BR-01, BR-02, băm mật khẩu BCrypt, tạo Account + Profile trong **1 transaction**. 5. Sửa/xem chi tiết tương tự. |
+| Luồng chính | 1. Admin vào "Students" (hoặc "Staff"). 2. Tìm kiếm theo tên/mã/lớp… 3. "Add new": nhập thông tin đăng nhập + cá nhân + nhập học (hoặc công việc + ghi chú). 4. Lưu: hệ thống kiểm tra BR-01, BR-02, băm mật khẩu BCrypt, tạo Account + Profile trong **1 transaction**. 5. Sửa/xem chi tiết tương tự. |
 | Luồng phụ / ngoại lệ | 4a. Trùng username/email/mã → báo lỗi tại trường. Xóa: đã có dữ liệu → hệ thống đề xuất vô hiệu hóa thay vì xóa (BR-04). Xóa chính mình / ADMIN cuối → từ chối (BR-03). |
 | Hậu điều kiện | Account + Profile được tạo/cập nhật; người dùng đăng nhập được. |
 
@@ -501,13 +501,13 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 *Là người dùng, tôi muốn đăng nhập để dùng đúng chức năng của vai trò mình.*
 - **AC1:** Given tài khoản hợp lệ, active, When đăng nhập đúng mật khẩu, Then vào dashboard đúng role.
 - **AC2:** Given sai mật khẩu, When đăng nhập, Then hiện thông báo lỗi chung và vẫn ở trang login.
-- **AC3:** Given tài khoản bị khóa, When đăng nhập, Then bị từ chối với thông báo "đã bị khóa".
+- **AC3:** Given tài khoản bị khóa, When đăng nhập, Then bị từ chối với thông báo "account locked".
 - **AC4:** Given đăng nhập role STUDENT, When truy cập `/admin/**`, Then nhận trang 403.
 - **AC5:** Given chưa đăng nhập, When truy cập `/student/**`, Then bị chuyển tới `/login`.
 
 ### US-02 (F-M02-01..04) – Trang chủ
 *Là khách, tôi muốn xem các cuộc thi và học viên đạt giải để biết hoạt động của học viện.*
-- **AC1:** Given có cuộc thi startDate > hôm nay, When mở trang chủ, Then nó nằm trong mục "Sắp diễn ra".
+- **AC1:** Given có cuộc thi startDate > hôm nay, When mở trang chủ, Then nó nằm trong mục "Upcoming".
 - **AC2:** Given cuộc thi ONGOING có 12 bài nộp, When mở trang chủ, Then hiển thị cuộc thi đó với "12 bài dự thi".
 - **AC3:** Given cuộc thi GRADED gần nhất có 3 giải đã trao, When mở trang chủ, Then hiển thị 3 học viên + tên giải.
 - **AC4:** Given cuộc thi CLOSED chưa công bố, Then **không** hiển thị kết quả của cuộc thi đó.
@@ -515,7 +515,7 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 ### US-03 (F-M03-01..05) – Admin quản lý nhân viên
 *Là Admin, tôi muốn thêm/sửa/xóa/tìm nhân viên kèm thông tin đăng nhập, cá nhân, công việc, ghi chú để quản lý nhân sự.*
 - **AC1:** Given form đầy đủ hợp lệ, When lưu, Then tạo Account (mật khẩu BCrypt) + StaffProfile, nhân viên đăng nhập được.
-- **AC2:** Given username đã tồn tại, When lưu, Then báo "Tên đăng nhập đã tồn tại", không tạo bản ghi.
+- **AC2:** Given username đã tồn tại, When lưu, Then báo "Username already exists", không tạo bản ghi.
 - **AC3:** Given nhập "toán" vào ô môn phụ trách, When tìm kiếm, Then chỉ hiển thị nhân viên có môn chứa "toán".
 - **AC4:** Given nhân viên đã từng chấm bài, When xóa, Then hệ thống vô hiệu hóa thay vì xóa và thông báo rõ.
 
@@ -527,17 +527,17 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 
 ### US-05 (F-M05-01..06, 09) – Quản lý cuộc thi
 *Là Staff, tôi muốn tạo cuộc thi với ngày, thể lệ và giải thưởng để học viên tham gia.*
-- **AC1:** Given startDate > endDate, When lưu, Then báo lỗi "Ngày kết thúc phải sau ngày bắt đầu".
-- **AC2:** Given cuộc thi đã có bài nộp, When xóa, Then bị từ chối với thông báo "Cuộc thi đã có bài dự thi".
+- **AC1:** Given startDate > endDate, When lưu, Then báo lỗi "End date must be on or after the start date".
+- **AC2:** Given cuộc thi đã có bài nộp, When xóa, Then bị từ chối với thông báo "This competition already has submissions".
 - **AC3:** Given cuộc thi có 3 CompetitionAward, When học viên xem chi tiết, Then thấy 3 giải với giá trị và số lượng.
 - **AC4:** Given hôm nay nằm giữa start và end, When xem danh sách, Then trạng thái hiển thị ONGOING.
 
 ### US-06 (F-M06-01) – Nộp bài
 *Là học viên, tôi muốn upload tranh JPEG kèm thơ/trích dẫn trước hạn để tham gia cuộc thi.*
-- **AC1:** Given cuộc thi ONGOING và file .jpg 2 MB, When nộp, Then bài được lưu, file tồn tại trong `uploads/submissions/{id}/`, thấy bài trong "Bài của tôi".
-- **AC2:** Given file .png (hoặc file .jpg giả mạo không có magic bytes JPEG), When nộp, Then báo "Chỉ chấp nhận ảnh JPEG", không lưu.
-- **AC3:** Given file 6 MB, When nộp, Then báo "Ảnh vượt quá 5 MB".
-- **AC4:** Given cuộc thi đã qua hạn, When gửi request nộp (kể cả gọi thẳng URL), Then bị từ chối "Đã quá hạn nộp bài".
+- **AC1:** Given cuộc thi ONGOING và file .jpg 2 MB, When nộp, Then bài được lưu, file tồn tại trong `uploads/submissions/{id}/`, thấy bài trong "My Submissions".
+- **AC2:** Given file .png (hoặc file .jpg giả mạo không có magic bytes JPEG), When nộp, Then báo "Only JPEG images are accepted", không lưu.
+- **AC3:** Given file 6 MB, When nộp, Then báo "The image exceeds 5 MB".
+- **AC4:** Given cuộc thi đã qua hạn, When gửi request nộp (kể cả gọi thẳng URL), Then bị từ chối "The submission deadline has passed".
 - **AC5:** Given học viên đã có bài trong cuộc thi, When chọn nộp lần nữa, Then được chuyển sang màn hình sửa bài.
 
 ### US-07 (F-M06-02..04) – Sửa/xóa bài
@@ -550,48 +550,48 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 ### US-08 (F-M06-05, 06) – Tìm kiếm & tải bài
 *Là học viên, tôi muốn tìm và tải lại các bài mình đã nộp.*
 - **AC1:** Given tôi có 5 bài, When lọc theo cuộc thi X, Then chỉ hiện bài của cuộc thi X.
-- **AC2:** When bấm "Tải về", Then trình duyệt tải file JPEG với tên file gốc (header `Content-Disposition: attachment`).
+- **AC2:** When bấm "Download", Then trình duyệt tải file JPEG với tên file gốc (header `Content-Disposition: attachment`).
 
 ### US-09 (F-M07-01..06) – Chấm bài
 *Là Staff, tôi muốn xem bài và xếp loại kèm nhận xét để đánh giá học viên.*
-- **AC1:** Given cuộc thi ONGOING, When mở trang chấm, Then nút chấm bị khóa với thông báo "Chưa hết hạn nộp".
-- **AC2:** Given CLOSED, When chọn BETTER, nhập điểm mạnh, lưu, Then bài chuyển sang "Đã chấm", tiến độ tăng 1.
+- **AC1:** Given cuộc thi ONGOING, When mở trang chấm, Then nút chấm bị khóa với thông báo "The submission period has not ended yet".
+- **AC2:** Given CLOSED, When chọn BETTER, nhập điểm mạnh, lưu, Then bài chuyển sang "Graded", tiến độ tăng 1.
 - **AC3:** Given chọn DISQUALIFIED và để trống lý do, When lưu, Then báo lỗi bắt buộc nhập lý do.
 - **AC4:** When lọc xếp loại = BEST, Then chỉ hiện bài BEST.
 - **AC5:** Given cuộc thi GRADED, When sửa đánh giá, Then bị từ chối.
 
 ### US-10 (F-M05-08, F-M06-07, 08) – Công bố & xem kết quả
 *Là học viên, tôi muốn xem xếp loại và nhận xét cho các bài của mình, và xem các bài BEST để học hỏi.*
-- **AC1:** Given cuộc thi còn 2 bài chưa chấm, When Staff bấm công bố, Then bị từ chối "Còn 2 bài chưa chấm".
-- **AC2:** Given cuộc thi CLOSED (chưa công bố) đã chấm bài tôi, When tôi xem bài, Then hiển thị "Đang chờ kết quả".
-- **AC3:** Given GRADED, When xem "Kết quả của tôi", Then thấy xếp loại, điểm mạnh, điểm yếu, cần cải thiện cho mọi bài đã tham gia.
-- **AC4:** Given GRADED, When mở "Bài xuất sắc", Then thấy mọi bài BEST kèm nhận xét staff.
+- **AC1:** Given cuộc thi còn 2 bài chưa chấm, When Staff bấm công bố, Then bị từ chối "2 submissions have not been graded yet".
+- **AC2:** Given cuộc thi CLOSED (chưa công bố) đã chấm bài tôi, When tôi xem bài, Then hiển thị "Awaiting results".
+- **AC3:** Given GRADED, When xem "My Results", Then thấy xếp loại, điểm mạnh, điểm yếu, cần cải thiện cho mọi bài đã tham gia.
+- **AC4:** Given GRADED, When mở "Best Works", Then thấy mọi bài BEST kèm nhận xét staff.
 
 ### US-11 (F-M08-01..04) – Trao giải
 *Là Staff, tôi muốn ghi nhận giải đã trao cho học viên để công bố và lưu trữ.*
-- **AC1:** Given giải "Nhất" quantity = 1 đã trao, When trao thêm, Then bị từ chối "Đã hết suất".
+- **AC1:** Given giải "Nhất" quantity = 1 đã trao, When trao thêm, Then bị từ chối "No award slots left".
 - **AC2:** Given bài xếp loại GOOD, When trao giải, Then bài không xuất hiện trong danh sách chọn.
 - **AC3:** Given học viên đã nhận giải Nhì cuộc thi này, When trao thêm giải Ba cho cùng bài, Then bị từ chối.
-- **AC4:** When học viên xem "Giải thưởng", Then thấy giải đã trao của các cuộc thi GRADED.
+- **AC4:** When học viên xem "Awards", Then thấy giải đã trao của các cuộc thi GRADED.
 
 ### US-12 (F-M09-01..03) – Quản lý triển lãm
 *Là Staff/Manager, tôi muốn quản lý các triển lãm sắp tới trong nước để học viên biết và gửi tranh.*
-- **AC1:** Given dữ liệu hợp lệ, When Manager tạo triển lãm, Then học viên thấy triển lãm trong mục "Triển lãm sắp tới".
+- **AC1:** Given dữ liệu hợp lệ, When Manager tạo triển lãm, Then học viên thấy triển lãm trong mục "Upcoming Exhibitions".
 - **AC2:** Given triển lãm đã có tranh gửi, When xóa, Then bị từ chối.
 
 ### US-13 (F-M09-04..12) – Tranh triển lãm, bán & trả tiền
 *Là học viên, tôi muốn gửi tranh đạt BEST/BETTER đi triển lãm với giá tôi đặt và theo dõi tình trạng bán, nhận tiền.*
-- **AC1:** Given bài BEST, triển lãm UPCOMING, When gửi với giá 2.000.000, Then tạo entry PENDING với askingPrice = 2.000.000.
+- **AC1:** Given bài BEST, triển lãm UPCOMING, When gửi với giá $200.00, Then tạo entry PENDING với askingPrice = 200.00.
 - **AC2:** Given bài GOOD, When gửi, Then bài không có trong danh sách chọn.
 - **AC3:** Given entry ACCEPTED, When Staff đánh dấu SOLD mà không chọn khách mua, Then báo lỗi.
-- **AC4:** Given entry PENDING, When Staff nhập "đã trả tiền", Then bị từ chối (chưa SOLD).
-- **AC5:** Given SOLD 2.500.000 và đã trả, When học viên xem, Then thấy: giá đề xuất, "Đã bán", giá khách trả 2.500.000, "Đã nhận tiền" + ngày trả.
+- **AC4:** Given entry PENDING, When Staff nhập "Paid to student", Then bị từ chối (chưa SOLD).
+- **AC5:** Given SOLD $250.00 và đã trả, When học viên xem, Then thấy: giá đề xuất, "Sold", giá khách trả $250.00, "Paid" + ngày trả.
 - **AC6:** Given tranh đã SOLD, When gửi sang triển lãm khác, Then bị từ chối.
 
 ### US-14 (F-M10-01) – Báo cáo bài nộp
 *Là Staff/Manager, tôi muốn xem các bài nộp trong khoảng thời gian cho 1 cuộc thi theo xếp loại.*
 - **AC1:** Given cuộc thi X, từ 01/11 đến 10/11, xếp loại BEST, When chạy báo cáo, Then chỉ liệt kê bài của X, `submittedAt` trong khoảng, rating BEST, kèm tổng số dòng.
-- **AC2:** Given không có dữ liệu, Then hiển thị "Không có dữ liệu".
+- **AC2:** Given không có dữ liệu, Then hiển thị "No data".
 
 ### US-15 (F-M11-01..08) – Manager xem
 *Là Manager, tôi muốn xem toàn bộ học viên, nhân viên, cuộc thi, bài nộp, đánh giá, giải, tranh triển lãm.*
@@ -605,9 +605,9 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 
 | Mã | Tên báo cáo | Tham số lọc | Cột hiển thị | Tổng/Thống kê | Actor |
 |---|---|---|---|---|---|
-| RPT-01 | **Bài nộp theo khoảng thời gian cho 1 cuộc thi theo xếp loại** (yêu cầu đề bài) | Cuộc thi (bắt buộc), Từ ngày – Đến ngày (theo `submittedAt`), Xếp loại (nhiều lựa chọn, có "Chưa chấm"), Lớp (tùy chọn) | STT, Mã HV, Họ tên, Lớp, Tiêu đề tranh, Ngày nộp, Ngày sửa cuối, Xếp loại, Người chấm, Ngày chấm, Đạt giải (có/không) | Tổng số bài; số bài theo từng xếp loại | STAFF, MANAGER |
+| RPT-01 | **Bài nộp theo khoảng thời gian cho 1 cuộc thi theo xếp loại** (yêu cầu đề bài) | Cuộc thi (bắt buộc), Từ ngày – Đến ngày (theo `submittedAt`), Xếp loại (nhiều lựa chọn, có "Not graded"), Lớp (tùy chọn) | STT, Mã HV, Họ tên, Lớp, Tiêu đề tranh, Ngày nộp, Ngày sửa cuối, Xếp loại, Người chấm, Ngày chấm, Đạt giải (có/không) | Tổng số bài; số bài theo từng xếp loại | STAFF, MANAGER |
 | RPT-02 | Thống kê tham gia & xếp loại theo cuộc thi | Khoảng thời gian cuộc thi, Trạng thái cuộc thi | Cuộc thi, Ngày bắt đầu–kết thúc, Trạng thái, Số HV (active), Số bài nộp, % tham gia, Số BEST/BETTER/GOOD/MODERATE/NORMAL/DISQUALIFIED, Số chưa chấm | Dòng tổng; chi tiết: danh sách HV **chưa nộp** (BR-12) | STAFF, MANAGER |
-| RPT-03 | Giải thưởng đã trao | Cuộc thi, Khoảng ngày trao, Học viên | Cuộc thi, Giải, Hạng, Giá trị giải (VNĐ), Học viên, Tranh, Ngày trao, Đã phát thưởng, Ghi chú | Tổng số giải, **tổng giá trị giải** (Financial) | STAFF, MANAGER |
+| RPT-03 | Giải thưởng đã trao | Cuộc thi, Khoảng ngày trao, Học viên | Cuộc thi, Giải, Hạng, Giá trị giải (USD), Học viên, Tranh, Ngày trao, Đã phát thưởng, Ghi chú | Tổng số giải, **tổng giá trị giải** (Financial) | STAFF, MANAGER |
 | RPT-04 | Tranh triển lãm & doanh thu bán tranh | Triển lãm, Khoảng ngày, Trạng thái entry, Học viên | Triển lãm, Tranh, Học viên, Xếp loại, Giá đề xuất, Trạng thái, Giá bán, Ngày bán, Khách mua, Đã trả HV, Số tiền trả, Ngày trả | Số tranh gửi/đã bán/chưa bán, **tổng giá đề xuất, tổng giá bán**, chênh lệch | STAFF, MANAGER |
 | RPT-05 | Công nợ trả tiền cho học viên | Triển lãm, Học viên, Khoảng ngày bán | Học viên, Mã HV, Tranh, Triển lãm, Ngày bán, Giá bán, Số ngày chưa trả | Tổng tiền chưa trả | STAFF, MANAGER |
 | RPT-06 | Hồ sơ thành tích học viên | Học viên (bắt buộc), Khoảng thời gian | Cuộc thi, Tranh, Ngày nộp, Xếp loại, Nhận xét tóm tắt, Giải, Triển lãm/Đã bán | Số cuộc thi tham gia, số BEST, số giải, tổng tiền bán tranh | STAFF, MANAGER |
@@ -626,18 +626,18 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 | NFR-03 | Bảo mật – web | CSRF token cho mọi form POST; chống XSS (Razor tự mã hóa HTML); chống SQL injection (EF Core/LINQ tham số hóa) | Anti-forgery token của ASP.NET Core, Razor encode; không nối chuỗi SQL |
 | NFR-04 | Bảo mật – file | Chỉ JPEG (magic bytes), ≤ 5 MB, tên file Guid, chặn path traversal, phục vụ ảnh qua controller có kiểm tra quyền | BR-16..18, BR-20 |
 | NFR-05 | Session | Hết hạn sau 30 phút không hoạt động; đăng xuất hủy session | Cookie đăng nhập `ExpireTimeSpan = 30 phút`, `SlidingExpiration` |
-| NFR-06 | Validate | Validate cả client (HTML5/Bootstrap) và server (Bean Validation `@NotBlank`, `@Size`, `@Email`, `@Past`…); thông báo lỗi tiếng Việt tại từng trường | Test nhập sai |
+| NFR-06 | Validate | Validate cả client (HTML5/Bootstrap) và server (DataAnnotations `[Required]`, `[StringLength]`, `[EmailAddress]`, `[Range]`…); thông báo lỗi **tiếng Anh** tại từng trường | Test nhập sai |
 | NFR-07 | Toàn vẹn dữ liệu | Ràng buộc FK, UNIQUE (BR-01, BR-15, BR-31), CHECK (giá ≥ 0, ngày); thao tác ghi nhiều bảng trong `@Transactional`; file và DB nhất quán (xóa file khi rollback) | Script DDL Phần 2 |
 | NFR-08 | Hiệu năng | Trang danh sách < 2 giây với 1.000 bài nộp; phân trang 10–20 dòng; index các cột lọc (competitionId, studentId, submittedAt, rating) | Test với dữ liệu mẫu |
 | NFR-09 | Khả dụng (usability) | Giao diện nhất quán Bootstrap 5, menu theo role, breadcrumb, thông báo flash thành công/lỗi, xác nhận trước khi xóa | GUI Standards Document |
 | NFR-10 | Responsive | Dùng tốt trên desktop, tablet, mobile (≥ 360 px) | Kiểm tra Chrome DevTools |
-| NFR-11 | Ngôn ngữ | UI tiếng Việt có dấu, UTF-8 toàn hệ thống (DB `NVARCHAR`); thuật ngữ xếp loại hiển thị song ngữ (vd "Xuất sắc nhất (BEST)"); chuyển Anh/Việt là Could (M19) | |
+| NFR-11 | Ngôn ngữ | **Giao diện và dữ liệu mẫu bằng tiếng Anh** (ngôn ngữ chính). UTF-8 toàn hệ thống (DB `NVARCHAR`, collation `Vietnamese_100_CI_AS_SC_UTF8`) để vẫn lưu và hiển thị đúng nội dung tiếng Việt người dùng nhập (thơ, mô tả). Giao diện tiếng Việt là tính năng phụ (M19 – Could) | Kiểm tra mọi trang hiển thị tiếng Anh; nhập thử tiếng Việt có dấu |
 | NFR-12 | Tương thích | Chrome, Edge, Firefox bản mới | |
 | NFR-13 | Sao lưu | Theo đặc tả eProject: **sao lưu mã nguồn và dữ liệu mỗi ngày** – Git push hằng ngày; script `BACKUP DATABASE` SQL Server + nén thư mục `uploads/` | Checklist hằng ngày |
 | NFR-14 | Khả năng bảo trì | Kiến trúc phân lớp Controller – Service – DbContext (EF Core) – Entity; **mọi khối mã có chú thích** (yêu cầu đặc tả); đặt tên theo chuẩn C# | Code review |
 | NFR-15 | Cấu hình | Đường dẫn `uploads/`, giới hạn dung lượng, kết nối DB nằm trong `appsettings.json` | |
 | NFR-16 | Ghi log | Log lỗi (SLF4J/Logback) ra file; không log dữ liệu nhạy cảm | |
-| NFR-17 | Múi giờ & định dạng | Asia/Ho_Chi_Minh; ngày `dd/MM/yyyy`; tiền `#,##0 ₫` | |
+| NFR-17 | Múi giờ & định dạng | Văn hóa mặc định `en-US` (cố định trong `Program.cs`, không phụ thuộc ngôn ngữ Windows); múi giờ học viện Asia/Ho_Chi_Minh; ngày hiển thị `dd MMM yyyy` (ví dụ 05 Nov 2026); tiền `$#,##0.00` | Nhập giá có phần thập phân trên máy Windows tiếng Việt vẫn đúng |
 | NFR-18 | Triển khai | Chạy được bằng `dotnet run` (hoặc F5 trong Visual Studio) trên Windows, SQL Server 2019+; có script tạo DB + dữ liệu mẫu | Hướng dẫn cài đặt |
 
 ---
@@ -738,11 +738,11 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 | A-12 | Tranh "đẹp nhất" được triển lãm là xếp loại nào? | BEST hoặc BETTER (BR-40) |
 | A-13 | "View all postings marked as best" – của riêng HV hay tất cả? | Tất cả bài BEST của mọi HV ở cuộc thi đã GRADED (gallery học hỏi) |
 | A-14 | Exhibition được quản lý bởi Staff (mục 4) và Manager (mục 6) | Cả STAFF và MANAGER đều CRUD Exhibition; ExhibitionEntry do STAFF quản lý, MANAGER chỉ xem |
-| A-15 | "Award details" gồm gì (Financial: giải sẽ trao) | CompetitionAward: tên, hạng, giá trị tiền (VNĐ), số lượng, mô tả phần thưởng |
+| A-15 | "Award details" gồm gì (Financial: giải sẽ trao) | CompetitionAward: tên, hạng, giá trị tiền (USD), số lượng, mô tả phần thưởng |
 | A-16 | "Remarks of the competition" trong giải đã trao | Trường `remarks` trong AwardIssued (nhận xét của BTC) |
 | A-17 | "Academic records" của học viên | = lịch sử Submission + Evaluation + AwardIssued (không có điểm môn học) |
 | A-18 | Bán tranh: thanh toán thế nào? | Ngoài hệ thống (tiền mặt/chuyển khoản tại triển lãm); hệ thống chỉ ghi nhận |
-| A-19 | Đơn vị tiền tệ | VNĐ (có thể đổi nhãn sang USD nếu GV yêu cầu) |
+| A-19 | Đơn vị tiền tệ | **USD** – sản phẩm được team nước ngoài chấm |
 | A-20 | "Upload & download image" – ai tải? | HV tải bài của mình; STAFF/MANAGER tải mọi bài; khách chỉ xem ảnh công khai (không tải bản gốc) |
 | A-21 | Trang chủ "danh sách học viên đạt giải cuộc thi trước" | Cuộc thi GRADED có `endDate` gần nhất (có thể hiển thị thêm 3 cuộc thi gần nhất) |
 | A-22 | Công nghệ | **Giảng viên đã xác nhận làm bằng .NET**: ASP.NET Core MVC (.NET 10) + EF Core + SQL Server 2022 (đặc tả cho phép .Net và SQL Server "hoặc mới hơn") |

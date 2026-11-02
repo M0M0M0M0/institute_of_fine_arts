@@ -6,12 +6,12 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace InstituteOfFineArts.Web.Data.Configurations;
 
 /// <summary>
-/// Cấu hình EF Core cho bảng exhibition: kiểu cột, khóa, ràng buộc CHECK, index, quan hệ.
-/// Thiết kế chi tiết: docs/plan/02_Kien_truc_Cong_nghe_CSDL.md mục 6.2.
+/// EF Core configuration of table exhibition: column types, keys, CHECK constraints, indexes and relationships.
+/// Design: docs/plan/02_Kien_truc_Cong_nghe_CSDL.md section 6.2.
 /// </summary>
 public class ExhibitionConfiguration : IEntityTypeConfiguration<Exhibition>
 {
-    /// <summary>Áp dụng cấu hình cho entity Exhibition.</summary>
+    /// <summary>Applies the configuration to the Exhibition entity.</summary>
     public void Configure(EntityTypeBuilder<Exhibition> b)
     {
         b.ToTable("exhibition", t =>
@@ -20,14 +20,14 @@ public class ExhibitionConfiguration : IEntityTypeConfiguration<Exhibition>
             t.HasCheckConstraint("CK_exhibition_status", "[status] IN ('UPCOMING','ONGOING','FINISHED')");
         });
 
-        // Kiểu dữ liệu từng cột
+        // Column types
         b.Property(x => x.Name).HasMaxLength(200);
         b.Property(x => x.Venue).HasMaxLength(255);
         b.Property(x => x.City).HasMaxLength(100);
         b.Property(x => x.Organizer).HasMaxLength(200);
         b.Property(x => x.Status).HasConversion<string>().HasMaxLength(20).IsUnicode(false);
 
-        // Người tạo (Staff hoặc Manager)
+        // Creator (staff or manager)
         b.HasOne(x => x.CreatedByStaff).WithMany()
             .HasForeignKey(x => x.CreatedBy).OnDelete(DeleteBehavior.Restrict);
     }

@@ -99,7 +99,7 @@
 
 | ID | Module | Tiêu đề | Tiền điều kiện | Các bước | Dữ liệu | Kết quả mong đợi | Kết quả thực tế | Trạng thái | Người test | Ngày |
 |---|---|---|---|---|---|---|---|---|---|---|
-| TC-M06-03 | M06 | Upload file PNG bị từ chối | Đăng nhập `student01`; cuộc thi "Mùa thu" đang ONGOING | 1. Vào Cuộc thi → "Mùa thu" → Nộp bài<br>2. Chọn file<br>3. Nhập mô tả<br>4. Bấm "Nộp" | `image.png`; mô tả "Test" | Hiện lỗi "Chỉ chấp nhận file JPEG"; không có bài mới trong "Bài của tôi"; không có file mới trong `uploads/` | (điền khi test) | Pass / Fail / Blocked / Not run | QA | 20/xx |
+| TC-M06-03 | M06 | Upload file PNG bị từ chối | Đăng nhập `student01`; cuộc thi "Colors of Autumn" đang ONGOING | 1. Vào Cuộc thi → "Colors of Autumn" → Nộp bài<br>2. Chọn file<br>3. Nhập mô tả<br>4. Bấm "Submit" | `image.png`; mô tả "Test" | Hiện lỗi "Only JPEG images are accepted"; không có bài mới trong "My Submissions"; không có file mới trong `uploads/` | (điền khi test) | Pass / Fail / Blocked / Not run | QA | 20/xx |
 
 **Quy tắc viết:**
 - **ID:** `TC-Mxx-yy` (xx = mã module, yy = số thứ tự). Không đổi ID sau khi đã đặt.
@@ -123,12 +123,12 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 
 **Bước tái hiện:**
 1. Đăng nhập student01 / (mật khẩu test)
-2. Vào Cuộc thi → "Mùa thu" → Nộp bài
+2. Vào Cuộc thi → "Colors of Autumn" → Nộp bài
 3. Chọn file image.png, nhập mô tả "Test"
-4. Bấm "Nộp"
+4. Bấm "Submit"
 
-**Kết quả mong đợi:** Báo lỗi "Chỉ chấp nhận file JPEG", không lưu bài.
-**Kết quả thực tế:** Bài được lưu, ảnh PNG hiển thị trong "Bài của tôi".
+**Kết quả mong đợi:** Báo lỗi "Only JPEG images are accepted", không lưu bài.
+**Kết quả thực tế:** Bài được lưu, ảnh PNG hiển thị trong "My Submissions".
 **Ảnh chụp / log:** (kéo thả ảnh vào đây; nếu có lỗi ở cửa sổ Output/console của Visual Studio thì copy 10–20 dòng)
 **Mức độ:** High
 **Tần suất:** Luôn luôn (3/3 lần)
@@ -174,11 +174,11 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 |---|---|---|---|---|---|---|
 | TC-M01-01 | Đăng nhập đúng – STUDENT | Chưa đăng nhập | 1. Mở `/login` 2. Nhập user/pass 3. Bấm Đăng nhập | `student01` / mật khẩu đúng | Chuyển tới trang của học viên; header hiện tên học viên & nút Đăng xuất | C |
 | TC-M01-02 | Đăng nhập đúng – mỗi vai trò chuyển đúng trang | Chưa đăng nhập | Lặp TC-M01-01 với từng tài khoản | `admin01`, `manager01`, `staff01` | ADMIN → dashboard admin; MANAGER → dashboard manager; STAFF → dashboard staff | C |
-| TC-M01-03 | Sai mật khẩu | Chưa đăng nhập | Nhập user đúng, mật khẩu sai | `student01` / `sai123` | Ở lại `/login`, hiện "Tên đăng nhập hoặc mật khẩu không đúng" (không nói rõ sai cái nào) | C |
+| TC-M01-03 | Sai mật khẩu | Chưa đăng nhập | Nhập user đúng, mật khẩu sai | `student01` / `sai123` | Ở lại `/login`, hiện "Invalid username or password." (không nói rõ sai cái nào) | C |
 | TC-M01-04 | Tài khoản không tồn tại | Chưa đăng nhập | Nhập user lạ | `khongton tai` / bất kỳ | Thông báo lỗi giống TC-M01-03 | T |
 | TC-M01-05 | Bỏ trống ô đăng nhập | Chưa đăng nhập | Bấm Đăng nhập khi để trống | (trống) | Báo bắt buộc nhập; không gửi form hoặc báo lỗi | T |
 | TC-M01-06 | SQL injection ở ô đăng nhập | Chưa đăng nhập | Nhập chuỗi injection vào username | `' OR '1'='1' --` / `x` | Đăng nhập thất bại, không lỗi 500, không lộ thông báo SQL | C |
-| TC-M01-07 | Tài khoản bị khóa không đăng nhập được | ADMIN đã khóa `student10` (active = 0) | Đăng nhập `student10` | mật khẩu đúng | Báo "Tài khoản đã bị khóa"/lỗi đăng nhập; không vào được hệ thống | T |
+| TC-M01-07 | Tài khoản bị khóa không đăng nhập được | ADMIN đã khóa `student10` (active = 0) | Đăng nhập `student10` | mật khẩu đúng | Báo "Your account has been locked. Please contact the administrator."/lỗi đăng nhập; không vào được hệ thống | T |
 | TC-M01-08 | Đăng xuất | Đang đăng nhập `staff01` | 1. Bấm Đăng xuất 2. Bấm nút Back của trình duyệt 3. Thử mở `/staff/submissions` | | Về trang chủ/login; Back không xem được dữ liệu đã đăng nhập; mở URL staff bị chuyển về `/login` | C |
 | TC-M01-09 | Đổi mật khẩu | Đăng nhập `student02` | 1. Hồ sơ → Đổi mật khẩu 2. Nhập mật khẩu cũ sai → Lưu 3. Nhập đúng, mật khẩu mới + xác nhận → Lưu 4. Đăng xuất, đăng nhập bằng mật khẩu mới | | Bước 2 báo lỗi; bước 3 thành công; bước 4 đăng nhập được bằng mật khẩu mới, mật khẩu cũ không dùng được | T |
 | TC-M01-10 | Mật khẩu được mã hóa trong DB | Có quyền mở SQL Server Management Studio (SSMS) | `SELECT username, password_hash FROM account` | | Cột password_hash là chuỗi BCrypt (bắt đầu `$2a$`/`$2b$`), không phải mật khẩu thô | C |
@@ -188,21 +188,21 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 | ID | Tiêu đề | Tiền điều kiện | Các bước | Dữ liệu | Kết quả mong đợi | Ưu tiên |
 |---|---|---|---|---|---|---|
 | TC-M02-01 | GUEST xem trang chủ | Chưa đăng nhập | Mở `http://localhost:5000/` | Seed chuẩn | Hiện 4 khối: cuộc thi sắp diễn ra (UPCOMING), đang diễn ra (ONGOING), học viên đạt giải cuộc thi trước, tổng số bài nộp cuộc thi đang diễn ra | C |
-| TC-M02-02 | Đếm số bài nộp đúng | Seed: "Sắc màu mùa thu" ONGOING có 6 bài | So số hiển thị với `SELECT COUNT(*) FROM Submission WHERE competition_id = …` | | Hai con số bằng nhau | C |
+| TC-M02-02 | Đếm số bài nộp đúng | Seed: "Colors of Autumn" ONGOING có 6 bài | So số hiển thị với `SELECT COUNT(*) FROM Submission WHERE competition_id = …` | | Hai con số bằng nhau | C |
 | TC-M02-03 | Cập nhật số bài sau khi nộp mới | Ghi lại số bài hiện tại | 1. `student07` nộp 1 bài vào cuộc thi ONGOING 2. Đăng xuất, tải lại trang chủ | `ok_small.jpg` | Số bài tăng thêm 1 | T |
-| TC-M02-04 | Danh sách đạt giải cuộc thi trước | Cuộc thi GRADED "Phong cảnh quê hương" đã trao giải | Xem khối "Đạt giải" | | Hiện đúng tên học viên, tên giải, tên cuộc thi theo bảng `AwardIssued` | T |
-| TC-M02-05 | Xem chi tiết cuộc thi khi chưa đăng nhập | Chưa đăng nhập | Bấm vào 1 cuộc thi UPCOMING | | Hiện mô tả, thể lệ, ngày bắt đầu/kết thúc, giải thưởng; nút "Nộp bài" yêu cầu đăng nhập | T |
+| TC-M02-04 | Danh sách đạt giải cuộc thi trước | Cuộc thi GRADED "Hometown Landscapes" đã trao giải | Xem khối "Awarded" | | Hiện đúng tên học viên, tên giải, tên cuộc thi theo bảng `AwardIssued` | T |
+| TC-M02-05 | Xem chi tiết cuộc thi khi chưa đăng nhập | Chưa đăng nhập | Bấm vào 1 cuộc thi UPCOMING | | Hiện mô tả, thể lệ, ngày bắt đầu/kết thúc, giải thưởng; nút "Submit" yêu cầu đăng nhập | T |
 | TC-M02-06 | Giao diện điện thoại | Chưa đăng nhập | F12 → Toggle device → iPhone 12 | | Menu thu gọn (hamburger), không tràn ngang, ảnh co giãn | Th |
 
 ### M03 – Admin quản lý nhân viên (6 TC)
 
 | ID | Tiêu đề | Tiền điều kiện | Các bước | Dữ liệu | Kết quả mong đợi | Ưu tiên |
 |---|---|---|---|---|---|---|
-| TC-M03-01 | Thêm nhân viên hợp lệ | Đăng nhập `admin01` | 1. Nhân viên → Thêm mới 2. Nhập thông tin đăng nhập, cá nhân, công việc (ngày vào làm, lớp, môn), ghi chú 3. Lưu | username `staff09`, vai trò STAFF, ngày vào làm 01/09/2025, lớp "Hội họa K12", môn "Màu nước" | Báo thành công; nhân viên mới có trong danh sách; đăng nhập được bằng `staff09` | C |
-| TC-M03-02 | Trùng username | `staff01` đã tồn tại | Thêm mới với username `staff01` | | Báo "Tên đăng nhập đã tồn tại"; không tạo bản ghi | C |
+| TC-M03-01 | Thêm nhân viên hợp lệ | Đăng nhập `admin01` | 1. Nhân viên → Thêm mới 2. Nhập thông tin đăng nhập, cá nhân, công việc (ngày vào làm, lớp, môn), ghi chú 3. Lưu | username `staff09`, vai trò STAFF, ngày vào làm 01/09/2025, lớp "Painting K12", môn "Watercolor" | Báo thành công; nhân viên mới có trong danh sách; đăng nhập được bằng `staff09` | C |
+| TC-M03-02 | Trùng username | `staff01` đã tồn tại | Thêm mới với username `staff01` | | Báo "Username already exists"; không tạo bản ghi | C |
 | TC-M03-03 | Bỏ trống trường bắt buộc / email sai định dạng | Đăng nhập `admin01` | Để trống họ tên; email `abc@` → Lưu | | Báo lỗi tại từng ô; dữ liệu đã nhập không bị mất | T |
-| TC-M03-04 | Sửa thông tin nhân viên | Có `staff02` | Sửa lớp phụ trách → Lưu | "Hoạt hình K5" | Danh sách & chi tiết hiện giá trị mới | T |
-| TC-M03-05 | Tìm kiếm nhân viên | Seed 3 STAFF | Tìm theo tên một phần / theo môn | "Ngọc", "Màu nước" | Chỉ hiện các nhân viên khớp; không khớp → "Không có kết quả" | T |
+| TC-M03-04 | Sửa thông tin nhân viên | Có `staff02` | Sửa lớp phụ trách → Lưu | "Animation K5" | Danh sách & chi tiết hiện giá trị mới | T |
+| TC-M03-05 | Tìm kiếm nhân viên | Seed 3 STAFF | Tìm theo tên một phần / theo môn | "Ngoc", "Watercolor" | Chỉ hiện các nhân viên khớp; không khớp → "No results found" | T |
 | TC-M03-06 | Xóa nhân viên đã chấm bài | `staff01` đã có Evaluation | Bấm Xóa `staff01` → xác nhận | | Hệ thống chặn xóa (báo lý do) **hoặc** chỉ vô hiệu hóa tài khoản; Evaluation cũ vẫn còn tên người chấm | C |
 
 ### M04 – Admin quản lý học viên (5 TC)
@@ -219,41 +219,41 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 
 | ID | Tiêu đề | Tiền điều kiện | Các bước | Dữ liệu | Kết quả mong đợi | Ưu tiên |
 |---|---|---|---|---|---|---|
-| TC-M05-01 | Tạo cuộc thi hợp lệ kèm giải thưởng | Đăng nhập `staff01` | 1. Cuộc thi → Thêm 2. Nhập tên, mô tả, thể lệ, ngày bắt đầu D+3, kết thúc D+20 3. Thêm 3 giải (Nhất/Nhì/Ba) 4. Lưu | "Tranh Tết 2027" | Lưu thành công; trạng thái hiển thị UPCOMING; có 3 `CompetitionAward` | C |
-| TC-M05-02 | Ngày kết thúc trước ngày bắt đầu | Đăng nhập `staff01` | Nhập start D+10, end D+5 → Lưu | | Báo "Ngày kết thúc phải sau ngày bắt đầu"; không lưu | C |
+| TC-M05-01 | Tạo cuộc thi hợp lệ kèm giải thưởng | Đăng nhập `staff01` | 1. Cuộc thi → Thêm 2. Nhập tên, mô tả, thể lệ, ngày bắt đầu D+3, kết thúc D+20 3. Thêm 3 giải (Nhất/Nhì/Ba) 4. Lưu | "Lunar New Year 2027" | Lưu thành công; trạng thái hiển thị UPCOMING; có 3 `CompetitionAward` | C |
+| TC-M05-02 | Ngày kết thúc trước ngày bắt đầu | Đăng nhập `staff01` | Nhập start D+10, end D+5 → Lưu | | Báo "End date must be on or after the start date"; không lưu | C |
 | TC-M05-03 | Trạng thái tính đúng theo ngày | Seed đủ 3 loại | Xem danh sách cuộc thi | | UPCOMING / ONGOING / CLOSED / GRADED khớp bảng mục 4.2; cuộc thi có endDate = D vẫn là ONGOING | C |
 | TC-M05-04 | Sửa cuộc thi | Cuộc thi UPCOMING | Sửa thể lệ & thêm 1 giải → Lưu | | Chi tiết hiển thị nội dung mới | T |
-| TC-M05-05 | Xóa cuộc thi CHƯA có bài nộp | Cuộc thi UPCOMING "Chân dung gia đình" (0 bài) | Xóa → xác nhận | | Xóa thành công; các `CompetitionAward` của nó cũng bị xóa | T |
-| TC-M05-06 | Xóa cuộc thi ĐÃ có bài nộp | "Sắc màu mùa thu" có 6 bài | Xóa → xác nhận | | **Bị chặn**: "Không thể xóa cuộc thi đã có bài nộp"; dữ liệu và file ảnh còn nguyên | C |
-| TC-M05-07 | Tìm kiếm cuộc thi theo tên/trạng thái | Seed chuẩn | Lọc trạng thái CLOSED; tìm "mùa" | | Kết quả đúng | T |
+| TC-M05-05 | Xóa cuộc thi CHƯA có bài nộp | Cuộc thi UPCOMING "Family Portrait" (0 bài) | Xóa → xác nhận | | Xóa thành công; các `CompetitionAward` của nó cũng bị xóa | T |
+| TC-M05-06 | Xóa cuộc thi ĐÃ có bài nộp | "Colors of Autumn" có 6 bài | Xóa → xác nhận | | **Bị chặn**: "A competition with submissions cannot be deleted"; dữ liệu và file ảnh còn nguyên | C |
+| TC-M05-07 | Tìm kiếm cuộc thi theo tên/trạng thái | Seed chuẩn | Lọc trạng thái CLOSED; tìm "autumn" | | Kết quả đúng | T |
 | TC-M05-08 | XSS trong mô tả cuộc thi | Đăng nhập `staff01` | Mô tả = `<script>alert('XSS')</script>` → Lưu → mở trang chi tiết (cả khi GUEST) | | Không có hộp thoại alert; chuỗi hiển thị dạng chữ thường (Razor tự mã hóa HTML) | C |
 
 ### M06 – Bài nộp (14 TC)
 
 | ID | Tiêu đề | Tiền điều kiện | Các bước | Dữ liệu | Kết quả mong đợi | Ưu tiên |
 |---|---|---|---|---|---|---|
-| TC-M06-01 | Nộp bài hợp lệ | `student01`; "Sắc màu mùa thu" ONGOING; chưa nộp | 1. Cuộc thi → Nộp bài 2. Chọn ảnh 3. Nhập thơ/trích dẫn/câu chuyện + mô tả 4. Nộp | `ok_small.jpg`, thơ 4 câu | Thành công; bài có trong "Bài của tôi" với ngày nộp = hôm nay; file mới trong `uploads/` với **tên do hệ thống sinh** (Guid) | C |
+| TC-M06-01 | Nộp bài hợp lệ | `student01`; "Colors of Autumn" ONGOING; chưa nộp | 1. Cuộc thi → Nộp bài 2. Chọn ảnh 3. Nhập thơ/trích dẫn/câu chuyện + mô tả 4. Nộp | `ok_small.jpg`, thơ 4 câu | Thành công; bài có trong "My Submissions" với ngày nộp = hôm nay; file mới trong `uploads/` với **tên do hệ thống sinh** (Guid) | C |
 | TC-M06-02 | JPEG phần mở rộng viết hoa | Như trên (cuộc thi ONGOING khác) | Nộp | `ok_upper.JPEG` | Được chấp nhận | T |
-| TC-M06-03 | File PNG bị từ chối | Như TC-M06-01 | Nộp | `image.png` | "Chỉ chấp nhận file JPEG"; không lưu bài, không có file mới | C |
+| TC-M06-03 | File PNG bị từ chối | Như TC-M06-01 | Nộp | `image.png` | "Only JPEG images are accepted"; không lưu bài, không có file mới | C |
 | TC-M06-04 | File giả JPEG (đổi đuôi) | Như trên | Nộp | `fake_jpg.jpg` | Bị từ chối (kiểm tra content-type/magic bytes `FF D8 FF`) | C |
-| TC-M06-05 | File quá lớn | Như trên | Nộp | `big_8mb.jpg` | Báo "Dung lượng tối đa 5 MB" trên trang (không phải trang lỗi trắng/500) | C |
-| TC-M06-06 | File rỗng / không chọn file | Như trên | Nộp không chọn file; nộp `empty.jpg` | | Báo "Vui lòng chọn ảnh" / "File không hợp lệ" | T |
+| TC-M06-05 | File quá lớn | Như trên | Nộp | `big_8mb.jpg` | Báo "Maximum file size is 5 MB" trên trang (không phải trang lỗi trắng/500) | C |
+| TC-M06-06 | File rỗng / không chọn file | Như trên | Nộp không chọn file; nộp `empty.jpg` | | Báo "Please choose an image" / "Invalid file" | T |
 | TC-M06-07 | Tên file có ký tự lạ/tiếng Việt | Như trên | Nộp | `ten co dau & ky tu #lạ!.jpg` | Lưu thành công, ảnh hiển thị đúng (vì tên file lưu là Guid) | T |
 | TC-M06-08 | Path traversal qua tên file | Postman, có cookie phiên `student01` | Gửi multipart với `filename="../../evil.jpg"` (nội dung JPEG thật) | | Không có file nào được ghi ra ngoài `uploads/`; tên lưu là Guid hoặc request bị từ chối | C |
-| TC-M06-09 | Nộp bài ngay trước hạn (đúng ngày end date) | Cuộc thi "Hạn chót hôm nay" có endDate = D | Nộp lúc trong ngày D | `ok_small.jpg` | **Được chấp nhận** (hạn tính hết 23:59:59 ngày end date) | C |
-| TC-M06-10 | Nộp bài sau hạn | Cuộc thi CLOSED (endDate = D-1) | 1. Mở trang cuộc thi 2. Thử mở trực tiếp URL `/student/submissions/new?competitionId=…` và POST bằng Postman | | Nút Nộp bị ẩn/khóa; POST trực tiếp bị từ chối "Cuộc thi đã kết thúc"; không có bài mới | C |
-| TC-M06-11 | Nộp vào cuộc thi UPCOMING | Cuộc thi UPCOMING | Thử nộp (qua URL trực tiếp) | | Bị từ chối "Cuộc thi chưa bắt đầu" | T |
+| TC-M06-09 | Nộp bài ngay trước hạn (đúng ngày end date) | Cuộc thi "Deadline Today" có endDate = D | Nộp lúc trong ngày D | `ok_small.jpg` | **Được chấp nhận** (hạn tính hết 23:59:59 ngày end date) | C |
+| TC-M06-10 | Nộp bài sau hạn | Cuộc thi CLOSED (endDate = D-1) | 1. Mở trang cuộc thi 2. Thử mở trực tiếp URL `/student/submissions/new?competitionId=…` và POST bằng Postman | | Nút Nộp bị ẩn/khóa; POST trực tiếp bị từ chối "The competition has ended"; không có bài mới | C |
+| TC-M06-11 | Nộp vào cuộc thi UPCOMING | Cuộc thi UPCOMING | Thử nộp (qua URL trực tiếp) | | Bị từ chối "The competition has not started yet" | T |
 | TC-M06-12 | Sửa bài trước hạn (đổi ảnh + thơ) | `student01` có bài ở cuộc thi ONGOING | Bài của tôi → Sửa → chọn ảnh mới, sửa thơ → Lưu | | Ảnh mới hiển thị; file ảnh cũ bị xóa khỏi `uploads/` (hoặc được thay thế); thơ mới được lưu | C |
 | TC-M06-13 | Sửa/xóa bài sau hạn | `student02` có bài ở cuộc thi CLOSED | Mở bài → tìm nút Sửa/Xóa; thử POST trực tiếp `/student/submissions/{id}/edit` và `/delete` | | Không có nút; request trực tiếp bị từ chối; dữ liệu không đổi | C |
-| TC-M06-14 | Sửa/xóa bài của người khác (IDOR) | `student01` đăng nhập; biết id bài của `student03` | Đổi id trên URL `/student/submissions/{id}/edit` | id bài của student03 | 403 hoặc "Không tìm thấy"; không xem/sửa được bài người khác | C |
+| TC-M06-14 | Sửa/xóa bài của người khác (IDOR) | `student01` đăng nhập; biết id bài của `student03` | Đổi id trên URL `/student/submissions/{id}/edit` | id bài của student03 | 403 hoặc "Not found"; không xem/sửa được bài người khác | C |
 
-> Bổ sung (không đánh số riêng, gộp vào TC-M06-01 khi chạy): XSS/SQL trong ô thơ/trích dẫn – xem TC-M07-06. Một học viên chỉ được 1 bài/1 cuộc thi (nếu nhóm chọn quy tắc này) – nộp lần 2 phải báo "Bạn đã nộp bài, hãy dùng chức năng Sửa".
+> Bổ sung (không đánh số riêng, gộp vào TC-M06-01 khi chạy): XSS/SQL trong ô thơ/trích dẫn – xem TC-M07-06. Một học viên chỉ được 1 bài/1 cuộc thi (nếu nhóm chọn quy tắc này) – nộp lần 2 phải báo "You have already submitted to this competition. Use Edit instead.".
 
 ### M07 – Chấm bài (7 TC)
 
 | ID | Tiêu đề | Tiền điều kiện | Các bước | Dữ liệu | Kết quả mong đợi | Ưu tiên |
 |---|---|---|---|---|---|---|
-| TC-M07-01 | Xem danh sách bài theo cuộc thi | Đăng nhập `staff01` | Chấm bài → chọn "Phong cảnh quê hương" | | Thấy ảnh thu nhỏ, tên học viên, ngày nộp, thơ/trích dẫn, mô tả; tải ảnh gốc về được (download) | C |
+| TC-M07-01 | Xem danh sách bài theo cuộc thi | Đăng nhập `staff01` | Chấm bài → chọn "Hometown Landscapes" | | Thấy ảnh thu nhỏ, tên học viên, ngày nộp, thơ/trích dẫn, mô tả; tải ảnh gốc về được (download) | C |
 | TC-M07-02 | Chấm xếp loại BEST kèm nhận xét | Bài chưa chấm | Chọn BEST, nhập điểm mạnh, điểm yếu, cần cải thiện → Lưu | | Lưu `Evaluation`; bài hiển thị nhãn BEST; ghi nhận người chấm & ngày chấm | C |
 | TC-M07-03 | Sửa xếp loại đã chấm | Bài đã chấm GOOD | Đổi thành BETTER → Lưu | | Cập nhật, không tạo bản ghi trùng | T |
 | TC-M07-04 | Bài nộp trễ → DISQUALIFIED | Seed có 1 bài `submittedAt` > endDate (nhập qua seed) | Mở bài đó để chấm | | Hệ thống tự gán/ép DISQUALIFIED, không cho chọn loại khác (hoặc cảnh báo rõ) | C |
@@ -265,34 +265,34 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 
 | ID | Tiêu đề | Tiền điều kiện | Các bước | Dữ liệu | Kết quả mong đợi | Ưu tiên |
 |---|---|---|---|---|---|---|
-| TC-M08-01 | Trao giải cho bài BEST | Cuộc thi "Phong cảnh quê hương" (đã chấm), có bài BEST chưa đạt giải | Trao giải → chọn cuộc thi → chọn giải "Giải Nhất" → chọn bài → nhập nhận xét cuộc thi → Lưu | | Tạo `AwardIssued`; hiện ở trang chủ & trang "Giải thưởng" của học viên | C |
-| TC-M08-02 | Không trao giải khi cuộc thi chưa kết thúc | Cuộc thi ONGOING | Thử trao giải | | Bị chặn "Chỉ trao giải khi cuộc thi đã kết thúc" | T |
+| TC-M08-01 | Trao giải cho bài BEST | Cuộc thi "Hometown Landscapes" (đã chấm), có bài BEST chưa đạt giải | Trao giải → chọn cuộc thi → chọn giải "First Prize" → chọn bài → nhập nhận xét cuộc thi → Lưu | | Tạo `AwardIssued`; hiện ở trang chủ & trang "Awards" của học viên | C |
+| TC-M08-02 | Không trao giải khi cuộc thi chưa kết thúc | Cuộc thi ONGOING | Thử trao giải | | Bị chặn "Awards can only be issued after the competition has closed" | T |
 | TC-M08-03 | Không trao giải cho bài DISQUALIFIED | Có bài DISQUALIFIED | Thử chọn bài đó | | Bài không có trong danh sách chọn / bị từ chối | C |
-| TC-M08-04 | Không trao 1 giải cho 2 người (trùng) | "Giải Nhất" đã trao | Trao "Giải Nhất" lần 2 cho bài khác | | Báo giải đã được trao (trừ khi giải cho phép số lượng > 1) | T |
+| TC-M08-04 | Không trao 1 giải cho 2 người (trùng) | "First Prize" đã trao | Trao "First Prize" lần 2 cho bài khác | | Báo giải đã được trao (trừ khi giải cho phép số lượng > 1) | T |
 | TC-M08-05 | STUDENT xem giải theo cuộc thi | Đăng nhập `student05` | Giải thưởng → chọn cuộc thi | | Hiện danh sách người đạt giải, tên giải, nhận xét | T |
 
 ### M09 – Triển lãm & bán tranh (9 TC)
 
 | ID | Tiêu đề | Tiền điều kiện | Các bước | Dữ liệu | Kết quả mong đợi | Ưu tiên |
 |---|---|---|---|---|---|---|
-| TC-M09-01 | Tạo triển lãm | Đăng nhập `staff01` (hoặc `manager01`) | Triển lãm → Thêm: tên, địa điểm, ngày bắt đầu/kết thúc, mô tả → Lưu | "Triển lãm Xuân Hà Nội" | Lưu thành công; STUDENT thấy trong "Triển lãm sắp tới" | C |
-| TC-M09-02 | Gửi tranh BEST đi triển lãm với giá học viên đưa | Bài BEST của `student01` | Chọn bài → Gửi triển lãm → chọn triển lãm → nhập giá học viên đề xuất → Lưu | Giá 2.000.000 | Tạo `ExhibitionEntry` (sold = false, paidToStudent = false) | C |
+| TC-M09-01 | Tạo triển lãm | Đăng nhập `staff01` (hoặc `manager01`) | Triển lãm → Thêm: tên, địa điểm, ngày bắt đầu/kết thúc, mô tả → Lưu | "Hanoi Spring Exhibition" | Lưu thành công; STUDENT thấy trong "Upcoming Exhibitions" | C |
+| TC-M09-02 | Gửi tranh BEST đi triển lãm với giá học viên đưa | Bài BEST của `student01` | Chọn bài → Gửi triển lãm → chọn triển lãm → nhập giá học viên đề xuất → Lưu | Giá $200.00 | Tạo `ExhibitionEntry` (sold = false, paidToStudent = false) | C |
 | TC-M09-03 | Giá không hợp lệ | Như trên | Nhập giá âm / chữ / để trống | `-5`, `abc` | Báo lỗi; không lưu | T |
 | TC-M09-04 | Không gửi trùng 1 bài vào cùng 1 triển lãm | Bài đã có trong triển lãm | Gửi lại | | Báo trùng | T |
-| TC-M09-05 | Đánh dấu ĐÃ BÁN kèm khách hàng | Entry chưa bán | Sửa → tick Đã bán → nhập giá bán, ngày bán, thông tin khách (tên, SĐT, email, địa chỉ) → Lưu | Giá bán 2.500.000 | sold = true, soldPrice lưu đúng, tạo/gắn `Customer`; trạng thái "Đã bán – Chưa trả tiền học viên" | C |
+| TC-M09-05 | Đánh dấu ĐÃ BÁN kèm khách hàng | Entry chưa bán | Sửa → tick Đã bán → nhập giá bán, ngày bán, thông tin khách (tên, SĐT, email, địa chỉ) → Lưu | Giá bán $250.00 | sold = true, soldPrice lưu đúng, tạo/gắn `Customer`; trạng thái "Sold – Not paid to student" | C |
 | TC-M09-06 | Bán nhưng thiếu giá bán/khách hàng | Entry chưa bán | Tick Đã bán, để trống giá bán → Lưu | | Báo lỗi bắt buộc | C |
-| TC-M09-07 | Cập nhật ĐÃ TRẢ TIỀN cho học viên | Entry đã bán, chưa trả | Tick "Đã trả tiền học viên" (+ ngày trả) → Lưu; sau đó đăng nhập `student01` xem "Tranh triển lãm của tôi" | | Học viên thấy: giá, đã bán, giá khách trả, **đã được trả tiền** | C |
-| TC-M09-08 | Không cho "đã trả tiền" khi chưa bán | Entry chưa bán | Tick "Đã trả tiền" → Lưu | | Báo lỗi "Tranh chưa bán" | C |
+| TC-M09-07 | Cập nhật ĐÃ TRẢ TIỀN cho học viên | Entry đã bán, chưa trả | Tick "Paid to student" (+ ngày trả) → Lưu; sau đó đăng nhập `student01` xem "My Exhibition Entries" | | Học viên thấy: giá, đã bán, giá khách trả, **đã được trả tiền** | C |
+| TC-M09-08 | Không cho "Paid to student" khi chưa bán | Entry chưa bán | Tick "Paid to student" → Lưu | | Báo lỗi "Not sold yet" | C |
 | TC-M09-09 | Bỏ đánh dấu bán / xóa entry đã bán | Entry đã bán & đã trả | Thử xóa entry | | Bị chặn hoặc yêu cầu xác nhận rõ ràng; không mất thông tin khách hàng âm thầm | T |
 
 ### M10 – Báo cáo (5 TC)
 
 | ID | Tiêu đề | Tiền điều kiện | Các bước | Dữ liệu | Kết quả mong đợi | Ưu tiên |
 |---|---|---|---|---|---|---|
-| TC-M10-01 | Báo cáo bài BEST theo cuộc thi trong khoảng ngày | Đăng nhập `staff01`; seed có bài BEST rải rác ngày | Báo cáo → chọn cuộc thi "Phong cảnh quê hương", xếp loại BEST, từ ngày A đến ngày B → Xem | A, B bao quanh 2 trong 3 bài BEST | Hiện đúng 2 bài; tổng số đúng; khớp câu SQL kiểm tra | C |
+| TC-M10-01 | Báo cáo bài BEST theo cuộc thi trong khoảng ngày | Đăng nhập `staff01`; seed có bài BEST rải rác ngày | Báo cáo → chọn cuộc thi "Hometown Landscapes", xếp loại BEST, từ ngày A đến ngày B → Xem | A, B bao quanh 2 trong 3 bài BEST | Hiện đúng 2 bài; tổng số đúng; khớp câu SQL kiểm tra | C |
 | TC-M10-02 | Biên khoảng ngày (bao gồm 2 đầu) | Bài nộp đúng ngày A và đúng ngày B | Lọc A→B | | Cả 2 bài nằm trong kết quả (lọc từ 00:00 ngày A đến 23:59:59 ngày B) | C |
 | TC-M10-03 | Từ ngày > Đến ngày | | Nhập A sau B | | Báo lỗi khoảng ngày | T |
-| TC-M10-04 | Không có dữ liệu | | Chọn khoảng ngày năm 2000 | | Hiện "Không có dữ liệu", không lỗi | T |
+| TC-M10-04 | Không có dữ liệu | | Chọn khoảng ngày năm 2000 | | Hiện "No data", không lỗi | T |
 | TC-M10-05 | Báo cáo bán tranh | Seed 3 tranh đã bán | Báo cáo triển lãm → xem tổng doanh thu, đã trả/chưa trả học viên | | Tổng tiền = tổng soldPrice; số chưa trả khớp seed (1) | T |
 
 ### M11 – Manager (chỉ xem) & phân quyền chung (8 TC)
@@ -304,9 +304,9 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 | TC-M11-03 | Manager xem xếp loại/nhận xét của 1 bức tranh | `manager01` | Mở chi tiết 1 bài đã chấm | | Thấy xếp loại + điểm mạnh/yếu/cần cải thiện, không sửa được | T |
 | TC-M11-04 | Manager quản lý triển lãm (được phép sửa) | `manager01` | Thêm/sửa 1 triển lãm sắp tới | | Thành công (đề bài cho phép Manager quản lý triển lãm) | T |
 | TC-M11-05 | Manager không sửa được qua URL/POST | `manager01` | POST trực tiếp `/admin/students/{id}/delete` | | 403 | C |
-| TC-M11-06 | STUDENT truy cập URL của STAFF/ADMIN | `student01` | Mở `/staff/submissions`, `/admin/staff`, `/manager/reports` | | 403 (trang "Bạn không có quyền") cho cả 3 URL | C |
+| TC-M11-06 | STUDENT truy cập URL của STAFF/ADMIN | `student01` | Mở `/staff/submissions`, `/admin/staff`, `/manager/reports` | | 403 (trang "You do not have permission to access this page") cho cả 3 URL | C |
 | TC-M11-07 | GUEST truy cập trang cần đăng nhập | Chưa đăng nhập | Mở `/student/submissions` | | Chuyển về `/login`; sau đăng nhập quay lại đúng trang | C |
-| TC-M11-08 | STUDENT xem tranh triển lãm & nhận xét của mình | `student01` | Mở "Kết quả của tôi" và "Tranh triển lãm" | | Thấy xếp loại + nhận xét tất cả bài đã nộp; thấy giá, đã bán chưa, đã trả tiền chưa, khách trả bao nhiêu; **chỉ** dữ liệu của chính mình (trang "Tất cả bài BEST" thì thấy của mọi người) | C |
+| TC-M11-08 | STUDENT xem tranh triển lãm & nhận xét của mình | `student01` | Mở "My Results" và "Exhibition Entries" | | Thấy xếp loại + nhận xét tất cả bài đã nộp; thấy giá, đã bán chưa, đã trả tiền chưa, khách trả bao nhiêu; **chỉ** dữ liệu của chính mình (trang "All Best Works" thì thấy của mọi người) | C |
 
 ### Tổng hợp số lượng
 
@@ -346,13 +346,13 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 
 | # | Tên cuộc thi | startDate | endDate | Trạng thái | Giải thưởng | Bài nộp | Ghi chú |
 |---|---|---|---|---|---|---|---|
-| 1 | Phong cảnh quê hương | D-60 | D-30 | GRADED | Nhất, Nhì, Ba | 8 | Đã chấm đủ 6 loại (có 1 bài nộp trễ → DISQUALIFIED); đã trao 3 giải |
-| 2 | Động vật hoang dã | D-45 | D-15 | GRADED | Nhất, Nhì, Ba, Khuyến khích | 6 | Đã chấm, đã trao 2 giải |
-| 3 | Thành phố về đêm | D-25 | D-1 | CLOSED | Nhất, Nhì | 5 | **Chưa chấm** – để demo chấm bài |
-| 4 | Sắc màu mùa thu | D-10 | D+10 | ONGOING | Nhất, Nhì, Ba | 6 | Dùng test sửa/xóa bài, xóa cuộc thi bị chặn |
-| 5 | Hạn chót hôm nay | D-7 | **D** | ONGOING | Nhất | 2 | Test biên nộp đúng ngày end date |
-| 6 | Tranh Tết 2027 | D+5 | D+30 | UPCOMING | Nhất, Nhì, Ba | 0 | |
-| 7 | Chân dung gia đình | D+15 | D+45 | UPCOMING | Nhất | 0 | Test xóa cuộc thi chưa có bài |
+| 1 | Hometown Landscapes | D-60 | D-30 | GRADED | First, Second, Third | 8 | Đã chấm đủ 6 loại (có 1 bài nộp trễ → DISQUALIFIED); đã trao 3 giải |
+| 2 | Wildlife | D-45 | D-15 | GRADED | First, Second, Third, Honorable Mention | 6 | Đã chấm, đã trao 2 giải |
+| 3 | City at Night | D-25 | D-1 | CLOSED | First, Second | 5 | **Chưa chấm** – để demo chấm bài |
+| 4 | Colors of Autumn | D-10 | D+10 | ONGOING | First, Second, Third | 6 | Dùng test sửa/xóa bài, xóa cuộc thi bị chặn |
+| 5 | Deadline Today | D-7 | **D** | ONGOING | First | 2 | Test biên nộp đúng ngày end date |
+| 6 | Lunar New Year 2027 | D+5 | D+30 | UPCOMING | First, Second, Third | 0 | |
+| 7 | Family Portrait | D+15 | D+45 | UPCOMING | First | 0 | Test xóa cuộc thi chưa có bài |
 
 **Tổng bài nộp: 27** (thêm 1 bài trễ hạn đã nằm trong cuộc thi #1). Xếp loại phân bố cho cuộc thi #1–#2: BEST 4, BETTER 3, GOOD 3, MODERATE 2, NORMAL 1, DISQUALIFIED 1.
 
@@ -360,8 +360,8 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 
 | Triển lãm | Thời gian | Entry | Đã bán | Đã trả học viên |
 |---|---|---|---|---|
-| Triển lãm Mỹ thuật Trẻ (Hà Nội) | D-20 → D-5 (đã diễn ra) | 5 | 3 | 2 (1 chưa trả – test TC-M09-07) |
-| Triển lãm Xuân Sài Gòn | D+20 → D+27 (sắp tới) | 3 | 0 | 0 |
+| Young Artists Exhibition (Hanoi) | D-20 → D-5 (đã diễn ra) | 5 | 3 | 2 (1 chưa trả – test TC-M09-07) |
+| Saigon Spring Exhibition | D+20 → D+27 (sắp tới) | 3 | 0 | 0 |
 | **Customer** | 3 khách hàng (tên/SĐT/email giả, VD `khachhang1@example.com`) | | | |
 
 ### 4.4. Ảnh mẫu & bản quyền
@@ -372,7 +372,8 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
   2. **Unsplash** (unsplash.com/license), **Pexels** (pexels.com/license), **Pixabay** – giấy phép free, cho phép dùng không cần xin phép.
 - **Bắt buộc ghi nguồn**: file `Database/seed-images/CREDITS.txt` theo mẫu: `fileName | nguồn | tác giả | link | giấy phép`. Đưa đoạn "Nguồn ảnh" vào User Guide.
 - KHÔNG dùng ảnh lấy từ Google Images, Pinterest, tranh của họa sĩ nổi tiếng còn bản quyền, ảnh có logo/thương hiệu, ảnh có khuôn mặt người thật dễ nhận diện.
-- Thơ/trích dẫn mẫu: tự viết (2–4 câu) hoặc trích ca dao/thơ đã thuộc phạm vi công cộng; ghi "Sưu tầm" nếu là ca dao.
+- Thơ/trích dẫn mẫu: **tiếng Anh**, tự viết (2–4 câu) hoặc trích tác phẩm đã thuộc phạm vi công cộng (ví dụ William Blake, Emily Dickinson) – ghi tên tác giả. Thêm 2–3 bài có thơ tiếng Việt có dấu để kiểm tra lưu & hiển thị Unicode.
+- Tên người mẫu: tiếng Việt **không dấu** (ví dụ Nguyen Minh Khoa); tên cuộc thi, giải, lớp, khóa học, triển lãm: tiếng Anh.
 
 ### 4.5. Danh sách tài khoản test (đưa vào README.txt & Installation Guide)
 
@@ -423,9 +424,9 @@ Checklist nội dung tối thiểu:
 - [ ] `StaffService.CreateAsync` / `StudentService.CreateAsync` – trùng username bị từ chối; mật khẩu được mã hóa BCrypt
 
 **B. Kiểm tra mức màn hình/đơn vị giao diện (QA)**
-- [ ] Mỗi form: trường bắt buộc có dấu `*` và thông báo lỗi bằng tiếng Việt/Anh thống nhất
+- [ ] Mỗi form: trường bắt buộc có dấu `*` và thông báo lỗi bằng **tiếng Anh** thống nhất
 - [ ] Mỗi form: nhập sai không làm mất dữ liệu đã gõ
-- [ ] Mỗi danh sách: phân trang, tìm kiếm, "Không có kết quả"
+- [ ] Mỗi danh sách: phân trang, tìm kiếm, "No results found"
 - [ ] Mỗi nút Xóa: có hộp thoại xác nhận
 - [ ] Mỗi trang: tiêu đề đúng, menu đúng vai trò
 - [ ] Ảnh hiển thị đúng, có ảnh thay thế khi file bị thiếu
@@ -471,7 +472,7 @@ Checklist nội dung tối thiểu:
 
 - Công cụ: **Microsoft Word / WPS Writer** (file .docx, xuất thêm PDF), **draw.io (diagrams.net)** cho ERD/flowchart/sơ đồ, **Excel** cho Task Sheet & test case, Snipping Tool cho ảnh màn hình.
 - Định dạng thống nhất: font Times New Roman 13 (hoặc Calibri 12), heading dùng Style Heading 1/2/3 (để tạo mục lục tự động), lề 2.5 cm, đánh số trang, header ghi "Institute of Fine Arts – eProject".
-- Ngôn ngữ: theo yêu cầu của trung tâm (mặc định **tiếng Anh** cho bản nộp; nháp có thể viết tiếng Việt rồi dịch). Thuật ngữ vai trò/thực thể giữ nguyên tiếng Anh như mục quy ước.
+- Ngôn ngữ: bản nộp bằng **tiếng Anh** (team nước ngoài chấm); nháp viết tiếng Việt, dịch sang tiếng Anh khi chốt (Day 25–27). Ảnh chụp màn hình lấy từ giao diện tiếng Anh. Thuật ngữ vai trò/thực thể giữ nguyên tiếng Anh như mục quy ước.
 - Tất cả tài liệu lưu trong repo thư mục `docs/` (nháp) → bản cuối ghép thành **Project Report** (có Synopsis + toàn bộ tài liệu + phụ lục code chính).
 - Quy trình: **người được giao viết nháp → người review góp ý (comment trong Word) → người viết sửa → QA ghép vào Project Report**.
 
@@ -528,8 +529,8 @@ Vị trí: `CompetitionStatusResolver.Resolve()`.
 ```
 FUNCTION canModifySubmission(student, competition, submission?, now)
     status ← getStatus(competition, now.date)
-    IF status = "UPCOMING" THEN THROW "Cuộc thi chưa bắt đầu"
-    IF status <> "ONGOING" THEN THROW "Cuộc thi đã kết thúc, không thể nộp/sửa/xóa"
+    IF status = "UPCOMING" THEN THROW "The competition has not started yet"
+    IF status <> "ONGOING" THEN THROW "The competition has ended. Submissions can no longer be added, edited or deleted."
     IF submission ≠ null AND submission.student ≠ student THEN THROW AccessDenied   // chống IDOR
     RETURN true
 END FUNCTION
@@ -540,15 +541,15 @@ Vị trí: `SubmissionService.CreateAsync/UpdateAsync/DeleteAsync()` – gọi *
 
 ```
 FUNCTION storeImage(multipartFile)
-    IF file is empty THEN THROW "Vui lòng chọn ảnh"
-    IF file.size > 5 MB THEN THROW "Dung lượng tối đa 5 MB"
+    IF file is empty THEN THROW "Please choose an image"
+    IF file.size > 5 MB THEN THROW "Maximum file size is 5 MB"
     ext ← lowercase(extension(file.originalName))
-    IF ext NOT IN {"jpg","jpeg"} THEN THROW "Chỉ chấp nhận JPEG"
-    IF file.contentType ≠ "image/jpeg" THEN THROW "Chỉ chấp nhận JPEG"
-    IF first 3 bytes ≠ FF D8 FF THEN THROW "File không phải JPEG thật"
+    IF ext NOT IN {"jpg","jpeg"} THEN THROW "Only JPEG images are accepted"
+    IF file.contentType ≠ "image/jpeg" THEN THROW "Only JPEG images are accepted"
+    IF first 3 bytes ≠ FF D8 FF THEN THROW "The file is not a valid JPEG image"
     newName ← Guid.NewGuid() + ".jpg"                    // bỏ hoàn toàn tên gốc → chống path traversal & ký tự lạ
     target ← normalize(uploadDir / newName)
-    IF target NOT startsWith uploadDir THEN THROW "Đường dẫn không hợp lệ"
+    IF target NOT startsWith uploadDir THEN THROW "Invalid file path"
     copy(file → target)                          // FileStream + IFormFile.CopyToAsync
     RETURN newName                               // lưu tên này vào Submission.imagePath
 END FUNCTION
@@ -577,8 +578,8 @@ FUNCTION listCandidatesForExhibition(exhibition)
 END FUNCTION
 
 FUNCTION addToExhibition(exhibition, submission, studentPrice)
-    IF studentPrice <= 0 THEN THROW "Giá không hợp lệ"
-    IF exists(exhibition, submission) THEN THROW "Tranh đã có trong triển lãm"
+    IF studentPrice <= 0 THEN THROW "Invalid price"
+    IF exists(exhibition, submission) THEN THROW "This painting is already in an exhibition"
     SAVE ExhibitionEntry(exhibition, submission, studentPrice, sold=false, paidToStudent=false)
 END FUNCTION
 ```
@@ -587,15 +588,15 @@ END FUNCTION
 
 ```
 FUNCTION markSold(entry, soldPrice, soldDate, customerInfo)
-    IF entry.sold THEN THROW "Tranh đã bán"
-    IF soldPrice <= 0 OR customerInfo missing THEN THROW "Thiếu giá bán / khách hàng"
+    IF entry.sold THEN THROW "Sold"
+    IF soldPrice <= 0 OR customerInfo missing THEN THROW "Sold price and customer are required"
     customer ← findOrCreate Customer(customerInfo)
     entry.sold ← true; entry.soldPrice ← soldPrice; entry.soldDate ← soldDate; entry.customer ← customer
     SAVE entry
 END FUNCTION
 
 FUNCTION markPaidToStudent(entry, paidDate)
-    IF NOT entry.sold THEN THROW "Tranh chưa bán, không thể trả tiền"
+    IF NOT entry.sold THEN THROW "The painting has not been sold, so payment cannot be recorded"
     entry.paidToStudent ← true; entry.paidDate ← paidDate
     SAVE entry
 END FUNCTION
@@ -605,7 +606,7 @@ END FUNCTION
 
 ```
 FUNCTION reportBest(competitionId, fromDate, toDate, grade = "BEST")
-    IF fromDate > toDate THEN THROW "Khoảng ngày không hợp lệ"
+    IF fromDate > toDate THEN THROW "Invalid date range"
     RETURN submissions WHERE competition = competitionId
                        AND submittedAt >= fromDate 00:00:00
                        AND submittedAt <  (toDate + 1 day) 00:00:00     // bao gồm trọn ngày cuối
@@ -698,8 +699,8 @@ Người A (QA) đóng gói, người B (FE2) kiểm tra **trên máy khác**; s
 |---|---|---|---|---|
 | 0:00–1:30 | Mở đầu | BE1 | Giới thiệu nhóm, bài toán (quản lý giấy → website), kiến trúc (ASP.NET Core MVC + Razor + EF Core + SQL Server), ERD 1 slide | — |
 | 1:30–3:00 | GUEST – Trang chủ | BE2 | Cuộc thi sắp/đang diễn ra, số bài nộp, danh sách đạt giải; xem chi tiết cuộc thi | (không đăng nhập) |
-| 3:00–5:30 | STUDENT | FE1 | Đăng nhập → xem cuộc thi "Sắc màu mùa thu" → nộp JPEG + thơ → sửa bài → **thử nộp file PNG (bị chặn)** → **cuộc thi đã kết thúc: không có nút sửa** → xem kết quả/nhận xét → xem tranh triển lãm (đã bán, đã được trả tiền) | `student01` |
-| 5:30–9:00 | STAFF | BE1 | Tạo cuộc thi + giải → chấm bài "Thành phố về đêm" (BEST + nhận xét) → **thử xóa cuộc thi có bài (bị chặn)** → trao giải → gửi tranh BEST đi triển lãm với giá học viên → đánh dấu đã bán + khách hàng → đã trả tiền → báo cáo BEST theo khoảng ngày | `staff01` |
+| 3:00–5:30 | STUDENT | FE1 | Đăng nhập → xem cuộc thi "Colors of Autumn" → nộp JPEG + thơ → sửa bài → **thử nộp file PNG (bị chặn)** → **cuộc thi đã kết thúc: không có nút sửa** → xem kết quả/nhận xét → xem tranh triển lãm (đã bán, đã được trả tiền) | `student01` |
+| 5:30–9:00 | STAFF | BE1 | Tạo cuộc thi + giải → chấm bài "City at Night" (BEST + nhận xét) → **thử xóa cuộc thi có bài (bị chặn)** → trao giải → gửi tranh BEST đi triển lãm với giá học viên → đánh dấu đã bán + khách hàng → đã trả tiền → báo cáo BEST theo khoảng ngày | `staff01` |
 | 9:00–10:30 | ADMIN | FE2 | Thêm nhân viên/học viên, tìm kiếm, khóa tài khoản | `admin01` |
 | 10:30–12:00 | MANAGER | QA | Xem toàn bộ (chỉ đọc), xem xếp loại 1 bức tranh, quản lý triển lãm sắp tới | `manager01` |
 | 12:00–13:30 | Bảo mật & chất lượng | QA + BE1 | STUDENT mở URL `/staff/...` → 403; mật khẩu BCrypt trong DB; upload đổi tên Guid; `dotnet test` xanh; số liệu test (83 TC) | — |

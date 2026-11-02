@@ -6,12 +6,12 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 namespace InstituteOfFineArts.Web.Data.Configurations;
 
 /// <summary>
-/// Cấu hình EF Core cho bảng submission: kiểu cột, khóa, ràng buộc CHECK, index, quan hệ.
-/// Thiết kế chi tiết: docs/plan/02_Kien_truc_Cong_nghe_CSDL.md mục 6.2.
+/// EF Core configuration of table submission: column types, keys, CHECK constraints, indexes and relationships.
+/// Design: docs/plan/02_Kien_truc_Cong_nghe_CSDL.md section 6.2.
 /// </summary>
 public class SubmissionConfiguration : IEntityTypeConfiguration<Submission>
 {
-    /// <summary>Áp dụng cấu hình cho entity Submission.</summary>
+    /// <summary>Applies the configuration to the Submission entity.</summary>
     public void Configure(EntityTypeBuilder<Submission> b)
     {
         b.ToTable("submission", t =>
@@ -20,7 +20,7 @@ public class SubmissionConfiguration : IEntityTypeConfiguration<Submission>
             t.HasCheckConstraint("CK_submission_text_type", "[text_type] IN ('POEM','QUOTATION','STORY','OTHER')");
         });
 
-        // Kiểu dữ liệu và độ dài theo BR-19
+        // Column types and lengths according to BR-19
         b.Property(x => x.Title).HasMaxLength(150);
         b.Property(x => x.ImagePath).HasMaxLength(500).IsUnicode(false);
         b.Property(x => x.ThumbnailPath).HasMaxLength(500).IsUnicode(false);
@@ -30,13 +30,13 @@ public class SubmissionConfiguration : IEntityTypeConfiguration<Submission>
         b.Property(x => x.Description).HasMaxLength(2000);
         b.Property(x => x.SubmittedAt).HasPrecision(0).HasDefaultValueSql("SYSDATETIME()");
 
-        // Mỗi học viên tối đa 1 bài / 1 cuộc thi (BR-15)
+        // At most one submission per student per competition (BR-15)
         b.HasIndex(x => new { x.CompetitionId, x.StudentId }).IsUnique().HasDatabaseName("UX_submission_competition_student");
-        // Báo cáo bài nộp theo khoảng thời gian cho 1 cuộc thi
+        // Report of submissions within a date range for one competition
         b.HasIndex(x => new { x.CompetitionId, x.SubmittedAt }).HasDatabaseName("IX_submission_competition_submitted");
         b.HasIndex(x => x.StudentId).HasDatabaseName("IX_submission_student");
 
-        // Quan hệ tới cuộc thi và học viên
+        // Relationships to competition and student
         b.HasOne(x => x.Competition).WithMany(c => c.Submissions)
             .HasForeignKey(x => x.CompetitionId).OnDelete(DeleteBehavior.Restrict);
         b.HasOne(x => x.Student).WithMany(s => s.Submissions)

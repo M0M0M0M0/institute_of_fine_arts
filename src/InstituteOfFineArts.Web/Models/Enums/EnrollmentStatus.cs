@@ -1,23 +1,23 @@
 namespace InstituteOfFineArts.Web.Models.Enums;
 
 /// <summary>
-/// Tình trạng học tập của học viên.
+/// Study status of a student.
 /// </summary>
 /// <remarks>
-/// Tên giá trị viết HOA để khớp đúng chuỗi lưu trong CSDL (cột VARCHAR + CHECK constraint)
-/// và tên vai trò dùng trong [Authorize(Roles = "...")].
+/// Member names are UPPER CASE so they match the strings stored in the database (VARCHAR column + CHECK constraint)
+/// and the role names used in [Authorize(Roles = "...")].
 /// </remarks>
 public enum EnrollmentStatus
 {
-    /// <summary>Đang học</summary>
+    /// <summary>Currently studying</summary>
     STUDYING,
 
-    /// <summary>Đã tốt nghiệp</summary>
+    /// <summary>Graduated</summary>
     GRADUATED,
 
-    /// <summary>Bảo lưu / tạm dừng</summary>
+    /// <summary>Suspended / on hold</summary>
     SUSPENDED,
 
-    /// <summary>Đã nghỉ học</summary>
+    /// <summary>Dropped out</summary>
     DROPPED
 }

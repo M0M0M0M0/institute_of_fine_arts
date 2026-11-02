@@ -3,35 +3,35 @@ using Microsoft.EntityFrameworkCore;
 namespace InstituteOfFineArts.Web.Data.Seed;
 
 /// <summary>
-/// Tạo CSDL và dữ liệu mẫu khi chạy ở môi trường Development (được gọi sẵn trong Program.cs).
-/// Lớp được tách thành nhiều file (partial) để 2 người viết song song không đụng nhau:
+/// Creates the database and sample data when running in the Development environment (called from Program.cs).
+/// The class is split into several files (partial) so two people can work on it in parallel without conflicts:
 /// <list type="bullet">
-/// <item><c>DbSeeder.Accounts.cs</c> – tài khoản mẫu (task BE1-01)</item>
-/// <item><c>DbSeeder.SampleData.cs</c> – cuộc thi, bài nộp, chấm, giải, triển lãm (task BE2-01)</item>
+/// <item><c>DbSeeder.Accounts.cs</c> – sample accounts (task BE1-01)</item>
+/// <item><c>DbSeeder.SampleData.cs</c> – competitions, submissions, grading, awards, exhibitions (task BE2-01)</item>
 /// </list>
 /// </summary>
 public static partial class DbSeeder
 {
     /// <summary>
-    /// Áp dụng migration còn thiếu, sau đó thêm dữ liệu mẫu nếu CSDL còn trống.
+    /// Applies pending migrations, then inserts sample data when the database is still empty.
     /// </summary>
-    /// <param name="services">Service provider của ứng dụng để lấy AppDbContext</param>
+    /// <param name="services">Application service provider used to resolve AppDbContext</param>
     public static async Task SeedAsync(IServiceProvider services)
     {
-        // Tạo scope riêng vì AppDbContext được đăng ký dạng Scoped
+        // AppDbContext is registered as Scoped, so create a dedicated scope
         using var scope = services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        // Tạo CSDL (nếu chưa có) và áp dụng các migration mới
+        // Create the database (if missing) and apply new migrations
         await db.Database.MigrateAsync();
 
-        // Bước 1: tài khoản (chỉ thêm khi bảng account còn trống)
+        // Step 1: accounts (only when the account table is empty)
         if (!await db.Accounts.AnyAsync())
         {
             await SeedAccountsAsync(db);
         }
 
-        // Bước 2: dữ liệu nghiệp vụ (chỉ thêm khi chưa có cuộc thi nào)
+        // Step 2: business data (only when there is no competition yet)
         if (!await db.Competitions.AnyAsync())
         {
             await SeedSampleDataAsync(db);

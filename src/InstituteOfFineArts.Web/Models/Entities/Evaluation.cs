@@ -3,34 +3,34 @@ using InstituteOfFineArts.Web.Models.Enums;
 namespace InstituteOfFineArts.Web.Models.Entities;
 
 /// <summary>
-/// Kết quả chấm một bài dự thi (bảng evaluation).
+/// Grading result of a submission (table evaluation).
 /// </summary>
 public class Evaluation : BaseEntity
 {
-    /// <summary>Khóa ngoại tới bài dự thi (duy nhất – mỗi bài tối đa 1 đánh giá).</summary>
+    /// <summary>Foreign key to the submission (unique – at most one evaluation per submission).</summary>
     public long SubmissionId { get; set; }
 
-    /// <summary>Id hồ sơ nhân sự chấm/sửa cuối cùng.</summary>
+    /// <summary>Id of the staff profile that graded / last edited the evaluation.</summary>
     public long EvaluatedBy { get; set; }
 
-    /// <summary>Xếp loại.</summary>
+    /// <summary>Rating.</summary>
     public Rating Rating { get; set; }
 
-    /// <summary>Điểm mạnh – bắt buộc khi không bị loại (BR-23).</summary>
+    /// <summary>Positive points – required unless disqualified (BR-23).</summary>
     public string? PositivePoints { get; set; }
 
-    /// <summary>Điểm yếu – bắt buộc khi bị loại, dùng làm lý do (BR-23).</summary>
+    /// <summary>Negative points – required when disqualified, used as the reason (BR-23).</summary>
     public string? NegativePoints { get; set; }
 
-    /// <summary>Điểm cần cải thiện.</summary>
+    /// <summary>Areas of improvement.</summary>
     public string? ImprovementAreas { get; set; }
 
-    /// <summary>Thời điểm chấm.</summary>
+    /// <summary>Grading time.</summary>
     public DateTime EvaluatedAt { get; set; }
 
-    /// <summary>Bài dự thi.</summary>
+    /// <summary>Submission.</summary>
     public Submission Submission { get; set; } = null!;
 
-    /// <summary>Nhân sự chấm bài.</summary>
+    /// <summary>Staff member who graded.</summary>
     public StaffProfile EvaluatedByStaff { get; set; } = null!;
 }
