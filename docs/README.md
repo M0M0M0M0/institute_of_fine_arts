@@ -14,4 +14,5 @@
 | `feedback/` | Phiếu phản hồi điền khi nộp | BE |
 | `TaskSheet.xlsx` | Bảng phân công & theo dõi công việc | T1 cập nhật hằng ngày |
 | `Mo_ta_de_tai.docx` | Mô tả đề tài (bối cảnh, mục tiêu, phạm vi, quy trình, quy tắc, công nghệ) | BE |
+| `Phan_cong_task.xlsx` | Chia 46 task cho BE1, BE2, FE1, FE2 + quy tắc làm song song không đụng file của nhau | BE1 (cả nhóm cập nhật cột Trạng thái) |
 | `Danh_sach_chuc_nang.xlsx` | Danh sách 100 chức năng (CN01–CN100) theo 12 nhóm + sheet tổng hợp | BE, cả nhóm điền cột Người phụ trách |
