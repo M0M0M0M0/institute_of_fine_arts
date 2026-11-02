@@ -119,22 +119,22 @@ Ký hiệu: **BE**, **FE**, **T1**, **T2**. Việc **in đậm** nằm trên đ�
 | Day 1 | Cài môi trường: .NET SDK 10, Visual Studio Community/VS Code, `dotnet-ef`, SQL Server + SSMS, Git; clone repo thử | Cả nhóm (BE hỗ trợ T1/T2) | Ảnh chụp mỗi máy chạy `dotnet --version`, `git --version` | – |
 | Day 2 | **Phân tích BA**: liệt kê chức năng theo vai trò Admin/Manager/Staff/Student/Guest, vẽ Use Case | BE + FE | Danh sách chức năng, sơ đồ Use Case (draw.io) | Day 1 |
 | Day 2 | Lập bảng thuật ngữ (Competition, Submission, Rating…), gom câu hỏi chưa rõ | T1 | Glossary, danh sách câu hỏi DOUBT | Day 1 |
-| Day 2 | Tìm/tạo 40–60 ảnh mẫu JPEG (tranh tự vẽ, ảnh bản quyền tự do) + thơ/trích dẫn đi kèm | T2 | Thư mục `sample-images/` + file Excel mô tả | – |
+| Day 2 | Tìm/tạo 40–60 ảnh mẫu JPEG (tranh tự vẽ, ảnh bản quyền tự do) + thơ/trích dẫn đi kèm | T2 | Thư mục `database/seed-images/` + `CREDITS.txt` + file Excel mô tả | – |
 | Day 3 | **Chốt CRS**: user story + acceptance criteria cho M01–M11; phân loại Must/Should/Could (M12+ = Could) | BE | Customer Requirement Specification (nháp 1), Backlog trên GitHub | Day 2 |
 | Day 3 | Gửi email **"DOUBT:"** nếu còn điểm chưa rõ (ví dụ: ai được quản lý triển lãm) | BE | Email DOUBT (nếu cần) | Day 2 |
-| Day 3 | Soạn nháp Problem Definition (dựa trên phần Hiện trạng/Giải pháp của đề) | T1 (FE review) | `docs/01_Problem_Definition.docx` nháp | Day 2 |
+| Day 3 | Soạn nháp Problem Definition (dựa trên phần Hiện trạng/Giải pháp của đề) | T1 (FE review) | `docs/documentation/03_ProblemDefinition.docx` nháp | Day 2 |
 | Day 3 | Liệt kê danh sách màn hình theo vai trò, phác thảo wireframe trên giấy | FE + T2 | Danh sách ~30 màn hình, ảnh chụp phác thảo | Day 2 |
 | Day 4 | **Thiết kế ERD** (User/Role, Staff, Student, Competition, Award, Submission, Evaluation, AwardIssued, Exhibition, ExhibitionEntry, Customer) | BE | ERD v1 (draw.io) | Day 3 |
 | Day 4 | Wireframe chi tiết trên Figma/draw.io: Home, Login, layout Admin/Staff/Student | FE | Wireframe v1 | Day 3 |
 | Day 4 | Soạn nháp GUI Standards (màu, font, nút, thông báo, định dạng ngày dd/MM/yyyy, tiền VNĐ) | T2 (FE kèm) | GUI Standards Document nháp | Day 3 |
-| Day 4 | Viết mẫu Test Case (template Excel: ID, module, bước, dữ liệu, kết quả mong đợi, thực tế, Pass/Fail) | T1 (BE kèm) | `docs/test/TestCase_Template.xlsx` | Day 3 |
+| Day 4 | Viết mẫu Test Case (template Excel: ID, module, bước, dữ liệu, kết quả mong đợi, thực tế, Pass/Fail) | T1 (BE kèm) | `docs/testing/TestCases_FineArts.xlsx` | Day 3 |
 | Day 5 | **Chốt ERD v2 + script SQL** (bảng, khóa, ràng buộc, CHECK cho rating) | BE | `database/01_schema.sql`, ERD final | Day 4 |
 | Day 5 | Wireframe các màn hình còn lại (Submission, Evaluation, Exhibition, Reports, Manager) | FE | Wireframe v2 (đủ màn hình) | Day 4 |
 | Day 5 | Nhập dữ liệu mẫu vào Excel theo cấu trúc bảng (5 staff, 20 student, 4 cuộc thi quá khứ/đang/sắp diễn ra) | T2 (BE kèm) | `database/seed_data.xlsx` | Day 5 (sau khi chốt bảng) |
 | Day 5 | Viết test case M01 (đăng nhập, sai mật khẩu, truy cập trái quyền) | T1 | Test case M01 | Day 3 |
 | Day 6 | **Tạo skeleton ASP.NET Core MVC**: solution, 4 Area, thư mục `Services/Data/Models/ViewModels`, kết nối SQL Server, 11 Entity + `AppDbContext`, migration `InitialCreate` | BE | Project chạy được, push `develop` | Day 5 |
 | Day 6 | Layout Razor: `_Layout.cshtml`, partial header/footer/sidebar theo vai trò, trang lỗi 403/404 | FE | `Views/Shared/*`, CSS chung | Day 6 (skeleton) |
-| Day 6 | Chuyển seed Excel → câu lệnh `INSERT` | T2 (BE review) | `database/02_seed.sql` | Day 5 |
+| Day 6 | Đưa dữ liệu mẫu từ Excel vào `Data/Seed/DbSeeder.cs` (C#, mật khẩu băm BCrypt) | T2 (BE review) | `Data/Seed/DbSeeder.cs` | Day 5 |
 | Day 6 | Soạn nháp Project Plan (lấy từ tài liệu này) + Task Sheet tuần 1 | T1 | Project Plan nháp, Task Sheet | – |
 | Day 7 | **M01 Auth**: Cookie Authentication, BCrypt, đăng nhập/đăng xuất, phân quyền URL theo 4 vai trò, đổi mật khẩu | BE | M01 Done, tài khoản mẫu cho 4 vai trò | Day 6 |
 | Day 7 | Trang Login + menu động theo vai trò | FE | `login.html`, menu | Day 6 |
@@ -148,7 +148,7 @@ Ký hiệu: **BE**, **FE**, **T1**, **T2**. Việc **in đậm** nằm trên đ�
 | Day 8 | Sprint 2 Planning | BE | Sprint backlog | MS1 |
 | Day 8 | **M03 Admin – quản lý Staff** (thêm/sửa/xóa/tìm kiếm, thông tin đăng nhập, cá nhân, công việc: ngày vào làm, lớp, môn, ghi chú) | BE (service/controller), FE (View list/form) | M03 Done | M01 |
 | Day 8 | Viết test case M03, M04 | T1 | Test case M03/M04 | CRS |
-| Day 8 | Chuẩn bị bộ ảnh test upload: ảnh hợp lệ, ảnh > dung lượng, file .png/.exe đổi đuôi, tên file tiếng Việt có dấu | T2 | `sample-images/test-upload/` | – |
+| Day 8 | Chuẩn bị bộ ảnh test upload: ảnh hợp lệ, ảnh > dung lượng, file .png/.exe đổi đuôi, tên file tiếng Việt có dấu | T2 | `database/seed-images/test-upload/` | – |
 | Day 9 | **M04 Admin – quản lý Student** (thông tin đăng nhập, cá nhân, nhập học) | BE + FE | M04 Done | M01 |
 | Day 9 | Gom file đính kèm Status #1: source zip, script SQL, screenshots; điền form "Báo cáo tiến độ" phần lần 1 | T1 + T2 (BE duyệt) | Thư mục `status/STATUS_1/` | MS1 |
 | Day 9 | **Gửi email STATUS #1** (cuối ngày) | BE | Email "STATUS: …" + ZIP | **Mốc MS2** |
@@ -173,7 +173,7 @@ Ký hiệu: **BE**, **FE**, **T1**, **T2**. Việc **in đậm** nằm trên đ�
 | Day 15 | **M07 Evaluation**: Staff xem danh sách bài theo cuộc thi, chấm BEST/BETTER/GOOD/MODERATE/NORMAL; tự động DISQUALIFIED nếu ngày nộp > ngày kết thúc; nhận xét điểm mạnh/điểm yếu/cần cải thiện | BE | Service chấm bài | M06 |
 | Day 15 | Màn hình chấm bài (ảnh lớn + thơ + form xếp loại) | FE | View M07 | M06 |
 | Day 15 | Viết test case M07, M08 | T1 | Test case | CRS |
-| Day 15 | Bổ sung seed: bài nộp mẫu cho cuộc thi đã kết thúc (dùng ảnh T2 đã gom) | T2 | `02_seed.sql` cập nhật | M06 |
+| Day 15 | Bổ sung seed: bài nộp mẫu cho cuộc thi đã kết thúc (dùng ảnh T2 đã gom) | T2 | `02_seed_data.sql` cập nhật | M06 |
 | Day 16 | **M07 tiếp**: Student xem xếp loại + nhận xét bài của mình; xem tất cả bài BEST kèm nhận xét; Staff tìm kiếm bài theo xếp loại | BE + FE | M07 Done | Day 15 |
 | Day 16 | Test M07 (kể cả bài nộp trễ) | T1 + T2 | Kết quả test | Day 15 |
 | Day 17 | **M08 Award issuing**: Staff trao giải (học viên – cuộc thi – giải – nhận xét cuộc thi), Student/Guest xem giải theo cuộc thi | BE + FE | M08 Done | M07 |
@@ -203,7 +203,7 @@ Ký hiệu: **BE**, **FE**, **T1**, **T2**. Việc **in đậm** nằm trên đ�
 | Day 25 | **Gửi email STATUS #2** (3 ngày trước kết thúc) | BE | Email "STATUS: …" + ZIP, **Mốc MS7** | Day 25 |
 | Day 25 | Viết User Guide (cài đặt, cấu hình DB, chạy ứng dụng, **tài khoản đăng nhập 4 vai trò**, hướng dẫn từng chức năng) | T2 (BE cung cấp phần cài đặt) | User Guide | MS6 |
 | Day 26 | **Ghép bộ tài liệu đầy đủ** (13 mục) + Mục lục tự động + Certificate of Completion; Project Review and Monitoring Report (tổng hợp biên bản sprint) | T1 (ghép), BE (review kỹ thuật), FE (định dạng) | Báo cáo dự án bản final | Day 23–25 |
-| Day 26 | Backup DB `.bak` final + script `01_schema.sql`, `02_seed.sql` final | BE | `database/` final | MS6 |
+| Day 26 | Backup DB `.bak` final + script `01_schema.sql`, `02_seed_data.sql` final | BE | `database/` final | MS6 |
 | Day 27 | **BUFFER** – xử lý việc trễ; **chạy thử gói nộp trên máy sạch** (máy của T1: giải nén → restore DB → chạy app → đăng nhập 4 vai trò) | Cả nhóm | Biên bản dry-run, **Mốc MS8** | Day 26 |
 | Day 27 | Sprint 4 Review + Retro; tập dượt demo (kịch bản 10–15 phút) | Cả nhóm | Kịch bản demo | – |
 | Day 28 | Final Check List (mục 10) → đóng gói ZIP → điền Phiếu phản hồi → **gửi "PROJECT SUBMISSION:" (1 lần duy nhất)** | BE gửi; T1 đọc checklist; FE + T2 kiểm tra chéo | ZIP đã nộp, **Mốc MS9** | MS8 |
@@ -273,7 +273,7 @@ gantt
 | **BE** | Chủ trì kickoff; phân tích BA, CRS; ERD + `01_schema.sql`; skeleton ASP.NET Core MVC, Entity/AppDbContext; **M01** đăng nhập & phân quyền; tạo repo, Kanban, branch rule | **M03, M04, M05, M06** (service, controller, File I/O), query **M02**; review PR của FE; **gửi STATUS #1** | **M07, M08, M09, M10**, controller read-only **M11**; review PR; viết ý chính Algorithms | M12 (chọn lọc); sửa bug; **code freeze Day 24**; DB backup final; review tài liệu kỹ thuật; **gửi STATUS #2**, **gửi bài nộp** |
 | **FE** | Use case cùng BE; danh sách màn hình; wireframe Figma/draw.io đủ màn hình; duyệt GUI Standards; `_Layout.cshtml` + partial; trang Login + menu theo vai trò | View M03, M04, M05, M06 (form, bảng, phân trang, tìm kiếm, JS preview ảnh), Trang chủ M02; review phần template trong PR của BE | Template M07 (màn hình chấm), M08, M09, M10 (bộ lọc báo cáo), **M11** (toàn bộ màn hình Manager); responsive | Giao diện M12 (biểu đồ, nút export); chỉnh UI theo bug; Interface Design Document (bản final cùng T2); định dạng bộ tài liệu; kịch bản demo |
 | **T1** | Biên bản kickoff + các stand-up; glossary; câu hỏi DOUBT; nháp Problem Definition; template Test Case; test case M01; nháp Project Plan + Task Sheet; test M01; nháp nội dung Status #1 | Điền form Báo cáo tiến độ lần 1; test case M03–M06; test M03, M04; hỗ trợ T2 test upload; nháp Interface Design Document (M01–M06) | Test case M07–M11; test M07; **test E2E Day 18**; nháp Algorithms (theo ý BE); cập nhật Project Review and Monitoring Report (tổng hợp biên bản) | Hồi quy vòng 1 & 2; Unit Testing Check List; điền form lần 2; **ghép bộ tài liệu 13 mục** + Mục lục; đọc Final Check List Day 28 |
-| **T2** | Thiết lập nhóm chat; gom 40–60 ảnh mẫu + thơ/trích dẫn; phác thảo wireframe giấy; nháp GUI Standards; seed data Excel → `02_seed.sql` | Bộ ảnh test upload (hợp lệ/không hợp lệ); gom file Status #1 (zip source, SQL, screenshots); test M06 upload; nhập cuộc thi thử qua UI; nháp Interface Design Document | Seed bài nộp, triển lãm, khách hàng; test M07, M09; chụp màn hình theo module | Hồi quy cùng T1; chụp màn hình bản final; **User Guide** (kèm tài khoản đăng nhập); dry-run trên máy sạch Day 27; kiểm tra chéo ZIP |
+| **T2** | Thiết lập nhóm chat; gom 40–60 ảnh mẫu + thơ/trích dẫn; phác thảo wireframe giấy; nháp GUI Standards; seed data Excel → `02_seed_data.sql` | Bộ ảnh test upload (hợp lệ/không hợp lệ); gom file Status #1 (zip source, SQL, screenshots); test M06 upload; nhập cuộc thi thử qua UI; nháp Interface Design Document | Seed bài nộp, triển lãm, khách hàng; test M07, M09; chụp màn hình theo module | Hồi quy cùng T1; chụp màn hình bản final; **User Guide** (kèm tài khoản đăng nhập); dry-run trên máy sạch Day 27; kiểm tra chéo ZIP |
 
 ### 4.2. Ma trận RACI theo hạng mục
 
@@ -284,7 +284,7 @@ R = Thực hiện (Responsible) · A = Chịu trách nhiệm cuối (Accountable
 | Phân tích yêu cầu, CRS | A/R | R | C | I |
 | Problem Definition | A | C | R | I |
 | ERD, script schema SQL | A/R | C | I | I |
-| Seed data (`02_seed.sql`) | A | I | C | R |
+| Seed data (`02_seed_data.sql`) | A | I | C | R |
 | Ảnh mẫu JPEG + thơ/trích dẫn | I | C | I | A/R |
 | Wireframe, GUI Standards | C | A/R | I | R (nháp) |
 | Kiến trúc, đăng nhập & phân quyền (M01) | A/R | C | I | I |
@@ -349,7 +349,7 @@ Theo đặc tả: dự án < 30 ngày → **email 1 trong khoảng Day 7–10**,
 | **Việc đã xong** | CRS, ERD, script SQL, wireframe, GUI Standards nháp, skeleton, M01 | Toàn bộ module bắt buộc, kiểm thử hồi quy vòng 2, ERD/Algorithms/Interface Design bản final |
 | **Việc tiếp theo** | M05, M06, M02, luồng chấm bài | User Guide, ghép tài liệu, DB backup, dry-run, nộp Day 28 |
 | **Khó khăn (nếu có)** | Ví dụ: cấu hình SQL Server/chuỗi kết nối, chưa rõ quyền quản lý triển lãm | Ví dụ: tối ưu hiển thị ảnh lớn, thời gian viết tài liệu |
-| **File đính kèm (ZIP)** | `src` (zip mã nguồn, không gồm `target/`), `database/01_schema.sql`, `02_seed.sql`, ERD (PNG), 5–8 screenshots (Login, menu 4 vai trò, Admin CRUD), wireframe PDF, form Báo cáo tiến độ đã điền | `src` bản `v1.0-rc`, script SQL final, screenshots tất cả module, bản nháp tài liệu, form Báo cáo tiến độ đã điền phần lần 2 |
+| **File đính kèm (ZIP)** | `src` (zip mã nguồn, không gồm `bin/`, `obj/`), `database/01_schema.sql`, `02_seed_data.sql`, ERD (PNG), 5–8 screenshots (Login, menu 4 vai trò, Admin CRUD), wireframe PDF, form Báo cáo tiến độ đã điền | `src` bản `v1.0-rc`, script SQL final, screenshots tất cả module, bản nháp tài liệu, form Báo cáo tiến độ đã điền phần lần 2 |
 | **Tên ZIP** | `Batch_Group_InstituteOfFineArts_STATUS1.zip` | `Batch_Group_InstituteOfFineArts_STATUS2.zip` |
 
 ### 6.1. Mẫu email STATUS
@@ -403,7 +403,7 @@ Thang đo: Xác suất (Thấp/TB/Cao) × Ảnh hưởng (Thấp/TB/Cao).
 |---|---|---|---|---|---|---|
 | R1 | **Thành viên yếu (T1/T2) không hoàn thành việc** | Cao | Thấp–TB | Không giao việc trên đường găng; checklist từng bước; kèm cặp hằng ngày; việc chia nhỏ ≤ 0,5 ngày | BE/FE nhận lại phần quan trọng; T1/T2 chuyển sang việc đơn giản hơn (chụp màn hình, nhập dữ liệu) | BE |
 | R2 | **Trễ tiến độ** (đặc biệt M06, M07, M09) | TB | Cao | Làm theo thứ tự phụ thuộc; Kanban + stand-up phát hiện sớm; buffer Day 27; M12+ là "Could" | Cắt M12+; giảm phạm vi M10 (giữ 1 báo cáo bắt buộc); làm thêm giờ cuối tuần; không dời code freeze quá Day 25 | BE |
-| R3 | **Mất dữ liệu / hỏng máy / virus** | TB | Cao | Push code **mỗi ngày**; backup DB `.bak` hằng ngày lên Google Drive nhóm; script SQL nằm trong repo | Clone lại từ GitHub; restore `.bak` gần nhất hoặc chạy `01_schema.sql` + `02_seed.sql` | BE (DB), mỗi người (code) |
+| R3 | **Mất dữ liệu / hỏng máy / virus** | TB | Cao | Push code **mỗi ngày**; backup DB `.bak` hằng ngày lên Google Drive nhóm; script SQL nằm trong repo | Clone lại từ GitHub; restore `.bak` gần nhất hoặc chạy `01_schema.sql` + `02_seed_data.sql` | BE (DB), mỗi người (code) |
 | R4 | **Xung đột Git (merge conflict)** | Cao | TB | Mỗi người 1 nhánh feature; pull `develop` mỗi sáng; chia file rõ ràng (BE: C# – Services/Data/Controllers, FE: Views/wwwroot); chỉ BE tạo migration; PR nhỏ | BE giải quyết conflict cùng người liên quan; không bao giờ `push --force` lên `develop/main` | BE |
 | R5 | **Lỗi upload file** (đường dẫn Windows, file lớn, sai định dạng, tên tiếng Việt, mất ảnh khi đổi máy) | Cao | Cao | Đặt tên file bằng Guid; cấu hình `Upload:RootPath` trong `appsettings.json`; giới hạn `[RequestSizeLimit]` + `Upload:MaxFileSizeBytes`; kiểm tra MIME + phần mở rộng JPEG; bộ ảnh test của T2 | Ghi lỗi chi tiết; thư mục `uploads/` mẫu được đóng gói trong ZIP cùng seed | BE, T2 |
 | R6 | **Hiểu sai đề** (ví dụ: ai quản lý cuộc thi/triển lãm; điều kiện DISQUALIFIED; Student sửa bài sau hạn) | TB | Cao | Bảng đối chiếu yêu cầu ↔ module (CRS) được cả nhóm duyệt Day 3; gửi **DOUBT:** sớm | Điều chỉnh trong sprint kế tiếp; ghi giả định (assumption) vào tài liệu | BE |
@@ -425,7 +425,7 @@ Thang đo: Xác suất (Thấp/TB/Cao) × Ảnh hưởng (Thấp/TB/Cao).
 | `develop` | Nhánh tích hợp hằng ngày | BE (sau review) |
 | `feature/M06-upload-submission` | Tính năng mới, theo mã module | Người làm tính năng |
 | `fix/M07-late-disqualified` | Sửa lỗi | Người sửa |
-| `docs/user-guide`, `data/seed-competitions`, `test/M05-testcases` | Tài liệu, dữ liệu mẫu, test case (T1/T2 dùng) | T1/T2 |
+| `docs/documentation/`, `database/seed-images/`, `docs/testing/` | Tài liệu, dữ liệu mẫu, test case (T1/T2 dùng) | T1/T2 |
 
 Quy tắc commit: `[M06] Thêm kiểm tra định dạng JPEG khi upload` (mã module + động từ + nội dung). Bảo vệ nhánh `main` và `develop` trên GitHub: bắt buộc PR, ít nhất 1 người duyệt.
 
@@ -465,11 +465,11 @@ git push -u origin feature/M06-upload-submission
 1. Trên GitHub: **New pull request** → base `develop` ← compare `feature/...`.
 2. Tiêu đề: `[M06] Student upload tranh JPEG`; mô tả: làm gì, cách test, ảnh chụp màn hình, liên kết Issue (`Closes #12`).
 3. Người review: BE (cho code FE/T1/T2), FE (cho phần View của BE).
-4. Checklist review: chạy được; có comment; đúng phân quyền; không commit file `target/`, `uploads/` thật, mật khẩu DB thật; tên biến rõ nghĩa.
+4. Checklist review: chạy được; có comment; đúng phân quyền; không commit `bin/`, `obj/`, `uploads/` thật, mật khẩu DB thật; tên biến rõ nghĩa.
 5. Sửa theo góp ý → push tiếp lên cùng nhánh (PR tự cập nhật) → BE **Squash and merge** → xóa nhánh.
 6. Kéo thẻ Kanban sang `Testing` để T1/T2 kiểm thử.
 
-`.gitignore` tối thiểu: `bin/`, `obj/`, `.vs/`, `.vscode/`, `uploads/` (trừ `uploads-sample/`), `appsettings.*.local.json`, `*.bak`.
+`.gitignore` tối thiểu: `bin/`, `obj/`, `.vs/`, `.vscode/`, `uploads/` (ảnh mẫu để ở `database/seed-images/`), `appsettings.*.local.json`, `*.bak`.
 
 ### 8.4. Sao lưu hằng ngày
 
@@ -477,8 +477,8 @@ git push -u origin feature/M06-upload-submission
 |---|---|---|---|
 | Mã nguồn | `git push` nhánh đang làm lên GitHub | Cuối mỗi ngày (bắt buộc) | Mọi người |
 | CSDL | `BACKUP DATABASE InstituteOfFineArts TO DISK = 'D:\backup\IFA_dayNN.bak' WITH INIT;` rồi chép lên Google Drive nhóm | Hằng ngày (giữ 3 bản gần nhất + bản Day 14, 21, final) | BE |
-| Script CSDL | `01_schema.sql`, `02_seed.sql` nằm trong repo, cập nhật khi đổi bảng | Mỗi lần đổi | BE / T2 |
-| Ảnh mẫu & tài liệu | Thư mục Google Drive chung + bản trong repo (`docs/`, `uploads-sample/`) | Hằng ngày | T1 / T2 |
+| Script CSDL | `01_schema.sql` (xuất từ migration), `02_seed_data.sql` (xuất ở Day 26) nằm trong `database/` | Mỗi lần đổi | BE / T2 |
+| Ảnh mẫu & tài liệu | Thư mục Google Drive chung + bản trong repo (`docs/`, `database/seed-images/`) | Hằng ngày | T1 / T2 |
 | Mốc phiên bản | Tag `v0.1` (D7), `v0.2` (D14), `v0.9` (D21), `v1.0-rc` (D24), `v1.0` (D28) | Theo mốc | BE |
 
 ---
@@ -527,7 +527,7 @@ Batch_Group_InstituteOfFineArts/
 ├── 02_Database/
 │   ├── InstituteOfFineArts.bak     # bản sao lưu CSDL
 │   ├── 01_schema.sql
-│   └── 02_seed.sql
+│   └── 02_seed_data.sql
 ├── 03_Uploads_Sample/        # ảnh mẫu tương ứng dữ liệu seed (để ảnh hiển thị khi chấm)
 ├── 04_Documentation/
 │   ├── Project_Report.docx / .pdf  # 13 mục theo đặc tả
@@ -543,9 +543,9 @@ Batch_Group_InstituteOfFineArts/
 | # | Hạng mục kiểm tra | Người | ☐ |
 |---|---|---|---|
 | 1 | Mã nguồn bản `v1.0` (tag trên `main`) build được bằng `dotnet build -c Release` | BE | ☐ |
-| 2 | Không có thư mục `target/`, `.idea/`, file mật khẩu cá nhân trong ZIP | FE | ☐ |
+| 2 | Không có thư mục `bin/`, `obj/`, `.vs/`, file mật khẩu cá nhân trong ZIP | FE | ☐ |
 | 3 | Mọi khối mã có comment (rà soát nhanh từng package) | BE + FE | ☐ |
-| 4 | Restore `.bak` thành công trên máy sạch; hoặc chạy `01_schema.sql` + `02_seed.sql` không lỗi | T2 | ☐ |
+| 4 | Restore `.bak` thành công trên máy sạch; hoặc chạy `01_schema.sql` + `02_seed_data.sql` không lỗi | T2 | ☐ |
 | 5 | Ảnh mẫu hiển thị đúng sau khi chép `03_Uploads_Sample` theo hướng dẫn | T2 | ☐ |
 | 6 | Đăng nhập được bằng **tài khoản mẫu của cả 4 vai trò** (ADMIN, MANAGER, STAFF, STUDENT) + trang chủ Guest | T1 | ☐ |
 | 7 | Luồng demo chạy trọn: tạo cuộc thi → nộp bài → chấm → trao giải → triển lãm → bán tranh → báo cáo | T1 + T2 | ☐ |

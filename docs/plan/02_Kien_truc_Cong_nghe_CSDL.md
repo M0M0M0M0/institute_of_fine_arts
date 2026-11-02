@@ -328,10 +328,10 @@ Mã luật lấy **đúng theo tài liệu BA** (`01_Phan_tich_nghiep_vu_BA.md`,
 
 | Mã BA | Luật (tóm tắt) | Hiện thực |
 |---|---|---|
-| BR-01 | `username`, `email`, `student_code`, `staff_code` duy nhất | UNIQUE trong DB + kiểm tra ở `AccountService` |
+| BR-01 | `username`, `email`, `student_code`, `staff_code` duy nhất | UNIQUE trong DB + kiểm tra ở `StaffService`, `StudentService` |
 | BR-02 | Mật khẩu ≥ 8 ký tự, có chữ và số; lưu BCrypt | `StaffFormVm/StudentFormVm` + `IPasswordHasher` (BCrypt.Net-Next) |
-| BR-03 | 1 Account = 1 role; không tự đổi role; không khóa/xóa ADMIN cuối cùng, không tự xóa mình | `AccountService` |
-| BR-04, BR-05 | Account đã phát sinh dữ liệu → **không xóa cứng**, chỉ `active = 0`; account bị khóa không đăng nhập được | `AccountService` + `AuthService` (đăng nhập) |
+| BR-03 | 1 Account = 1 role; không tự đổi role; không khóa/xóa ADMIN cuối cùng, không tự xóa mình | `StaffService`, `StudentService` |
+| BR-04, BR-05 | Account đã phát sinh dữ liệu → **không xóa cứng**, chỉ `active = 0`; account bị khóa không đăng nhập được | `StaffService`, `StudentService` + `AuthService` (đăng nhập) |
 | BR-06 | `start_date ≤ end_date`; hạn nộp = **23:59:59 ngày `end_date`** | Attribute `[DateRange]` + `CompetitionService` + CHECK |
 | BR-07 | Trạng thái **UPCOMING / ONGOING / CLOSED tính từ ngày** (không nhập tay); **GRADED** chỉ khi Staff công bố | `CompetitionStatusResolver` (dùng khi đọc) + `StatusSyncBackgroundService` (đồng bộ cột `status`) |
 | BR-08 | Công bố (→ GRADED) chỉ khi đang CLOSED **và 100% bài nộp đã có Evaluation** | `CompetitionService.PublishResultsAsync()` |
@@ -347,9 +347,9 @@ Mã luật lấy **đúng theo tài liệu BA** (`01_Phan_tich_nghiep_vu_BA.md`,
 | BR-22 | **Tối đa 1 Evaluation / Submission**; lưu `evaluated_by`, `evaluated_at` (người sửa cuối ghi đè) | UNIQUE `evaluation.submission_id` |
 | BR-23 | `rating` bắt buộc; DISQUALIFIED bắt buộc lý do (`negative_points`); rating khác bắt buộc `positive_points` | `EvaluationFormVm` + `EvaluationService` + CHECK |
 | BR-24 | Học viên chỉ thấy Evaluation của mình **sau khi GRADED** | `EvaluationService`, `Student/ResultsController` |
-| BR-30 | Chỉ trao giải cho bài **rating = BEST** của đúng cuộc thi; DISQUALIFIED tuyệt đối không | `AwardIssuedService` |
-| BR-31 | Số giải trao ≤ `quantity`; **tối đa 1 giải / học viên / cuộc thi** | `AwardIssuedService` + UNIQUE `award_issued.submission_id` |
-| BR-32, BR-33 | Trao giải khi CLOSED hoặc GRADED; chỉ công khai khi GRADED; thu hồi phải ghi lý do | `AwardIssuedService` |
+| BR-30 | Chỉ trao giải cho bài **rating = BEST** của đúng cuộc thi; DISQUALIFIED tuyệt đối không | `AwardService` |
+| BR-31 | Số giải trao ≤ `quantity`; **tối đa 1 giải / học viên / cuộc thi** | `AwardService` + UNIQUE `award_issued.submission_id` |
+| BR-32, BR-33 | Trao giải khi CLOSED hoặc GRADED; chỉ công khai khi GRADED; thu hồi phải ghi lý do | `AwardService` |
 | BR-40 | Chỉ bài **BEST/BETTER** của cuộc thi **GRADED** được gửi triển lãm | `ExhibitionEntryService` |
 | BR-41 | `asking_price` > 0 do học viên quyết định; Staff tạo trực tiếp phải nhập đúng giá học viên báo | `ExhibitionEntryService` + CHECK |
 | BR-42 | Chỉ gửi tới triển lãm **UPCOMING**; trạng thái triển lãm tính tự động UPCOMING/ONGOING/FINISHED; chỉ xóa triển lãm khi chưa có entry | `ExhibitionService` |
@@ -397,9 +397,11 @@ institute-of-fine-arts/                         ← thư mục gốc repo
 │       │   ├── Migrations/                     ← sinh bởi dotnet ef
 │       │   └── Seed/                           ← DbSeeder (dữ liệu mẫu, chạy ở môi trường Development)
 │       ├── Services/
-│       │   ├── Interfaces/                     ← IAccountService, ICompetitionService, ISubmissionService, IEvaluationService,
-│       │   │                                      IAwardService, IExhibitionService, IExhibitionEntryService, ICustomerService,
-│       │   │                                      IReportService, IFileStorageService, IAuthService
+│       │   ├── Interfaces/                     ← IAuthService, IProfileService, IStaffService, IStudentService, ICompetitionService,
+│       │   │                                      ICompetitionAwardService, IFileStorageService, ISubmissionService, IHomeService,
+│       │   │                                      IStaffSubmissionService, IEvaluationService, IAwardService, IResultService,
+│       │   │                                      IStudentResultService, IExhibitionService, IExhibitionEntryService,
+│       │   │                                      ICustomerService, IReportService, IManagerService (tên theo docs/Phan_cong_task.xlsx)
 │       │   └── Implementations/
 │       ├── Infrastructure/
 │       │   ├── FileStorage/                    ← FileStorageService, ThumbnailService, UploadOptions
@@ -717,7 +719,7 @@ CONSTRAINT CK_evaluation_dq_reason CHECK (rating <> 'DISQUALIFIED' OR negative_p
 | remarks | NVARCHAR(MAX) | ✔ | | Nhận xét khi trao giải / nhận xét về cuộc thi |
 | created_at / updated_at | DATETIME2(0) | | | |
 
-> `AwardIssuedService` kiểm tra: bài có Evaluation **rating = BEST** (BR-30), giải và bài cùng cuộc thi, cuộc thi CLOSED/GRADED (BR-32), không vượt `quantity` (BR-31). Thu hồi giải phải ghi lý do vào log (BR-33).
+> `AwardService` kiểm tra: bài có Evaluation **rating = BEST** (BR-30), giải và bài cùng cuộc thi, cuộc thi CLOSED/GRADED (BR-32), không vượt `quantity` (BR-31). Thu hồi giải phải ghi lý do vào log (BR-33).
 
 #### 6.2.9. `exhibition` – Triển lãm (Entity `Exhibition`)
 | Cột | Kiểu | Null | Ràng buộc | Ghi chú |
@@ -939,7 +941,7 @@ public abstract class StaffBaseController : Controller
 | `staff01` … `staff03` | STAFF | |
 | `student01` … `student10` | STUDENT | `student10` bị khóa để test |
 
-- Mật khẩu demo ghi trong `README.md` và tài liệu cài đặt (xem PLAN/04 mục 4.4).
+- Mật khẩu demo ghi trong `README.md` và tài liệu cài đặt (xem docs/plan/04 mục 4.5).
 - `DbSeeder` băm mật khẩu bằng BCrypt ngay khi tạo dữ liệu – **không** phải tự gõ hash.
 
 ---
@@ -1260,19 +1262,7 @@ Quy tắc: `git pull origin develop` mỗi sáng trước khi code; **không** c
 - `DbSeeder` chép ảnh mẫu từ `database/seed-images/` vào `uploads/submissions/...` nếu chưa có; đường dẫn trong dữ liệu phải khớp tên file.
 - Chi tiết số lượng và tài khoản: **PLAN/04 mục 4** (15 tài khoản, 7 cuộc thi, 27 bài nộp…).
 
-**Nội dung dữ liệu mẫu (tối thiểu):**
-| Bảng | Số bản ghi | Ghi chú |
-|---|---|---|
-| account | 14 | 1 admin, 1 manager, 2 staff, 10 student |
-| staff_profile / student_profile | 4 / 10 | |
-| competition | 4 | 1 `GRADED` (đã công bố, có giải – hiện trang chủ “đạt giải cuộc thi trước”), 1 `CLOSED` (chờ chấm), 1 `ONGOING`, 1 `UPCOMING` |
-| competition_award | ~10 | Nhất/Nhì/Ba/Khuyến khích kèm `prize_value` |
-| submission | ~25 | Kèm ảnh JPEG mẫu (ảnh tự vẽ/ảnh public domain) trong `scripts/seed-images/` |
-| evaluation | ~15 | 100% bài của cuộc thi GRADED có đánh giá; đủ 6 mức rating, có 1 `DISQUALIFIED` (kèm lý do) |
-| award_issued | 4 | Cho các bài BEST của cuộc thi `GRADED` |
-| exhibition | 3 | 1 `UPCOMING`, 1 `ONGOING`, 1 `FINISHED` (để có entry SOLD/UNSOLD) |
-| exhibition_entry | 6 | Đủ PENDING / ACCEPTED / REJECTED / SOLD (đã trả & chưa trả học viên) / UNSOLD – chỉ dùng bài BEST/BETTER của cuộc thi GRADED |
-| customer | 3 | |
+**Nội dung dữ liệu mẫu:** số lượng và tài khoản theo **docs/plan/04 mục 4** (15 tài khoản, 7 cuộc thi, 27 bài nộp, đánh giá đủ 6 xếp loại, giải đã trao, 2 triển lãm / 8 tranh, 3 khách mua). Không ghi số liệu ở đây để tránh lệch giữa hai tài liệu.
 
 
 **Reset dữ liệu dev:**

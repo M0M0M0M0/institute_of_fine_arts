@@ -11,7 +11,7 @@
 | `07_Algorithms.docx` | Algorithms | T1 (vẽ flowchart) + BE (pseudo-code) | BE | Day 16 | Day 20 |
 | `08_GUIStandards.docx` | GUI Standards Document | T2 | FE | Day 6 | Day 8 |
 | `09_InterfaceDesign.docx` | Interface Design Document | T1 (chụp màn hình) | FE | Day 12 (wireframe) | Day 25 (ảnh thật) |
-| `10_TaskSheet.docx` | Task Sheet | T2 | BE | Day 2 (tạo) | Cập nhật Day 7, 14, 21, chốt Day 27 |
+| `10_TaskSheet.docx` | Task Sheet (nội dung lấy từ `docs/Phan_cong_task.xlsx`) | T2 | BE | Day 2 (tạo) | Cập nhật Day 7, 14, 21, chốt Day 27 |
 | `11_ProjectReviewAndMonitoringReport.docx` | Project Review and Monitoring Report | T1 | BE | Day 9 (kỳ 1), Day 24 (kỳ 2) | Day 9, Day 25 |
 | `12_UnitTestingCheckList.docx` | Unit Testing Check List | T2 (trình bày) + BE (unit test) | BE (QA Lead) | Day 23 | Day 24 |
 | `13_FinalCheckList.docx` | Final Check List | T1 + T2 | BE | Day 26 | Day 27 |

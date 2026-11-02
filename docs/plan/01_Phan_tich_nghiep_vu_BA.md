@@ -295,7 +295,7 @@ Ký hiệu: **C** = Create, **R** = Read/xem, **U** = Update, **D** = Delete, **
 | F-M12-02 | M12 Thông báo | Thông báo trong hệ thống (chuông) | Bảng Notification | Could |
 | F-M13-01 | M13 Ảnh | Tạo thumbnail khi upload (SkiaSharp, File I/O) | Tăng tốc gallery | Could |
 | F-M13-02 | M13 Ảnh | Watermark tên học viện khi hiển thị công khai | Chống sao chép | Could |
-| F-M14-01 | M14 Xuất báo cáo | Xuất PDF (OpenPDF) / Excel (Apache POI) | | Could |
+| F-M14-01 | M14 Xuất báo cáo | Xuất PDF (QuestPDF) / Excel (ClosedXML) | | Could |
 | F-M15-01 | M15 Biểu đồ | Dashboard Chart.js: bài nộp theo cuộc thi, tỉ lệ xếp loại, doanh thu | | Could |
 | F-M16-01 | M16 Quên mật khẩu | Gửi link/token reset qua email | | Could |
 | F-M17-01 | M17 Audit log | Nhật ký: ai, làm gì, lúc nào (đăng nhập, chấm bài, xóa, bán tranh) | | Could |

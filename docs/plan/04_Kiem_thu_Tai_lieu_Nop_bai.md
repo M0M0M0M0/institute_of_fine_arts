@@ -165,7 +165,7 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 ## 3. Bộ test case mẫu (M01–M11)
 
 > Ký hiệu cột **Ưu tiên**: C = Cao (bắt buộc chạy trong regression), T = Trung bình, Th = Thấp.
-> Mật khẩu test chung: xem mục 4.4. Cột "Kết quả thực tế / Trạng thái / Người test / Ngày" để trống – điền vào file Excel khi chạy.
+> Mật khẩu test chung: xem mục 4.5. Cột "Kết quả thực tế / Trạng thái / Người test / Ngày" để trống – điền vào file Excel khi chạy.
 > Ngày "hôm nay" được ký hiệu **D**. Cuộc thi seed có ngày tương đối với D (mục 4.2).
 
 ### M01 – Xác thực & tài khoản (10 TC)
@@ -342,7 +342,7 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 
 ### 4.2. Cuộc thi (ngày tính tương đối so với ngày chạy seed **D**)
 
-> Gợi ý cho BE: viết seed bằng `CommandLineRunner`/`data.sql` dùng `GETDATE()` ± n ngày để trạng thái luôn đúng mỗi khi reset DB.
+> Gợi ý cho BE: viết seed trong `Data/Seed/DbSeeder.cs`, ngày tháng dùng `DateTimeHelper.Today.AddDays(± n)` để trạng thái luôn đúng mỗi khi reset DB.
 
 | # | Tên cuộc thi | startDate | endDate | Trạng thái | Giải thưởng | Bài nộp | Ghi chú |
 |---|---|---|---|---|---|---|---|
@@ -420,7 +420,7 @@ Checklist nội dung tối thiểu:
 - [ ] `ExhibitionEntryService.MarkSoldAsync` – bắt buộc soldPrice > 0 và Customer
 - [ ] `ExhibitionEntryService.MarkPaidAsync` – chặn khi chưa bán
 - [ ] `ReportService.GetSubmissionReportAsync` – bao gồm 2 đầu khoảng ngày
-- [ ] `AccountService.CreateAsync` – trùng username bị từ chối; mật khẩu được mã hóa BCrypt
+- [ ] `StaffService.CreateAsync` / `StudentService.CreateAsync` – trùng username bị từ chối; mật khẩu được mã hóa BCrypt
 
 **B. Kiểm tra mức màn hình/đơn vị giao diện (T1/T2)**
 - [ ] Mỗi form: trường bắt buộc có dấu `*` và thông báo lỗi bằng tiếng Việt/Anh thống nhất
@@ -488,12 +488,12 @@ Checklist nội dung tối thiểu:
 | 7 | **Algorithms** | Xem mục 7: pseudo-code + flowchart 5 thuật toán chính | T1 (vẽ flowchart) + BE (pseudo-code) | BE | Day 16 | Day 20 | draw.io + Word |
 | 8 | **GUI Standards Document** | 1. Bảng màu, font, logo 2. Bố cục chung (header/menu/footer) 3. Quy chuẩn nút (màu theo hành động: Lưu = primary, Xóa = danger) 4. Quy chuẩn form (nhãn, `*`, thông báo lỗi) 5. Bảng/phân trang 6. Thông báo (alert success/error) 7. Responsive Bootstrap 5 | T2 | FE | Day 6 | Day 8 | Word |
 | 9 | **Interface Design Document** | Mỗi màn hình: tên, vai trò truy cập, URL, ảnh chụp/wireframe, mô tả các trường & nút, điều hướng; sơ đồ sitemap theo vai trò | T1 (chụp màn hình) | FE | Day 12 (wireframe) | Day 25 (ảnh thật) | Word + draw.io |
-| 10 | **Task Sheet** | Bảng: STT, công việc, module, người làm, ngày bắt đầu, ngày kết thúc dự kiến/thực tế, trạng thái, ghi chú – cập nhật mỗi tuần | T2 | BE | Day 2 (tạo) | Cập nhật Day 7, 14, 21, chốt Day 27 | Excel |
+| 10 | **Task Sheet** | Bảng: STT, công việc, module, người làm, ngày bắt đầu, ngày kết thúc dự kiến/thực tế, trạng thái, ghi chú – lấy từ `docs/Phan_cong_task.xlsx`, cập nhật mỗi tuần | T2 | BE | Day 2 (tạo) | Cập nhật Day 7, 14, 21, chốt Day 27 | Excel |
 | 11 | **Project Review and Monitoring Report** | Mỗi kỳ: tiến độ % theo module, việc đã xong, việc đang làm, khó khăn & cách xử lý, kế hoạch kỳ tới, minh chứng (ảnh, script) – dùng làm nội dung 2 email STATUS | T1 | BE | Day 9 (kỳ 1), Day 24 (kỳ 2) | Day 9, Day 25 | Word |
 | 12 | **Unit Testing Check List** | Mục 5.1 + kết quả `dotnet test` + bảng tổng hợp test case Pass/Fail | T2 (trình bày) + BE (unit test) | QA Lead | Day 23 | Day 24 | Word + Excel |
 | 13 | **Final Check List** | Mục 5.2, tick & ký | T1 + T2 | BE | Day 26 | Day 27 | Word |
 | 14 | **User Guide (Hướng dẫn sử dụng)** | 1. Giới thiệu 2. Đăng nhập/đăng xuất 3. Hướng dẫn theo vai trò (GUEST, STUDENT, STAFF, MANAGER, ADMIN) – mỗi chức năng: mục đích, các bước, ảnh chụp 4. Câu hỏi thường gặp & lỗi thường gặp 5. Nguồn ảnh | T1 (STUDENT, GUEST, MANAGER) + T2 (STAFF, ADMIN) | FE | Day 22 | Day 25 | Word |
-| 15 | **Installation Guide (Hướng dẫn cài đặt)** | 1. Yêu cầu hệ thống (.NET 10 SDK, SQL Server, SSMS) 2. Restore DB từ `.bak` hoặc chạy `.sql` 3. Cấu hình `appsettings.json` (chuỗi kết nối) 4. Copy thư mục ảnh `uploads/` 5. Chạy ứng dụng (`mvn spring-boot:run` / `java -jar`) 6. Truy cập `http://localhost:5000` 7. **Bảng tài khoản đăng nhập** (mục 4.5) 8. Lỗi thường gặp (cổng 8080 bận, TCP/IP SQL Server chưa bật, sai mật khẩu `sa`) | T2 | BE | Day 24 | Day 26 (sau test máy sạch) | Word |
+| 15 | **Installation Guide (Hướng dẫn cài đặt)** | 1. Yêu cầu hệ thống (.NET 10 SDK, SQL Server, SSMS) 2. Restore DB từ `.bak` hoặc chạy `.sql` 3. Cấu hình `appsettings.json` (chuỗi kết nối) 4. Copy thư mục ảnh `uploads/` 5. Chạy ứng dụng (`mvn spring-boot:run` / `java -jar`) 6. Truy cập `http://localhost:5000` 7. **Bảng tài khoản đăng nhập** (mục 4.5) 8. Lỗi thường gặp (cổng 5000 bận, TCP/IP SQL Server chưa bật, sai mật khẩu `sa`) | T2 | BE | Day 24 | Day 26 (sau test máy sạch) | Word |
 | — | **Project Report (bản ghép)** | Bìa → Certificate → Mục lục → **Synopsis** (1–2 trang) → tài liệu 3–13 → User Guide → Installation Guide → Phụ lục: code chính có comment | QA Lead | BE | Day 26 | **Day 27** | Word → PDF |
 
 > Ghi nhớ yêu cầu spec: *mọi khối code phải có comment; phải giải thích logic chương trình; báo cáo hoàn chỉnh gồm synopsis, mã nguồn và tài liệu.* BE/FE tự rà comment code Day 22–24; T1 kiểm tra ngẫu nhiên 10 file (có Javadoc cho class/method public không) và ghi vào Final Check List.
@@ -549,7 +549,7 @@ FUNCTION storeImage(multipartFile)
     newName ← Guid.NewGuid() + ".jpg"                    // bỏ hoàn toàn tên gốc → chống path traversal & ký tự lạ
     target ← normalize(uploadDir / newName)
     IF target NOT startsWith uploadDir THEN THROW "Đường dẫn không hợp lệ"
-    copy(file.inputStream → target)              // FileOutputStream / Files.copy
+    copy(file → target)                          // FileStream + IFormFile.CopyToAsync
     RETURN newName                               // lưu tên này vào Submission.imagePath
 END FUNCTION
 
@@ -637,7 +637,7 @@ END FUNCTION
 │   ├── UserGuide.pdf
 │   ├── InstallationGuide.pdf
 │   ├── ERD.drawio (+ .png)
-│   └── TestCases_FineArts.xlsx, TaskSheet.xlsx
+│   └── TestCases_FineArts.xlsx, Phan_cong_task.xlsx
 ├── Screenshots/                    ← ảnh màn hình theo vai trò (Mxx_ROLE_screen.png)
 └── Feedback/
     └── FeedbackForm.docx           ← phiếu phản hồi đã điền
@@ -647,7 +647,7 @@ END FUNCTION
 
 - Mẫu: **`<Batch>_<Group>_<ProjectTitle>.zip`** – không dấu, không khoảng trắng.
 - Ví dụ: `T1.2409.E1_Group3_InstituteOfFineArts.zip` (thay bằng mã khóa và số nhóm thật của lớp).
-- Dung lượng: cố gắng < 100 MB (nén ảnh seed; không đưa `target/`, file `.jar` chỉ đưa nếu trung tâm yêu cầu).
+- Dung lượng: cố gắng < 100 MB (nén ảnh seed; không đưa `bin/`, `obj/`, `.vs/`).
 
 ### 8.3. Checklist kiểm tra chéo 2 người (Day 27)
 
@@ -665,7 +665,7 @@ Người A (T1) đóng gói, người B (T2) kiểm tra **trên máy khác**; sa
 | 8 | Đủ 13 tài liệu + User Guide + Installation Guide, mở được | [ ] | [ ] |
 | 9 | PDF báo cáo có mục lục đúng số trang, có Synopsis | [ ] | [ ] |
 | 10 | Feedback form đã điền | [ ] | [ ] |
-| 11 | Không có file rác (`.idea`, `target`, `~$*.docx`, `Thumbs.db`) | [ ] | [ ] |
+| 11 | Không có file rác (`.vs`, `bin`, `obj`, `~$*.docx`, `Thumbs.db`) | [ ] | [ ] |
 | 12 | Tiêu đề email nộp bắt đầu bằng `PROJECT SUBMISSION:` | [ ] | [ ] |
 | Ký tên / ngày | | | |
 
