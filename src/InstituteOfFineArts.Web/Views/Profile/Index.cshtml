@@ -1,0 +1,100 @@
+@model InstituteOfFineArts.Web.ViewModels.Profile.ProfileVm
+@*
+    My profile (/profile) – every signed-in role.
+    Minimal version created by BE1 so the feature works; FE1 builds the real design in task FE1-02.
+    Only Phone and Address are posted; the other fields are display-only.
+*@
+@{
+    ViewData["Title"] = "My profile";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <h1 class="h3 mb-3">My profile</h1>
+
+        @if (TempData["Success"] is string success)
+        {
+            <div class="alert alert-success">@success</div>
+        }
+
+        <dl class="row">
+            <dt class="col-sm-4">@Html.DisplayNameFor(m => m.FullName)</dt>
+            <dd class="col-sm-8">@Model.FullName</dd>
+
+            <dt class="col-sm-4">@Html.DisplayNameFor(m => m.Username)</dt>
+            <dd class="col-sm-8">@Model.Username</dd>
+
+            <dt class="col-sm-4">@Html.DisplayNameFor(m => m.Role)</dt>
+            <dd class="col-sm-8">@Model.Role</dd>
+
+            <dt class="col-sm-4">@Html.DisplayNameFor(m => m.Email)</dt>
+            <dd class="col-sm-8">@Model.Email</dd>
+
+            @if (Model.Code != null)
+            {
+                <dt class="col-sm-4">@Html.DisplayNameFor(m => m.Code)</dt>
+                <dd class="col-sm-8">@Model.Code</dd>
+            }
+            @if (Model.CourseOrPosition != null)
+            {
+                <dt class="col-sm-4">@(Model.Role == InstituteOfFineArts.Web.Models.Enums.Role.STUDENT ? "Course" : "Position")</dt>
+                <dd class="col-sm-8">@Model.CourseOrPosition</dd>
+            }
+            @if (Model.Classes != null)
+            {
+                <dt class="col-sm-4">@Html.DisplayNameFor(m => m.Classes)</dt>
+                <dd class="col-sm-8">@Model.Classes</dd>
+            }
+            @if (Model.Subjects != null)
+            {
+                <dt class="col-sm-4">@Html.DisplayNameFor(m => m.Subjects)</dt>
+                <dd class="col-sm-8">@Model.Subjects</dd>
+            }
+            @if (Model.SinceDate is { } since)
+            {
+                <dt class="col-sm-4">@(Model.Role == InstituteOfFineArts.Web.Models.Enums.Role.STUDENT ? "Enrolled on" : "Joined on")</dt>
+                <dd class="col-sm-8">@since.ToString("dd MMM yyyy")</dd>
+            }
+            @if (Model.DateOfBirth is { } dob)
+            {
+                <dt class="col-sm-4">@Html.DisplayNameFor(m => m.DateOfBirth)</dt>
+                <dd class="col-sm-8">@dob.ToString("dd MMM yyyy")</dd>
+            }
+            @if (Model.Gender != null)
+            {
+                <dt class="col-sm-4">@Html.DisplayNameFor(m => m.Gender)</dt>
+                <dd class="col-sm-8">@Model.Gender</dd>
+            }
+            @if (Model.LastLoginAt is { } lastLogin)
+            {
+                <dt class="col-sm-4">@Html.DisplayNameFor(m => m.LastLoginAt)</dt>
+                <dd class="col-sm-8">@lastLogin.ToString("dd MMM yyyy HH:mm")</dd>
+            }
+        </dl>
+
+        <h2 class="h5 mt-4">Contact details</h2>
+        @* Posts only Phone and Address (EditProfileVm); asp-* adds the anti-forgery token *@
+        <form asp-controller="Profile" asp-action="Index" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+            <div class="mb-3">
+                <label asp-for="Phone" class="form-label"></label>
+                <input asp-for="Phone" class="form-control" autocomplete="tel" />
+                <span asp-validation-for="Phone" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Address" class="form-label"></label>
+                <input asp-for="Address" class="form-control" autocomplete="street-address" />
+                <span asp-validation-for="Address" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save changes</button>
+            <a asp-controller="Profile" asp-action="ChangePassword" class="btn btn-outline-secondary ms-2">Change password</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -12,6 +12,8 @@
 <h1 class="h3">Welcome, @User.GetFullName()</h1>
 <p>You are on the home page of the <strong>Student</strong> area (role STUDENT).</p>
 
+<p><a href="/profile">My profile</a> · <a href="/profile/change-password">Change password</a></p>
+
 @* Log out with POST plus the anti-forgery token *@
 <form method="post" action="/logout">
     @Html.AntiForgeryToken()
