@@ -26,7 +26,7 @@ Cookie Authentication + BCrypt · SkiaSharp (thumbnail) · Serilog · xUnit + Mo
      ```powershell
      dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost;Database=IFA_DB;User Id=<user>;Password=<mật khẩu>;TrustServerCertificate=True" --project src/InstituteOfFineArts.Web
      ```
-5. Tạo CSDL (sau khi đã có migration `InitialCreate` – Day 5–6):
+5. Tạo CSDL (sau khi đã có migration `InitialCreate` – Day 3–4):
    ```powershell
    dotnet ef database update --project src/InstituteOfFineArts.Web
    ```
@@ -94,4 +94,4 @@ institute-of-fine-arts/
 - Cuối ngày: push code + chạy `scripts/backup-db.cmd`.
 
 ## Tài khoản demo
-(Bổ sung khi có dữ liệu mẫu – Day 6.)
+(Bổ sung khi có dữ liệu mẫu – Day 4.)

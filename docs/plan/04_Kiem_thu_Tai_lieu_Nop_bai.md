@@ -4,7 +4,7 @@
 **Người phụ trách phần này:** QA (kiểm thử & tài liệu tổng hợp), BE1 duyệt
 **Đối tượng đọc chính:** QA (kiểm thử thủ công, tài liệu tổng hợp); BE1, BE2, FE1, FE2 (tự test phần mình, viết tài liệu được giao, review)
 **Stack:** .NET 10 · ASP.NET Core MVC (C#) · Entity Framework Core · SQL Server · Razor + Bootstrap 5 · File I/O lưu ảnh vào `uploads/`
-**Mốc thời gian:** 4 tuần (Day 1 → Day 28) · **Code freeze: Day 24** · **Nộp bài: Day 28** (1 file ZIP, **chỉ được nộp 1 lần**)
+**Mốc thời gian:** 4 tuần (Day 1 → Day 28) · **Chức năng xong: Day 17** · **Review & chỉnh sửa: Day 18–23** · **Code freeze: Day 24** · **Nộp bài: Day 28** (1 file ZIP, **chỉ được nộp 1 lần**)
 
 > Quy ước dùng chung với các phần kế hoạch khác:
 > - Vai trò: `ADMIN`, `MANAGER`, `STAFF`, `STUDENT`, `GUEST`.
@@ -36,9 +36,9 @@
 | Mức | Ai làm | Công cụ | Phạm vi | Khi nào |
 |---|---|---|---|---|
 | **Unit test** | BE (FE hỗ trợ nếu có thời gian) | xUnit + Moq (+ EF Core InMemory cho dữ liệu giả) | Các service có logic quan trọng: `SubmissionService` (kiểm tra hạn nộp, quyền sở hữu), `FileStorageService` (kiểm tra JPEG, kích thước, tên file an toàn), `CompetitionService` (tính trạng thái, chặn xóa khi đã có bài nộp), `EvaluationService` (bài nộp trễ → `DISQUALIFIED`), `ExhibitionService` (bán tranh, trả tiền học viên), `ReportService` (lọc theo khoảng ngày) | Viết song song khi code, mục tiêu ≥ 25 unit test xanh trước Day 24 |
-| **Integration test** | BE | `WebApplicationFactory` (gói `Microsoft.AspNetCore.Mvc.Testing`) hoặc Postman collection | Controller ↔ Service ↔ DbContext ↔ DB; phân quyền URL theo vai trò; upload multipart | Từ Day 15, chạy lại trước code freeze |
-| **System test (thủ công)** | **QA** (người làm chức năng tự test trước khi tạo PR) | Trình duyệt Chrome/Edge, file test case Excel/Google Sheets, Selenium IDE (tùy chọn) | Toàn bộ chức năng M01–M11 theo test case ở mục 3 | Mỗi module xong (BE/FE báo "Ready for test") → test trong 24 giờ; vòng test đầy đủ Day 20–23 |
-| **UAT theo vai trò** | QA đóng vai STUDENT + GUEST, FE1 đóng vai STAFF, FE2 đóng vai ADMIN + MANAGER; BE1/BE2 quan sát | Kịch bản demo (mục 9) | Đi trọn luồng nghiệp vụ như người dùng thật | Day 23 (lần 1), Day 26 (lần 2 trên bản đóng gói) |
+| **Integration test** | BE | `WebApplicationFactory` (gói `Microsoft.AspNetCore.Mvc.Testing`) hoặc Postman collection | Controller ↔ Service ↔ DbContext ↔ DB; phân quyền URL theo vai trò; upload multipart | Từ Day 12, chạy lại trước code freeze |
+| **System test (thủ công)** | **QA** (người làm chức năng tự test trước khi tạo PR) | Trình duyệt Chrome/Edge, file test case Excel/Google Sheets, Selenium IDE (tùy chọn) | Toàn bộ chức năng M01–M11 theo test case ở mục 3 | Mỗi module xong (BE/FE báo "Ready for test") → test trong 24 giờ; vòng test đầy đủ Day 16–19 |
+| **UAT theo vai trò** | QA đóng vai STUDENT + GUEST, FE1 đóng vai STAFF, FE2 đóng vai ADMIN + MANAGER; BE1/BE2 quan sát | Kịch bản demo (mục 9) | Đi trọn luồng nghiệp vụ như người dùng thật | Day 19 (lần 1), Day 26 (lần 2 trên bản đóng gói) |
 | **Regression** | QA | Selenium IDE (ghi/phát lại) + danh sách test case ưu tiên "Cao" | Chạy lại tất cả test case mức ưu tiên Cao + các bug đã sửa | Day 24 (trước code freeze) và Day 26 (trên máy sạch) |
 
 ### 1.2. Môi trường kiểm thử
@@ -482,22 +482,22 @@ Checklist nội dung tối thiểu:
 |---|---|---|---|---|---|---|---|
 | 1 | **Certificate of Completion** | Tên dự án, tên nhóm/khóa/nhóm, thành viên + mã HV, giảng viên hướng dẫn, ngày, chữ ký (theo mẫu trung tâm) | QA | BE1 | Day 25 | Day 26 | Word |
 | 2 | **Table of Contents** | Mục lục tự động (References → Table of Contents), cập nhật cuối cùng | QA | BE1 | Day 26 | Day 27 | Word |
-| 3 | **Problem Definition** | 1. Giới thiệu khách hàng 2. Hiện trạng (quản lý giấy tờ, khó tra cứu) 3. Vấn đề cần giải quyết 4. Giải pháp đề xuất (website) 5. Phạm vi (trong/ngoài phạm vi) 6. Đối tượng người dùng (5 vai trò) | BE2 | BE1 | Day 3 | Day 5 | Word |
-| 4 | **Customer Requirement Specification (CRS)** | 1. Mục đích 2. Mô tả vai trò 3. Yêu cầu chức năng theo module M01–M11 (bảng: mã YC, mô tả, vai trò, ưu tiên) 4. Yêu cầu phi chức năng (bảo mật, hiệu năng, upload JPEG ≤ 5 MB, trình duyệt) 5. Yêu cầu tài chính (giá giải, giá học viên, giá bán) 6. Sơ đồ Use Case 7. Ràng buộc & giả định | BE2 | BE1 | Day 4 | Day 6 | Word + draw.io |
-| 5 | **Project Plan** | 1. Mục tiêu 2. Thành viên & vai trò 3. Mốc (Week 1–4, code freeze Day 24, nộp Day 28) 4. Gantt chart 5. Rủi ro & phương án 6. Công cụ & môi trường 7. Lịch status report (Day 9 và Day 25) | QA | BE1 | Day 3 | Day 5 | Word + Excel (Gantt) |
-| 6 | **E-R Diagrams** | 1. ERD mức khái niệm (11 thực thể chuẩn) 2. ERD vật lý (bảng, PK/FK, kiểu dữ liệu) 3. Từ điển dữ liệu (bảng: cột, kiểu, null, mô tả) 4. Giải thích quan hệ (1-n, 1-1) | BE2 (vẽ theo schema đã có) | BE1 | Day 6 | Day 8 (cập nhật lại Day 24 nếu đổi) | draw.io + Word |
-| 7 | **Algorithms** | Xem mục 7: pseudo-code + flowchart 5 thuật toán chính | BE1 (pseudo-code) + QA (vẽ flowchart) | BE1 | Day 16 | Day 20 | draw.io + Word |
-| 8 | **GUI Standards Document** | 1. Bảng màu, font, logo 2. Bố cục chung (header/menu/footer) 3. Quy chuẩn nút (màu theo hành động: Lưu = primary, Xóa = danger) 4. Quy chuẩn form (nhãn, `*`, thông báo lỗi) 5. Bảng/phân trang 6. Thông báo (alert success/error) 7. Responsive Bootstrap 5 | FE1 | FE2 | Day 6 | Day 8 | Word |
-| 9 | **Interface Design Document** | Mỗi màn hình: tên, vai trò truy cập, URL, ảnh chụp/wireframe, mô tả các trường & nút, điều hướng; sơ đồ sitemap theo vai trò | FE2 (QA chụp màn hình) | FE1 | Day 12 (wireframe) | Day 25 (ảnh thật) | Word + draw.io |
-| 10 | **Task Sheet** | Bảng: STT, công việc, module, người làm, ngày bắt đầu, ngày kết thúc dự kiến/thực tế, trạng thái, ghi chú – lấy từ `docs/Phan_cong_task.xlsx`, cập nhật mỗi tuần | QA (xuất từ Phan_cong_task.xlsx) | BE1 | Day 2 (tạo) | Cập nhật Day 7, 14, 21, chốt Day 27 | Excel |
-| 11 | **Project Review and Monitoring Report** | Mỗi kỳ: tiến độ % theo module, việc đã xong, việc đang làm, khó khăn & cách xử lý, kế hoạch kỳ tới, minh chứng (ảnh, script) – dùng làm nội dung 2 email STATUS | QA (số liệu từ Kanban & Phan_cong_task.xlsx) | BE1 | Day 9 (kỳ 1), Day 24 (kỳ 2) | Day 9, Day 25 | Word |
-| 12 | **Unit Testing Check List** | Mục 5.1 + kết quả `dotnet test` + bảng tổng hợp test case Pass/Fail | QA (trình bày) + BE1, BE2 (unit test) | BE1 | Day 23 | Day 24 | Word + Excel |
+| 3 | **Problem Definition** | 1. Giới thiệu khách hàng 2. Hiện trạng (quản lý giấy tờ, khó tra cứu) 3. Vấn đề cần giải quyết 4. Giải pháp đề xuất (website) 5. Phạm vi (trong/ngoài phạm vi) 6. Đối tượng người dùng (5 vai trò) | BE2 | BE1 | Day 2 | Day 3 | Word |
+| 4 | **Customer Requirement Specification (CRS)** | 1. Mục đích 2. Mô tả vai trò 3. Yêu cầu chức năng theo module M01–M11 (bảng: mã YC, mô tả, vai trò, ưu tiên) 4. Yêu cầu phi chức năng (bảo mật, hiệu năng, upload JPEG ≤ 5 MB, trình duyệt) 5. Yêu cầu tài chính (giá giải, giá học viên, giá bán) 6. Sơ đồ Use Case 7. Ràng buộc & giả định | BE2 | BE1 | Day 3 | Day 4 | Word + draw.io |
+| 5 | **Project Plan** | 1. Mục tiêu 2. Thành viên & vai trò 3. Mốc (Sprint 1–3 xong chức năng Day 17, review & chỉnh sửa Day 18–23, code freeze Day 24, nộp Day 28) 4. Gantt chart 5. Rủi ro & phương án 6. Công cụ & môi trường 7. Lịch status report (Day 7 và Day 25) | QA | BE1 | Day 2 | Day 3 | Word + Excel (Gantt) |
+| 6 | **E-R Diagrams** | 1. ERD mức khái niệm (11 thực thể chuẩn) 2. ERD vật lý (bảng, PK/FK, kiểu dữ liệu) 3. Từ điển dữ liệu (bảng: cột, kiểu, null, mô tả) 4. Giải thích quan hệ (1-n, 1-1) | BE2 (vẽ theo schema đã có) | BE1 | Day 4 | Day 6 (cập nhật lại Day 24 nếu đổi) | draw.io + Word |
+| 7 | **Algorithms** | Xem mục 7: pseudo-code + flowchart 5 thuật toán chính | BE1 (pseudo-code) + QA (vẽ flowchart) | BE1 | Day 13 | Day 16 | draw.io + Word |
+| 8 | **GUI Standards Document** | 1. Bảng màu, font, logo 2. Bố cục chung (header/menu/footer) 3. Quy chuẩn nút (màu theo hành động: Lưu = primary, Xóa = danger) 4. Quy chuẩn form (nhãn, `*`, thông báo lỗi) 5. Bảng/phân trang 6. Thông báo (alert success/error) 7. Responsive Bootstrap 5 | FE1 | FE2 | Day 4 | Day 6 | Word |
+| 9 | **Interface Design Document** | Mỗi màn hình: tên, vai trò truy cập, URL, ảnh chụp/wireframe, mô tả các trường & nút, điều hướng; sơ đồ sitemap theo vai trò | FE2 (QA chụp màn hình) | FE1 | Day 9 (wireframe) | Day 25 (ảnh thật) | Word + draw.io |
+| 10 | **Task Sheet** | Bảng: STT, công việc, module, người làm, ngày bắt đầu, ngày kết thúc dự kiến/thực tế, trạng thái, ghi chú – lấy từ `docs/Phan_cong_task.xlsx`, cập nhật cuối mỗi sprint | QA (xuất từ Phan_cong_task.xlsx) | BE1 | Day 2 (tạo) | Cập nhật Day 5, 11, 17, chốt Day 27 | Excel |
+| 11 | **Project Review and Monitoring Report** | Mỗi kỳ: tiến độ % theo module, việc đã xong, việc đang làm, khó khăn & cách xử lý, kế hoạch kỳ tới, minh chứng (ảnh, script) – dùng làm nội dung 2 email STATUS | QA (số liệu từ Kanban & Phan_cong_task.xlsx) | BE1 | Day 7 (kỳ 1), Day 24 (kỳ 2) | Day 7, Day 25 | Word |
+| 12 | **Unit Testing Check List** | Mục 5.1 + kết quả `dotnet test` + bảng tổng hợp test case Pass/Fail | QA (trình bày) + BE1, BE2 (unit test) | BE1 | Day 19 | Day 24 | Word + Excel |
 | 13 | **Final Check List** | Mục 5.2, tick & ký | QA | BE1 | Day 26 | Day 27 | Word |
-| 14 | **User Guide (Hướng dẫn sử dụng)** | 1. Giới thiệu 2. Đăng nhập/đăng xuất 3. Hướng dẫn theo vai trò (GUEST, STUDENT, STAFF, MANAGER, ADMIN) – mỗi chức năng: mục đích, các bước, ảnh chụp 4. Câu hỏi thường gặp & lỗi thường gặp 5. Nguồn ảnh | FE1 (GUEST, STUDENT, STAFF) + FE2 (ADMIN, MANAGER) | QA (làm thử theo hướng dẫn) | Day 22 | Day 25 | Word |
+| 14 | **User Guide (Hướng dẫn sử dụng)** | 1. Giới thiệu 2. Đăng nhập/đăng xuất 3. Hướng dẫn theo vai trò (GUEST, STUDENT, STAFF, MANAGER, ADMIN) – mỗi chức năng: mục đích, các bước, ảnh chụp 4. Câu hỏi thường gặp & lỗi thường gặp 5. Nguồn ảnh | FE1 (GUEST, STUDENT, STAFF) + FE2 (ADMIN, MANAGER) | QA (làm thử theo hướng dẫn) | Day 18 | Day 25 | Word |
 | 15 | **Installation Guide (Hướng dẫn cài đặt)** | 1. Yêu cầu hệ thống (.NET 10 SDK, SQL Server, SSMS) 2. Restore DB từ `.bak` hoặc chạy `.sql` 3. Cấu hình `appsettings.json` (chuỗi kết nối) 4. Copy thư mục ảnh `uploads/` 5. Chạy ứng dụng (`mvn spring-boot:run` / `java -jar`) 6. Truy cập `http://localhost:5000` 7. **Bảng tài khoản đăng nhập** (mục 4.5) 8. Lỗi thường gặp (cổng 5000 bận, TCP/IP SQL Server chưa bật, sai mật khẩu `sa`) | BE2 | QA (cài thử trên máy sạch) | Day 24 | Day 26 (sau test máy sạch) | Word |
 | — | **Project Report (bản ghép)** | Bìa → Certificate → Mục lục → **Synopsis** (1–2 trang) → tài liệu 3–13 → User Guide → Installation Guide → Phụ lục: code chính có comment | QA | BE1 | Day 26 | **Day 27** | Word → PDF |
 
-> Ghi nhớ yêu cầu spec: *mọi khối code phải có comment; phải giải thích logic chương trình; báo cáo hoàn chỉnh gồm synopsis, mã nguồn và tài liệu.* BE1, BE2, FE1, FE2 tự rà comment code Day 22–24; QA kiểm tra ngẫu nhiên 10 file (có XML comment `///` cho class/method public không) và ghi vào Final Check List.
+> Ghi nhớ yêu cầu spec: *mọi khối code phải có comment; phải giải thích logic chương trình; báo cáo hoàn chỉnh gồm synopsis, mã nguồn và tài liệu.* BE1, BE2, FE1, FE2 tự rà comment code Day 18–24; QA kiểm tra ngẫu nhiên 10 file (có XML comment `///` cho class/method public không) và ghi vào Final Check List.
 
 ### 6.3. Hướng dẫn chụp ảnh màn hình (cho QA)
 
@@ -682,7 +682,7 @@ Người A (QA) đóng gói, người B (FE2) kiểm tra **trên máy khác**; s
 
 | Ngày | Việc |
 |---|---|
-| Day 9 | Email `STATUS:` lần 1 + Project Review & Monitoring Report kỳ 1 + ZIP minh chứng |
+| Day 7 | Email `STATUS:` lần 1 + Project Review & Monitoring Report kỳ 1 + ZIP minh chứng |
 | Day 24 | Code freeze; regression; Unit Testing Check List chốt |
 | Day 25 | Email `STATUS:` lần 2 (3 ngày trước khi kết thúc) + Report kỳ 2; User Guide chốt |
 | Day 26 | Test máy sạch; Installation Guide & Certificate chốt; ghép Project Report |

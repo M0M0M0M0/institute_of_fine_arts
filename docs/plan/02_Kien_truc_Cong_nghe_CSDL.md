@@ -114,7 +114,7 @@
 
 ## 3. Công nghệ tùy chọn (100% miễn phí)
 
-Mức độ khó: ⭐ dễ · ⭐⭐ trung bình · ⭐⭐⭐ khó. Khuyến nghị: **Nên dùng** / **Tùy chọn** (tuần 4 nếu dư thời gian) / **Bỏ qua**.
+Mức độ khó: ⭐ dễ · ⭐⭐ trung bình · ⭐⭐⭐ khó. Khuyến nghị: **Nên dùng** / **Tùy chọn** (Day 19–23 nếu đã sửa xong góp ý review) / **Bỏ qua**.
 
 ### 3.1. Thư viện backend
 | Công nghệ | Mục đích | Lợi ích | Độ khó | Khuyến nghị |
@@ -153,8 +153,8 @@ Mức độ khó: ⭐ dễ · ⭐⭐ trung bình · ⭐⭐⭐ khó. Khuyến ngh
 | Postman | Thử request tải file | **Tùy chọn** |
 
 ### 3.4. Tóm tắt khuyến nghị
-- **Dùng ngay từ tuần 1:** EF Core Migrations, EFCore.NamingConventions, BCrypt.Net-Next, BackgroundService, SkiaSharp, Serilog, Chart.js, SweetAlert2, GitHub + Projects, draw.io, xUnit + Moq, Selenium IDE, SonarQube for IDE.
-- **Tùy chọn (tuần 4):** ClosedXML (Excel) → QuestPDF (PDF) → MailKit + Mailtrap → DataTables, Figma, Postman.
+- **Dùng ngay từ Sprint 1:** EF Core Migrations, EFCore.NamingConventions, BCrypt.Net-Next, BackgroundService, SkiaSharp, Serilog, Chart.js, SweetAlert2, GitHub + Projects, draw.io, xUnit + Moq, Selenium IDE, SonarQube for IDE.
+- **Tùy chọn (Day 19–23):** ClosedXML (Excel) → QuestPDF (PDF) → MailKit + Mailtrap → DataTables, Figma, Postman.
 - **Bỏ qua:** FluentValidation, AutoMapper, ASP.NET Core Identity, Repository pattern riêng, Swagger.
 - **Docker:** chỉ dùng để chạy SQL Server khi máy không cài (`docker-compose.yml`), không đóng gói ứng dụng web.
 
@@ -1222,7 +1222,7 @@ gitGraph
 ```
 | Nhánh | Mục đích | Quy tắc |
 |---|---|---|
-| `main` | Bản ổn định để demo/nộp | Chỉ merge từ `develop` cuối mỗi tuần, gắn tag `v0.x` |
+| `main` | Bản ổn định để demo/nộp | Chỉ merge từ `develop` cuối mỗi sprint, gắn tag `v0.x` |
 | `develop` | Tích hợp hằng ngày | Merge qua Pull Request, Lead review |
 | `feature/Mxx-mo-ta` | Mỗi task 1 nhánh | Tạo từ `develop`, sống ≤ 2–3 ngày |
 | `fix/Mxx-mo-ta` | Sửa lỗi do tester báo | Gắn số issue |
