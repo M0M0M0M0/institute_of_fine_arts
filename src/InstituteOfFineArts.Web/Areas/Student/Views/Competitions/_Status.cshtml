@@ -1,0 +1,15 @@
+@model InstituteOfFineArts.Web.Models.Enums.CompetitionStatus
+@*
+    Coloured badge for a competition status as shown to students.
+    Minimal version created by BE1 (BE1-06); FE1 restyles it in FE1-04.
+*@
+@{
+    var (css, text) = Model switch
+    {
+        CompetitionStatus.UPCOMING => ("bg-info text-dark", "Upcoming"),
+        CompetitionStatus.ONGOING => ("bg-success", "Open for entries"),
+        CompetitionStatus.CLOSED => ("bg-secondary", "Closed"),
+        _ => ("bg-primary", "Results published"),
+    };
+}
+<span class="badge @css">@text</span>

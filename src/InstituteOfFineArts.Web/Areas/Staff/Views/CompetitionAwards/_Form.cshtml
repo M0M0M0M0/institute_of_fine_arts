@@ -1,0 +1,46 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.Competitions.CompetitionAwardFormVm
+@*
+    Fields shared by the add and edit award forms (F-M05-06): name, rank, prize (USD), quantity, description.
+    Minimal version created by BE1 (BE1-06); FE1 builds the real design in FE1-03.
+*@
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+<div class="mb-3">
+    <label asp-for="AwardName" class="form-label"></label>
+    <input asp-for="AwardName" class="form-control" placeholder="e.g. First Prize" />
+    <span asp-validation-for="AwardName" class="text-danger"></span>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <label asp-for="Rank" class="form-label"></label>
+        <input asp-for="Rank" type="number" min="1" step="1" class="form-control" />
+        <div class="form-text">1 = highest.</div>
+        <span asp-validation-for="Rank" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label asp-for="PrizeValue" class="form-label"></label>
+        <div class="input-group">
+            <span class="input-group-text">$</span>
+            <input asp-for="PrizeValue" type="number" min="0" step="0.01" class="form-control" />
+        </div>
+        <span asp-validation-for="PrizeValue" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label asp-for="Quantity" class="form-label"></label>
+        <input asp-for="Quantity" type="number" min="@(Math.Max(1, Model.IssuedCount))" step="1" class="form-control" />
+        @* An issued award keeps at least as many slots as it has been given (BR-31) *@
+        @if (Model.IssuedCount > 0)
+        {
+            <div class="form-text">Already given @Model.IssuedCount time(s); the quantity cannot be lower.</div>
+        }
+        <span asp-validation-for="Quantity" class="text-danger"></span>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label asp-for="PrizeDescription" class="form-label"></label>
+    <textarea asp-for="PrizeDescription" class="form-control" rows="3" placeholder="e.g. Certificate and art supplies voucher"></textarea>
+    <span asp-validation-for="PrizeDescription" class="text-danger"></span>
+</div>
