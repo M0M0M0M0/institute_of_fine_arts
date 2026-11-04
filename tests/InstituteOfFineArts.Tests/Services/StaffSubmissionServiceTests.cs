@@ -337,8 +337,8 @@ public class StaffSubmissionServiceTests
     public void IsLate_Boundary()
     {
         var end = new DateOnly(2026, 10, 31);
-        Assert.False(StaffSubmissionService.IsLate(end.ToDateTime(new TimeOnly(23, 59, 59)), end));
-        Assert.True(StaffSubmissionService.IsLate(end.AddDays(1).ToDateTime(TimeOnly.MinValue), end));
+        Assert.False(CompetitionStatusResolver.IsLateSubmission(end.ToDateTime(new TimeOnly(23, 59, 59)), end));
+        Assert.True(CompetitionStatusResolver.IsLateSubmission(end.AddDays(1).ToDateTime(TimeOnly.MinValue), end));
     }
 
     /// <summary>BR-21: CLOSED competition (stored status stale) → the Evaluate button is shown; not evaluated yet.</summary>

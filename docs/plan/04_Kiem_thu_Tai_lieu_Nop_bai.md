@@ -234,15 +234,15 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 |---|---|---|---|---|---|---|
 | TC-M06-01 | Nộp bài hợp lệ | `student01`; "Colors of Autumn" ONGOING; chưa nộp | 1. Cuộc thi → Nộp bài 2. Chọn ảnh 3. Nhập thơ/trích dẫn/câu chuyện + mô tả 4. Nộp | `ok_small.jpg`, thơ 4 câu | Thành công; bài có trong "My Submissions" với ngày nộp = hôm nay; file mới trong `uploads/` với **tên do hệ thống sinh** (Guid) | C |
 | TC-M06-02 | JPEG phần mở rộng viết hoa | Như trên (cuộc thi ONGOING khác) | Nộp | `ok_upper.JPEG` | Được chấp nhận | T |
-| TC-M06-03 | File PNG bị từ chối | Như TC-M06-01 | Nộp | `image.png` | "Only JPEG images are accepted"; không lưu bài, không có file mới | C |
+| TC-M06-03 | File PNG bị từ chối | Như TC-M06-01 | Nộp | `image.png` | "Only JPEG images (.jpg, .jpeg) are allowed."; không lưu bài, không có file mới | C |
 | TC-M06-04 | File giả JPEG (đổi đuôi) | Như trên | Nộp | `fake_jpg.jpg` | Bị từ chối (kiểm tra content-type/magic bytes `FF D8 FF`) | C |
-| TC-M06-05 | File quá lớn | Như trên | Nộp | `big_8mb.jpg` | Báo "Maximum file size is 5 MB" trên trang (không phải trang lỗi trắng/500) | C |
-| TC-M06-06 | File rỗng / không chọn file | Như trên | Nộp không chọn file; nộp `empty.jpg` | | Báo "Please choose an image" / "Invalid file" | T |
+| TC-M06-05 | File quá lớn | Như trên | Nộp | `big_8mb.jpg` | File > 5 MB nhưng ≤ 6 MB: báo "Images must be 5 MB or smaller." trên form; file lớn hơn: trang lỗi 413 "File too large" (không phải trang trắng/500) | C |
+| TC-M06-06 | File rỗng / không chọn file | Như trên | Nộp không chọn file; nộp `empty.jpg` | | Báo "Please choose an image file." / "The file is not a valid JPEG image." | T |
 | TC-M06-07 | Tên file có ký tự lạ/tiếng Việt | Như trên | Nộp | `ten co dau & ky tu #lạ!.jpg` | Lưu thành công, ảnh hiển thị đúng (vì tên file lưu là Guid) | T |
 | TC-M06-08 | Path traversal qua tên file | Postman, có cookie phiên `student01` | Gửi multipart với `filename="../../evil.jpg"` (nội dung JPEG thật) | | Không có file nào được ghi ra ngoài `uploads/`; tên lưu là Guid hoặc request bị từ chối | C |
 | TC-M06-09 | Nộp bài ngay trước hạn (đúng ngày end date) | Cuộc thi "Deadline Today" có endDate = D | Nộp lúc trong ngày D | `ok_small.jpg` | **Được chấp nhận** (hạn tính hết 23:59:59 ngày end date) | C |
-| TC-M06-10 | Nộp bài sau hạn | Cuộc thi CLOSED (endDate = D-1) | 1. Mở trang cuộc thi 2. Thử mở trực tiếp URL `/student/submissions/new?competitionId=…` và POST bằng Postman | | Nút Nộp bị ẩn/khóa; POST trực tiếp bị từ chối "The competition has ended"; không có bài mới | C |
-| TC-M06-11 | Nộp vào cuộc thi UPCOMING | Cuộc thi UPCOMING | Thử nộp (qua URL trực tiếp) | | Bị từ chối "The competition has not started yet" | T |
+| TC-M06-10 | Nộp bài sau hạn | Cuộc thi CLOSED (endDate = D-1) | 1. Mở trang cuộc thi 2. Thử mở trực tiếp URL `/student/submissions/new?competitionId=…` và POST bằng Postman | | Nút Nộp bị ẩn/khóa; POST trực tiếp bị từ chối "The submission deadline has passed."; không có bài mới | C |
+| TC-M06-11 | Nộp vào cuộc thi UPCOMING | Cuộc thi UPCOMING | Thử nộp (qua URL trực tiếp) | | Bị từ chối "The competition has not started yet." | T |
 | TC-M06-12 | Sửa bài trước hạn (đổi ảnh + thơ) | `student01` có bài ở cuộc thi ONGOING | Bài của tôi → Sửa → chọn ảnh mới, sửa thơ → Lưu | | Ảnh mới hiển thị; file ảnh cũ bị xóa khỏi `uploads/` (hoặc được thay thế); thơ mới được lưu | C |
 | TC-M06-13 | Sửa/xóa bài sau hạn | `student02` có bài ở cuộc thi CLOSED | Mở bài → tìm nút Sửa/Xóa; thử POST trực tiếp `/student/submissions/{id}/edit` và `/delete` | | Không có nút; request trực tiếp bị từ chối; dữ liệu không đổi | C |
 | TC-M06-14 | Sửa/xóa bài của người khác (IDOR) | `student01` đăng nhập; biết id bài của `student03` | Đổi id trên URL `/student/submissions/{id}/edit` | id bài của student03 | 403 hoặc "Not found"; không xem/sửa được bài người khác | C |

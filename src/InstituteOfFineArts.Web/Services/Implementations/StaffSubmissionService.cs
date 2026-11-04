@@ -47,14 +47,6 @@ public class StaffSubmissionService : IStaffSubmissionService
         _db = db;
     }
 
-    /// <summary>
-    /// True when the entry was submitted after the deadline, i.e. after 23:59:59 of the end date (BR-14).
-    /// </summary>
-    /// <param name="submittedAt">Submission time (institute time zone)</param>
-    /// <param name="endDate">Last day of the competition</param>
-    public static bool IsLate(DateTime submittedAt, DateOnly endDate)
-        => submittedAt >= endDate.AddDays(1).ToDateTime(TimeOnly.MinValue);
-
     /// <inheritdoc />
     public async Task<PagedResult<SubmissionListItemVm>> SearchAsync(SubmissionSearchVm search, int pageSize = 10)
     {
@@ -88,12 +80,12 @@ public class StaffSubmissionService : IStaffSubmissionService
         // Date range, both ends included: from 00:00 of From to 23:59:59 of To (TC-M10-02)
         if (search.From is { } from)
         {
-            var start = from.ToDateTime(TimeOnly.MinValue);
+            var start = DateTimeHelper.StartOfDay(from);
             query = query.Where(s => s.SubmittedAt >= start);
         }
         if (search.To is { } to)
         {
-            var endExclusive = to.AddDays(1).ToDateTime(TimeOnly.MinValue);
+            var endExclusive = DateTimeHelper.StartOfNextDay(to);
             query = query.Where(s => s.SubmittedAt < endExclusive);
         }
 
@@ -196,7 +188,7 @@ public class StaffSubmissionService : IStaffSubmissionService
         var vm = row.Vm;
         vm.CompetitionStatus = CompetitionStatusResolver.Resolve(
             new Competition { Status = row.Status, StartDate = row.StartDate, EndDate = vm.CompetitionEndDate });
-        vm.IsLate = IsLate(vm.SubmittedAt, vm.CompetitionEndDate);
+        vm.IsLate = CompetitionStatusResolver.IsLateSubmission(vm.SubmittedAt, vm.CompetitionEndDate);
         return vm;
     }
 
@@ -306,7 +298,7 @@ public class StaffSubmissionService : IStaffSubmissionService
         {
             row.Vm.CompetitionStatus = CompetitionStatusResolver.Resolve(
                 new Competition { Status = row.Status, StartDate = row.StartDate, EndDate = row.Vm.CompetitionEndDate });
-            row.Vm.IsLate = IsLate(row.Vm.SubmittedAt, row.Vm.CompetitionEndDate);
+            row.Vm.IsLate = CompetitionStatusResolver.IsLateSubmission(row.Vm.SubmittedAt, row.Vm.CompetitionEndDate);
             vm.Entries.Add(row.Vm);
         }
         return vm;
@@ -317,7 +309,7 @@ public class StaffSubmissionService : IStaffSubmissionService
     {
         foreach (var item in page.Items)
         {
-            item.IsLate = IsLate(item.SubmittedAt, item.CompetitionEndDate);
+            item.IsLate = CompetitionStatusResolver.IsLateSubmission(item.SubmittedAt, item.CompetitionEndDate);
         }
         return page;
     }

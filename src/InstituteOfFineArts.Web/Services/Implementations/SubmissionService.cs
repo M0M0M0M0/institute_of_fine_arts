@@ -135,12 +135,12 @@ public class SubmissionService : ISubmissionService
         // Submitted date range: whole days, "To" included up to 23:59:59
         if (search.From is { } from)
         {
-            var start = from.ToDateTime(TimeOnly.MinValue);
+            var start = DateTimeHelper.StartOfDay(from);
             query = query.Where(s => s.SubmittedAt >= start);
         }
         if (search.To is { } to)
         {
-            var end = to.AddDays(1).ToDateTime(TimeOnly.MinValue);
+            var end = DateTimeHelper.StartOfNextDay(to);
             query = query.Where(s => s.SubmittedAt < end);
         }
 

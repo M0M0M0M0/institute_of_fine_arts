@@ -81,7 +81,7 @@ public class EvaluationService : IEvaluationService
             ?? throw new NotFoundException($"Submission {submissionId} was not found.");
 
         var status = CompetitionStatusResolver.Resolve(data.Competition);
-        var isLate = IsLate(data.SubmittedAt, data.Competition.EndDate);
+        var isLate = CompetitionStatusResolver.IsLateSubmission(data.SubmittedAt, data.Competition.EndDate);
         var page = new EvaluationPageVm
         {
             SubmissionId = data.Id,
@@ -152,7 +152,7 @@ public class EvaluationService : IEvaluationService
         var (rating, positive, negative, improvement) = Validate(form);
 
         // BR-14: an entry submitted after the deadline can only be disqualified
-        if (IsLate(submission.SubmittedAt, submission.Competition.EndDate) && rating != Rating.DISQUALIFIED)
+        if (CompetitionStatusResolver.IsLateSubmission(submission.SubmittedAt, submission.Competition.EndDate) && rating != Rating.DISQUALIFIED)
         {
             throw new BusinessException(LateOnlyDisqualifiedMessage, nameof(EvaluationFormVm.Rating));
         }
@@ -275,9 +275,6 @@ public class EvaluationService : IEvaluationService
         return hasExhibitionEntry ? ExhibitedDeleteMessage : null;
     }
 
-    /// <summary>BR-14: submitted after 23:59:59 of the end date, i.e. on or after the next day at 00:00.</summary>
-    private static bool IsLate(DateTime submittedAt, DateOnly endDate)
-        => submittedAt >= endDate.AddDays(1).ToDateTime(TimeOnly.MinValue);
 
     /// <summary>Trims text; blank becomes null.</summary>
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();

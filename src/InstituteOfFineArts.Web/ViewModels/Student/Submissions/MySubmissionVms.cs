@@ -131,7 +131,7 @@ public class MySubmissionDetailsVm
     public bool CanEdit { get; set; }
 
     /// <summary>Deadline as ISO 8601 local time (end of the last day), for the countdown script: 2026-11-14T23:59:59.</summary>
-    public string DeadlineIso => EndDate.ToDateTime(new TimeOnly(23, 59, 59)).ToString("yyyy-MM-dd'T'HH:mm:ss", CultureInfo.InvariantCulture);
+    public string DeadlineIso => Helpers.CompetitionStatusResolver.SubmissionDeadline(EndDate).ToString("yyyy-MM-dd'T'HH:mm:ss", CultureInfo.InvariantCulture);
 
     /// <summary>The evaluation, only when the competition is GRADED (BR-24); otherwise null.</summary>
     public MyEvaluationVm? Evaluation { get; set; }

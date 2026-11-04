@@ -36,6 +36,21 @@ public static class CompetitionStatusResolver
         return day <= competition.EndDate ? CompetitionStatus.ONGOING : CompetitionStatus.CLOSED;
     }
 
+    /// <summary>
+    /// Submission deadline of a competition: 23:59:59 on its end date, institute time (BR-06).
+    /// </summary>
+    /// <param name="endDate">Last day of the competition</param>
+    public static DateTime SubmissionDeadline(DateOnly endDate) => endDate.ToDateTime(new TimeOnly(23, 59, 59));
+
+    /// <summary>
+    /// True when an entry was submitted after the deadline, i.e. on or after 00:00 of the day after the end date
+    /// (BR-14, TC-M07-04). Used by the staff submission pages and the evaluation rules.
+    /// </summary>
+    /// <param name="submittedAt">Submission time (institute time zone)</param>
+    /// <param name="endDate">Last day of the competition</param>
+    public static bool IsLateSubmission(DateTime submittedAt, DateOnly endDate)
+        => submittedAt >= DateTimeHelper.StartOfNextDay(endDate);
+
     /// <summary>Whether the competition still allows submitting / editing / deleting entries (BR-13).</summary>
     public static bool IsOpenForSubmission(Competition competition, DateOnly? today = null)
         => Resolve(competition, today) == CompetitionStatus.ONGOING;

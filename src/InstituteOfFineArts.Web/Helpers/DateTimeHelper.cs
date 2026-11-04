@@ -15,6 +15,17 @@ public static class DateTimeHelper
     /// <summary>Current date in the institute time zone.</summary>
     public static DateOnly Today => DateOnly.FromDateTime(Now);
 
+    /// <summary>00:00 of the given day – inclusive lower bound of a date filter.</summary>
+    /// <param name="day">Day</param>
+    public static DateTime StartOfDay(DateOnly day) => day.ToDateTime(TimeOnly.MinValue);
+
+    /// <summary>
+    /// 00:00 of the day after the given day – exclusive upper bound, so a "To" date filter includes the whole day
+    /// up to 23:59:59 (TC-M10-02).
+    /// </summary>
+    /// <param name="day">Day</param>
+    public static DateTime StartOfNextDay(DateOnly day) => day.AddDays(1).ToDateTime(TimeOnly.MinValue);
+
     /// <summary>
     /// Finds the institute time zone: tries the IANA id first, then falls back to the Windows id.
     /// </summary>
