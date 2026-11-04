@@ -1,0 +1,46 @@
+@model InstituteOfFineArts.Web.ViewModels.Admin.Staff.CreateStaffVm
+@*
+    Admin – new staff member (/admin/staff/new, SCR-12).
+    Minimal version created by BE (BE2-02); FE2 builds the real design in FE2-02.
+*@
+@{
+    ViewData["Title"] = "New staff member";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <h1 class="h3 mb-3">New staff member</h1>
+        <form asp-action="Create" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+            <h2 class="h6 text-uppercase text-muted">Login</h2>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label asp-for="NewUsername" class="form-label"></label>
+                    <input asp-for="NewUsername" class="form-control" autocomplete="off" />
+                    <span asp-validation-for="NewUsername" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="Password" class="form-label"></label>
+                    <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                    <div class="form-text">At least 8 characters, with a letter and a digit.</div>
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label asp-for="ConfirmPassword" class="form-label"></label>
+                    <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                </div>
+            </div>
+
+            <partial name="_Form" model="Model" />
+
+            <button type="submit" class="btn btn-primary">Create staff member</button>
+            <a asp-action="Index" class="btn btn-link">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

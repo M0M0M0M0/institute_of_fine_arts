@@ -1,0 +1,101 @@
+@model InstituteOfFineArts.Web.ViewModels.Admin.Staff.StaffDetailsVm
+@*
+    Admin – staff details (/admin/staff/{id}, SCR-13) with reset password, lock/unlock and delete.
+    Minimal version created by BE (BE2-02); FE2 builds the real design in FE2-02.
+*@
+@{
+    ViewData["Title"] = Model.FullName;
+    string Show(string? value) => string.IsNullOrWhiteSpace(value) ? "–" : value;
+    string Day(DateOnly? d) => d?.ToString("dd MMM yyyy") ?? "–";
+}
+
+<partial name="_Alerts" />
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="h3 mb-1">@Model.FullName</h1>
+        <div class="text-muted">
+            @Model.StaffCode · @Model.Role ·
+            @if (Model.Active) { <span class="badge bg-success">Active</span> } else { <span class="badge bg-secondary">Locked</span> }
+        </div>
+    </div>
+    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Edit</a>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <h2 class="h6 text-uppercase text-muted">Login</h2>
+        <dl class="row">
+            <dt class="col-sm-5">Username</dt><dd class="col-sm-7">@Model.Username</dd>
+            <dt class="col-sm-5">Email</dt><dd class="col-sm-7">@Model.Email</dd>
+            <dt class="col-sm-5">Last login</dt><dd class="col-sm-7">@(Model.LastLoginAt?.ToString("dd MMM yyyy HH:mm") ?? "Never")</dd>
+            <dt class="col-sm-5">Created</dt><dd class="col-sm-7">@Model.CreatedAt.ToString("dd MMM yyyy")</dd>
+        </dl>
+        <h2 class="h6 text-uppercase text-muted">Personal</h2>
+        <dl class="row">
+            <dt class="col-sm-5">Gender</dt><dd class="col-sm-7">@(Model.Gender?.ToString() ?? "–")</dd>
+            <dt class="col-sm-5">Date of birth</dt><dd class="col-sm-7">@Day(Model.DateOfBirth)</dd>
+            <dt class="col-sm-5">Phone</dt><dd class="col-sm-7">@Show(Model.Phone)</dd>
+            <dt class="col-sm-5">Address</dt><dd class="col-sm-7">@Show(Model.Address)</dd>
+        </dl>
+    </div>
+    <div class="col-lg-6">
+        <h2 class="h6 text-uppercase text-muted">Job</h2>
+        <dl class="row">
+            <dt class="col-sm-5">Joined</dt><dd class="col-sm-7">@Day(Model.JoinedDate)</dd>
+            <dt class="col-sm-5">Position</dt><dd class="col-sm-7">@Show(Model.Position)</dd>
+            <dt class="col-sm-5">Classes in charge</dt><dd class="col-sm-7">@Show(Model.ClassesInCharge)</dd>
+            <dt class="col-sm-5">Subjects in charge</dt><dd class="col-sm-7">@Show(Model.SubjectsInCharge)</dd>
+            <dt class="col-sm-5">Qualification</dt><dd class="col-sm-7">@Show(Model.Qualification)</dd>
+            <dt class="col-sm-5">Notes</dt><dd class="col-sm-7">@Show(Model.Notes)</dd>
+        </dl>
+        <h2 class="h6 text-uppercase text-muted">Related data</h2>
+        <dl class="row">
+            <dt class="col-sm-5">Competitions</dt><dd class="col-sm-7">@Model.CompetitionCount</dd>
+            <dt class="col-sm-5">Evaluations</dt><dd class="col-sm-7">@Model.EvaluationCount</dd>
+            <dt class="col-sm-5">Awards issued</dt><dd class="col-sm-7">@Model.AwardCount</dd>
+            <dt class="col-sm-5">Exhibition work</dt><dd class="col-sm-7">@Model.ExhibitionCount</dd>
+        </dl>
+    </div>
+</div>
+
+<hr />
+<h2 class="h5">Account actions</h2>
+<div class="row g-3 align-items-end">
+    <div class="col-md-6">
+        <form asp-action="ResetPassword" asp-route-id="@Model.Id" method="post" class="d-flex gap-2 align-items-end">
+            <div class="flex-grow-1">
+                <label class="form-label" for="NewPassword">Temporary password</label>
+                <input class="form-control" type="password" id="NewPassword" name="NewPassword" autocomplete="new-password" />
+            </div>
+            <button type="submit" class="btn btn-outline-secondary">Reset password</button>
+        </form>
+    </div>
+    @if (!Model.IsCurrentUser)
+    {
+        <div class="col-md-6 d-flex gap-2 justify-content-md-end">
+            @if (Model.Active)
+            {
+                <form asp-action="Lock" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Lock this account? The person will not be able to log in.');">
+                    <button type="submit" class="btn btn-outline-warning">Lock</button>
+                </form>
+            }
+            else
+            {
+                <form asp-action="Unlock" asp-route-id="@Model.Id" method="post">
+                    <button type="submit" class="btn btn-outline-success">Unlock</button>
+                </form>
+            }
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+                  onsubmit="return confirm('@(Model.HasRelatedData ? "This person has related data, so the account will be locked instead of deleted. Continue?" : "Delete this staff member permanently?")');">
+                <button type="submit" class="btn btn-outline-danger">Delete</button>
+            </form>
+        </div>
+    }
+    else
+    {
+        <div class="col-md-6 text-md-end text-muted small">This is your own account: it cannot be locked or deleted here.</div>
+    }
+</div>
+
+<a asp-action="Index" class="btn btn-link px-0 mt-3">Back to staff list</a>
