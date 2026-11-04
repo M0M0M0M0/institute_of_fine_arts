@@ -1,2 +1,3 @@
 # Nguồn ảnh mẫu – BẮT BUỘC ghi đủ cho mọi ảnh (chỉ dùng ảnh tự vẽ hoặc giấy phép free: Unsplash, Pexels, Public Domain)
 # fileName | nguồn | tác giả | link | giấy phép
+# Ảnh còn thiếu sẽ được DbSeeder tự vẽ (SampleArtwork.cs, SkiaSharp) – ảnh do chương trình tạo, không có bản quyền bên thứ ba.

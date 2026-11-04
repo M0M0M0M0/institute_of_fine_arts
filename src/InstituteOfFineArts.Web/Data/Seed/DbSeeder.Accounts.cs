@@ -28,7 +28,7 @@ public static partial class DbSeeder
     /// and 10 STUDENT (with student_profile); student10 is locked to test login of a locked account.
     /// </summary>
     /// <param name="db">DbContext used to insert the data</param>
-    private static async Task SeedAccountsAsync(AppDbContext db)
+    internal static async Task SeedAccountsAsync(AppDbContext db)
     {
         var today = DateTimeHelper.Today;
 

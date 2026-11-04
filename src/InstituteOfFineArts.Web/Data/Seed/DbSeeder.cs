@@ -34,7 +34,7 @@ public static partial class DbSeeder
         // Step 2: business data (only when there is no competition yet)
         if (!await db.Competitions.AnyAsync())
         {
-            await SeedSampleDataAsync(db);
+            await SeedSampleDataAsync(db, scope.ServiceProvider);
         }
     }
 }
