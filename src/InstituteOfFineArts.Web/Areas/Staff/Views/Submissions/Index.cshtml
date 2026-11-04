@@ -1,0 +1,106 @@
+@model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Staff.Submissions.SubmissionListItemVm>
+@*
+    Staff – submission list & filters (/staff/submissions, SCR-26; F-M07-01, F-M07-09).
+    Minimal version created by BE2 (BE2-06); FE2 builds the real design in FE2-04.
+*@
+@using InstituteOfFineArts.Web.ViewModels.Staff.Submissions
+@{
+    ViewData["Title"] = "Submissions";
+    var search = (SubmissionSearchVm)ViewBag.Search;
+    var competitions = (IReadOnlyList<CompetitionOptionVm>)ViewBag.Competitions;
+    var progress = (EvaluationProgressVm?)ViewBag.Progress;
+    // Keeps the filters when moving between pages
+    object PageRoute(int page) => new
+    {
+        search.CompetitionId, search.Evaluated, search.Rating, search.Student,
+        From = search.From?.ToString("yyyy-MM-dd"), To = search.To?.ToString("yyyy-MM-dd"), page,
+    };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Submissions</h1>
+    <a asp-action="ByRating" class="btn btn-outline-primary">Search by rating</a>
+</div>
+
+<partial name="_Alerts" />
+
+<form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
+    <div class="col-md-3">
+        <label class="form-label" for="CompetitionId">Competition</label>
+        <select class="form-select" id="CompetitionId" name="CompetitionId">
+            <option value="">All competitions</option>
+            @foreach (var c in competitions)
+            {
+                <option value="@c.Id" selected="@(search.CompetitionId == c.Id)">@c.Code – @c.Title</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="Evaluated">Evaluation</label>
+        <select class="form-select" id="Evaluated" name="Evaluated">
+            <option value="">All</option>
+            <option value="true" selected="@(search.Evaluated == true)">Evaluated</option>
+            <option value="false" selected="@(search.Evaluated == false)">Not evaluated</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="Rating">Rating</label>
+        <select class="form-select" id="Rating" name="Rating">
+            <option value="">All</option>
+            @foreach (var r in Enum.GetValues<Rating>())
+            {
+                <option value="@r" selected="@(search.Rating == r)">@r</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="Student">Student name or code</label>
+        <input class="form-control" id="Student" name="Student" value="@search.Student" />
+    </div>
+    <div class="col-md-1">
+        <label class="form-label" for="From">From</label>
+        <input class="form-control" type="date" id="From" name="From" value="@search.From?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-1">
+        <label class="form-label" for="To">To</label>
+        <input class="form-control" type="date" id="To" name="To" value="@search.To?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-1">
+        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    </div>
+</form>
+
+@* Evaluation progress of the chosen competition (F-M07-09) *@
+@if (progress != null)
+{
+    <div class="alert alert-info d-flex justify-content-between align-items-center" id="evaluation-progress">
+        <span>
+            <a asp-controller="Competitions" asp-action="Details" asp-route-id="@progress.CompetitionId">@progress.CompetitionTitle</a>
+            · <partial name="~/Areas/Staff/Views/Competitions/_Status.cshtml" model="progress.Status" />
+        </span>
+        <strong>Evaluated @progress.Evaluated / total @progress.Total</strong>
+    </div>
+}
+
+@if (Model.TotalCount == 0)
+{
+    <p class="text-muted">No submissions found.</p>
+}
+else
+{
+    <partial name="_Table" model="Model.Items" />
+
+    <nav class="d-flex justify-content-between align-items-center">
+        <span class="text-muted small">@Model.TotalCount submission(s) · page @Model.Page of @Model.TotalPages</span>
+        <div>
+            @if (Model.HasPrevious)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
+            }
+            @if (Model.HasNext)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
+            }
+        </div>
+    </nav>
+}
