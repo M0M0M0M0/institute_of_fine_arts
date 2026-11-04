@@ -4,6 +4,7 @@ using System.Text.Unicode;
 using InstituteOfFineArts.Web.Data;
 using InstituteOfFineArts.Web.Data.Seed;
 using InstituteOfFineArts.Web.Infrastructure.DependencyInjection;
+using InstituteOfFineArts.Web.Infrastructure.FileStorage;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http.Features;
@@ -60,10 +61,17 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // → adding a new service does NOT require editing this file
 builder.Services.AddApplicationServices();
 
+// Upload settings (root folder, 5 MB limit, thumbnail width) used by FileStorageService – task BE1-04
+builder.Services.Configure<UploadOptions>(builder.Configuration.GetSection(UploadOptions.SectionName));
+
 // Background jobs: every BackgroundService in Infrastructure/BackgroundJobs is registered automatically
 builder.Services.AddBackgroundJobs();
 
 var app = builder.Build();
+
+// Create the upload root (outside wwwroot) at start-up so the first upload does not fail
+var uploadOptions = builder.Configuration.GetSection(UploadOptions.SectionName).Get<UploadOptions>() ?? new UploadOptions();
+Directory.CreateDirectory(uploadOptions.ResolveRoot(app.Environment.ContentRootPath));
 
 // ===== Request pipeline =====
 
