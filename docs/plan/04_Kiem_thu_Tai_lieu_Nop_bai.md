@@ -346,15 +346,15 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 
 | # | Tên cuộc thi | startDate | endDate | Trạng thái | Giải thưởng | Bài nộp | Ghi chú |
 |---|---|---|---|---|---|---|---|
-| 1 | Hometown Landscapes | D-60 | D-30 | GRADED | First, Second, Third | 8 | Đã chấm đủ 6 loại (có 1 bài nộp trễ → DISQUALIFIED); đã trao 3 giải |
-| 2 | Wildlife | D-45 | D-15 | GRADED | First, Second, Third, Honorable Mention | 6 | Đã chấm, đã trao 2 giải |
+| 1 | Hometown Landscapes | D-60 | D-30 | GRADED | First, Second, Third | 8 | Đã chấm (có 1 bài nộp trễ → DISQUALIFIED); 3 bài BEST, đã trao First + Second; **Third Prize còn trống** để demo trao giải (TC-M08-01) |
+| 2 | Wildlife | D-45 | D-15 | GRADED | First, Second, Third, Honorable Mention | 6 | Đã chấm, đã trao 2 giải (First, Second) |
 | 3 | City at Night | D-25 | D-1 | CLOSED | First, Second | 5 | **Chưa chấm** – để demo chấm bài |
 | 4 | Colors of Autumn | D-10 | D+10 | ONGOING | First, Second, Third | 6 | Dùng test sửa/xóa bài, xóa cuộc thi bị chặn |
 | 5 | Deadline Today | D-7 | **D** | ONGOING | First | 2 | Test biên nộp đúng ngày end date |
 | 6 | Lunar New Year 2027 | D+5 | D+30 | UPCOMING | First, Second, Third | 0 | |
 | 7 | Family Portrait | D+15 | D+45 | UPCOMING | First | 0 | Test xóa cuộc thi chưa có bài |
 
-**Tổng bài nộp: 27** (thêm 1 bài trễ hạn đã nằm trong cuộc thi #1). Xếp loại phân bố cho cuộc thi #1–#2: BEST 4, BETTER 3, GOOD 3, MODERATE 2, NORMAL 1, DISQUALIFIED 1.
+**Tổng bài nộp: 27** (thêm 1 bài trễ hạn đã nằm trong cuộc thi #1). Xếp loại phân bố cho cuộc thi #1–#2 (14 bài): BEST 5, BETTER 4, GOOD 2, MODERATE 1, NORMAL 1, DISQUALIFIED 1 – giải chỉ trao cho bài BEST (BR-30). `student07` không nộp bài nào; `student01` chưa nộp "Colors of Autumn" (để chạy TC-M06-01).
 
 ### 4.3. Triển lãm & bán tranh
 
@@ -364,9 +364,12 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 | Saigon Spring Exhibition | D+20 → D+27 (sắp tới) | 3 | 0 | 0 |
 | **Customer** | 3 khách hàng (tên/SĐT/email giả, VD `khachhang1@example.com`) | | | |
 
+> Chi tiết: triển lãm Hanoi gồm 5 tranh BEST/BETTER của cuộc thi #1 (3 SOLD – tranh của `student01` chưa trả tiền, 2 UNSOLD); triển lãm Saigon gồm 3 tranh của cuộc thi #2 (2 ACCEPTED, 1 PENDING). Bài BEST của `student01` ở cuộc thi #2 chưa gửi triển lãm nào – dùng cho TC-M09-02.
+
 ### 4.4. Ảnh mẫu & bản quyền
 
-- Cần **~30 ảnh JPEG** (27 bài nộp + dự phòng), kích thước 800–1600 px, ≤ 1 MB/ảnh. Đặt trong `Database/seed-images/` và copy sang `uploads/` khi seed.
+- Cần **~30 ảnh JPEG** (27 bài nộp + dự phòng), kích thước 800–1600 px, ≤ 1 MB/ảnh. Đặt trong `database/seed-images/` và copy sang `uploads/` khi seed. Tên file phải trùng tên trong `Data/Seed/DbSeeder.SampleData.cs` (ví dụ `river-of-my-childhood.jpg`).
+- **Khi chưa có ảnh**: seeder tự vẽ ảnh trừu tượng theo chủ đề cuộc thi bằng SkiaSharp (`Data/Seed/SampleArtwork.cs`) – không vướng bản quyền. Có ảnh thật trong `database/seed-images/` thì seeder dùng ảnh thật.
 - Nguồn ưu tiên (theo thứ tự):
   1. **Tự vẽ/tự tạo** (vẽ tay chụp lại, vẽ bằng Paint/Krita/Canva bản free) – an toàn nhất.
   2. **Unsplash** (unsplash.com/license), **Pexels** (pexels.com/license), **Pixabay** – giấy phép free, cho phép dùng không cần xin phép.

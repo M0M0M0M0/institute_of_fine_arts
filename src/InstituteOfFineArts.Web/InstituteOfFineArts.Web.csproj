@@ -8,6 +8,11 @@
     <UserSecretsId>bec49735-9165-4447-87f1-f6b7886b0b36</UserSecretsId>
   </PropertyGroup>
 
+  <!-- Unit tests may call internal members (e.g. the sample data seeder) -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="InstituteOfFineArts.Tests" />
+  </ItemGroup>
+
   <!-- Libraries used by the project (fixed versions so every team member builds the same) -->
   <ItemGroup>
     <!-- BCrypt password hashing -->
