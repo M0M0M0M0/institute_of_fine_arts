@@ -1,0 +1,89 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.Competitions.CompetitionDetailsVm
+@*
+    Staff – competition details (/staff/competitions/{id}, SCR-25): information, rules, awards, entries, status.
+    Minimal version created by BE1 (BE1-05); FE1 builds the real design and the award tabs in FE1-03 / BE1-06.
+*@
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<partial name="_Alerts" />
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="h3 mb-1">@Model.Title</h1>
+        <div class="text-muted">@Model.Code · <partial name="_Status" model="Model.Status" /></div>
+    </div>
+    <div class="d-flex gap-2">
+        @if (Model.CanEdit)
+        {
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Edit</a>
+        }
+        @if (Model.CanDelete)
+        {
+            @* POST with anti-forgery token; the browser asks for confirmation first *@
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Delete this competition and its awards?');">
+                <button type="submit" class="btn btn-outline-danger">Delete</button>
+            </form>
+        }
+    </div>
+</div>
+
+@foreach (var warning in Model.Warnings)
+{
+    <div class="alert alert-warning">@warning</div>
+}
+
+@if (Model.HasCover)
+{
+    <img src="/files/competitions/@Model.Id/cover" alt="Cover of @Model.Title" class="img-fluid rounded mb-3" style="max-height:280px" />
+}
+
+<dl class="row">
+    <dt class="col-sm-3">Start date</dt>
+    <dd class="col-sm-9">@Model.StartDate.ToString("dd MMM yyyy")</dd>
+    <dt class="col-sm-3">End date (deadline)</dt>
+    <dd class="col-sm-9">@Model.EndDate.ToString("dd MMM yyyy"), 23:59:59</dd>
+    <dt class="col-sm-3">Entries</dt>
+    <dd class="col-sm-9">@Model.SubmissionCount</dd>
+    <dt class="col-sm-3">Created by</dt>
+    <dd class="col-sm-9">@Model.CreatedByName, @Model.CreatedAt.ToString("dd MMM yyyy HH:mm")</dd>
+    @if (Model.PublishedAt is { } published)
+    {
+        <dt class="col-sm-3">Results published</dt>
+        <dd class="col-sm-9">@published.ToString("dd MMM yyyy HH:mm")</dd>
+    }
+</dl>
+
+@* white-space: pre-line keeps the line breaks typed by staff; Razor still encodes the text (no HTML/XSS) *@
+<h2 class="h5">Description</h2>
+<p style="white-space: pre-line">@(Model.Description ?? "–")</p>
+
+<h2 class="h5">Rules &amp; conditions</h2>
+<p style="white-space: pre-line">@(Model.Rules ?? "–")</p>
+
+<h2 class="h5">Awards</h2>
+@if (Model.Awards.Count == 0)
+{
+    <p class="text-muted">No awards defined yet.</p>
+}
+else
+{
+    <table class="table table-sm">
+        <thead><tr><th>Rank</th><th>Award</th><th class="text-end">Prize</th><th class="text-end">Quantity</th><th>Description</th></tr></thead>
+        <tbody>
+            @foreach (var a in Model.Awards)
+            {
+                <tr>
+                    <td>@a.Rank</td>
+                    <td>@a.Name</td>
+                    <td class="text-end">@a.PrizeValue.ToString("$#,##0.00")</td>
+                    <td class="text-end">@a.Quantity</td>
+                    <td>@a.Description</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<a asp-action="Index" class="btn btn-link px-0">Back to competitions</a>
