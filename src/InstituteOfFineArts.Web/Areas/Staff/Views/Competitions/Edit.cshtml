@@ -1,0 +1,24 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.Competitions.CompetitionFormVm
+@*
+    Staff – edit competition (/staff/competitions/{id}/edit, SCR-24).
+    Minimal version created by BE1 (BE1-05); FE1 builds the real design in FE1-03.
+*@
+@{
+    ViewData["Title"] = "Edit competition";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="h3 mb-3">Edit competition <small class="text-muted">@Model.Code</small></h1>
+
+        <form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" novalidate>
+            <partial name="_Form" model="Model" />
+            <button type="submit" class="btn btn-primary">Save changes</button>
+            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
