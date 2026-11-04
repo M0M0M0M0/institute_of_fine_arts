@@ -1,0 +1,99 @@
+@model InstituteOfFineArts.Web.ViewModels.Admin.Staff.StaffFormVm
+@*
+    Personal and job fields shared by the create and edit forms (SCR-12).
+    The username / password fields are in Create.cshtml (they cannot be edited later).
+*@
+@{
+    var roles = new[] { Role.STAFF, Role.MANAGER, Role.ADMIN };
+}
+
+<h2 class="h6 text-uppercase text-muted mt-3">Account</h2>
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" autocomplete="off" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="Role" class="form-label"></label>
+        <select asp-for="Role" class="form-select">
+            @foreach (var r in roles)
+            {
+                <option value="@r">@r</option>
+            }
+        </select>
+        <span asp-validation-for="Role" class="text-danger"></span>
+    </div>
+</div>
+
+<h2 class="h6 text-uppercase text-muted mt-3">Personal information</h2>
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label asp-for="FullName" class="form-label"></label>
+        <input asp-for="FullName" class="form-control" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+    <div class="col-md-3 mb-3">
+        <label asp-for="Gender" class="form-label"></label>
+        <select asp-for="Gender" class="form-select">
+            <option value="">–</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+            <option value="O">Other</option>
+        </select>
+    </div>
+    <div class="col-md-3 mb-3">
+        <label asp-for="DateOfBirth" class="form-label"></label>
+        <input asp-for="DateOfBirth" type="date" class="form-control" />
+        <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="Phone" class="form-label"></label>
+        <input asp-for="Phone" class="form-control" />
+        <span asp-validation-for="Phone" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="Address" class="form-label"></label>
+        <input asp-for="Address" class="form-control" />
+        <span asp-validation-for="Address" class="text-danger"></span>
+    </div>
+</div>
+
+<h2 class="h6 text-uppercase text-muted mt-3">Job</h2>
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <label asp-for="StaffCode" class="form-label"></label>
+        <input asp-for="StaffCode" class="form-control" placeholder="Generated if empty" />
+        <span asp-validation-for="StaffCode" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label asp-for="JoinedDate" class="form-label"></label>
+        <input asp-for="JoinedDate" type="date" class="form-control" />
+        <span asp-validation-for="JoinedDate" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label asp-for="Position" class="form-label"></label>
+        <input asp-for="Position" class="form-control" placeholder="e.g. Lecturer" />
+        <span asp-validation-for="Position" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="ClassesInCharge" class="form-label"></label>
+        <input asp-for="ClassesInCharge" class="form-control" placeholder="e.g. PT01, PT02" />
+        <span asp-validation-for="ClassesInCharge" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="SubjectsInCharge" class="form-label"></label>
+        <input asp-for="SubjectsInCharge" class="form-control" placeholder="e.g. Oil Painting, Watercolor" />
+        <span asp-validation-for="SubjectsInCharge" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="Qualification" class="form-label"></label>
+        <input asp-for="Qualification" class="form-control" />
+        <span asp-validation-for="Qualification" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="Notes" class="form-label"></label>
+        <input asp-for="Notes" class="form-control" />
+        <span asp-validation-for="Notes" class="text-danger"></span>
+    </div>
+</div>

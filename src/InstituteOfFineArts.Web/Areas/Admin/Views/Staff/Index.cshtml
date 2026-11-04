@@ -1,0 +1,94 @@
+@model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Admin.Staff.StaffListItemVm>
+@*
+    Admin – staff list & search (/admin/staff, SCR-11).
+    Minimal version created by BE (BE2-02); FE2 builds the real design in FE2-02.
+*@
+@{
+    ViewData["Title"] = "Staff";
+    var search = (InstituteOfFineArts.Web.ViewModels.Admin.Staff.StaffSearchVm)ViewBag.Search;
+    object PageRoute(int page) => new { search.Keyword, search.Role, search.Subject, search.ClassName, search.Active, page };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Staff</h1>
+    <a asp-action="Create" class="btn btn-primary">New staff member</a>
+</div>
+
+<partial name="_Alerts" />
+
+<form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
+    <div class="col-md-3">
+        <label class="form-label" for="Keyword">Name, username, code or email</label>
+        <input class="form-control" id="Keyword" name="Keyword" value="@search.Keyword" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="Role">Role</label>
+        <select class="form-select" id="Role" name="Role">
+            <option value="">All</option>
+            @foreach (var r in new[] { Role.STAFF, Role.MANAGER, Role.ADMIN })
+            {
+                <option value="@r" selected="@(search.Role == r)">@r</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="Subject">Subject</label>
+        <input class="form-control" id="Subject" name="Subject" value="@search.Subject" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="ClassName">Class</label>
+        <input class="form-control" id="ClassName" name="ClassName" value="@search.ClassName" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="Active">Status</label>
+        <select class="form-select" id="Active" name="Active">
+            <option value="">All</option>
+            <option value="true" selected="@(search.Active == true)">Active</option>
+            <option value="false" selected="@(search.Active == false)">Locked</option>
+        </select>
+    </div>
+    <div class="col-md-1">
+        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    </div>
+</form>
+
+@if (Model.TotalCount == 0)
+{
+    <p class="text-muted">No results found.</p>
+}
+else
+{
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr><th>Code</th><th>Name</th><th>Username</th><th>Role</th><th>Subjects</th><th>Classes</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var s in Model.Items)
+            {
+                <tr>
+                    <td>@s.StaffCode</td>
+                    <td><a asp-action="Details" asp-route-id="@s.Id">@s.FullName</a><div class="small text-muted">@s.Position</div></td>
+                    <td>@s.Username</td>
+                    <td>@s.Role</td>
+                    <td>@s.SubjectsInCharge</td>
+                    <td>@s.ClassesInCharge</td>
+                    <td>@if (s.Active) { <span class="badge bg-success">Active</span> } else { <span class="badge bg-secondary">Locked</span> }</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <nav class="d-flex justify-content-between align-items-center">
+        <span class="text-muted small">@Model.TotalCount staff member(s) · page @Model.Page of @Model.TotalPages</span>
+        <div>
+            @if (Model.HasPrevious)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
+            }
+            @if (Model.HasNext)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
+            }
+        </div>
+    </nav>
+}
