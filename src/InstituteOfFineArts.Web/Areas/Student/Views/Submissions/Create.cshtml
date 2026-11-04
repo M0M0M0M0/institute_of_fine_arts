@@ -1,0 +1,42 @@
+@model InstituteOfFineArts.Web.ViewModels.Student.Submissions.SubmissionFormVm
+@*
+    Student – submit an entry (/student/submissions/new?competitionId={id}, SCR-43, F-M06-01).
+    Minimal version created by BE1 (BE1-07); FE1 builds the real design in FE1-05.
+*@
+@{
+    ViewData["Title"] = "Submit an entry";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="h3 mb-1">Submit an entry</h1>
+        <p class="text-muted">
+            @Model.CompetitionTitle · deadline @Model.Deadline.ToString("dd MMM yyyy"), 23:59:59.
+            One entry per competition; you can edit or replace it until the deadline.
+        </p>
+
+        <partial name="_Alerts" />
+
+        @* multipart/form-data is required to upload the image; the competition id goes back in the query string *@
+        <form asp-action="Create" asp-route-competitionId="@Model.CompetitionId" method="post" enctype="multipart/form-data" novalidate>
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+            <input type="hidden" asp-for="CompetitionId" />
+
+            <div class="mb-3">
+                <label asp-for="Image" class="form-label"></label>
+                <input asp-for="Image" type="file" accept=".jpg,.jpeg,image/jpeg" class="form-control" />
+                <div class="form-text">JPEG only (.jpg, .jpeg), up to 5 MB. At least 600 px on the shortest side is recommended.</div>
+                <span asp-validation-for="Image" class="text-danger"></span>
+            </div>
+
+            <partial name="_Form" model="Model" />
+
+            <button type="submit" class="btn btn-primary">Submit</button>
+            <a href="/student/competitions/@Model.CompetitionId" class="btn btn-link">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

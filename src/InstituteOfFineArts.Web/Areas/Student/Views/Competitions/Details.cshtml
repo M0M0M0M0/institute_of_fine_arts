@@ -33,7 +33,8 @@
         @if (Model.MySubmission is { } mine)
         {
             <p class="mb-0">
-                <strong>You have already submitted an entry:</strong> “@mine.Title”, @mine.SubmittedAt.ToString("dd MMM yyyy HH:mm").
+                <strong>You have already submitted an entry:</strong>
+                <a href="/student/submissions/@mine.Id">“@mine.Title”</a>, @mine.SubmittedAt.ToString("dd MMM yyyy HH:mm").
             </p>
         }
         else if (Model.CanSubmit)
