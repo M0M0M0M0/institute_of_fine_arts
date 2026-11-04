@@ -5,6 +5,8 @@ using InstituteOfFineArts.Web.Data;
 using InstituteOfFineArts.Web.Data.Seed;
 using InstituteOfFineArts.Web.Infrastructure.DependencyInjection;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -42,6 +44,13 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SameSite = SameSiteMode.Lax;
     });
 
+// Upload size limit (BR-17, task BE1-03): images ≤ Upload:MaxFileSizeBytes (5 MB) plus 1 MB for the other form fields.
+// Applied to every request body (Kestrel and IIS) and to multipart forms; a larger request shows the 413 error page.
+var maxRequestBytes = builder.Configuration.GetValue<long>("Upload:MaxFileSizeBytes", 5 * 1024 * 1024) + 1024 * 1024;
+builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = maxRequestBytes);
+builder.Services.Configure<IISServerOptions>(options => options.MaxRequestBodySize = maxRequestBytes);
+builder.Services.Configure<FormOptions>(options => options.MultipartBodyLengthLimit = maxRequestBytes);
+
 // Database: EF Core + SQL Server; table/column names converted to snake_case (account, password_hash…)
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
@@ -59,16 +68,35 @@ var app = builder.Build();
 // ===== Request pipeline =====
 
 // Development: create the database + sample data (Data/Seed/DbSeeder.cs)
-// Production: friendly error page + HSTS
+// Production: HSTS (browsers keep using HTTPS)
 if (app.Environment.IsDevelopment())
 {
     await DbSeeder.SeedAsync(app.Services);
 }
 else
 {
-    app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
 }
+
+// Friendly error pages in every environment (F-M01-07): unhandled exception → /error/500 (logged; details shown
+// on the page in Development only); empty 4xx/5xx responses such as 404 → /error/{code}. See ErrorController.
+app.UseExceptionHandler("/error/500");
+app.UseStatusCodePagesWithReExecute("/error/{0}");
+
+// Reject oversized requests up front with 413 (→ "File too large" page). Without this, the anti-forgery check
+// reads the form first, hits the size limit and answers 400 "Bad request". Requests without a Content-Length
+// (chunked) are still stopped by the Kestrel/IIS limit above.
+// Skipped while the error page itself is being rendered (re-execute keeps the original Content-Length).
+app.Use(async (context, next) =>
+{
+    if (context.Request.ContentLength > maxRequestBytes
+        && context.Features.Get<IStatusCodeReExecuteFeature>() == null)
+    {
+        context.Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
+        return;
+    }
+    await next();
+});
 
 // The UI is English: fix the culture to en-US so numbers, dates and USD amounts are parsed and
 // formatted the same way on every machine, even when Windows uses another language (e.g. vi-VN uses "," for decimals).
