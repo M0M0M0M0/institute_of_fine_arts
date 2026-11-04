@@ -1,0 +1,38 @@
+@model InstituteOfFineArts.Web.ViewModels.Student.Submissions.SubmissionFieldsVm
+@*
+    Text fields shared by the submit and edit forms (BR-19): title, text type, poem / quotation / story, description.
+    The image field is added by Create.cshtml (required) and Edit.cshtml (optional replacement).
+*@
+@{
+    // Value = enum name (POEM…), text = "Poem"…
+    var textTypes = Enum.GetValues<TextType>()
+        .Select(t => new SelectListItem(t.ToString()[0] + t.ToString()[1..].ToLowerInvariant(), t.ToString()));
+}
+
+<div class="mb-3">
+    <label asp-for="Title" class="form-label"></label>
+    <input asp-for="Title" class="form-control" maxlength="150" />
+    <span asp-validation-for="Title" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="TextType" class="form-label"></label>
+    <select asp-for="TextType" class="form-select" asp-items="textTypes">
+        <option value="">– Choose –</option>
+    </select>
+    <span asp-validation-for="TextType" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="TextContent" class="form-label"></label>
+    <textarea asp-for="TextContent" class="form-control" rows="6" maxlength="4000"></textarea>
+    <div class="form-text">Up to 4000 characters.</div>
+    <span asp-validation-for="TextContent" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Description" class="form-label"></label>
+    <textarea asp-for="Description" class="form-control" rows="4" maxlength="2000"></textarea>
+    <div class="form-text">Why you painted it and why it deserves to win. Up to 2000 characters.</div>
+    <span asp-validation-for="Description" class="text-danger"></span>
+</div>

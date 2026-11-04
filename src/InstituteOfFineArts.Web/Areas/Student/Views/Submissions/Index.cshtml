@@ -1,0 +1,113 @@
+@model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Student.Submissions.MySubmissionListItemVm>
+@*
+    Student – my entries (/student/submissions, SCR-44, F-M06-05): own entries only, filters and paging.
+    Minimal version created by BE1 (BE1-08); FE1 builds the real design in FE1-05.
+*@
+@{
+    ViewData["Title"] = "My entries";
+    var search = (InstituteOfFineArts.Web.ViewModels.Student.Submissions.MySubmissionSearchVm)ViewBag.Search;
+    var competitions = (List<InstituteOfFineArts.Web.ViewModels.Student.Submissions.MyCompetitionOptionVm>)ViewBag.Competitions;
+    // Keeps the filters when moving between pages
+    object PageRoute(int page) => new { search.CompetitionId, search.Title, search.Rating, From = search.From?.ToString("yyyy-MM-dd"), To = search.To?.ToString("yyyy-MM-dd"), page };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">My entries</h1>
+    <a href="/student/competitions" class="btn btn-primary">Find a competition</a>
+</div>
+
+<partial name="_Alerts" />
+
+<form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
+    <div class="col-md-3">
+        <label class="form-label" for="CompetitionId">Competition</label>
+        <select class="form-select" id="CompetitionId" name="CompetitionId">
+            <option value="">All</option>
+            @foreach (var c in competitions)
+            {
+                <option value="@c.Id" selected="@(search.CompetitionId == c.Id)">@c.Title</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="Title">Title</label>
+        <input class="form-control" id="Title" name="Title" value="@search.Title" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="From">Submitted from</label>
+        <input class="form-control" type="date" id="From" name="From" value="@search.From?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="To">Submitted to</label>
+        <input class="form-control" type="date" id="To" name="To" value="@search.To?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="Rating">Rating</label>
+        <select class="form-select" id="Rating" name="Rating">
+            <option value="">All</option>
+            @foreach (var r in Enum.GetValues<Rating>())
+            {
+                <option value="@r" selected="@(search.Rating == r)">@r</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-1">
+        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    </div>
+</form>
+
+@if (Model.TotalCount == 0)
+{
+    <p class="text-muted">No entries found.</p>
+}
+else
+{
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr><th></th><th>Title</th><th>Competition</th><th>Submitted</th><th>Status</th><th>Rating</th><th>Changes</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var s in Model.Items)
+            {
+                <tr>
+                    <td style="width:90px">
+                        @if (s.HasThumbnail)
+                        {
+                            <img src="/files/submissions/@s.Id/thumb" alt="@s.Title" class="img-thumbnail" style="max-height:60px" />
+                        }
+                    </td>
+                    <td><a asp-action="Details" asp-route-id="@s.Id">@s.Title</a></td>
+                    <td>@s.CompetitionTitle</td>
+                    <td>@s.SubmittedAt.ToString("dd MMM yyyy HH:mm")</td>
+                    <td><partial name="~/Areas/Student/Views/Competitions/_Status.cshtml" model="s.CompetitionStatus" /></td>
+                    <td>@(s.Rating?.ToString() ?? "–")</td>
+                    <td>
+                        @if (s.CanEdit)
+                        {
+                            <a asp-action="Edit" asp-route-id="@s.Id">Edit</a>
+                            <span class="small text-muted">until @s.EndDate.ToString("dd MMM yyyy")</span>
+                        }
+                        else
+                        {
+                            <span class="small text-muted">Locked</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <nav class="d-flex justify-content-between align-items-center">
+        <span class="text-muted small">@Model.TotalCount entr@(Model.TotalCount == 1 ? "y" : "ies") · page @Model.Page of @Model.TotalPages</span>
+        <div>
+            @if (Model.HasPrevious)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
+            }
+            @if (Model.HasNext)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
+            }
+        </div>
+    </nav>
+}
