@@ -120,7 +120,7 @@ public class CompetitionService : ICompetitionService
         var c = await _db.Competitions
             .AsNoTracking()
             .Include(x => x.CreatedByStaff).ThenInclude(s => s.Account)
-            .Include(x => x.Awards)
+            .Include(x => x.Awards).ThenInclude(a => a.IssuedAwards)
             .FirstOrDefaultAsync(x => x.Id == id)
             ?? throw new NotFoundException($"Competition {id} was not found.");
         var submissionCount = await _db.Submissions.CountAsync(s => s.CompetitionId == id);
@@ -142,9 +142,10 @@ public class CompetitionService : ICompetitionService
             PublishedAt = c.PublishedAt,
             SubmissionCount = submissionCount,
             Awards = c.Awards.OrderBy(a => a.Rank).ThenBy(a => a.AwardName)
-                .Select(a => new AwardRowVm(a.Id, a.AwardName, a.Rank, a.PrizeValue, a.Quantity, a.PrizeDescription))
+                .Select(a => new AwardRowVm(a.Id, a.AwardName, a.Rank, a.PrizeValue, a.Quantity, a.PrizeDescription, a.IssuedAwards.Count))
                 .ToList(),
             CanEdit = status != CompetitionStatus.GRADED,
+            CanManageAwards = status != CompetitionStatus.GRADED,
             CanDelete = submissionCount == 0,
         };
 

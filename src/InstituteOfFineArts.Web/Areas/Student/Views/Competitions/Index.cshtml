@@ -1,0 +1,60 @@
+@model List<InstituteOfFineArts.Web.ViewModels.Student.Competitions.StudentCompetitionListItemVm>
+@*
+    Student – upcoming and ongoing competitions (/student/competitions, SCR-41, F-M05-09).
+    Minimal version created by BE1 (BE1-06); FE1 builds the real design in FE1-04.
+*@
+@{
+    ViewData["Title"] = "Competitions";
+}
+
+<partial name="_Alerts" />
+
+<h1 class="h3 mb-3">Competitions</h1>
+<p class="text-muted">Competitions that are open for entries now or starting soon.</p>
+
+@if (Model.Count == 0)
+{
+    <p class="text-muted">There are no upcoming or ongoing competitions at the moment.</p>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var c in Model)
+        {
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100">
+                    @if (c.HasCover)
+                    {
+                        <img src="/files/competitions/@c.Id/cover" alt="Cover of @c.Title" class="card-img-top" style="max-height:160px; object-fit:cover" />
+                    }
+                    <div class="card-body">
+                        <h2 class="h5 card-title">
+                            <a asp-action="Details" asp-route-id="@c.Id">@c.Title</a>
+                        </h2>
+                        <div class="mb-2"><partial name="_Status" model="c.Status" /></div>
+                        <p class="card-text small mb-1">
+                            @c.StartDate.ToString("dd MMM yyyy") – @c.EndDate.ToString("dd MMM yyyy")
+                        </p>
+                        @* Award summary: number of awards and the highest prize *@
+                        <p class="card-text small mb-1">
+                            @if (c.AwardCount == 0)
+                            {
+                                <span class="text-muted">Awards to be announced</span>
+                            }
+                            else
+                            {
+                                @($"{c.AwardCount} award(s) · top prize {c.TopPrize.ToString("$#,##0.00")}")
+                            }
+                        </p>
+                        @if (c.HasSubmitted)
+                        {
+                            <span class="badge bg-light text-success border">You have already submitted</span>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+<a href="/student" class="btn btn-link px-0 mt-3">Back to home</a>

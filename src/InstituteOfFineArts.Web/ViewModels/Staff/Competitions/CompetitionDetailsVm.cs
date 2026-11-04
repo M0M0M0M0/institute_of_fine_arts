@@ -52,6 +52,9 @@ public class CompetitionDetailsVm
     /// <summary>Edit allowed (not GRADED).</summary>
     public bool CanEdit { get; set; }
 
+    /// <summary>Awards can be added / edited / deleted (not GRADED, task BE1-06).</summary>
+    public bool CanManageAwards { get; set; }
+
     /// <summary>Delete allowed (no entries, BR-11).</summary>
     public bool CanDelete { get; set; }
 
@@ -66,4 +69,5 @@ public class CompetitionDetailsVm
 /// <param name="PrizeValue">Prize in USD</param>
 /// <param name="Quantity">How many can be given</param>
 /// <param name="Description">Prize description</param>
-public record AwardRowVm(long Id, string Name, int Rank, decimal PrizeValue, int Quantity, string? Description);
+/// <param name="IssuedCount">How many times it has already been given (an issued award cannot be deleted)</param>
+public record AwardRowVm(long Id, string Name, int Rank, decimal PrizeValue, int Quantity, string? Description, int IssuedCount = 0);
