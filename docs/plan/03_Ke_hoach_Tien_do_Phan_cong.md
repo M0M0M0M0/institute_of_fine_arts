@@ -3,6 +3,7 @@
 **Dự án:** Institute of Fine Arts (Học viện Mỹ thuật) – eProject Aptech Học kỳ 3
 **Vai trò soạn thảo:** Project Manager (PM) – kiêm nhiệm bởi BE1 (trưởng nhóm)
 **Thời gian:** 4 tuần = 28 ngày (Day 1 = ngày Kickoff, Day 28 = ngày nộp bài cuối)
+**Nhịp độ:** làm xong **toàn bộ chức năng bắt buộc trong ~2,5 tuần (Day 17)** → **Day 18–23 review & chỉnh sửa** theo góp ý → Day 24–28 khóa code, hoàn thiện tài liệu, nộp bài
 **Công nghệ:** .NET 10 · ASP.NET Core MVC (C#) · Entity Framework Core · SQL Server · Razor + Bootstrap 5 · File I/O lưu ảnh · GitHub
 
 > Tài liệu này là **Project Plan** của nhóm, là nguồn để viết các mục "Kế hoạch dự án (Project Plan)" và "Báo cáo đánh giá và theo dõi dự án (Project Review and Monitoring Report)". Phân công chi tiết (Task Sheet) nằm trong `docs/Phan_cong_task.xlsx`.
@@ -38,11 +39,11 @@ Khởi động → Phân tích BA → Thiết kế (CSDL, wireframe UI, kiến t
 | # | Giai đoạn | Thời gian | Mục tiêu | Đầu ra chính |
 |---|---|---|---|---|
 | P1 | Khởi động (Kickoff) | Day 1 | Mọi người hiểu đề, thống nhất công cụ, vai trò, lịch họp | Biên bản Kickoff, repo GitHub, nhóm chat, bảng Kanban |
-| P2 | Phân tích BA | Day 1–3 | Hiểu đúng & đủ yêu cầu; liệt kê chức năng theo 4 vai trò + Guest | Problem Definition, Customer Requirement Specification (CRS), danh sách User Story + tiêu chí chấp nhận, danh sách câu hỏi DOUBT |
-| P3 | Thiết kế | Day 4–6 | Chốt CSDL, giao diện và khung kiến trúc trước khi code hàng loạt | ERD + script tạo bảng, wireframe tất cả màn hình, GUI Standards Document, sơ đồ kiến trúc/package |
-| P4 | Phát triển theo sprint | Day 6–23 | Xây dựng M01→M11 theo thứ tự phụ thuộc, sau đó M12+ (tùy chọn) | Mã nguồn chạy được, mỗi module có test case |
-| P5 | Kiểm thử | Liên tục từ Day 8; tập trung Day 21–26 | Phát hiện & sửa lỗi; kiểm thử hồi quy toàn hệ thống | Unit Testing Check List, bảng test case có kết quả Pass/Fail, danh sách bug |
-| P6 | Tài liệu | Nháp liên tục; hoàn thiện Day 23–27 | Đủ 13 tài liệu theo đặc tả + User Guide | Bộ báo cáo dự án (Word/PDF) |
+| P2 | Phân tích BA | Day 1–2 | Hiểu đúng & đủ yêu cầu; liệt kê chức năng theo 4 vai trò + Guest | Problem Definition, Customer Requirement Specification (CRS), danh sách User Story + tiêu chí chấp nhận, danh sách câu hỏi DOUBT |
+| P3 | Thiết kế | Day 3–4 | Chốt CSDL, giao diện và khung kiến trúc trước khi code hàng loạt | ERD + script tạo bảng, wireframe tất cả màn hình, GUI Standards Document, sơ đồ kiến trúc/package |
+| P4 | Phát triển theo sprint | Day 4–17 (bắt buộc) · Day 18–23 chỉnh sửa sau review | Xây dựng M01→M11 theo thứ tự phụ thuộc, xong ở Day 17; sau đó review toàn hệ thống và sửa theo góp ý, M12+ chỉ khi đã sửa xong | Mã nguồn chạy được, mỗi module có test case |
+| P5 | Kiểm thử | Liên tục từ Day 6; tập trung Day 17–26 | Phát hiện & sửa lỗi; kiểm thử hồi quy toàn hệ thống | Unit Testing Check List, bảng test case có kết quả Pass/Fail, danh sách bug |
+| P6 | Tài liệu | Nháp liên tục; hoàn thiện Day 19–27 | Đủ 13 tài liệu theo đặc tả + User Guide | Bộ báo cáo dự án (Word/PDF) |
 | P7 | Đóng gói & nộp | Day 27–28 | 1 file ZIP đầy đủ, nộp **một lần duy nhất** | `Batch_Group_ProjectTitle.zip`, email "PROJECT SUBMISSION:" + Phiếu phản hồi |
 | P8 | Demo / bảo vệ | Sau Day 28 (theo lịch trung tâm) | Trình bày luồng nghiệp vụ, trả lời câu hỏi | Kịch bản demo, slide ngắn (nếu GV yêu cầu) |
 
@@ -62,25 +63,28 @@ Khởi động → Phân tích BA → Thiết kế (CSDL, wireframe UI, kiến t
 
 ---
 
-## 2. Mô hình làm việc: Scrum-lite, 4 sprint × 1 tuần
+## 2. Mô hình làm việc: Scrum-lite, 3 sprint ngắn + giai đoạn review
 
 ### 2.1. Các sprint
 
 | Sprint | Ngày | Mục tiêu sprint (Sprint Goal) | Module |
 |---|---|---|---|
-| **Sprint 1** | Day 1–7 | Hiểu đề, thiết kế xong, có project chạy được + đăng nhập phân quyền | Phân tích, ERD, wireframe, skeleton, **M01** |
-| **Sprint 2** | Day 8–14 | Quản lý người dùng, cuộc thi, nộp bài (upload File I/O), trang chủ | **M03, M04, M05, M06, M02** |
-| **Sprint 3** | Day 15–21 | Chấm bài, trao giải, triển lãm & bán tranh, báo cáo, màn hình Manager → **Feature complete** | **M07, M08, M09, M10, M11** |
-| **Sprint 4** | Day 22–28 | Tùy chọn (nếu kịp), sửa lỗi, **code freeze Day 24**, kiểm thử hồi quy, tài liệu, đóng gói, nộp | **M12+**, QA, Docs, Release |
+| **Sprint 1** | Day 1–5 | Hiểu đề, thiết kế xong, có project chạy được + đăng nhập phân quyền | Phân tích, ERD, wireframe, skeleton, **M01** |
+| **Sprint 2** | Day 6–11 | Quản lý người dùng, cuộc thi, nộp bài (upload File I/O) | **M03, M04, M05, M06** |
+| **Sprint 3** | Day 12–17 | Chấm bài, trao giải, triển lãm & bán tranh, trang chủ, báo cáo, màn hình Manager → **Feature complete Day 17** | **M07, M08, M09, M10, M11, M02** |
+| **Review & thay đổi** | Day 18–23 | Review toàn hệ thống (Day 18), sửa theo danh sách thay đổi, kiểm thử vòng 3; M12+ chỉ khi danh sách thay đổi đã xong | Thay đổi sau review, **M12+** (tùy chọn) |
+| **Phát hành** | Day 24–28 | **Code freeze Day 24**, kiểm thử hồi quy, tài liệu, đóng gói, nộp | QA, Docs, Release |
+
+> Sprint ngắn (5–6 ngày) nên ở Day 4–17 mỗi người cần khoảng **BE1, BE2: 8 giờ/ngày · FE1: 6 giờ · FE2: 7 giờ** (lịch trong Phan_cong_task.xlsx đã xếp theo mức này). Kẹt việc phải báo ngay ở stand-up để BE1 chia lại.
 
 ### 2.2. Nghi thức (ceremonies)
 
 | Hoạt động | Khi nào | Thời lượng | Người chủ trì | Nội dung |
 |---|---|---|---|---|
 | **Daily stand-up** | Mỗi ngày 8h30 (hoặc 21h nếu học buổi tối) – họp online/nhóm chat | 15 phút | BE1 | Mỗi người trả lời 3 câu: *Hôm qua làm gì? Hôm nay làm gì? Có vướng gì không?* QA ghi biên bản ngắn. |
-| **Sprint Planning** | Đầu sprint: Day 1, 8, 15, 22 | 45–60 phút | BE1 | Chọn task từ Backlog vào cột "To Do" của sprint, ước lượng (S/M/L), gán người. |
-| **Sprint Review (demo nội bộ)** | Cuối sprint: Day 7, 14, 21, 27 | 30–45 phút | Người làm chức năng demo | Demo chức năng đã xong trên nhánh `develop`, QA chạy thử theo test case. |
-| **Retrospective** | Ngay sau Review | 15 phút | QA ghi | 3 câu: *Điều gì tốt? Điều gì chưa tốt? Tuần sau thay đổi gì?* |
+| **Sprint Planning** | Đầu sprint: Day 1, 6, 12; Day 18 (xếp ưu tiên danh sách thay đổi) | 45–60 phút | BE1 | Chọn task từ Backlog vào cột "To Do" của sprint, ước lượng (S/M/L), gán người. |
+| **Sprint Review (demo nội bộ)** | Cuối sprint: Day 5, 11, 17; review toàn hệ thống Day 18; diễn tập Day 27 | 30–45 phút | Người làm chức năng demo | Demo chức năng đã xong trên nhánh `develop`, QA chạy thử theo test case. |
+| **Retrospective** | Ngay sau Review | 15 phút | QA ghi | 3 câu: *Điều gì tốt? Điều gì chưa tốt? Sprint sau thay đổi gì?* |
 | **Code review** | Mỗi Pull Request | ≤ 24h | BE1 (review mọi PR); BE2 hoặc FE1 (review code của BE1) | Không merge PR nếu chưa được review. |
 
 ### 2.3. Bảng Kanban trên GitHub Projects
@@ -115,41 +119,43 @@ Cột: `Backlog` → `Ready` → `In Progress` → `In Review (PR)` → `Testing
 
 ## 3. Lịch thực hiện
 
-### 3.1. Day 1–5: phân tích & thiết kế (trước khi chia task lập trình)
+### 3.1. Day 1–3: phân tích & thiết kế (trước khi chia task lập trình)
 
 | Ngày | Công việc | Người | Đầu ra |
 |---|---|---|---|
 | Day 1 | **Kickoff**: đọc đề, thống nhất vai trò, công cụ, giờ stand-up; tạo repo GitHub, Kanban, nhóm chat; cài môi trường (.NET SDK 10, Visual Studio/VS Code, SQL Server, Git) | Cả nhóm (BE1 chủ trì) | Biên bản kickoff (QA), repo + Kanban (BE1) |
-| Day 2–3 | **Phân tích BA**: chức năng theo vai trò, use case, quy tắc nghiệp vụ; gom câu hỏi chưa rõ | BE1 + BE2 | docs/plan/01, danh sách câu hỏi |
-| Day 2–5 | Gửi email **DOUBT:** nếu đề còn chỗ mơ hồ ảnh hưởng tới CSDL/luồng nghiệp vụ | BE1 | Email DOUBT |
-| Day 3 | Nháp Problem Definition · nháp Project Plan | BE2 · QA | `docs/documentation/03_…`, `05_…` |
-| Day 4 | Nháp CRS · wireframe các màn hình | BE2 · FE1 + FE2 | `04_…`, `docs/wireframes/` |
-| Day 4–5 | **Thiết kế CSDL** (ERD, 11 bảng) → tầng dữ liệu + migration (BASE-01, BASE-02) | BE1 (BE2 vẽ ERD) | docs/plan/02 mục 6, `database/01_schema.sql` |
-| Day 5–6 | Ảnh mẫu & nguồn ảnh (QA-01) | QA | `database/seed-images/` |
-| Day 6–8 | GUI Standards Document | FE1 (FE2 review) | `08_GUIStandards.docx` |
+| Day 2 | **Phân tích BA**: chức năng theo vai trò, use case, quy tắc nghiệp vụ; gom câu hỏi chưa rõ | BE1 + BE2 | docs/plan/01, danh sách câu hỏi |
+| Day 2–3 | Gửi email **DOUBT:** nếu đề còn chỗ mơ hồ ảnh hưởng tới CSDL/luồng nghiệp vụ | BE1 | Email DOUBT |
+| Day 2 | Nháp Problem Definition · nháp Project Plan | BE2 · QA | `docs/documentation/03_…`, `05_…` |
+| Day 3 | Nháp CRS · wireframe các màn hình | BE2 · FE1 + FE2 | `04_…`, `docs/wireframes/` |
+| Day 3 | **Thiết kế CSDL** (ERD, 11 bảng) → tầng dữ liệu + migration (BASE-01, BASE-02) | BE1 (BE2 vẽ ERD) | docs/plan/02 mục 6, `database/01_schema.sql` |
+| Day 3–4 | Ảnh mẫu & nguồn ảnh (QA-01) | QA | `database/seed-images/` |
+| Day 4–6 | GUI Standards Document | FE1 (FE2 review) | `08_GUIStandards.docx` |
 
-### 3.2. Day 6–23: lập trình theo tuần (tóm tắt từ Phan_cong_task.xlsx)
+### 3.2. Day 4–23: lập trình theo giai đoạn (tóm tắt từ Phan_cong_task.xlsx)
 
-| Tuần | BE1 | BE2 | FE1 | FE2 | QA |
+| Giai đoạn | BE1 | BE2 | FE1 | FE2 | QA |
 |---|---|---|---|---|---|
-| **Tuần 1** (Day 1–7) | BE1-01 Dữ liệu mẫu – tài khoản (làm ĐẦU TIÊN)<br>BE1-02 Đăng nhập, đăng xuất, phân quyền | BE2-01 Dữ liệu mẫu – cuộc thi, bài nộp, chấm, giải, triển lãm | FE1-01 Layout chung & giao diện cơ bản<br>FE1-02 Trang đăng nhập, đổi mật khẩu, hồ sơ | FE2-01 Khung Area, menu, partial dùng chung | QA-01 Ảnh mẫu & nguồn ảnh<br>QA-02 Rà & hoàn thiện bộ test case |
-| **Tuần 2** (Day 8–14) | BE1-03 Đổi mật khẩu, hồ sơ cá nhân, trang lỗi<br>BE1-04 Lưu ảnh bằng File I/O + FilesController<br>BE1-05 Giáo viên – quản lý cuộc thi<br>BE1-06 Giải thưởng của cuộc thi; học viên xem cuộc thi<br>BE1-07 Học viên – nộp bài<br>BE1-08 Học viên – bài của tôi, chi tiết, hạn nộp<br>BE1-09 Học viên – sửa, thay ảnh, xóa bài | BE2-02 Admin – quản lý nhân viên<br>BE2-03 Admin – quản lý học viên; giáo viên xem học viên<br>BE2-04 Admin – dashboard<br>BE2-05 Tự động cập nhật trạng thái cuộc thi & triển lãm<br>BE2-06 Giáo viên – danh sách & chi tiết bài nộp (chỉ đọc) | FE1-03 Giáo viên – cuộc thi & giải thưởng<br>FE1-04 Học viên – dashboard & xem cuộc thi<br>FE1-05 Học viên – nộp, xem, sửa, xóa bài | FE2-02 Admin – dashboard & nhân viên<br>FE2-03 Admin – học viên; giáo viên xem học viên<br>FE2-04 Giáo viên – danh sách & chi tiết bài nộp | QA-03 Trang báo lỗi 403/404/500 (FE nhỏ)<br>QA-04 Kiểm thử vòng 1: đăng nhập & quản lý tài khoản |
-| **Tuần 3** (Day 15–21) | BE1-10 Chấm bài<br>BE1-11 Trao giải & công bố kết quả<br>BE1-12 Đề xuất, duyệt, gửi tranh đi triển lãm<br>BE1-13 Bán tranh & trả tiền học viên | BE2-07 Tìm bài theo xếp loại; hồ sơ học tập học viên (chỉ đọc)<br>BE2-08 Học viên – kết quả, bài xuất sắc, giải thưởng (chỉ đọc)<br>BE2-09 Quản lý triển lãm<br>BE2-10 Quản lý khách mua<br>BE2-11 Trang chủ & trang công khai (chỉ đọc)<br>BE2-12 Báo cáo RPT-01 … RPT-07<br>BE2-13 Quản lý – dashboard và các trang xem (chỉ đọc) | FE1-06 Giáo viên – màn hình chấm bài<br>FE1-07 Trao giải & công bố kết quả<br>FE1-08 Đề xuất & duyệt tranh triển lãm<br>FE1-09 Bán tranh & trả tiền<br>FE1-10 Kiểm tra responsive phần FE1 | FE2-05 Giáo viên – tìm theo xếp loại & hồ sơ học tập<br>FE2-06 Học viên – kết quả, bài xuất sắc, giải<br>FE2-07 Triển lãm & khách mua<br>FE2-08 Trang chủ & trang công khai<br>FE2-09 Giao diện báo cáo<br>FE2-10 Quản lý – dashboard & trang xem | QA-05 Trang giới thiệu & liên hệ (FE nhỏ)<br>QA-07 CSS in báo cáo (FE nhỏ)<br>QA-06 Kiểm thử vòng 2: cuộc thi, nộp bài, chấm bài<br>QA-08 Kiểm thử vòng 3 + ghi lại bằng Selenium IDE |
-| **Tuần 4** (Day 22–28) | BE1-OPT Tùy chọn | BE2-OPT Tùy chọn | FE1-OPT Tùy chọn | FE2-OPT Tùy chọn | QA-09 Regression trước code freeze + chụp màn hình<br>QA-10 Tài liệu tổng hợp & đóng gói |
+| **Sprint 1** (Day 1–5) | BE1-01 Dữ liệu mẫu – tài khoản (làm ĐẦU TIÊN) (Day 4 (sáng))<br>BE1-02 Đăng nhập, đăng xuất, phân quyền (Day 4–5)<br>BE1-03 Đổi mật khẩu, hồ sơ cá nhân, trang lỗi (Day 5–6) | BE2-01 Dữ liệu mẫu – cuộc thi, bài nộp, chấm, giải, triển lãm (Day 4–5)<br>BE2-02 Admin – quản lý nhân viên (Day 5–6) | FE1-01 Layout chung & giao diện cơ bản (Day 4–5)<br>FE1-02 Trang đăng nhập, đổi mật khẩu, hồ sơ (Day 5–6) | FE2-01 Khung Area, menu, partial dùng chung (Day 4–5)<br>FE2-02 Admin – dashboard & nhân viên (Day 5–6) | QA-01 Ảnh mẫu & nguồn ảnh (Day 3–4)<br>QA-02 Rà & hoàn thiện bộ test case (Day 4–6) |
+| **Sprint 2** (Day 6–11) | BE1-04 Lưu ảnh bằng File I/O + FilesController (Day 6–7)<br>BE1-05 Giáo viên – quản lý cuộc thi (Day 7–9)<br>BE1-06 Giải thưởng của cuộc thi; học viên xem cuộc thi (Day 9)<br>BE1-07 Học viên – nộp bài (Day 9–10)<br>BE1-08 Học viên – bài của tôi, chi tiết, hạn nộp (Day 10–11)<br>BE1-09 Học viên – sửa, thay ảnh, xóa bài (Day 11–12) | BE2-03 Admin – quản lý học viên; giáo viên xem học viên (Day 6–7)<br>BE2-04 Admin – dashboard (Day 8)<br>BE2-05 Tự động cập nhật trạng thái cuộc thi & triển lãm (Day 8)<br>BE2-06 Giáo viên – danh sách & chi tiết bài nộp (chỉ đọc) (Day 9)<br>BE2-07 Tìm bài theo xếp loại; hồ sơ học tập học viên (chỉ đọc) (Day 10)<br>BE2-09 Quản lý triển lãm (Day 10–11)<br>BE2-10 Quản lý khách mua (Day 11) | FE1-03 Giáo viên – cuộc thi & giải thưởng (Day 8–9)<br>FE1-04 Học viên – dashboard & xem cuộc thi (Day 9–10)<br>FE1-05 Học viên – nộp, xem, sửa, xóa bài (Day 10–12) | FE2-03 Admin – học viên; giáo viên xem học viên (Day 7–8)<br>FE2-04 Giáo viên – danh sách & chi tiết bài nộp (Day 9–10)<br>FE2-05 Giáo viên – tìm theo xếp loại & hồ sơ học tập (Day 10) | QA-03 Trang báo lỗi 403/404/500 (FE nhỏ) (Day 6–7)<br>QA-04 Kiểm thử vòng 1: đăng nhập & quản lý tài khoản (Day 9–10) |
+| **Sprint 3** (Day 12–17) | BE1-10 Chấm bài (Day 12–13)<br>BE1-11 Trao giải & công bố kết quả (Day 13–15)<br>BE1-12 Đề xuất, duyệt, gửi tranh đi triển lãm (Day 15–16)<br>BE1-13 Bán tranh & trả tiền học viên (Day 16–17) | BE2-08 Học viên – kết quả, bài xuất sắc, giải thưởng (chỉ đọc) (Day 12)<br>BE2-11 Trang chủ & trang công khai (chỉ đọc) (Day 12–13)<br>BE2-12 Báo cáo RPT-01 … RPT-07 (Day 13–15)<br>BE2-13 Quản lý – dashboard và các trang xem (chỉ đọc) (Day 15–16) | FE1-06 Giáo viên – màn hình chấm bài (Day 12–14)<br>FE1-07 Trao giải & công bố kết quả (Day 14–15)<br>FE1-08 Đề xuất & duyệt tranh triển lãm (Day 15–16)<br>FE1-09 Bán tranh & trả tiền (Day 16–17)<br>FE1-10 Kiểm tra responsive phần FE1 (Day 17) | FE2-06 Học viên – kết quả, bài xuất sắc, giải (Day 12–13)<br>FE2-07 Triển lãm & khách mua (Day 13–14)<br>FE2-08 Trang chủ & trang công khai (Day 14–15)<br>FE2-09 Giao diện báo cáo (Day 15–16)<br>FE2-10 Quản lý – dashboard & trang xem (Day 16–17) | QA-06 Kiểm thử vòng 2: cuộc thi, nộp bài, chấm bài (Day 14–15)<br>QA-05 Trang giới thiệu & liên hệ (FE nhỏ) (Day 15)<br>QA-07 CSS in báo cáo (FE nhỏ) (Day 16)<br>QA-08 Kiểm thử vòng 3 + ghi lại bằng Selenium IDE (Day 17–19) |
+| **Review & thay đổi** (Day 18–23) | BE1-OPT Tùy chọn (Day 19–23) | BE2-OPT Tùy chọn (Day 19–23) | FE1-OPT Tùy chọn (Day 19–23) | FE2-OPT Tùy chọn (Day 19–23) | – |
+| **Phát hành** (Day 24–28) | – | – | – | – | QA-09 Regression trước code freeze + chụp màn hình (Day 24–25)<br>QA-10 Tài liệu tổng hợp & đóng gói (Day 25–27) |
 
 ### 3.3. Mốc và việc chung theo ngày
 
 | Ngày | Việc | Người |
 |---|---|---|
-| Day 7 | Sprint Review 1: đăng nhập chạy được, có dữ liệu mẫu, layout + menu theo vai trò | Cả nhóm |
-| **Day 9** | **Gửi email STATUS #1** (mục 6) + Project Review & Monitoring Report kỳ 1 | QA soạn, BE1 gửi |
-| Day 12–13 | Kiểm thử vòng 1 (đăng nhập, quản lý tài khoản) | QA |
-| Day 14 | Sprint Review 2: cuộc thi + nộp bài chạy được | Cả nhóm |
-| Day 16–17 | Kiểm thử vòng 2 (cuộc thi, nộp bài, chấm bài) | QA |
-| Day 16 / 20 | Algorithms: nháp / chốt | BE1 + QA |
-| Day 21 | **Feature complete** – Sprint Review 3 | Cả nhóm |
-| Day 21–23 | Kiểm thử vòng 3 + Selenium IDE; làm tùy chọn (M12+) nếu phần bắt buộc đã xong | QA; BE/FE |
-| Day 22 | User Guide bản nháp | FE1 + FE2 |
+| Day 5 | Sprint Review 1: đăng nhập chạy được, có dữ liệu mẫu, layout + menu theo vai trò | Cả nhóm |
+| **Day 7** | **Gửi email STATUS #1** (mục 6) + Project Review & Monitoring Report kỳ 1 | QA soạn, BE1 gửi |
+| Day 9–10 | Kiểm thử vòng 1 (đăng nhập, quản lý tài khoản) | QA |
+| Day 11 | Sprint Review 2: tài khoản, cuộc thi + nộp bài chạy được | Cả nhóm |
+| Day 14–15 | Kiểm thử vòng 2 (cuộc thi, nộp bài, chấm bài) | QA |
+| Day 13 / 16 | Algorithms: nháp / chốt | BE1 + QA |
+| **Day 17** | **Feature complete** – Sprint Review 3 (M01–M11 chạy được) | Cả nhóm |
+| Day 17–19 | Kiểm thử vòng 3 + Selenium IDE | QA |
+| **Day 18** | **Review toàn hệ thống**: chạy kịch bản demo theo từng vai trò, đối chiếu đề bài; ghi mọi góp ý thành thẻ nhãn `change` trên Kanban; BE1 xếp ưu tiên (lỗi → yêu cầu đề bài chưa đạt → góp ý giao diện). User Guide bản nháp | Cả nhóm; FE1 + FE2 |
+| Day 19–23 | Làm các thay đổi sau review; QA test lại từng thay đổi. Tùy chọn (M12+) chỉ khi danh sách thay đổi đã xong | BE/FE; QA |
 | **Day 24** | **Code freeze 18:00** – chỉ sửa lỗi; Unit Testing Check List chốt; Installation Guide nháp | Cả nhóm; QA; BE2 |
 | **Day 25** | **Gửi email STATUS #2** + Report kỳ 2; User Guide & Interface Design chốt | QA soạn, BE1 gửi; FE1, FE2 |
 | Day 26 | Cài thử trên máy sạch; backup DB bản cuối; xuất `01_schema.sql`, `02_seed_data.sql`; Certificate; ghép Project Report | QA + BE2; BE1 |
@@ -162,79 +168,82 @@ Hạn của từng tài liệu: docs/plan/04 mục 6.2.
 
 ```mermaid
 gantt
-    title Institute of Fine Arts – 4 tuần
+    title Institute of Fine Arts – chức năng xong Day 17, review Day 18–23, nộp Day 28
     dateFormat YYYY-MM-DD
     axisFormat %d/%m
     section Phân tích & thiết kế
-    Kickoff, BA, CRS, ERD :done, ba, 2026-11-02, 5d
+    Kickoff, BA, CRS, ERD :done, ba, 2026-11-02, 3d
     section BE1
-    BE1-01 Dữ liệu mẫu – tài khoản (làm ĐẦU TIÊN) :be101, 2026-11-07, 1d
-    BE1-02 Đăng nhập, đăng xuất, phân quyền :be102, 2026-11-07, 2d
-    BE1-03 Đổi mật khẩu, hồ sơ cá nhân, trang lỗi :be103, 2026-11-09, 1d
-    BE1-04 Lưu ảnh bằng File I/O + FilesControlle :be104, 2026-11-09, 2d
-    BE1-05 Giáo viên – quản lý cuộc thi :be105, 2026-11-11, 2d
-    BE1-06 Giải thưởng của cuộc thi  học viên xem :be106, 2026-11-12, 2d
-    BE1-07 Học viên – nộp bài :be107, 2026-11-13, 2d
-    BE1-08 Học viên – bài của tôi, chi tiết, hạn  :be108, 2026-11-14, 2d
-    BE1-09 Học viên – sửa, thay ảnh, xóa bài :be109, 2026-11-15, 1d
-    BE1-10 Chấm bài :be110, 2026-11-16, 1d
-    BE1-11 Trao giải & công bố kết quả :be111, 2026-11-17, 2d
-    BE1-12 Đề xuất, duyệt, gửi tranh đi triển lãm :be112, 2026-11-19, 2d
-    BE1-13 Bán tranh & trả tiền học viên :be113, 2026-11-21, 1d
-    BE1-OPT Tùy chọn :be1opt, 2026-11-23, 2d
+    BE1-01 Dữ liệu mẫu – tài khoản (làm ĐẦU TIÊN) :be101, 2026-11-05, 1d
+    BE1-02 Đăng nhập, đăng xuất, phân quyền :be102, 2026-11-05, 2d
+    BE1-03 Đổi mật khẩu, hồ sơ cá nhân, trang lỗi :be103, 2026-11-06, 2d
+    BE1-04 Lưu ảnh bằng File I/O + FilesControlle :be104, 2026-11-07, 2d
+    BE1-05 Giáo viên – quản lý cuộc thi :be105, 2026-11-08, 3d
+    BE1-06 Giải thưởng của cuộc thi  học viên xem :be106, 2026-11-10, 1d
+    BE1-07 Học viên – nộp bài :be107, 2026-11-10, 2d
+    BE1-08 Học viên – bài của tôi, chi tiết, hạn  :be108, 2026-11-11, 2d
+    BE1-09 Học viên – sửa, thay ảnh, xóa bài :be109, 2026-11-12, 2d
+    BE1-10 Chấm bài :be110, 2026-11-13, 2d
+    BE1-11 Trao giải & công bố kết quả :be111, 2026-11-14, 3d
+    BE1-12 Đề xuất, duyệt, gửi tranh đi triển lãm :be112, 2026-11-16, 2d
+    BE1-13 Bán tranh & trả tiền học viên :be113, 2026-11-17, 2d
+    BE1-OPT Tùy chọn :be1opt, 2026-11-20, 5d
     section BE2
-    BE2-01 Dữ liệu mẫu – cuộc thi, bài nộp, chấm, :be201, 2026-11-07, 3d
-    BE2-02 Admin – quản lý nhân viên :be202, 2026-11-10, 2d
-    BE2-03 Admin – quản lý học viên  giáo viên xe :be203, 2026-11-12, 2d
-    BE2-04 Admin – dashboard :be204, 2026-11-13, 1d
-    BE2-05 Tự động cập nhật trạng thái cuộc thi & :be205, 2026-11-14, 1d
-    BE2-06 Giáo viên – danh sách & chi tiết bài n :be206, 2026-11-14, 2d
-    BE2-07 Tìm bài theo xếp loại  hồ sơ học tập h :be207, 2026-11-16, 1d
-    BE2-08 Học viên – kết quả, bài xuất sắc, giải :be208, 2026-11-18, 1d
-    BE2-09 Quản lý triển lãm :be209, 2026-11-17, 1d
-    BE2-10 Quản lý khách mua :be210, 2026-11-17, 1d
-    BE2-11 Trang chủ & trang công khai (chỉ đọc) :be211, 2026-11-19, 1d
-    BE2-12 Báo cáo RPT-01 … RPT-07 :be212, 2026-11-20, 2d
-    BE2-13 Quản lý – dashboard và các trang xem ( :be213, 2026-11-22, 1d
-    BE2-OPT Tùy chọn :be2opt, 2026-11-23, 2d
+    BE2-01 Dữ liệu mẫu – cuộc thi, bài nộp, chấm, :be201, 2026-11-05, 2d
+    BE2-02 Admin – quản lý nhân viên :be202, 2026-11-06, 2d
+    BE2-03 Admin – quản lý học viên  giáo viên xe :be203, 2026-11-07, 2d
+    BE2-04 Admin – dashboard :be204, 2026-11-09, 1d
+    BE2-05 Tự động cập nhật trạng thái cuộc thi & :be205, 2026-11-09, 1d
+    BE2-06 Giáo viên – danh sách & chi tiết bài n :be206, 2026-11-10, 1d
+    BE2-07 Tìm bài theo xếp loại  hồ sơ học tập h :be207, 2026-11-11, 1d
+    BE2-09 Quản lý triển lãm :be209, 2026-11-11, 2d
+    BE2-10 Quản lý khách mua :be210, 2026-11-12, 1d
+    BE2-08 Học viên – kết quả, bài xuất sắc, giải :be208, 2026-11-13, 1d
+    BE2-11 Trang chủ & trang công khai (chỉ đọc) :be211, 2026-11-13, 2d
+    BE2-12 Báo cáo RPT-01 … RPT-07 :be212, 2026-11-14, 3d
+    BE2-13 Quản lý – dashboard và các trang xem ( :be213, 2026-11-16, 2d
+    BE2-OPT Tùy chọn :be2opt, 2026-11-20, 5d
     section FE1
-    FE1-01 Layout chung & giao diện cơ bản :fe101, 2026-11-07, 2d
-    FE1-02 Trang đăng nhập, đổi mật khẩu, hồ sơ :fe102, 2026-11-08, 2d
-    FE1-03 Giáo viên – cuộc thi & giải thưởng :fe103, 2026-11-11, 2d
-    FE1-04 Học viên – dashboard & xem cuộc thi :fe104, 2026-11-13, 1d
-    FE1-05 Học viên – nộp, xem, sửa, xóa bài :fe105, 2026-11-14, 3d
-    FE1-06 Giáo viên – màn hình chấm bài :fe106, 2026-11-16, 2d
-    FE1-07 Trao giải & công bố kết quả :fe107, 2026-11-17, 2d
-    FE1-08 Đề xuất & duyệt tranh triển lãm :fe108, 2026-11-19, 2d
-    FE1-09 Bán tranh & trả tiền :fe109, 2026-11-21, 1d
-    FE1-10 Kiểm tra responsive phần FE1 :fe110, 2026-11-22, 1d
-    FE1-OPT Tùy chọn :fe1opt, 2026-11-23, 2d
+    FE1-01 Layout chung & giao diện cơ bản :fe101, 2026-11-05, 2d
+    FE1-02 Trang đăng nhập, đổi mật khẩu, hồ sơ :fe102, 2026-11-06, 2d
+    FE1-03 Giáo viên – cuộc thi & giải thưởng :fe103, 2026-11-09, 2d
+    FE1-04 Học viên – dashboard & xem cuộc thi :fe104, 2026-11-10, 2d
+    FE1-05 Học viên – nộp, xem, sửa, xóa bài :fe105, 2026-11-11, 3d
+    FE1-06 Giáo viên – màn hình chấm bài :fe106, 2026-11-13, 3d
+    FE1-07 Trao giải & công bố kết quả :fe107, 2026-11-15, 2d
+    FE1-08 Đề xuất & duyệt tranh triển lãm :fe108, 2026-11-16, 2d
+    FE1-09 Bán tranh & trả tiền :fe109, 2026-11-17, 2d
+    FE1-10 Kiểm tra responsive phần FE1 :fe110, 2026-11-18, 1d
+    FE1-OPT Tùy chọn :fe1opt, 2026-11-20, 5d
     section FE2
-    FE2-01 Khung Area, menu, partial dùng chung :fe201, 2026-11-07, 2d
-    FE2-02 Admin – dashboard & nhân viên :fe202, 2026-11-10, 2d
-    FE2-03 Admin – học viên  giáo viên xem học vi :fe203, 2026-11-12, 2d
-    FE2-04 Giáo viên – danh sách & chi tiết bài n :fe204, 2026-11-15, 1d
-    FE2-05 Giáo viên – tìm theo xếp loại & hồ sơ  :fe205, 2026-11-16, 1d
-    FE2-06 Học viên – kết quả, bài xuất sắc, giải :fe206, 2026-11-18, 1d
-    FE2-07 Triển lãm & khách mua :fe207, 2026-11-18, 2d
-    FE2-08 Trang chủ & trang công khai :fe208, 2026-11-19, 2d
-    FE2-09 Giao diện báo cáo :fe209, 2026-11-21, 1d
-    FE2-10 Quản lý – dashboard & trang xem :fe210, 2026-11-22, 1d
-    FE2-OPT Tùy chọn :fe2opt, 2026-11-23, 2d
+    FE2-01 Khung Area, menu, partial dùng chung :fe201, 2026-11-05, 2d
+    FE2-02 Admin – dashboard & nhân viên :fe202, 2026-11-06, 2d
+    FE2-03 Admin – học viên  giáo viên xem học vi :fe203, 2026-11-08, 2d
+    FE2-04 Giáo viên – danh sách & chi tiết bài n :fe204, 2026-11-10, 2d
+    FE2-05 Giáo viên – tìm theo xếp loại & hồ sơ  :fe205, 2026-11-11, 1d
+    FE2-06 Học viên – kết quả, bài xuất sắc, giải :fe206, 2026-11-13, 2d
+    FE2-07 Triển lãm & khách mua :fe207, 2026-11-14, 2d
+    FE2-08 Trang chủ & trang công khai :fe208, 2026-11-15, 2d
+    FE2-09 Giao diện báo cáo :fe209, 2026-11-16, 2d
+    FE2-10 Quản lý – dashboard & trang xem :fe210, 2026-11-17, 2d
+    FE2-OPT Tùy chọn :fe2opt, 2026-11-20, 5d
     section QA
-    QA-01 Ảnh mẫu & nguồn ảnh :qa01, 2026-11-06, 2d
-    QA-02 Rà & hoàn thiện bộ test case :qa02, 2026-11-07, 3d
-    QA-03 Trang báo lỗi 403/404/500 (FE nhỏ) :qa03, 2026-11-09, 2d
-    QA-05 Trang giới thiệu & liên hệ (FE nhỏ) :qa05, 2026-11-20, 1d
-    QA-07 CSS in báo cáo (FE nhỏ) :qa07, 2026-11-21, 1d
-    QA-04 Kiểm thử vòng 1  đăng nhập & quản lý t :qa04, 2026-11-13, 2d
-    QA-06 Kiểm thử vòng 2  cuộc thi, nộp bài, ch :qa06, 2026-11-17, 2d
-    QA-08 Kiểm thử vòng 3 + ghi lại bằng Seleniu :qa08, 2026-11-22, 3d
+    QA-01 Ảnh mẫu & nguồn ảnh :qa01, 2026-11-04, 2d
+    QA-02 Rà & hoàn thiện bộ test case :qa02, 2026-11-05, 3d
+    QA-03 Trang báo lỗi 403/404/500 (FE nhỏ) :qa03, 2026-11-07, 2d
+    QA-04 Kiểm thử vòng 1  đăng nhập & quản lý t :qa04, 2026-11-10, 2d
+    QA-06 Kiểm thử vòng 2  cuộc thi, nộp bài, ch :qa06, 2026-11-15, 2d
+    QA-05 Trang giới thiệu & liên hệ (FE nhỏ) :qa05, 2026-11-16, 1d
+    QA-07 CSS in báo cáo (FE nhỏ) :qa07, 2026-11-17, 1d
+    QA-08 Kiểm thử vòng 3 + ghi lại bằng Seleniu :qa08, 2026-11-18, 3d
     QA-09 Regression trước code freeze + chụp mà :qa09, 2026-11-25, 2d
     QA-10 Tài liệu tổng hợp & đóng gói :qa10, 2026-11-26, 3d
+    section Review & thay đổi
+    Review toàn hệ thống :crit, rv, 2026-11-19, 1d
+    Sửa theo góp ý :chg, 2026-11-20, 5d
     section Mốc
-    STATUS 1 :milestone, 2026-11-10, 0d
-    Feature complete :milestone, 2026-11-22, 0d
+    STATUS 1 :milestone, 2026-11-08, 0d
+    Feature complete :milestone, 2026-11-18, 0d
     Code freeze :milestone, 2026-11-25, 0d
     STATUS 2 :milestone, 2026-11-26, 0d
     Nộp bài :milestone, 2026-11-29, 0d
@@ -284,9 +293,9 @@ R = Thực hiện · A = Chịu trách nhiệm cuối · C = Được tham vấn
 
 | Cặp | Hình thức | Mục tiêu |
 |---|---|---|
-| **BE2 ↔ BE1** | Day 6–10: làm chung dữ liệu mẫu và bước (1)–(2) của BE2-02; sau đó 20 phút/ngày giải đáp + review mọi PR của BE2 | CRUD với EF Core, transaction, DataAnnotations, cách tổ chức Service |
+| **BE2 ↔ BE1** | Day 4–7: làm chung dữ liệu mẫu và bước (1)–(2) của BE2-02; sau đó 20 phút/ngày giải đáp + review mọi PR của BE2 | CRUD với EF Core, transaction, DataAnnotations, cách tổ chức Service |
 | **QA ↔ BE1** | 30 phút sau Sprint Review: BE1 giải thích luồng vừa xong, QA bổ sung test case | Hiểu nghiệp vụ, viết test case đúng |
-| **QA ↔ FE1** | Day 8 (trang lỗi), Day 19 (trang giới thiệu), Day 20 (CSS in): FE1 hướng dẫn Razor/Bootstrap | Sửa được View đơn giản |
+| **QA ↔ FE1** | Day 6 (trang lỗi), Day 15 (trang giới thiệu), Day 16 (CSS in): FE1 hướng dẫn Razor/Bootstrap | Sửa được View đơn giản |
 | **BE2 ↔ FE2** | Mỗi task: chốt ViewModel trước rồi mới làm | Thói quen thỏa thuận "hợp đồng" BE–FE |
 
 - Giao việc bằng **checklist cụ thể từng bước** (mô tả task trong Phan_cong_task.xlsx đã đánh số bước).
@@ -299,17 +308,18 @@ R = Thực hiện · A = Chịu trách nhiệm cuối · C = Được tham vấn
 | Mốc | Ngày | Tên | Tiêu chí hoàn thành (phải đạt tất cả) |
 |---|---|---|---|
 | MS0 | Day 1 | Kickoff | Repo GitHub, Kanban, nhóm chat đã tạo; mọi máy cài xong môi trường |
-| MS1 | Day 7 | Thiết kế xong + Nền tảng | CRS đã chốt; ERD final + `01_schema.sql` chạy được; wireframe đủ màn hình; project chạy; **M01 đăng nhập đúng 4 vai trò** |
-| MS2 | Day 9 | **STATUS #1 đã gửi** | Email "STATUS:" + ZIP (source, SQL, screenshots) + form Báo cáo tiến độ lần 1 |
-| MS3 | Day 14 | Nộp bài chạy được | M02–M06 Done: Admin tạo Staff/Student; Staff tạo cuộc thi; Student upload/sửa/xóa/tải ảnh qua File I/O; trang chủ hiển thị số liệu |
-| MS4 | Day 18 | Luồng lõi E2E | Competition → Submission → Evaluation (kể cả DISQUALIFIED tự động) → Award chạy trọn vẹn, test E2E Pass |
-| MS5 | Day 21 | **Feature complete** | M01–M11 đạt DoD; không còn bug Blocker; tag `v0.9` |
+| MS1 | Day 5 | Thiết kế xong + Nền tảng | CRS đã chốt; ERD final + `01_schema.sql` chạy được; wireframe đủ màn hình; project chạy; **M01 đăng nhập đúng 4 vai trò** |
+| MS2 | Day 7 | **STATUS #1 đã gửi** | Email "STATUS:" + ZIP (source, SQL, screenshots) + form Báo cáo tiến độ lần 1 |
+| MS3 | Day 11 | Nộp bài chạy được | M03–M06 Done: Admin tạo Staff/Student; Staff tạo cuộc thi; Student upload/sửa/xóa/tải ảnh qua File I/O |
+| MS4 | Day 15 | Luồng lõi E2E | Competition → Submission → Evaluation (kể cả DISQUALIFIED tự động) → Award chạy trọn vẹn, test E2E Pass |
+| MS5 | Day 17 | **Feature complete** | M01–M11 đạt DoD; không còn bug Blocker; tag `v0.9` |
+| MS5b | Day 18 | **Review xong** | Đã chạy demo đủ 4 vai trò + GUEST; danh sách thay đổi có trên Kanban, đã xếp ưu tiên và gán người |
 | MS6 | Day 24 | **Code freeze** (18:00) | `main` = `v1.0-rc`; mọi khối mã có comment; chỉ còn sửa bug Blocker/Critical |
 | MS7 | Day 25 | **STATUS #2 đã gửi** | Email "STATUS:" + ZIP bản `v1.0-rc` + form Báo cáo tiến độ lần 2 (cuối cùng) |
 | MS8 | Day 27 | Sẵn sàng phát hành | Bộ tài liệu 13 mục + User Guide hoàn chỉnh; DB `.bak` final; dry-run trên máy sạch thành công |
 | MS9 | Day 28 | **Nộp bài cuối (1 lần)** | Final Check List 100%; email "PROJECT SUBMISSION:" + ZIP + Phiếu phản hồi |
 
-**Ngày dự phòng (buffer):** Day 27 (buffer chính thức) + nửa cuối Day 21 và Day 23. Nếu Sprint 3 trễ, **cắt M12+ trước tiên**, sau đó lùi M10/M11 sang Day 22–23 — **không bao giờ dời Code freeze quá Day 25 và không dời ngày nộp**.
+**Ngày dự phòng (buffer):** Day 18–23 vừa là thời gian review & chỉnh sửa vừa là buffer; Day 27 là buffer cuối. Nếu Sprint 3 trễ: dùng Day 18–19 để hoàn tất M10/M11 trước rồi mới review, **cắt M12+ trước tiên** — **không bao giờ dời Code freeze quá Day 25 và không dời ngày nộp**.
 
 ---
 
@@ -319,7 +329,7 @@ Theo đặc tả: dự án < 30 ngày → **email 1 trong khoảng Day 7–10**,
 
 | | STATUS #1 | STATUS #2 (cuối cùng) |
 |---|---|---|
-| **Ngày gửi** | **Day 9** (dư 1 ngày dự phòng trước hạn Day 10) | **Day 25** (Day 28 − 3) |
+| **Ngày gửi** | **Day 7** (ngày đầu của khoảng Day 7–10 theo đặc tả; còn 3 ngày dự phòng nếu trễ) | **Day 25** (Day 28 − 3) |
 | **Người soạn / gửi** | QA soạn & gom file, BE1 duyệt & gửi | QA soạn & gom file, BE1 duyệt & gửi |
 | **Tiến độ tổng thể** | ~35%: Phân tích + thiết kế xong; M01 Done; M03, M04 đang làm | ~95%: M01–M11 Done (+ M12 nếu có); code freeze; đang hoàn thiện tài liệu |
 | **Việc đã xong** | CRS, ERD, script SQL, wireframe, GUI Standards nháp, skeleton, M01 | Toàn bộ module bắt buộc, kiểm thử hồi quy vòng 2, ERD/Algorithms/Interface Design bản final |
@@ -331,7 +341,7 @@ Theo đặc tả: dự án < 30 ngày → **email 1 trong khoảng Day 7–10**,
 ### 6.1. Mẫu email STATUS
 
 ```
-Tiêu đề: STATUS: [Batch_Group] Institute of Fine Arts – Báo cáo tiến độ lần 1 (Day 9)
+Tiêu đề: STATUS: [Batch_Group] Institute of Fine Arts – Báo cáo tiến độ lần 1 (Day 7)
 
 Kính gửi Nhóm eProjects,
 
@@ -363,7 +373,7 @@ STATUS #2 dùng cùng mẫu, đổi "lần 2 (cuối cùng) (Day 25)", tiến đ
 |---|---|
 | Thông tin học viên | Họ và tên, Mã số học viên, Chương trình học, Học kỳ (Sem 3), Tên trung tâm – điền cho trưởng nhóm, ghi tên các thành viên vào Ghi chú |
 | Thông tin eProject | Tên eProject: Institute of Fine Arts; Thời gian thực hiện: 28 ngày; Ngày bắt đầu/kết thúc theo định dạng **DD/MMM/YYYY** (ví dụ 02/Nov/2026) |
-| Báo cáo tiến độ lần 1 | Ngày gửi (Day 9); Ảnh chụp màn hình (tên các file đính kèm); Mô tả / Tài liệu đánh giá (tóm tắt mục 6 ở trên); Ghi chú (khó khăn) |
+| Báo cáo tiến độ lần 1 | Ngày gửi (Day 7); Ảnh chụp màn hình (tên các file đính kèm); Mô tả / Tài liệu đánh giá (tóm tắt mục 6 ở trên); Ghi chú (khó khăn) |
 | Báo cáo tiến độ lần 2 (cuối cùng) | Tương tự, điền ở Day 25 (giữ nguyên phần lần 1) |
 | Nhận xét của học viên | Điền khi nộp bài cuối: góp ý của nhóm eProjects đã giúp gì; Phản hồi/Ghi chú |
 
@@ -382,9 +392,9 @@ Thang đo: Xác suất (Thấp/TB/Cao) × Ảnh hưởng (Thấp/TB/Cao).
 | R3 | **Mất dữ liệu / hỏng máy / virus** | TB | Cao | Push code **mỗi ngày**; backup DB `.bak` hằng ngày lên Google Drive nhóm; script SQL nằm trong repo | Clone lại từ GitHub; restore `.bak` gần nhất hoặc chạy `01_schema.sql` + `02_seed_data.sql` | BE1 (DB), mỗi người (code) |
 | R4 | **Xung đột Git (merge conflict)** | Cao | TB | Mỗi người 1 nhánh feature; pull `develop` mỗi sáng; chia file rõ ràng (BE1/BE2: C# – Services/Data/Controllers, FE1/FE2/QA: Views/wwwroot); chỉ BE1 tạo migration; PR nhỏ | BE1 giải quyết conflict cùng người liên quan; không bao giờ `push --force` lên `develop/main` | BE1 |
 | R5 | **Lỗi upload file** (đường dẫn Windows, file lớn, sai định dạng, tên tiếng Việt, mất ảnh khi đổi máy) | Cao | Cao | Đặt tên file bằng Guid; cấu hình `Upload:RootPath` trong `appsettings.json`; giới hạn `[RequestSizeLimit]` + `Upload:MaxFileSizeBytes`; kiểm tra MIME + phần mở rộng JPEG; bộ ảnh test của QA | Ghi lỗi chi tiết; thư mục `uploads/` mẫu được đóng gói trong ZIP cùng seed | BE1, QA |
-| R6 | **Hiểu sai đề** (ví dụ: ai quản lý cuộc thi/triển lãm; điều kiện DISQUALIFIED; Student sửa bài sau hạn) | TB | Cao | Bảng đối chiếu yêu cầu ↔ module (CRS) được cả nhóm duyệt Day 3; gửi **DOUBT:** sớm | Điều chỉnh trong sprint kế tiếp; ghi giả định (assumption) vào tài liệu | BE1 |
+| R6 | **Hiểu sai đề** (ví dụ: ai quản lý cuộc thi/triển lãm; điều kiện DISQUALIFIED; Student sửa bài sau hạn) | TB | Cao | Bảng đối chiếu yêu cầu ↔ module (CRS) được cả nhóm duyệt Day 2; gửi **DOUBT:** sớm | Điều chỉnh trong sprint kế tiếp; ghi giả định (assumption) vào tài liệu | BE1 |
 | R7 | Môi trường không đồng nhất (khác phiên bản .NET SDK, SQL Server, cổng, collation) | TB | TB | Cùng .NET SDK 10 (file `global.json` cố định phiên bản); chuỗi kết nối Windows Authentication, khác biệt riêng từng máy để trong User Secrets; hướng dẫn cài trong README | BE1 hỗ trợ qua chia sẻ màn hình; dùng máy BE1 làm máy demo | BE1 |
-| R8 | Thiếu/không đạt tài liệu (13 mục) | TB | Cao | Viết nháp song song từ Day 3; QA làm chủ bộ tài liệu, mỗi người viết tài liệu được giao (docs/plan/04 mục 6.2); template sẵn | Dồn nguồn lực Day 26–27; BE/FE viết phần kỹ thuật | QA |
+| R8 | Thiếu/không đạt tài liệu (13 mục) | TB | Cao | Viết nháp song song từ Day 2; QA làm chủ bộ tài liệu, mỗi người viết tài liệu được giao (docs/plan/04 mục 6.2); template sẵn | Dồn nguồn lực Day 26–27; BE/FE viết phần kỹ thuật | QA |
 | R9 | Nộp bài thiếu file (chỉ được nộp 1 lần) | Thấp | Rất cao | Final Check List; dry-run Day 27 trên máy sạch; 2 người kiểm tra chéo ZIP | Không có phương án khắc phục sau khi nộp → phải phòng ngừa tuyệt đối | BE1 + QA |
 | R10 | Thành viên ốm/vắng đột xuất | TB | TB | Code có comment + PR mô tả rõ; tài liệu trên Drive chung | Phân lại việc trong stand-up; BE1 ưu tiên việc găng | BE1 |
 | R11 | Lỗi bảo mật cơ bản (lộ mật khẩu, truy cập trái quyền, upload file độc hại) | TB | TB | BCrypt; phân quyền URL + kiểm tra chủ sở hữu bài nộp ở Service; anti-forgery token của ASP.NET Core (CSRFity; không lưu file thực thi | Sửa trước code freeze; test case truy cập trái quyền | BE1, QA |
@@ -397,7 +407,7 @@ Thang đo: Xác suất (Thấp/TB/Cao) × Ảnh hưởng (Thấp/TB/Cao).
 
 | Nhánh | Mục đích | Ai được merge |
 |---|---|---|
-| `main` | Bản ổn định để nộp/demo (chỉ cập nhật ở Day 14, 21, 24, 28) | Chỉ BE1 |
+| `main` | Bản ổn định để nộp/demo (chỉ cập nhật ở Day 11, 17, 24, 28) | Chỉ BE1 |
 | `develop` | Nhánh tích hợp hằng ngày | BE1 (sau review) |
 | `feature/M06-upload-submission` | Tính năng mới, theo mã module | Người làm tính năng |
 | `fix/M07-late-disqualified` | Sửa lỗi | Người sửa |
@@ -452,7 +462,7 @@ git push -u origin feature/M06-upload-submission
 | Loại | Cách làm | Tần suất | Người |
 |---|---|---|---|
 | Mã nguồn | `git push` nhánh đang làm lên GitHub | Cuối mỗi ngày (bắt buộc) | Mọi người |
-| CSDL | `BACKUP DATABASE InstituteOfFineArts TO DISK = 'D:\backup\IFA_dayNN.bak' WITH INIT;` rồi chép lên Google Drive nhóm | Hằng ngày (giữ 3 bản gần nhất + bản Day 14, 21, final) | BE1 |
+| CSDL | `BACKUP DATABASE InstituteOfFineArts TO DISK = 'D:\backup\IFA_dayNN.bak' WITH INIT;` rồi chép lên Google Drive nhóm | Hằng ngày (giữ 3 bản gần nhất + bản Day 11, 17, final) | BE1 |
 | Script CSDL | `01_schema.sql` (xuất từ migration), `02_seed_data.sql` (xuất ở Day 26) nằm trong `database/` | Mỗi lần đổi | BE1 |
 | Ảnh mẫu & tài liệu | Thư mục Google Drive chung + bản trong repo (`docs/`, `database/seed-images/`) | Hằng ngày | QA |
 | Mốc phiên bản | Tag `v0.1` (D7), `v0.2` (D14), `v0.9` (D21), `v1.0-rc` (D24), `v1.0` (D28) | Theo mốc | BE1 |
@@ -465,12 +475,12 @@ git push -u origin feature/M06-upload-submission
 |---|---|---|---|
 | Nhóm chat (Zalo/Messenger/Discord) | Trao đổi nhanh, báo kẹt việc, nhắc lịch | Hằng ngày; trả lời trong vòng 2 giờ (giờ hành chính) | Cả nhóm (QA quản trị nhóm) |
 | Daily stand-up (online hoặc tại Lab) | Đồng bộ tiến độ | 15 phút/ngày | BE1 chủ trì, QA ghi biên bản |
-| Họp sprint (Planning / Review / Retro) | Lập kế hoạch, demo, cải tiến | Day 1, 7, 8, 14, 15, 21, 22, 27 | BE1 |
+| Họp sprint (Planning / Review / Retro) | Lập kế hoạch, demo, cải tiến | Day 1, 5, 6, 11, 12, 17, 18, 27 | BE1 |
 | GitHub Projects + Issues + PR | Theo dõi task, bug, review code | Liên tục | Cả nhóm |
 | Google Drive nhóm | Tài liệu, ảnh mẫu, backup DB, biên bản | Liên tục | QA |
 | Gặp giảng viên (GV hướng dẫn) tại Lab | Hỏi nhanh về phạm vi, nhờ xem demo | Mỗi buổi Lab | BE1 (+ người liên quan) |
-| Email **"DOUBT:"** gửi Nhóm eProjects | Làm rõ yêu cầu đề bài | Khi: (1) đề mơ hồ ảnh hưởng tới CSDL/luồng nghiệp vụ; (2) nhóm tranh luận > 1 ngày không chốt được; (3) GV Lab không trả lời được. **Gửi sớm (Day 2–5)**, gom nhiều câu hỏi vào 1 email | BE1 gửi, BE2 soạn danh sách câu hỏi |
-| Email **"STATUS:"** | Báo cáo tiến độ bắt buộc | Day 9, Day 25 | BE1 |
+| Email **"DOUBT:"** gửi Nhóm eProjects | Làm rõ yêu cầu đề bài | Khi: (1) đề mơ hồ ảnh hưởng tới CSDL/luồng nghiệp vụ; (2) nhóm tranh luận > 1 ngày không chốt được; (3) GV Lab không trả lời được. **Gửi sớm (Day 2–3)**, gom nhiều câu hỏi vào 1 email | BE1 gửi, BE2 soạn danh sách câu hỏi |
+| Email **"STATUS:"** | Báo cáo tiến độ bắt buộc | Day 7, Day 25 | BE1 |
 | Email **"PROJECT SUBMISSION:"** | Nộp bài cuối + Phiếu phản hồi | Day 28 (1 lần duy nhất) | BE1 |
 
 **Mẫu email DOUBT:**
@@ -522,4 +532,4 @@ Cấu trúc thư mục bên trong ZIP: **docs/plan/04 mục 8.1** (chỉ mô t�
 
 ---
 
-*Tài liệu được cập nhật sau mỗi Sprint Review (Day 7, 14, 21, 27). Mọi thay đổi về mốc thời gian phải được BE1 (PM) duyệt và thông báo cho cả nhóm.*
+*Tài liệu được cập nhật sau mỗi Sprint Review (Day 5, 11, 17, 27). Mọi thay đổi về mốc thời gian phải được BE1 (PM) duyệt và thông báo cho cả nhóm.*

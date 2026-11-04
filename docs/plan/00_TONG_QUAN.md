@@ -1,6 +1,6 @@
 # KẾ HOẠCH DỰ ÁN – INSTITUTE OF FINE ARTS (Học viện Mỹ thuật)
 
-> eProject Semester 3 · 4 tuần (28 ngày) · Nhóm 4 người
+> eProject Semester 3 · 4 tuần (28 ngày) · chức năng xong trong ~2,5 tuần · Nhóm 5 người
 > Đây là file tổng quan, nên **đọc file này trước**, rồi mới đến 4 file chi tiết bên dưới.
 >
 > **Cập nhật 30/10/2026:** theo yêu cầu của giảng viên, dự án chuyển từ Java/Spring Boot sang **.NET (ASP.NET Core MVC)**. Toàn bộ kế hoạch, khung project và tài liệu đã được cập nhật theo.
@@ -43,7 +43,7 @@
 
 **Công nghệ optional, 100% miễn phí** (chi tiết ở mục 3 của file 02):
 - **Nên dùng:** EFCore.NamingConventions (giữ tên bảng snake_case), BackgroundService (tự đổi trạng thái cuộc thi), SkiaSharp (ảnh thu nhỏ), Serilog (ghi log), Chart.js (biểu đồ dashboard), SweetAlert2, GitHub Projects, draw.io, xUnit + Moq, Selenium IDE (để QA ghi lại test), SonarQube for IDE.
-- **Làm nếu còn thời gian (tuần 4):** ClosedXML (xuất Excel), QuestPDF (xuất PDF), MailKit + Mailtrap (gửi email thông báo), DataTables.
+- **Làm nếu còn thời gian (Day 19–23, sau khi sửa xong góp ý review):** ClosedXML (xuất Excel), QuestPDF (xuất PDF), MailKit + Mailtrap (gửi email thông báo), DataTables.
 
 > Lý do không dùng ASP.NET Core Identity, AutoMapper, Repository riêng… và phiên bản từng gói: xem mục 1–3 của file 02.
 
@@ -65,7 +65,7 @@ Phần BA (file 01) là **nguồn chuẩn cho quy tắc nghiệp vụ**. Nếu c
 | Ngôn ngữ | **Giao diện, thông báo, dữ liệu mẫu và comment trong code: tiếng Anh** (team nước ngoài chấm). Tiền tệ **USD**. Tên người mẫu tiếng Việt không dấu. Tiếng Việt là tính năng phụ (M19). Tài liệu hiện viết tiếng Việt, dịch sang tiếng Anh khi chốt |
 | Tài khoản | Chỉ Admin tạo tài khoản. Tài khoản đã có dữ liệu thì **khóa** (`active = 0`), không xóa hẳn |
 | Dữ liệu mẫu | Theo **file 04 mục 4**: 15 tài khoản, 7 cuộc thi, 27 bài nộp, 2 triển lãm/8 tranh, 3 khách mua. Bảng seed ở file 02 chỉ là bản tối thiểu |
-| CRS | **Day 3** chốt nội dung yêu cầu (file 03). Tài liệu CRS hoàn chỉnh: nháp Day 4, bản chốt **Day 6** (file 04) |
+| CRS | **Day 2** chốt nội dung yêu cầu (file 03). Tài liệu CRS hoàn chỉnh: nháp Day 3, bản chốt **Day 4** (file 04) |
 
 ---
 
@@ -84,14 +84,15 @@ Chi tiết từng task: `docs/Phan_cong_task.xlsx`. Ai viết tài liệu nào: 
 
 ---
 
-## 5. Lộ trình 4 tuần (tóm tắt)
+## 5. Lộ trình (tóm tắt): chức năng xong Day 17, review Day 18–23, nộp Day 28
 
-| Tuần | Mục tiêu | Mốc |
+| Giai đoạn | Mục tiêu | Mốc |
 |---|---|---|
-| **Tuần 1 (Day 1–7)**<br>Phân tích & nền tảng | Day 1 kickoff → Day 2–3 BA, chốt CRS → Day 2–5 email **DOUBT:** nếu cần → Day 4–5 ERD + tầng dữ liệu → Day 6: tài khoản mẫu, layout, khung Area → Day 7 xong **đăng nhập/phân quyền** + dữ liệu mẫu | **MS1 – Day 7** (tag v0.1) |
-| **Tuần 2 (Day 8–14)**<br>Tài khoản, cuộc thi, nộp bài | BE1: File I/O, cuộc thi & giải thưởng, **nộp bài**; BE2: quản lý nhân viên & học viên, danh sách bài nộp; QA kiểm thử vòng 1. **Day 9 gửi STATUS #1** | **MS3 – Day 14** (v0.2) |
-| **Tuần 3 (Day 15–21)**<br>Chấm bài, giải, triển lãm | BE1: chấm bài → trao giải & công bố (**Day 17 chạy trọn luồng cuộc thi → nộp → chấm → trao giải**) → đề xuất & bán tranh; BE2: triển lãm, khách mua, kết quả học viên, trang chủ, báo cáo, Manager; QA kiểm thử vòng 2 | **MS5 – Day 21: đủ chức năng** (v0.9) |
-| **Tuần 4 (Day 22–28)**<br>Hoàn thiện & nộp | Day 22–23 tùy chọn (M12+) + kiểm thử vòng 3 → **Day 24 code freeze 18:00** (v1.0-rc) → **Day 25 STATUS #2** → Day 26 cài thử máy sạch, ghép tài liệu, backup DB bản cuối → Day 27 Final Check List, đóng gói → **Day 28 nộp PROJECT SUBMISSION (chỉ 1 lần)** | v1.0 |
+| **Sprint 1 (Day 1–5)**<br>Phân tích & nền tảng | Day 1 kickoff → Day 2 BA, chốt CRS → Day 2–3 email **DOUBT:** nếu cần → Day 3 ERD + tầng dữ liệu → Day 4: tài khoản mẫu, layout, khung Area → Day 5 xong **đăng nhập/phân quyền** + dữ liệu mẫu | **MS1 – Day 5** (tag v0.1) |
+| **Sprint 2 (Day 6–11)**<br>Tài khoản, cuộc thi, nộp bài | BE1: File I/O, cuộc thi & giải thưởng, **nộp bài**; BE2: quản lý nhân viên & học viên, danh sách bài nộp; QA kiểm thử vòng 1. **Day 7 gửi STATUS #1** | **MS3 – Day 11** (v0.2) |
+| **Sprint 3 (Day 12–17)**<br>Chấm bài, giải, triển lãm | BE1: chấm bài → trao giải & công bố (**Day 15 chạy trọn luồng cuộc thi → nộp → chấm → trao giải**) → đề xuất & bán tranh; BE2: triển lãm, khách mua, kết quả học viên, trang chủ, báo cáo, Manager; QA kiểm thử vòng 2 | **MS5 – Day 17: đủ chức năng** (v0.9) |
+| **Review & thay đổi (Day 18–23)** | **Day 18 review toàn hệ thống** → ghi danh sách thay đổi → Day 19–23 sửa theo góp ý + kiểm thử vòng 3; tùy chọn (M12+) chỉ khi đã sửa xong | **MS5b – Day 18** |
+| **Phát hành (Day 24–28)** | **Day 24 code freeze 18:00** (v1.0-rc) → **Day 25 STATUS #2** → Day 26 cài thử máy sạch, ghép tài liệu, backup DB bản cuối → Day 27 Final Check List, đóng gói → **Day 28 nộp PROJECT SUBMISSION (chỉ 1 lần)** | v1.0 |
 
 ### Việc cần làm ngay (Day 1)
 1. BE1 tạo repo GitHub (nhánh `main`, `develop`) và bảng GitHub Projects. Mời cả nhóm vào.
@@ -114,7 +115,7 @@ Phân tích BA  →  ERD/CSDL  →  Khung project + Đăng nhập/phân quyền 
   - Không có cuộc thi thì không có bài nộp.
   - Không có bài nộp thì không có gì để chấm.
   - Không có kết quả chấm thì không trao giải hay gửi triển lãm được.
-- **Luồng lõi** (cuộc thi → nộp bài → chấm → trao giải) phải chạy được trước Day 18. Đây là phần giám khảo chú ý nhiều nhất.
+- **Luồng lõi** (cuộc thi → nộp bài → chấm → trao giải) phải chạy được trước Day 14. Đây là phần giám khảo chú ý nhiều nhất.
 - Chỉ làm tính năng optional khi các chức năng bắt buộc đã xong và đã qua test.
 
 ---
@@ -123,7 +124,7 @@ Phân tích BA  →  ERD/CSDL  →  Khung project + Đăng nhập/phân quyền 
 
 - **Mọi khối code phải có comment.** Logic chương trình phải được giải thích trong tài liệu.
 - Upload, sửa và tải ảnh **bắt buộc dùng File I/O**.
-- Gửi **2 email STATUS** (Day 9 và Day 25). Tiêu đề email bắt đầu bằng `STATUS:`, `DOUBT:` hoặc `PROJECT SUBMISSION:`.
+- Gửi **2 email STATUS** (Day 7 và Day 25). Tiêu đề email bắt đầu bằng `STATUS:`, `DOUBT:` hoặc `PROJECT SUBMISSION:`.
 - Bộ tài liệu cần đủ **13 mục** (danh sách ở mục 6 của file 04), kèm hướng dẫn sử dụng và tài khoản đăng nhập.
 - **Backup mỗi ngày**: push code lên GitHub và tạo file `.bak` cho DB.
 - **Chỉ được nộp 1 lần.** Tên file ZIP theo dạng `Batch_Group_ProjectTitle`. Hai người kiểm tra chéo trước khi nộp.
