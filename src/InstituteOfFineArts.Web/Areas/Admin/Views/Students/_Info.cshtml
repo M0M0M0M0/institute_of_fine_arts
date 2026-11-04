@@ -1,0 +1,46 @@
+@model InstituteOfFineArts.Web.ViewModels.Admin.Students.StudentDetailsVm
+@*
+    Minimal version created by BE (BE2-03); FE2 builds the real design in FE2-03.
+    Login, personal and study information plus related data counts of one student (never the password).
+    Shared by /admin/students/{id} and /staff/students/{id}.
+*@
+@{
+    string Show(string? value) => string.IsNullOrWhiteSpace(value) ? "–" : value;
+    string Day(DateOnly? d) => d?.ToString("dd MMM yyyy") ?? "–";
+}
+
+<div class="row">
+    <div class="col-lg-6">
+        <h2 class="h6 text-uppercase text-muted">Login</h2>
+        <dl class="row">
+            <dt class="col-sm-5">Username</dt><dd class="col-sm-7">@Model.Username</dd>
+            <dt class="col-sm-5">Email</dt><dd class="col-sm-7">@Model.Email</dd>
+            <dt class="col-sm-5">Last login</dt><dd class="col-sm-7">@(Model.LastLoginAt?.ToString("dd MMM yyyy HH:mm") ?? "Never")</dd>
+            <dt class="col-sm-5">Created</dt><dd class="col-sm-7">@Model.CreatedAt.ToString("dd MMM yyyy")</dd>
+        </dl>
+        <h2 class="h6 text-uppercase text-muted">Personal</h2>
+        <dl class="row">
+            <dt class="col-sm-5">Gender</dt><dd class="col-sm-7">@(Model.Gender?.ToString() ?? "–")</dd>
+            <dt class="col-sm-5">Date of birth</dt><dd class="col-sm-7">@Day(Model.DateOfBirth)</dd>
+            <dt class="col-sm-5">Phone</dt><dd class="col-sm-7">@Show(Model.Phone)</dd>
+            <dt class="col-sm-5">Address</dt><dd class="col-sm-7">@Show(Model.Address)</dd>
+        </dl>
+    </div>
+    <div class="col-lg-6">
+        <h2 class="h6 text-uppercase text-muted">Study</h2>
+        <dl class="row">
+            <dt class="col-sm-5">Student code</dt><dd class="col-sm-7">@Model.StudentCode</dd>
+            <dt class="col-sm-5">Enrolled</dt><dd class="col-sm-7">@Day(Model.EnrollmentDate)</dd>
+            <dt class="col-sm-5">Course</dt><dd class="col-sm-7">@Show(Model.CourseName)</dd>
+            <dt class="col-sm-5">Class</dt><dd class="col-sm-7">@Show(Model.ClassName)</dd>
+            <dt class="col-sm-5">Study status</dt><dd class="col-sm-7">@Model.EnrollmentStatus</dd>
+            <dt class="col-sm-5">Notes</dt><dd class="col-sm-7">@Show(Model.Notes)</dd>
+        </dl>
+        <h2 class="h6 text-uppercase text-muted">Related data</h2>
+        <dl class="row">
+            <dt class="col-sm-5">Submissions</dt><dd class="col-sm-7">@Model.SubmissionCount</dd>
+            <dt class="col-sm-5">Exhibition entries</dt><dd class="col-sm-7">@Model.ExhibitionEntryCount</dd>
+            <dt class="col-sm-5">Awards won</dt><dd class="col-sm-7">@Model.AwardCount</dd>
+        </dl>
+    </div>
+</div>

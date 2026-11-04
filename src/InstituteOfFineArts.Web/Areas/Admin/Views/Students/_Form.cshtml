@@ -1,0 +1,83 @@
+@model InstituteOfFineArts.Web.ViewModels.Admin.Students.StudentFormVm
+@*
+    Minimal version created by BE (BE2-03); FE2 builds the real design in FE2-03.
+    Personal and study fields shared by the create and edit forms (SCR-15).
+    The username / password fields are in Create.cshtml (they cannot be edited later).
+*@
+
+<h2 class="h6 text-uppercase text-muted mt-3">Personal information</h2>
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label asp-for="FullName" class="form-label"></label>
+        <input asp-for="FullName" class="form-control" />
+        <span asp-validation-for="FullName" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" autocomplete="off" />
+        <span asp-validation-for="Email" class="text-danger"></span>
+    </div>
+    <div class="col-md-3 mb-3">
+        <label asp-for="Gender" class="form-label"></label>
+        <select asp-for="Gender" class="form-select">
+            <option value="">–</option>
+            <option value="M">Male</option>
+            <option value="F">Female</option>
+            <option value="O">Other</option>
+        </select>
+    </div>
+    <div class="col-md-3 mb-3">
+        <label asp-for="DateOfBirth" class="form-label"></label>
+        <input asp-for="DateOfBirth" type="date" class="form-control" />
+        <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="Phone" class="form-label"></label>
+        <input asp-for="Phone" class="form-control" />
+        <span asp-validation-for="Phone" class="text-danger"></span>
+    </div>
+    <div class="col-md-12 mb-3">
+        <label asp-for="Address" class="form-label"></label>
+        <input asp-for="Address" class="form-control" />
+        <span asp-validation-for="Address" class="text-danger"></span>
+    </div>
+</div>
+
+<h2 class="h6 text-uppercase text-muted mt-3">Study</h2>
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <label asp-for="StudentCode" class="form-label"></label>
+        <input asp-for="StudentCode" class="form-control" placeholder="Generated if empty" />
+        <span asp-validation-for="StudentCode" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label asp-for="EnrollmentDate" class="form-label"></label>
+        <input asp-for="EnrollmentDate" type="date" class="form-control" />
+        <span asp-validation-for="EnrollmentDate" class="text-danger"></span>
+    </div>
+    <div class="col-md-4 mb-3">
+        <label asp-for="EnrollmentStatus" class="form-label"></label>
+        <select asp-for="EnrollmentStatus" class="form-select">
+            @foreach (var st in Enum.GetValues<EnrollmentStatus>())
+            {
+                <option value="@st">@st</option>
+            }
+        </select>
+        <span asp-validation-for="EnrollmentStatus" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="CourseName" class="form-label"></label>
+        <input asp-for="CourseName" class="form-control" placeholder="e.g. Painting" />
+        <span asp-validation-for="CourseName" class="text-danger"></span>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label asp-for="ClassName" class="form-label"></label>
+        <input asp-for="ClassName" class="form-control" placeholder="e.g. PT01" />
+        <span asp-validation-for="ClassName" class="text-danger"></span>
+    </div>
+    <div class="col-md-12 mb-3">
+        <label asp-for="Notes" class="form-label"></label>
+        <input asp-for="Notes" class="form-control" />
+        <span asp-validation-for="Notes" class="text-danger"></span>
+    </div>
+</div>
