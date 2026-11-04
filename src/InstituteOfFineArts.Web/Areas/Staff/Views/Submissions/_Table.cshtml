@@ -1,0 +1,40 @@
+@model IReadOnlyList<InstituteOfFineArts.Web.ViewModels.Staff.Submissions.SubmissionListItemVm>
+@*
+    Staff – table of submissions shared by /staff/submissions and /staff/submissions/by-rating.
+    Minimal version created by BE2 (BE2-06); FE2 builds the real design in FE2-04.
+*@
+
+<table class="table table-hover align-middle">
+    <thead>
+        <tr><th></th><th>Title</th><th>Student</th><th>Competition</th><th>Submitted</th><th>Rating</th><th>Award</th></tr>
+    </thead>
+    <tbody>
+        @foreach (var s in Model)
+        {
+            <tr>
+                <td><img src="/files/submissions/@s.Id/thumb" alt="Thumbnail of @s.Title" width="64" height="64" class="rounded" style="object-fit: cover" /></td>
+                <td><a asp-controller="Submissions" asp-action="Details" asp-route-id="@s.Id">@s.Title</a></td>
+                <td><a asp-controller="Students" asp-action="Details" asp-route-id="@s.StudentId">@s.StudentName</a> <span class="text-muted small">@s.StudentCode</span></td>
+                <td><a asp-controller="Competitions" asp-action="Details" asp-route-id="@s.CompetitionId">@s.CompetitionTitle</a></td>
+                <td>
+                    @s.SubmittedAt.ToString("dd MMM yyyy HH:mm")
+                    @if (s.IsLate)
+                    {
+                        <span class="badge bg-danger">Late entry</span>
+                    }
+                </td>
+                <td>
+                    @if (s.Rating is { } rating)
+                    {
+                        <span class="badge bg-primary">@rating</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Not evaluated</span>
+                    }
+                </td>
+                <td>@(s.AwardName ?? "–")</td>
+            </tr>
+        }
+    </tbody>
+</table>

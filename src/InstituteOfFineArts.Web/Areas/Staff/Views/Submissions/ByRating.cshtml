@@ -1,0 +1,69 @@
+@model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Staff.Submissions.SubmissionListItemVm>
+@*
+    Staff – search entries by rating (/staff/submissions/by-rating?rating=BEST&competitionId=, SCR-26; F-M07-06):
+    entries of CLOSED or GRADED competitions, used to pick paintings for exhibitions.
+    Minimal version created by BE2 (BE2-07); FE2 builds the real design in FE2-05.
+*@
+@using InstituteOfFineArts.Web.ViewModels.Staff.Submissions
+@{
+    ViewData["Title"] = "Search by rating";
+    var search = (RatingSearchVm)ViewBag.Search;
+    var competitions = (IReadOnlyList<CompetitionOptionVm>)ViewBag.Competitions;
+    // Keeps the filters when moving between pages
+    object PageRoute(int page) => new { search.Rating, search.CompetitionId, page };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Search by rating</h1>
+    <a asp-action="Index" class="btn btn-outline-secondary">All submissions</a>
+</div>
+
+<p class="text-muted">Entries of closed or graded competitions with the chosen rating, e.g. to pick paintings for an exhibition.</p>
+
+<form method="get" asp-action="ByRating" class="row g-2 align-items-end mb-3">
+    <div class="col-md-3">
+        <label class="form-label" for="Rating">Rating</label>
+        <select class="form-select" id="Rating" name="Rating">
+            @foreach (var r in Enum.GetValues<Rating>())
+            {
+                <option value="@r" selected="@(search.Rating == r)">@r</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-5">
+        <label class="form-label" for="CompetitionId">Competition</label>
+        <select class="form-select" id="CompetitionId" name="CompetitionId">
+            <option value="">All closed / graded competitions</option>
+            @foreach (var c in competitions)
+            {
+                <option value="@c.Id" selected="@(search.CompetitionId == c.Id)">@c.Code – @c.Title</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    </div>
+</form>
+
+@if (Model.TotalCount == 0)
+{
+    <p class="text-muted">No entries with rating @search.Rating found.</p>
+}
+else
+{
+    <partial name="_Table" model="Model.Items" />
+
+    <nav class="d-flex justify-content-between align-items-center">
+        <span class="text-muted small">@Model.TotalCount entry(ies) · page @Model.Page of @Model.TotalPages</span>
+        <div>
+            @if (Model.HasPrevious)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("ByRating", PageRoute(Model.Page - 1))">Previous</a>
+            }
+            @if (Model.HasNext)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("ByRating", PageRoute(Model.Page + 1))">Next</a>
+            }
+        </div>
+    </nav>
+}
