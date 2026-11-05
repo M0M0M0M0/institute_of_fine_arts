@@ -1,0 +1,55 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.Customers.CustomerDetailsVm
+@*
+    Manager – customer details, read only (/manager/customers/{id}): contact information and the artworks bought,
+    each linked to its exhibition entry. No edit / delete.
+    Minimal version created by BE2-13; FE2 builds the real design in FE2-10.
+*@
+@{
+    ViewData["Title"] = Model.FullName;
+}
+
+<partial name="_Alerts" />
+
+<h1 class="h3 mb-3">@Model.FullName</h1>
+
+<dl class="row">
+    <dt class="col-sm-3">Phone</dt>
+    <dd class="col-sm-9">@(Model.Phone ?? "–")</dd>
+    <dt class="col-sm-3">Email</dt>
+    <dd class="col-sm-9">@(Model.Email ?? "–")</dd>
+    <dt class="col-sm-3">Address</dt>
+    <dd class="col-sm-9">@(Model.Address ?? "–")</dd>
+    <dt class="col-sm-3">Notes</dt>
+    <dd class="col-sm-9" style="white-space: pre-line">@(Model.Notes ?? "–")</dd>
+    <dt class="col-sm-3">Recorded</dt>
+    <dd class="col-sm-9">@Model.CreatedAt.ToString("dd MMM yyyy HH:mm")</dd>
+</dl>
+
+@* Artworks bought (sold exhibition entries) *@
+<h2 class="h5">Purchases</h2>
+@if (Model.Purchases.Count == 0)
+{
+    <p class="text-muted">This customer has not bought any artwork yet.</p>
+}
+else
+{
+    <table class="table table-sm">
+        <thead>
+            <tr><th>Artwork</th><th>Exhibition</th><th class="text-end">Sold price</th><th>Sold date</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model.Purchases)
+            {
+                <tr>
+                    <td><a asp-controller="ExhibitionEntries" asp-action="Details" asp-route-id="@p.EntryId">@p.ArtworkTitle</a></td>
+                    <td><a asp-controller="Exhibitions" asp-action="Details" asp-route-id="@p.ExhibitionId">@p.ExhibitionName</a></td>
+                    <td class="text-end">@(p.SoldPrice?.ToString("$#,##0.00") ?? "–")</td>
+                    <td>@(p.SoldDate?.ToString("dd MMM yyyy") ?? "–")</td>
+                </tr>
+            }
+            <tr class="fw-semibold"><td colspan="2">Total</td><td class="text-end">@Model.PurchaseTotal.ToString("$#,##0.00")</td><td></td></tr>
+        </tbody>
+    </table>
+}
+
+<a asp-action="Index" class="btn btn-link px-0">Back to customers</a>
