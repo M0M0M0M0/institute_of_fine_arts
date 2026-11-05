@@ -120,11 +120,25 @@ public class CompetitionService : ICompetitionService
         var c = await _db.Competitions
             .AsNoTracking()
             .Include(x => x.CreatedByStaff).ThenInclude(s => s.Account)
+            .Include(x => x.PublishedByStaff).ThenInclude(s => s!.Account)
             .Include(x => x.Awards).ThenInclude(a => a.IssuedAwards)
             .FirstOrDefaultAsync(x => x.Id == id)
             ?? throw new NotFoundException($"Competition {id} was not found.");
         var submissionCount = await _db.Submissions.CountAsync(s => s.CompetitionId == id);
+        var evaluatedCount = await _db.Submissions.CountAsync(s => s.CompetitionId == id && s.Evaluation != null);
         var status = CompetitionStatusResolver.Resolve(c);
+
+        // Winners of each award (task BE1-11): student and artwork, grouped by award below
+        var winners = await _db.AwardsIssued.AsNoTracking()
+            .Where(i => i.CompetitionAward.CompetitionId == id)
+            .OrderBy(i => i.IssuedDate).ThenBy(i => i.Id)
+            .Select(i => new
+            {
+                i.CompetitionAwardId,
+                Vm = new AwardWinnerVm(i.Id, i.SubmissionId, i.Submission.Title, i.Submission.Student.Account.FullName,
+                    i.Submission.Student.StudentCode, i.IssuedDate),
+            })
+            .ToListAsync();
 
         var vm = new CompetitionDetailsVm
         {
@@ -140,14 +154,27 @@ public class CompetitionService : ICompetitionService
             CreatedByName = c.CreatedByStaff?.Account?.FullName ?? string.Empty,
             CreatedAt = c.CreatedAt,
             PublishedAt = c.PublishedAt,
+            PublishedByName = c.PublishedByStaff?.Account?.FullName,
+            ResultRemarks = c.ResultRemarks,
             SubmissionCount = submissionCount,
+            EvaluatedCount = evaluatedCount,
             Awards = c.Awards.OrderBy(a => a.Rank).ThenBy(a => a.AwardName)
-                .Select(a => new AwardRowVm(a.Id, a.AwardName, a.Rank, a.PrizeValue, a.Quantity, a.PrizeDescription, a.IssuedAwards.Count))
+                .Select(a => new AwardRowVm(a.Id, a.AwardName, a.Rank, a.PrizeValue, a.Quantity, a.PrizeDescription, a.IssuedAwards.Count)
+                {
+                    Winners = winners.Where(w => w.CompetitionAwardId == a.Id).Select(w => w.Vm).ToList(),
+                })
                 .ToList(),
             CanEdit = status != CompetitionStatus.GRADED,
             CanManageAwards = status != CompetitionStatus.GRADED,
             CanDelete = submissionCount == 0,
+            // Task BE1-11: awards are issued when CLOSED or GRADED (BR-32); results are published from CLOSED (BR-08)
+            CanPublish = status == CompetitionStatus.CLOSED,
+            PublishBlockedReason = submissionCount > evaluatedCount
+                ? CompetitionResultService.NotGradedMessage(submissionCount - evaluatedCount)
+                : null,
         };
+        vm.CanIssueAwards = status is CompetitionStatus.CLOSED or CompetitionStatus.GRADED
+            && vm.Awards.Any(a => a.IssuedCount < a.Quantity);
 
         // BR-09: awards must exist before the competition opens
         if (vm.Awards.Count == 0 && status is CompetitionStatus.UPCOMING or CompetitionStatus.ONGOING)
