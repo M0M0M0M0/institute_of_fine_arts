@@ -1,0 +1,23 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.Customers.CustomerFormVm
+@*
+    Staff – new customer (/staff/customers/new, SCR-32).
+    Minimal version created by BE2-10; FE2 builds the real design in FE2-07.
+*@
+@{
+    ViewData["Title"] = "New customer";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="h3 mb-3">New customer</h1>
+        <form asp-action="Create" method="post" novalidate>
+            <partial name="_Form" model="Model" />
+            <button type="submit" class="btn btn-primary">Create customer</button>
+            <a asp-action="Index" class="btn btn-link">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

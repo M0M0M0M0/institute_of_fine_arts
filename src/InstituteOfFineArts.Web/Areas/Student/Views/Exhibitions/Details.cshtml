@@ -1,0 +1,67 @@
+@model InstituteOfFineArts.Web.ViewModels.Student.Exhibitions.StudentExhibitionDetailsVm
+@*
+    Student – exhibition details (/student/exhibitions/{id}, SCR-48, F-M09-03): information, status, own artworks.
+    While UPCOMING the "Propose an artwork" link opens /student/exhibition-entries/new?exhibitionId={id} (BE1-12).
+    Minimal version created by BE2-09; FE2 builds the real design in FE2-07.
+*@
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<partial name="_Alerts" />
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="h3 mb-1">@Model.Name</h1>
+        <div class="text-muted">@Model.City · <partial name="~/Views/Shared/Exhibitions/_ExhibitionStatus.cshtml" model="Model.Status" /></div>
+    </div>
+    @* BR-42: artworks can only be sent to an exhibition that has not started *@
+    @if (Model.CanPropose)
+    {
+        <a href="/student/exhibition-entries/new?exhibitionId=@Model.Id" class="btn btn-primary">Propose an artwork</a>
+    }
+</div>
+
+<dl class="row">
+    <dt class="col-sm-3">Venue</dt>
+    <dd class="col-sm-9">@Model.Venue</dd>
+    <dt class="col-sm-3">City / province</dt>
+    <dd class="col-sm-9">@Model.City</dd>
+    <dt class="col-sm-3">Organizer</dt>
+    <dd class="col-sm-9">@(Model.Organizer ?? "–")</dd>
+    <dt class="col-sm-3">Dates</dt>
+    <dd class="col-sm-9">@Model.StartDate.ToString("dd MMM yyyy") – @Model.EndDate.ToString("dd MMM yyyy")</dd>
+</dl>
+
+@* white-space: pre-line keeps the line breaks typed by staff; Razor still encodes the text (no HTML/XSS) *@
+<h2 class="h5">Description</h2>
+<p style="white-space: pre-line">@(Model.Description ?? "–")</p>
+
+@* Only the student's own artworks in this exhibition *@
+<h2 class="h5">My artworks in this exhibition</h2>
+@if (Model.MyEntries.Count == 0)
+{
+    <p class="text-muted">You have not sent any artwork to this exhibition.</p>
+}
+else
+{
+    <table class="table table-sm">
+        <thead>
+            <tr><th>Artwork</th><th class="text-end">Asking price</th><th>Status</th><th class="text-end">Sold price</th><th>Paid to you</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var x in Model.MyEntries)
+            {
+                <tr>
+                    <td>@x.ArtworkTitle</td>
+                    <td class="text-end">@x.AskingPrice.ToString("$#,##0.00")</td>
+                    <td>@x.Status</td>
+                    <td class="text-end">@(x.SoldPrice?.ToString("$#,##0.00") ?? "–")</td>
+                    <td>@(x.Status == EntryStatus.SOLD ? (x.PaidToStudent ? "Yes" : "Not yet") : "–")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<a asp-action="Index" class="btn btn-link px-0">Back to exhibitions</a>

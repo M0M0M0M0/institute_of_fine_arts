@@ -1,0 +1,65 @@
+@model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Staff.Customers.CustomerListItemVm>
+@*
+    Staff – customer list & search (/staff/customers, SCR-32).
+    Minimal version created by BE2-10; FE2 builds the real design in FE2-07.
+*@
+@{
+    ViewData["Title"] = "Customers";
+    var search = (InstituteOfFineArts.Web.ViewModels.Staff.Customers.CustomerSearchVm)ViewBag.Search;
+    // Keeps the filter when moving between pages
+    object PageRoute(int page) => new { search.Keyword, page };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Customers</h1>
+    <a asp-action="Create" class="btn btn-primary">New customer</a>
+</div>
+
+<partial name="_Alerts" />
+
+<form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
+    <div class="col-md-6">
+        <label class="form-label" for="Keyword">Name, phone or email</label>
+        <input class="form-control" id="Keyword" name="Keyword" value="@search.Keyword" />
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    </div>
+</form>
+@if (Model.TotalCount == 0)
+{
+    <p class="text-muted">No customers found.</p>
+}
+else
+{
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr><th>Full name</th><th>Phone</th><th>Email</th><th class="text-end">Purchases</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var c in Model.Items)
+            {
+                <tr>
+                    <td><a asp-action="Details" asp-route-id="@c.Id">@c.FullName</a></td>
+                    <td>@(c.Phone ?? "–")</td>
+                    <td>@(c.Email ?? "–")</td>
+                    <td class="text-end">@c.PurchaseCount</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <nav class="d-flex justify-content-between align-items-center">
+        <span class="text-muted small">@Model.TotalCount customer(s) · page @Model.Page of @Model.TotalPages</span>
+        <div>
+            @if (Model.HasPrevious)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
+            }
+            @if (Model.HasNext)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
+            }
+        </div>
+    </nav>
+}

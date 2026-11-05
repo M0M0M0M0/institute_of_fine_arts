@@ -1,0 +1,67 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.Customers.CustomerDetailsVm
+@*
+    Staff – customer details (/staff/customers/{id}, SCR-32): contact information and the artworks bought (read only).
+    Minimal version created by BE2-10; FE2 builds the real design in FE2-07.
+*@
+@{
+    ViewData["Title"] = Model.FullName;
+}
+
+<partial name="_Alerts" />
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <h1 class="h3 mb-0">@Model.FullName</h1>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Edit</a>
+        @if (Model.CanDelete)
+        {
+            @* POST with anti-forgery token; the browser asks for confirmation first *@
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Delete this customer?');">
+                <button type="submit" class="btn btn-outline-danger">Delete</button>
+            </form>
+        }
+    </div>
+</div>
+
+<dl class="row">
+    <dt class="col-sm-3">Phone</dt>
+    <dd class="col-sm-9">@(Model.Phone ?? "–")</dd>
+    <dt class="col-sm-3">Email</dt>
+    <dd class="col-sm-9">@(Model.Email ?? "–")</dd>
+    <dt class="col-sm-3">Address</dt>
+    <dd class="col-sm-9">@(Model.Address ?? "–")</dd>
+    <dt class="col-sm-3">Notes</dt>
+    <dd class="col-sm-9" style="white-space: pre-line">@(Model.Notes ?? "–")</dd>
+    <dt class="col-sm-3">Recorded</dt>
+    <dd class="col-sm-9">@Model.CreatedAt.ToString("dd MMM yyyy HH:mm")</dd>
+</dl>
+
+@* Artworks bought (sold exhibition entries), read only *@
+<h2 class="h5">Purchases</h2>
+@if (Model.Purchases.Count == 0)
+{
+    <p class="text-muted">This customer has not bought any artwork yet.</p>
+}
+else
+{
+    <table class="table table-sm">
+        <thead>
+            <tr><th>Artwork</th><th>Exhibition</th><th class="text-end">Sold price</th><th>Sold date</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var p in Model.Purchases)
+            {
+                <tr>
+                    <td>@p.ArtworkTitle</td>
+                    <td><a asp-controller="Exhibitions" asp-action="Details" asp-route-id="@p.ExhibitionId">@p.ExhibitionName</a></td>
+                    <td class="text-end">@(p.SoldPrice?.ToString("$#,##0.00") ?? "–")</td>
+                    <td>@(p.SoldDate?.ToString("dd MMM yyyy") ?? "–")</td>
+                </tr>
+            }
+            <tr class="fw-semibold"><td colspan="2">Total</td><td class="text-end">@Model.PurchaseTotal.ToString("$#,##0.00")</td><td></td></tr>
+        </tbody>
+    </table>
+    <p class="text-muted small">A customer who has bought artworks cannot be deleted.</p>
+}
+
+<a asp-action="Index" class="btn btn-link px-0">Back to customers</a>
