@@ -1,0 +1,51 @@
+@model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Public.GalleryItemVm>
+@*
+    Public gallery (/gallery, SCR-06, F-M02-07): thumbnails of the awarded paintings of GRADED competitions, paged.
+    Open to guests and every role; only image, title, student, award and competition (no texts, no evaluations).
+    Minimal version created by BE2 (BE2-11); FE2 builds the real design in FE2-08.
+*@
+@{
+    ViewData["Title"] = "Gallery";
+}
+
+<h1 class="h3 mb-3">Gallery of awarded paintings</h1>
+
+@if (Model.TotalCount == 0)
+{
+    <p class="text-muted">No awarded paintings yet.</p>
+}
+else
+{
+    <div class="row g-3 mb-3">
+        @foreach (var g in Model.Items)
+        {
+            <div class="col-6 col-md-4 col-lg-3">
+                <div class="card h-100">
+                    @if (g.HasThumbnail)
+                    {
+                        <img src="/files/submissions/@g.SubmissionId/thumb" alt="@g.ArtworkTitle" class="card-img-top" />
+                    }
+                    <div class="card-body p-2">
+                        <div class="fw-semibold">“@g.ArtworkTitle”</div>
+                        <div class="small">@g.StudentName · <span class="badge bg-success">@g.AwardName</span></div>
+                        <div class="small"><a href="/competitions/@g.CompetitionId">@g.CompetitionTitle</a></div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <nav class="d-flex justify-content-between align-items-center">
+        <span class="text-muted small">@Model.TotalCount painting@(Model.TotalCount == 1 ? "" : "s") · page @Model.Page of @Model.TotalPages</span>
+        <div>
+            @if (Model.HasPrevious)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="/gallery?page=@(Model.Page - 1)">Previous</a>
+            }
+            @if (Model.HasNext)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="/gallery?page=@(Model.Page + 1)">Next</a>
+            }
+        </div>
+    </nav>
+}

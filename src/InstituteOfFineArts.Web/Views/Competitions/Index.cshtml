@@ -1,0 +1,77 @@
+@model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Public.PublicCompetitionListItemVm>
+@*
+    Public competition list (/competitions, SCR-02, F-M02-05, TC-M02-05): search by title / code and status
+    (calculated for today), summary only, paged. Open to guests and every role.
+    Minimal version created by BE2 (BE2-11); FE2 builds the real design in FE2-08.
+*@
+@using InstituteOfFineArts.Web.Models.Enums
+@{
+    ViewData["Title"] = "Competitions";
+    var search = (InstituteOfFineArts.Web.ViewModels.Public.PublicCompetitionSearchVm)ViewBag.Search;
+    // Keeps the filters when moving between pages
+    object PageRoute(int page) => new { search.Keyword, search.Status, page };
+}
+
+<h1 class="h3 mb-3">Competitions</h1>
+
+<partial name="_Alerts" />
+
+<form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
+    <div class="col-md-5">
+        <label class="form-label" for="Keyword">Title</label>
+        <input class="form-control" id="Keyword" name="Keyword" value="@search.Keyword" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label" for="Status">Status</label>
+        <select class="form-select" id="Status" name="Status">
+            <option value="">All</option>
+            @foreach (var s in Enum.GetValues<CompetitionStatus>())
+            {
+                <option value="@s" selected="@(search.Status == s)">@s</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    </div>
+</form>
+
+@if (Model.TotalCount == 0)
+{
+    <p class="text-muted">No results found.</p>
+}
+else
+{
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr><th>Code</th><th>Title</th><th>Dates</th><th>Status</th><th class="text-end">Awards</th><th class="text-end">Top prize</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var c in Model.Items)
+            {
+                <tr>
+                    <td>@c.Code</td>
+                    <td><a asp-action="Details" asp-route-id="@c.Id">@c.Title</a></td>
+                    <td>@c.StartDate.ToString("dd MMM yyyy") – @c.EndDate.ToString("dd MMM yyyy")</td>
+                    <td><partial name="_Status" model="c.Status" /></td>
+                    <td class="text-end">@c.AwardCount</td>
+                    <td class="text-end">@c.TopPrize.ToString("$#,##0.00")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <nav class="d-flex justify-content-between align-items-center">
+        <span class="text-muted small">@Model.TotalCount competition@(Model.TotalCount == 1 ? "" : "s") · page @Model.Page of @Model.TotalPages</span>
+        <div>
+            @if (Model.HasPrevious)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
+            }
+            @if (Model.HasNext)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
+            }
+        </div>
+    </nav>
+}
