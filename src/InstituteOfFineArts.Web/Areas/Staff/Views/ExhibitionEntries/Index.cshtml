@@ -1,0 +1,129 @@
+@model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Staff.ExhibitionEntries.EntryListItemVm>
+@*
+    Staff – exhibition entries (/staff/exhibition-entries, SCR-30; F-M09-05, F-M09-09): filters exhibition / status /
+    paid to student / student, paging; "Add a painting" for an upcoming exhibition (direct create, UC-07 3b).
+    Minimal version created by BE1 (BE1-12, BE1-13); FE1 builds the real design in FE1-08 / FE1-09.
+*@
+@using InstituteOfFineArts.Web.ViewModels.Staff.ExhibitionEntries
+@{
+    ViewData["Title"] = "Exhibition entries";
+    var search = (EntrySearchVm)ViewBag.Search;
+    var exhibitions = (List<EntryExhibitionOptionVm>)ViewBag.Exhibitions;
+    // Direct create only for the chosen exhibition when it has not started yet (BR-42)
+    var chosen = exhibitions.FirstOrDefault(x => x.Id == search.ExhibitionId);
+    var canAdd = chosen != null && chosen.StartDate > InstituteOfFineArts.Web.Helpers.DateTimeHelper.Today;
+    // Keeps the filters when moving between pages
+    object PageRoute(int page) => new { search.ExhibitionId, search.Status, search.Paid, search.Student, page };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Exhibition entries</h1>
+    @if (canAdd)
+    {
+        <a asp-action="Create" asp-route-exhibitionId="@chosen!.Id" class="btn btn-primary">Add a painting</a>
+    }
+</div>
+
+<partial name="_Alerts" />
+
+<form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
+    <div class="col-md-4">
+        <label class="form-label" for="ExhibitionId">Exhibition</label>
+        <select class="form-select" id="ExhibitionId" name="ExhibitionId">
+            <option value="">All exhibitions</option>
+            @foreach (var x in exhibitions)
+            {
+                <option value="@x.Id" selected="@(search.ExhibitionId == x.Id)">@x.Name (@x.StartDate.ToString("dd MMM yyyy"))</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="Status">Status</label>
+        <select class="form-select" id="Status" name="Status">
+            <option value="">All</option>
+            @foreach (var s in Enum.GetValues<EntryStatus>())
+            {
+                <option value="@s" selected="@(search.Status == s)">@s</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="Paid">Paid to student</label>
+        <select class="form-select" id="Paid" name="Paid">
+            <option value="">All</option>
+            <option value="true" selected="@(search.Paid == true)">Paid</option>
+            <option value="false" selected="@(search.Paid == false)">Sold, not paid</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label" for="Student">Student name or code</label>
+        <input class="form-control" id="Student" name="Student" value="@search.Student" />
+    </div>
+    <div class="col-md-1">
+        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    </div>
+</form>
+
+@if (Model.TotalCount == 0)
+{
+    <p class="text-muted">No exhibition entries found.</p>
+}
+else
+{
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th></th><th>Painting</th><th>Student</th><th>Exhibition</th><th class="text-end">Asking price</th>
+                <th>Status</th><th class="text-end">Sold price</th><th>Paid to student</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var e in Model.Items)
+            {
+                <tr>
+                    <td style="width:90px">
+                        @if (e.HasThumbnail)
+                        {
+                            <img src="/files/submissions/@e.SubmissionId/thumb" alt="@e.Title" class="img-thumbnail" style="max-height:60px" />
+                        }
+                    </td>
+                    <td><a asp-action="Details" asp-route-id="@e.Id">@e.Title</a></td>
+                    <td>@e.StudentName <span class="small text-muted">(@e.StudentCode)</span></td>
+                    <td>@e.ExhibitionName</td>
+                    <td class="text-end">@e.AskingPrice.ToString("$#,##0.00")</td>
+                    <td><partial name="_Status" model="e.Status" /></td>
+                    <td class="text-end">@(e.SoldPrice?.ToString("$#,##0.00") ?? "–")</td>
+                    <td>
+                        @if (e.PaidToStudent)
+                        {
+                            <span class="badge bg-success">Paid</span>
+                            <span class="small text-muted">@e.PaidDate?.ToString("dd MMM yyyy")</span>
+                        }
+                        else if (e.Status == EntryStatus.SOLD)
+                        {
+                            <span class="badge bg-warning text-dark">Not paid to student</span>
+                        }
+                        else
+                        {
+                            <span class="text-muted">–</span>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <nav class="d-flex justify-content-between align-items-center">
+        <span class="text-muted small">@Model.TotalCount entr@(Model.TotalCount == 1 ? "y" : "ies") · page @Model.Page of @Model.TotalPages</span>
+        <div>
+            @if (Model.HasPrevious)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
+            }
+            @if (Model.HasNext)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
+            }
+        </div>
+    </nav>
+}

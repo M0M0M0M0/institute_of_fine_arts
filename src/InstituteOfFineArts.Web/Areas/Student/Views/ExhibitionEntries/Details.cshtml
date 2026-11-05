@@ -1,0 +1,100 @@
+@model InstituteOfFineArts.Web.ViewModels.Student.ExhibitionEntries.MyEntryDetailsVm
+@*
+    Student – details of an own exhibition entry (/student/exhibition-entries/{id}, SCR-49, F-M09-10, US-13 AC5):
+    painting, exhibition, asking price, status, reject reason, sale and payment; change price / withdraw while PENDING (BR-46).
+    Minimal version created by BE1 (BE1-12); FE1 builds the real design in FE1-08.
+*@
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<partial name="_Alerts" />
+
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="h3 mb-1">@Model.Title</h1>
+        <div class="text-muted">@Model.ExhibitionName · <partial name="_Status" model="Model.Status" /></div>
+    </div>
+    @* Change price / withdraw only while PENDING; the server checks this again (BR-46) *@
+    @if (Model.CanChange)
+    {
+        <div class="d-flex gap-2">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Change price</a>
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Withdraw this proposal?');">
+                <button type="submit" class="btn btn-outline-danger">Withdraw</button>
+            </form>
+        </div>
+    }
+</div>
+
+<div class="row">
+    <div class="col-lg-5 mb-3">
+        <img src="/files/submissions/@Model.SubmissionId/thumb" alt="@Model.Title" class="img-fluid rounded border" />
+        <div class="small mt-1">
+            <a href="/student/submissions/@Model.SubmissionId">@Model.CompetitionTitle</a>
+            @if (Model.Rating is { } rating)
+            {
+                <span>· @rating</span>
+            }
+        </div>
+    </div>
+    <div class="col-lg-7">
+        <h2 class="h5">Exhibition</h2>
+        <dl class="row">
+            <dt class="col-sm-4">Name</dt>
+            <dd class="col-sm-8">@Model.ExhibitionName</dd>
+            <dt class="col-sm-4">Venue</dt>
+            <dd class="col-sm-8">@Model.Venue, @Model.City</dd>
+            <dt class="col-sm-4">Dates</dt>
+            <dd class="col-sm-8">@Model.StartDate.ToString("dd MMM yyyy") – @Model.EndDate.ToString("dd MMM yyyy") (@Model.ExhibitionStatus)</dd>
+        </dl>
+
+        <h2 class="h5">Entry</h2>
+        <dl class="row">
+            <dt class="col-sm-4">Asking price</dt>
+            <dd class="col-sm-8">@Model.AskingPrice.ToString("$#,##0.00")</dd>
+            <dt class="col-sm-4">Status</dt>
+            <dd class="col-sm-8"><partial name="_Status" model="Model.Status" /></dd>
+            <dt class="col-sm-4">Sent</dt>
+            <dd class="col-sm-8">
+                @Model.CreatedAt.ToString("dd MMM yyyy HH:mm")
+                @if (Model.CreatedByStaff)
+                {
+                    <span class="small text-muted">(sent by staff with the price you quoted)</span>
+                }
+            </dd>
+            @if (Model.RejectReason != null)
+            {
+                <dt class="col-sm-4">Reason for rejection</dt>
+                <dd class="col-sm-8" style="white-space: pre-line">@Model.RejectReason</dd>
+            }
+        </dl>
+
+        <h2 class="h5">Sale and payment</h2>
+        <dl class="row">
+            <dt class="col-sm-4">Sold?</dt>
+            <dd class="col-sm-8">@(Model.Status == EntryStatus.SOLD ? "Sold" : "Not sold")</dd>
+            @if (Model.Status == EntryStatus.SOLD)
+            {
+                <dt class="col-sm-4">Customer paid</dt>
+                <dd class="col-sm-8">@Model.SoldPrice?.ToString("$#,##0.00")</dd>
+                <dt class="col-sm-4">Sale date</dt>
+                <dd class="col-sm-8">@Model.SoldDate?.ToString("dd MMM yyyy")</dd>
+                <dt class="col-sm-4">Paid to me</dt>
+                <dd class="col-sm-8">
+                    @if (Model.PaidToStudent)
+                    {
+                        <span class="badge bg-success">Paid</span>
+                        <span>@Model.PaidAmount?.ToString("$#,##0.00") on @Model.PaidDate?.ToString("dd MMM yyyy")</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark">Not paid yet</span>
+                    }
+                </dd>
+            }
+        </dl>
+    </div>
+</div>
+
+<a asp-action="Index" class="btn btn-link px-0">Back to my exhibition entries</a>
