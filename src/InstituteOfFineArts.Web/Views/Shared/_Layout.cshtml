@@ -19,13 +19,58 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
+                    @* Temporary menu per role, added by BE when integrating week 3; FE replaces it with the real navigation (FE2-01) *@
+                    @{
+                        var menu = new List<(string Text, string Url)>();
+                        if (User.IsInRole(InstituteOfFineArts.Web.Helpers.RoleNames.Admin))
+                        {
+                            menu.AddRange([("Dashboard", "/admin"), ("Staff", "/admin/staff"), ("Students", "/admin/students")]);
+                        }
+                        else if (User.IsInRole(InstituteOfFineArts.Web.Helpers.RoleNames.Manager))
+                        {
+                            menu.AddRange([("Dashboard", "/manager"), ("Exhibitions", "/manager/exhibitions")]);
+                        }
+                        else if (User.IsInRole(InstituteOfFineArts.Web.Helpers.RoleNames.Staff))
+                        {
+                            menu.AddRange([("Dashboard", "/staff"), ("Competitions", "/staff/competitions"), ("Submissions", "/staff/submissions"),
+                                ("Awards", "/staff/awards"), ("Students", "/staff/students"), ("Exhibitions", "/staff/exhibitions"),
+                                ("Artworks", "/staff/exhibition-entries"), ("Customers", "/staff/customers")]);
+                        }
+                        else if (User.IsInRole(InstituteOfFineArts.Web.Helpers.RoleNames.Student))
+                        {
+                            menu.AddRange([("Dashboard", "/student"), ("Competitions", "/student/competitions"), ("My entries", "/student/submissions"),
+                                ("My results", "/student/results"), ("Best works", "/student/best"), ("Awards", "/student/awards"),
+                                ("Exhibitions", "/student/exhibitions"), ("My artworks on show", "/student/exhibition-entries")]);
+                        }
+                        else
+                        {
+                            menu.AddRange([("Home", "/"), ("Competitions", "/competitions"), ("Gallery", "/gallery"), ("About", "/about")]);
+                        }
+                    }
+                    <ul class="navbar-nav flex-grow-1 flex-wrap">
+                        @foreach (var item in menu)
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark" href="@item.Url">@item.Text</a>
+                            </li>
+                        }
+                    </ul>
+                    <ul class="navbar-nav">
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <li class="nav-item"><a class="nav-link text-dark" href="/profile">Profile</a></li>
+                            <li class="nav-item">
+                                @* Log out with POST plus the anti-forgery token *@
+                                <form method="post" action="/logout" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-link nav-link text-dark">Log out</button>
+                                </form>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item"><a class="nav-link text-dark" href="/login">Log in</a></li>
+                        }
                     </ul>
                 </div>
             </div>

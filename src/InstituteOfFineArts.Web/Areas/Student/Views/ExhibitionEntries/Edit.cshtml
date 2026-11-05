@@ -1,0 +1,33 @@
+@model InstituteOfFineArts.Web.ViewModels.Student.ExhibitionEntries.EditPriceFormVm
+@*
+    Student – change the asking price of a pending proposal (/student/exhibition-entries/{id}/edit, SCR-49, BR-41, BR-46).
+    Minimal version created by BE1 (BE1-12); FE1 builds the real design in FE1-08.
+*@
+@{
+    ViewData["Title"] = "Change asking price";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <h1 class="h3 mb-1">Change asking price</h1>
+        <p class="text-muted">@Model.Title · @Model.ExhibitionName</p>
+
+        <form asp-action="Edit" asp-route-id="@Model.Id" method="post" novalidate>
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+            <div class="mb-3">
+                <label asp-for="AskingPrice" class="form-label"></label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input asp-for="AskingPrice" type="number" min="0.01" step="0.01" class="form-control" />
+                </div>
+                <span asp-validation-for="AskingPrice" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

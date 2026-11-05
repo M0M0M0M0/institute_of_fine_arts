@@ -88,6 +88,11 @@ else if (Model.CompetitionStatus == CompetitionStatus.GRADED)
 {
     <p class="text-muted">Results are published, but this entry has no evaluation.</p>
 }
+else if (Model.CompetitionStatus == CompetitionStatus.CLOSED)
+{
+    @* Closed, waiting for staff to publish (US-10 AC2): same text as the My Results page *@
+    <p class="text-muted">@InstituteOfFineArts.Web.Services.Implementations.StudentResultService.AwaitingResultsMessage</p>
+}
 else
 {
     <p class="text-muted">Results have not been published yet.</p>

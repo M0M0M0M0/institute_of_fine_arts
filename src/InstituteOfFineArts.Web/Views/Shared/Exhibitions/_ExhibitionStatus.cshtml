@@ -1,0 +1,14 @@
+@model InstituteOfFineArts.Web.Models.Enums.ExhibitionStatus
+@*
+    Coloured badge for an exhibition status (UPCOMING / ONGOING / FINISHED), shared by the Staff, Manager and Student pages.
+    Minimal version created by BE2-09; FE2 restyles it in FE2-07.
+*@
+@{
+    var (css, text) = Model switch
+    {
+        InstituteOfFineArts.Web.Models.Enums.ExhibitionStatus.UPCOMING => ("bg-info text-dark", "Upcoming"),
+        InstituteOfFineArts.Web.Models.Enums.ExhibitionStatus.ONGOING => ("bg-success", "Ongoing"),
+        _ => ("bg-secondary", "Finished"),
+    };
+}
+<span class="badge @css">@text</span>

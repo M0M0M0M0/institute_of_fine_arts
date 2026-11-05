@@ -1,0 +1,68 @@
+@model InstituteOfFineArts.Web.ViewModels.Student.ExhibitionEntries.ProposeEntryFormVm
+@*
+    Student – propose a painting to an upcoming exhibition (/student/exhibition-entries/new?exhibitionId={id}, SCR-48/49,
+    F-M09-04, US-13 AC1/AC2): only own BEST/BETTER paintings of graded competitions without an active or sold entry
+    are listed (BR-40, BR-43); asking price > 0 USD (BR-41).
+    Minimal version created by BE1 (BE1-12); FE1 builds the real design in FE1-08.
+*@
+@{
+    ViewData["Title"] = "Propose an artwork";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="h3 mb-1">Propose an artwork</h1>
+        <p class="text-muted">
+            @Model.ExhibitionName · @Model.City · @Model.StartDate.ToString("dd MMM yyyy") – @Model.EndDate.ToString("dd MMM yyyy")
+        </p>
+
+        <partial name="_Alerts" />
+
+        @if (Model.Candidates.Count == 0)
+        {
+            @* US-13 AC2: GOOD (and lower) paintings never appear, so the list can be empty; a refused POST still shows its reason *@
+            <div asp-validation-summary="All" class="text-danger mb-2"></div>
+            <div class="alert alert-info">
+                You have no painting that can be proposed. Only paintings rated BEST or BETTER in a competition with
+                published results, that are not already in an exhibition and have not been sold, can be sent.
+            </div>
+            <a asp-action="Index" class="btn btn-link px-0">Back to my exhibition entries</a>
+        }
+        else
+        {
+            <form asp-action="Create" asp-route-exhibitionId="@Model.ExhibitionId" method="post" novalidate>
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+                <input type="hidden" asp-for="ExhibitionId" />
+
+                <div class="mb-3">
+                    <label asp-for="SubmissionId" class="form-label"></label>
+                    <select asp-for="SubmissionId" class="form-select">
+                        <option value="">Choose a painting…</option>
+                        @foreach (var c in Model.Candidates)
+                        {
+                            <option value="@c.Id">@c.Title – @c.CompetitionTitle (@c.Rating)</option>
+                        }
+                    </select>
+                    <span asp-validation-for="SubmissionId" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="AskingPrice" class="form-label"></label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input asp-for="AskingPrice" type="number" min="0.01" step="0.01" class="form-control" />
+                    </div>
+                    <div class="form-text">The price you want for the painting. The whole sale price is paid to you.</div>
+                    <span asp-validation-for="AskingPrice" class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Propose</button>
+                <a asp-action="Index" class="btn btn-link">Cancel</a>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

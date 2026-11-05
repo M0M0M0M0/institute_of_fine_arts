@@ -1,0 +1,122 @@
+@model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Student.Results.MyResultItemVm>
+@*
+    Student – my results (/student/results, F-M06-07, US-10 AC2/AC3): every own entry with rating, strengths,
+    weaknesses, areas of improvement and award once the competition is GRADED; "Awaiting results" before (BR-24).
+    Minimal version created by BE2 (BE2-08); FE2 builds the real design in FE2-06.
+*@
+@using InstituteOfFineArts.Web.Services.Implementations
+@{
+    ViewData["Title"] = "My Results";
+    var search = (InstituteOfFineArts.Web.ViewModels.Student.Results.MyResultSearchVm)ViewBag.Search;
+    var competitions = (List<InstituteOfFineArts.Web.ViewModels.Student.Submissions.MyCompetitionOptionVm>)ViewBag.Competitions;
+    // Keeps the filters when moving between pages
+    object PageRoute(int page) => new { search.CompetitionId, search.Rating, page };
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">My Results</h1>
+    <div>
+        <a href="/student/best" class="btn btn-outline-secondary">Best Works</a>
+        <a href="/student/awards" class="btn btn-outline-secondary">Awards</a>
+    </div>
+</div>
+
+<partial name="_Alerts" />
+
+<form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
+    <div class="col-md-5">
+        <label class="form-label" for="CompetitionId">Competition</label>
+        <select class="form-select" id="CompetitionId" name="CompetitionId">
+            <option value="">All</option>
+            @foreach (var c in competitions)
+            {
+                <option value="@c.Id" selected="@(search.CompetitionId == c.Id)">@c.Title</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label" for="Rating">Rating</label>
+        <select class="form-select" id="Rating" name="Rating">
+            <option value="">All</option>
+            @foreach (var r in Enum.GetValues<Rating>())
+            {
+                <option value="@r" selected="@(search.Rating == r)">@r</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    </div>
+</form>
+
+@if (Model.TotalCount == 0)
+{
+    <p class="text-muted">No results found.</p>
+}
+else
+{
+    @foreach (var s in Model.Items)
+    {
+        <div class="card mb-3">
+            <div class="card-body d-flex gap-3">
+                <div style="width:110px" class="flex-shrink-0">
+                    @if (s.HasThumbnail)
+                    {
+                        <img src="/files/submissions/@s.Id/thumb" alt="@s.Title" class="img-thumbnail" style="max-height:100px" />
+                    }
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between flex-wrap">
+                        <h2 class="h6 mb-1"><a href="/student/submissions/@s.Id">@s.Title</a></h2>
+                        <partial name="~/Areas/Student/Views/Competitions/_Status.cshtml" model="s.CompetitionStatus" />
+                    </div>
+                    <div class="text-muted small mb-2">
+                        @s.CompetitionTitle · submitted @s.SubmittedAt.ToString("dd MMM yyyy HH:mm")
+                    </div>
+
+                    @* BR-24: the evaluation is only shown once the results are published *@
+                    @if (!s.IsPublished)
+                    {
+                        <p class="mb-0"><span class="badge bg-warning text-dark">@StudentResultService.AwaitingResultsMessage</span></p>
+                    }
+                    else if (s.Rating is null)
+                    {
+                        <p class="mb-0 text-muted">Results are published, but this entry has no evaluation.</p>
+                    }
+                    else
+                    {
+                        <p class="mb-2">
+                            <strong>Rating:</strong> @s.Rating
+                            @if (s.AwardName != null)
+                            {
+                                <span class="badge bg-success ms-2">@s.AwardName (rank @s.AwardRank, @s.PrizeValue?.ToString("$#,##0.00"))</span>
+                            }
+                        </p>
+                        <dl class="row mb-0 small">
+                            <dt class="col-sm-3">Strengths</dt>
+                            <dd class="col-sm-9" style="white-space: pre-line">@(s.PositivePoints ?? "–")</dd>
+                            <dt class="col-sm-3">Weaknesses</dt>
+                            <dd class="col-sm-9" style="white-space: pre-line">@(s.NegativePoints ?? "–")</dd>
+                            <dt class="col-sm-3">Areas of improvement</dt>
+                            <dd class="col-sm-9 mb-0" style="white-space: pre-line">@(s.ImprovementAreas ?? "–")</dd>
+                        </dl>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <nav class="d-flex justify-content-between align-items-center">
+        <span class="text-muted small">@Model.TotalCount entr@(Model.TotalCount == 1 ? "y" : "ies") · page @Model.Page of @Model.TotalPages</span>
+        <div>
+            @if (Model.HasPrevious)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
+            }
+            @if (Model.HasNext)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
+            }
+        </div>
+    </nav>
+}

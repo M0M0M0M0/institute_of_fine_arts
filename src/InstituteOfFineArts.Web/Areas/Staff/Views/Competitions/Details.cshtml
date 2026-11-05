@@ -1,7 +1,8 @@
 @model InstituteOfFineArts.Web.ViewModels.Staff.Competitions.CompetitionDetailsVm
 @*
     Staff – competition details (/staff/competitions/{id}, SCR-25): information, rules, awards, entries, status.
-    Minimal version created by BE1 (BE1-05, award controls BE1-06); FE1 builds the real design and the award tabs in FE1-03.
+    Minimal version created by BE1 (BE1-05, award controls BE1-06, issued awards + publish BE1-11);
+    FE1 builds the real design and the award tabs in FE1-03 / FE1-07.
 *@
 @{
     ViewData["Title"] = Model.Title;
@@ -45,13 +46,23 @@
     <dt class="col-sm-3">End date (deadline)</dt>
     <dd class="col-sm-9">@Model.EndDate.ToString("dd MMM yyyy"), 23:59:59</dd>
     <dt class="col-sm-3">Entries</dt>
-    <dd class="col-sm-9">@Model.SubmissionCount</dd>
+    <dd class="col-sm-9">
+        @Model.SubmissionCount
+        @* Grading progress (F-M07-09) once the deadline has passed *@
+        @if (Model.Status is CompetitionStatus.CLOSED or CompetitionStatus.GRADED)
+        {
+            <span class="text-muted" id="grading-progress">· @Model.EvaluatedCount/@Model.SubmissionCount graded</span>
+        }
+        <a href="/staff/submissions?competitionId=@Model.Id" class="ms-2">View entries</a>
+    </dd>
     <dt class="col-sm-3">Created by</dt>
     <dd class="col-sm-9">@Model.CreatedByName, @Model.CreatedAt.ToString("dd MMM yyyy HH:mm")</dd>
     @if (Model.PublishedAt is { } published)
     {
         <dt class="col-sm-3">Results published</dt>
-        <dd class="col-sm-9">@published.ToString("dd MMM yyyy HH:mm")</dd>
+        <dd class="col-sm-9">@published.ToString("dd MMM yyyy HH:mm")@(Model.PublishedByName != null ? $" by {Model.PublishedByName}" : "")</dd>
+        <dt class="col-sm-3">Result remarks</dt>
+        <dd class="col-sm-9" style="white-space: pre-line">@(Model.ResultRemarks ?? "–")</dd>
     }
 </dl>
 
@@ -65,10 +76,17 @@
 @* Awards (F-M05-06, BE1-06): add / edit / delete while the competition is not GRADED *@
 <div class="d-flex justify-content-between align-items-center">
     <h2 class="h5 mb-0">Awards</h2>
-    @if (Model.CanManageAwards)
-    {
-        <a asp-controller="CompetitionAwards" asp-action="Create" asp-route-competitionId="@Model.Id" class="btn btn-sm btn-outline-primary">Add award</a>
-    }
+    <div class="d-flex gap-2">
+        @if (Model.CanIssueAwards)
+        {
+            @* Issue an award to a BEST entry (F-M08-01, BE1-11) *@
+            <a asp-controller="Awards" asp-action="Create" asp-route-competitionId="@Model.Id" class="btn btn-sm btn-primary">Issue award</a>
+        }
+        @if (Model.CanManageAwards)
+        {
+            <a asp-controller="CompetitionAwards" asp-action="Create" asp-route-competitionId="@Model.Id" class="btn btn-sm btn-outline-primary">Add award</a>
+        }
+    </div>
 </div>
 @if (Model.Awards.Count == 0)
 {
@@ -79,7 +97,7 @@ else
     <table class="table table-sm mt-2">
         <thead>
             <tr>
-                <th>Rank</th><th>Award</th><th class="text-end">Prize</th><th class="text-end">Quantity</th><th class="text-end">Given</th><th>Description</th>
+                <th>Rank</th><th>Award</th><th class="text-end">Prize</th><th class="text-end">Quantity</th><th class="text-end">Given</th><th>Description</th><th>Winners</th>
                 @if (Model.CanManageAwards)
                 {
                     <th></th>
@@ -96,6 +114,21 @@ else
                     <td class="text-end">@a.Quantity</td>
                     <td class="text-end">@a.IssuedCount</td>
                     <td>@a.Description</td>
+                    <td>
+                        @* Issued awards of this row (BE1-11): student + artwork, edit / revoke on the award page *@
+                        @foreach (var w in a.Winners)
+                        {
+                            <div>
+                                <a asp-controller="Submissions" asp-action="Details" asp-route-id="@w.SubmissionId">@w.SubmissionTitle</a>
+                                – @w.StudentName <span class="text-muted small">@w.StudentCode, @w.IssuedDate.ToString("dd MMM yyyy")</span>
+                                <a asp-controller="Awards" asp-action="Edit" asp-route-id="@w.IssuedId" class="small">Edit</a>
+                            </div>
+                        }
+                        @if (Model.CanIssueAwards && a.IssuedCount < a.Quantity)
+                        {
+                            <a asp-controller="Awards" asp-action="Create" asp-route-competitionId="@Model.Id" asp-route-competitionAwardId="@a.Id" class="small">Issue</a>
+                        }
+                    </td>
                     @if (Model.CanManageAwards)
                     {
                         <td class="text-end text-nowrap">
@@ -114,6 +147,33 @@ else
             }
         </tbody>
     </table>
+}
+
+@* Publish results (F-M05-08, BR-08, BE1-11): only while CLOSED; refused while entries are not graded *@
+@if (Model.CanPublish)
+{
+    <div class="card mb-3" id="publish-results">
+        <div class="card-body">
+            <h2 class="h5">Publish results</h2>
+            <p class="mb-2">Graded: <strong>@Model.EvaluatedCount/@Model.SubmissionCount</strong></p>
+            @if (Model.PublishBlockedReason != null)
+            {
+                <div class="alert alert-warning mb-2">@Model.PublishBlockedReason</div>
+            }
+            <p class="text-muted small">
+                After publishing, students see their ratings, comments and awards; the competition, its awards and the evaluations become read only.
+            </p>
+            @* POST with anti-forgery token; the browser asks for confirmation first *@
+            <form asp-controller="CompetitionResults" asp-action="Publish" asp-route-id="@Model.Id" method="post"
+                  onsubmit="return confirm('Publish the results? The competition will become read only.');">
+                <div class="mb-3">
+                    <label for="ResultRemarks" class="form-label">Result remarks (optional)</label>
+                    <textarea id="ResultRemarks" name="ResultRemarks" class="form-control" rows="3" maxlength="2000"></textarea>
+                </div>
+                <button type="submit" class="btn btn-success" disabled="@(Model.PublishBlockedReason != null)">Publish results</button>
+            </form>
+        </div>
+    </div>
 }
 
 <a asp-action="Index" class="btn btn-link px-0">Back to competitions</a>

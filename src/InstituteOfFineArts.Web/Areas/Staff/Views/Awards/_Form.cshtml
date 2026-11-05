@@ -1,0 +1,49 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.Awards.AwardIssuedFormVm
+@*
+    Fields shared by the issue and edit award forms (F-M08-01/02): award with a slot left, eligible entry
+    (evaluated BEST, no award yet – BR-30, BR-31), issued date, remarks. The competition is a hidden field.
+    Minimal version created by BE1 (BE1-11); FE1 builds the real design in FE1-07.
+*@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@{
+    // Options prepared by the service: full awards and non-BEST / already awarded entries are not offered (UC-06 2a/2b)
+    var awards = Model.Awards.Select(a => new SelectListItem(
+        $"{a.Name} (rank {a.Rank}, {a.PrizeValue.ToString("$#,##0.00")}, {a.SlotsLeft} of {a.Quantity} left)", a.Id.ToString()));
+    var submissions = Model.Submissions.Select(s => new SelectListItem($"{s.Title} – {s.StudentName} ({s.StudentCode})", s.Id.ToString()));
+}
+
+<div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+<input type="hidden" asp-for="CompetitionId" />
+
+<div class="mb-3">
+    <label asp-for="CompetitionAwardId" class="form-label"></label>
+    <select asp-for="CompetitionAwardId" asp-items="awards" class="form-select">
+        <option value="">– Select an award –</option>
+    </select>
+    @if (Model.Awards.Count == 0)
+    {
+        <div class="form-text">No award slots left.</div>
+    }
+    <span asp-validation-for="CompetitionAwardId" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="SubmissionId" class="form-label"></label>
+    <select asp-for="SubmissionId" asp-items="submissions" class="form-select">
+        <option value="">– Select an entry –</option>
+    </select>
+    <div class="form-text">Only entries evaluated as BEST that have no award yet are listed.</div>
+    <span asp-validation-for="SubmissionId" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="IssuedDate" class="form-label"></label>
+    <input asp-for="IssuedDate" type="date" class="form-control" />
+    <span asp-validation-for="IssuedDate" class="text-danger"></span>
+</div>
+
+<div class="mb-3">
+    <label asp-for="Remarks" class="form-label"></label>
+    <textarea asp-for="Remarks" class="form-control" rows="3" maxlength="1000" placeholder="e.g. Outstanding use of light and color."></textarea>
+    <span asp-validation-for="Remarks" class="text-danger"></span>
+</div>
