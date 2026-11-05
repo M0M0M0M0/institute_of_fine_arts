@@ -1,0 +1,102 @@
+@model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Staff.Awards.AwardIssuedListItemVm>
+@*
+    Manager – issued awards, read only (/manager/awards, F-M11-04): same filters as /staff/awards (competition,
+    student, award, issued date range) and paging; no issue / edit / revoke (TC-M11-02).
+    Minimal version created by BE2-13; FE2 builds the real design in FE2-10.
+*@
+@using InstituteOfFineArts.Web.ViewModels.Staff.Awards
+@using InstituteOfFineArts.Web.ViewModels.Staff.Submissions
+@{
+    ViewData["Title"] = "Issued awards";
+    var search = (AwardIssuedSearchVm)ViewBag.Search;
+    var competitions = (IReadOnlyList<CompetitionOptionVm>)ViewBag.Competitions;
+    // Keeps the filters when moving between pages
+    object PageRoute(int page) => new
+    {
+        search.CompetitionId, search.Student, search.Award,
+        From = search.From?.ToString("yyyy-MM-dd"), To = search.To?.ToString("yyyy-MM-dd"), page,
+    };
+}
+
+<h1 class="h3 mb-3">Issued awards</h1>
+
+<partial name="_Alerts" />
+
+<form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
+    <div class="col-md-3">
+        <label class="form-label" for="CompetitionId">Competition</label>
+        <select class="form-select" id="CompetitionId" name="CompetitionId">
+            <option value="">All competitions</option>
+            @foreach (var c in competitions)
+            {
+                <option value="@c.Id" selected="@(search.CompetitionId == c.Id)">@c.Code – @c.Title</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="Student">Student name or code</label>
+        <input class="form-control" id="Student" name="Student" value="@search.Student" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="Award">Award</label>
+        <input class="form-control" id="Award" name="Award" value="@search.Award" placeholder="e.g. First Prize" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="From">Issued from</label>
+        <input class="form-control" type="date" id="From" name="From" value="@search.From?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="To">Issued to</label>
+        <input class="form-control" type="date" id="To" name="To" value="@search.To?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-1">
+        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    </div>
+</form>
+
+@if (Model.TotalCount == 0)
+{
+    <p class="text-muted">No issued awards found.</p>
+}
+else
+{
+    @* Links go to the manager's read-only pages of submissions, students and competitions (BE2-13 part 1) *@
+    <table class="table table-hover align-middle">
+        <thead>
+            <tr>
+                <th></th><th>Artwork</th><th>Student</th><th>Competition</th><th>Award</th><th class="text-end">Prize</th>
+                <th>Issued</th><th>Remarks</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var a in Model.Items)
+            {
+                <tr>
+                    <td><img src="/files/submissions/@a.SubmissionId/thumb" alt="Thumbnail of @a.SubmissionTitle" width="64" height="64" class="rounded" style="object-fit: cover" /></td>
+                    <td><a href="/manager/submissions/@a.SubmissionId">@a.SubmissionTitle</a></td>
+                    <td><a href="/manager/students/@a.StudentId">@a.StudentName</a> <span class="text-muted small">@a.StudentCode</span></td>
+                    <td><a href="/manager/competitions/@a.CompetitionId">@a.CompetitionTitle</a> <span class="text-muted small">@a.CompetitionCode</span></td>
+                    <td>@a.AwardName <span class="text-muted small">(rank @a.Rank)</span></td>
+                    <td class="text-end">@a.PrizeValue.ToString("$#,##0.00")</td>
+                    <td>@a.IssuedDate.ToString("dd MMM yyyy")<div class="text-muted small">by @a.IssuedByName</div></td>
+                    @* Remarks typed by staff: encoded by Razor, line breaks kept *@
+                    <td style="white-space: pre-line">@(a.Remarks ?? "–")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <nav class="d-flex justify-content-between align-items-center">
+        <span class="text-muted small">@Model.TotalCount award(s) · page @Model.Page of @Model.TotalPages</span>
+        <div>
+            @if (Model.HasPrevious)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
+            }
+            @if (Model.HasNext)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
+            }
+        </div>
+    </nav>
+}

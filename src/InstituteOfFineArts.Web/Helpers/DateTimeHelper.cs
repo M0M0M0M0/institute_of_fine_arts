@@ -1,3 +1,5 @@
+using InstituteOfFineArts.Web.Exceptions;
+
 namespace InstituteOfFineArts.Web.Helpers;
 
 /// <summary>
@@ -6,6 +8,24 @@ namespace InstituteOfFineArts.Web.Helpers;
 /// </summary>
 public static class DateTimeHelper
 {
+    /// <summary>Message when a filter's From date is after its To date (TC-M10-03); shared by every search and report.</summary>
+    public const string InvalidDateRangeMessage = "Invalid date range: the From date must be on or before the To date.";
+
+    /// <summary>
+    /// Refuses a filter whose From date is after its To date (TC-M10-03). Either date may be empty.
+    /// </summary>
+    /// <param name="from">From day</param>
+    /// <param name="to">To day</param>
+    /// <param name="field">Form field the error belongs to</param>
+    /// <exception cref="BusinessException">From is after To</exception>
+    public static void EnsureValidRange(DateOnly? from, DateOnly? to, string field = "From")
+    {
+        if (from is { } f && to is { } t && f > t)
+        {
+            throw new BusinessException(InvalidDateRangeMessage, field);
+        }
+    }
+
     /// <summary>Institute time zone (UTC+7).</summary>
     private static readonly TimeZoneInfo VietnamZone = FindVietnamZone();
 

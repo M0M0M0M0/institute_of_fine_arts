@@ -1,6 +1,7 @@
 using InstituteOfFineArts.Web.Exceptions;
 using InstituteOfFineArts.Web.Infrastructure.Security;
 using InstituteOfFineArts.Web.Services.Interfaces;
+using InstituteOfFineArts.Web.ViewModels.Common;
 using InstituteOfFineArts.Web.ViewModels.Staff.Awards;
 using Microsoft.AspNetCore.Mvc;
 
@@ -30,7 +31,16 @@ public class AwardsController : StaffBaseController
     {
         ViewBag.Search = search;
         ViewBag.Competitions = await _awards.GetCompetitionOptionsAsync();
-        return View(await _awards.SearchAsync(search));
+        try
+        {
+            return View(await _awards.SearchAsync(search));
+        }
+        catch (BusinessException ex)
+        {
+            // Invalid filter (e.g. From after To): show the message and an empty list
+            TempData["Error"] = ex.Message;
+            return View(new PagedResult<AwardIssuedListItemVm> { Page = 1, PageSize = 10 });
+        }
     }
 
     /// <summary>Issue form: choose a CLOSED / GRADED competition first, then its award and an eligible entry.</summary>

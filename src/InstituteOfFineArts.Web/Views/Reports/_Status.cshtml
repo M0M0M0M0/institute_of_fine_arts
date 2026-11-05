@@ -1,0 +1,12 @@
+@model InstituteOfFineArts.Web.Models.Enums.CompetitionStatus
+@* Coloured badge for a competition status (UPCOMING / ONGOING / CLOSED / GRADED), same as the Staff area one. *@
+@{
+    var css = Model switch
+    {
+        CompetitionStatus.UPCOMING => "bg-info text-dark",
+        CompetitionStatus.ONGOING => "bg-success",
+        CompetitionStatus.CLOSED => "bg-secondary",
+        _ => "bg-primary",
+    };
+}
+<span class="badge @css">@Model</span>

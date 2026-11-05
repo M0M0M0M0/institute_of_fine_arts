@@ -1,0 +1,15 @@
+@model InstituteOfFineArts.Web.ViewModels.Reports.ReportLinkVm
+@*
+    Header of every report page of ReportsController: code + title, time the report was produced, Print and
+    "All reports" buttons (F-M10-08). Minimal version created by BE2-12; FE builds the real design in FE2-09.
+*@
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <h1 class="h3 mb-0">@Model.Code – @Model.Title</h1>
+        <div class="text-muted small">@Model.Description · Produced @DateTimeHelper.Now.ToString("dd MMM yyyy HH:mm")</div>
+    </div>
+    <div class="d-print-none text-nowrap">
+        <a href="/reports" class="btn btn-outline-secondary">All reports</a>
+        <button type="button" class="btn btn-primary" id="print-report" onclick="window.print()">Print</button>
+    </div>
+</div>

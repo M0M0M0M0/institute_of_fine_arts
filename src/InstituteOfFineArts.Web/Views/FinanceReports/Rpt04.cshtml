@@ -1,0 +1,137 @@
+@model InstituteOfFineArts.Web.ViewModels.Reports.ExhibitionSalesReportVm?
+@*
+    RPT-04 Exhibition artworks & sales revenue (/reports/rpt-04, SCR-33; F-M10-04, F-M10-08; TC-M10-05). STAFF, MANAGER.
+    Minimal version created by BE2 (BE2-12); FE2 builds the real design in FE2-09.
+*@
+@using InstituteOfFineArts.Web.Helpers
+@using InstituteOfFineArts.Web.Models.Enums
+@using InstituteOfFineArts.Web.Services.Implementations
+@using InstituteOfFineArts.Web.ViewModels.Reports
+@using InstituteOfFineArts.Web.ViewModels.Staff.ExhibitionEntries
+@{
+    ViewData["Title"] = "RPT-04 Exhibition artworks & sales";
+    var search = (ExhibitionSalesSearchVm)ViewBag.Search;
+    var exhibitions = (List<EntryExhibitionOptionVm>)ViewBag.Exhibitions;
+    var exhibitionName = exhibitions.FirstOrDefault(x => x.Id == search.ExhibitionId)?.Name ?? "All exhibitions";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">RPT-04 Exhibition artworks &amp; sales revenue</h1>
+    <div class="d-print-none">
+        <a href="/reports" class="btn btn-outline-secondary">All reports</a>
+        <button type="button" class="btn btn-outline-primary" onclick="window.print()">Print</button>
+    </div>
+</div>
+
+@* Filters: hidden when printing, replaced by a one-line summary *@
+<form method="get" asp-action="Rpt04" class="row g-2 align-items-end mb-3 d-print-none">
+    <div asp-validation-summary="All" class="text-danger col-12"></div>
+    <div class="col-md-3">
+        <label class="form-label" for="ExhibitionId">Exhibition</label>
+        <select class="form-select" id="ExhibitionId" name="ExhibitionId">
+            <option value="">All exhibitions</option>
+            @foreach (var x in exhibitions)
+            {
+                <option value="@x.Id" selected="@(search.ExhibitionId == x.Id)">@x.Name (@x.StartDate.ToString("dd MMM yyyy"))</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="From">Exhibition period from</label>
+        <input class="form-control" type="date" id="From" name="From" value="@search.From?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="To">to</label>
+        <input class="form-control" type="date" id="To" name="To" value="@search.To?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="Status">Entry status</label>
+        <select class="form-select" id="Status" name="Status">
+            <option value="">All statuses</option>
+            @foreach (var s in Enum.GetValues<EntryStatus>())
+            {
+                <option value="@s" selected="@(search.Status == s)">@s</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="Student">Student name or code</label>
+        <input class="form-control" id="Student" name="Student" value="@search.Student" />
+    </div>
+    <div class="col-md-1">
+        <button type="submit" class="btn btn-primary w-100">View</button>
+    </div>
+</form>
+
+<p class="d-none d-print-block small">
+    @exhibitionName · period @(search.From?.ToString("dd MMM yyyy") ?? "…") – @(search.To?.ToString("dd MMM yyyy") ?? "…")
+    · status @(search.Status?.ToString() ?? "all") · student @(string.IsNullOrWhiteSpace(search.Student) ? "all" : search.Student)
+    · printed @DateTimeHelper.Now.ToString("dd MMM yyyy HH:mm")
+</p>
+
+@if (Model == null)
+{
+    // Invalid filters: the error is shown above
+}
+else if (Model.Totals.Entries == 0)
+{
+    <p class="text-muted">No data</p>
+}
+else
+{
+    var t = Model.Totals;
+    if (Model.Truncated)
+    {
+        <div class="alert alert-warning">Only the first @ExhibitionReportService.MaxRows rows are shown; the totals include every matching painting. Narrow the filters to see all rows.</div>
+    }
+    <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>#</th><th>Exhibition</th><th>Painting</th><th>Student</th><th>Rating</th><th class="text-end">Asking price</th>
+                    <th>Status</th><th class="text-end">Sold price</th><th>Sold date</th><th>Customer</th><th>Paid to student</th>
+                    <th class="text-end">Amount paid</th><th>Paid date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < Model.Rows.Count; i++)
+                {
+                    var r = Model.Rows[i];
+                    <tr>
+                        <td>@(i + 1)</td>
+                        <td>@r.ExhibitionName</td>
+                        <td>@r.Title</td>
+                        <td>@r.StudentName <span class="text-muted small">@r.StudentCode</span></td>
+                        <td>@(r.Rating?.ToString() ?? "–")</td>
+                        <td class="text-end">@r.AskingPrice.ToString("$#,##0.00")</td>
+                        <td><partial name="_Status" model="r.Status" /></td>
+                        <td class="text-end">@(r.SoldPrice?.ToString("$#,##0.00") ?? "–")</td>
+                        <td>@(r.SoldDate?.ToString("dd MMM yyyy") ?? "–")</td>
+                        <td>@(r.CustomerName ?? "–")</td>
+                        <td>@(r.Status == EntryStatus.SOLD ? (r.PaidToStudent ? "Yes" : "No") : "–")</td>
+                        <td class="text-end">@(r.PaidAmount?.ToString("$#,##0.00") ?? "–")</td>
+                        <td>@(r.PaidDate?.ToString("dd MMM yyyy") ?? "–")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @* Totals of §7 over every matching painting (TC-M10-05) *@
+    <h2 class="h5">Totals</h2>
+    <table class="table table-sm table-bordered w-auto">
+        <tbody>
+            <tr><th>Matching entries</th><td class="text-end">@t.Entries</td></tr>
+            <tr><th>Paintings sent (accepted, sold, unsold)</th><td class="text-end">@t.Sent</td></tr>
+            <tr><th>Sold</th><td class="text-end">@t.Sold</td></tr>
+            <tr><th>Not sold (on show or unsold)</th><td class="text-end">@t.Unsold</td></tr>
+            <tr><th>Total asking price (sent paintings)</th><td class="text-end">@t.TotalAskingPrice.ToString("$#,##0.00")</td></tr>
+            <tr><th>Total sold price (revenue)</th><td class="text-end">@t.TotalSoldPrice.ToString("$#,##0.00")</td></tr>
+            <tr><th>Asking price of the sold paintings</th><td class="text-end">@t.SoldAskingPrice.ToString("$#,##0.00")</td></tr>
+            <tr><th>Difference (sold price − asking price of the sold paintings)</th><td class="text-end">@t.Difference.ToString("$#,##0.00")</td></tr>
+            <tr><th>Paid to students</th><td class="text-end">@t.PaidCount painting(s) · @t.PaidAmount.ToString("$#,##0.00")</td></tr>
+            <tr><th>Not paid to students yet</th><td class="text-end">@t.UnpaidCount painting(s) · @t.UnpaidAmount.ToString("$#,##0.00")</td></tr>
+        </tbody>
+    </table>
+    <p class="text-muted small">@Model.Rows.Count row(s) shown.</p>
+}

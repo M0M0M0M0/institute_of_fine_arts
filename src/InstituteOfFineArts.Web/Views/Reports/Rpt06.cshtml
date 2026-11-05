@@ -1,0 +1,120 @@
+@model Rpt06PageVm
+@*
+    RPT-06 – Student achievement profile (/reports/rpt-06; F-M10-06): one student's entries in a period with rating,
+    comment summary, award and exhibitions; totals: competitions joined, BEST count, awards, total sales.
+    Minimal version created by BE2-12; FE builds the real design in FE2-09.
+*@
+@{
+    ViewData["Title"] = "RPT-06 Student achievement profile";
+    var report = ReportCatalog.All.First(r => r.Code == "RPT-06");
+    var filter = Model.Filter;
+    var result = Model.Result;
+    var detailsBase = User.IsInRole(RoleNames.Manager) ? "/manager/submissions/" : "/staff/submissions/";
+}
+
+<partial name="_ReportHeader" model="report" />
+
+<form method="get" action="/reports/rpt-06" class="row g-2 align-items-end mb-3 d-print-none" id="report-filters">
+    <div class="col-md-5">
+        <label class="form-label" for="StudentId">Student *</label>
+        <select class="form-select" id="StudentId" name="StudentId">
+            <option value="">– Choose –</option>
+            @foreach (var s in Model.Students)
+            {
+                <option value="@s.Id" selected="@(filter.StudentId == s.Id)">@s.Code – @s.FullName</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label" for="From">Submitted from</label>
+        <input class="form-control" type="date" id="From" name="From" value="@filter.From?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label" for="To">Submitted to</label>
+        <input class="form-control" type="date" id="To" name="To" value="@filter.To?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-1">
+        <button type="submit" class="btn btn-outline-primary w-100">View</button>
+    </div>
+</form>
+
+<div asp-validation-summary="All" class="text-danger mb-2" id="report-errors"></div>
+
+@if (result != null)
+{
+    <p class="mb-2" id="report-criteria">
+        <strong>@result.StudentCode – @result.FullName</strong>
+        · Class @(result.ClassName ?? "–") · Course @result.CourseName
+        · Submitted from @(filter.From?.ToString("dd MMM yyyy") ?? "the start") to @(filter.To?.ToString("dd MMM yyyy") ?? "now")
+    </p>
+
+    if (result.TotalCount == 0)
+    {
+        <p class="text-muted" id="no-data">No data</p>
+    }
+    else
+    {
+        if (result.IsTruncated)
+        {
+            <partial name="_Truncated" model="result.TotalCount" />
+        }
+        <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle" id="report-table">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Competition</th>
+                        <th>Painting</th>
+                        <th>Submitted</th>
+                        <th>Rating</th>
+                        <th>Comment summary</th>
+                        <th>Award</th>
+                        <th>Exhibition / sold</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in result.Rows)
+                    {
+                        <tr data-submission-id="@row.SubmissionId">
+                            <td>@row.No</td>
+                            <td>@row.CompetitionCode – @row.CompetitionTitle</td>
+                            <td><a href="@(detailsBase + row.SubmissionId)">@row.Title</a></td>
+                            <td>@row.SubmittedAt.ToString("dd MMM yyyy HH:mm")</td>
+                            <td>@(row.Rating?.ToString() ?? "Not graded")</td>
+                            <td>@row.CommentSummary</td>
+                            <td>@(row.AwardName == null ? "" : row.AwardName + " (" + row.PrizeValue!.Value.ToString("$#,##0.00") + ")")</td>
+                            <td>
+                                @foreach (var e in row.Exhibitions)
+                                {
+                                    <div>
+                                        @e.ExhibitionName – @e.Status
+                                        @if (e.Status == EntryStatus.SOLD && e.SoldPrice is { } price)
+                                        {
+                                            <span>(sold @price.ToString("$#,##0.00"))</span>
+                                        }
+                                    </div>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @* Totals of §7: competitions joined, BEST entries, awards, total sales of the student's paintings *@
+    <table class="table table-sm table-bordered w-auto" id="report-totals">
+        <tbody>
+            <tr><th>Entries</th><td class="text-end" data-total="entries">@result.TotalCount</td></tr>
+            <tr><th>Competitions joined</th><td class="text-end" data-total="competitions">@result.CompetitionsJoined</td></tr>
+            <tr><th>BEST ratings</th><td class="text-end" data-total="best">@result.BestCount</td></tr>
+            <tr><th>Awards</th><td class="text-end" data-total="awards">@result.AwardCount</td></tr>
+            <tr><th>Total prize value</th><td class="text-end" data-total="prize">@result.TotalPrizeValue.ToString("$#,##0.00")</td></tr>
+            <tr><th>Total sales of paintings</th><td class="text-end" data-total="sales">@result.TotalSales.ToString("$#,##0.00")</td></tr>
+        </tbody>
+    </table>
+}
+else if (ViewData.ModelState.IsValid)
+{
+    <p class="text-muted">Choose a student and click View.</p>
+}

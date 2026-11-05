@@ -1,0 +1,25 @@
+@model InstituteOfFineArts.Web.ViewModels.Admin.Students.StudentDetailsVm
+@*
+    Manager – student details, read only (/manager/students/{id}, SCR-51; F-M11-02): personal and study information,
+    no account actions. Reuses the information partial of the Admin area.
+    Minimal version created by BE (BE2-13); FE2 builds the real design in FE2-10.
+*@
+@{
+    ViewData["Title"] = Model.FullName;
+}
+
+<div class="mb-3">
+    <h1 class="h3 mb-1">@Model.FullName</h1>
+    <div class="text-muted">
+        @Model.StudentCode · @Model.CourseName @Model.ClassName ·
+        @if (Model.Active) { <span class="badge bg-success">Active</span> } else { <span class="badge bg-secondary">Locked</span> }
+    </div>
+</div>
+
+<partial name="~/Areas/Admin/Views/Students/_Info.cshtml" model="Model" />
+
+<div class="mt-3">
+    @* The student's entries in the manager submission list (filter by student code) *@
+    <a asp-controller="Submissions" asp-action="Index" asp-route-student="@Model.StudentCode" class="btn btn-outline-primary">Submissions</a>
+    <a asp-action="Index" class="btn btn-link">Back to student list</a>
+</div>

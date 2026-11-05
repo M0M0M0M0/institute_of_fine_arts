@@ -32,4 +32,19 @@ public class DeadlineHelperTests
         Assert.Equal(new DateTime(2026, 11, 4, 0, 0, 0), DateTimeHelper.StartOfDay(day));
         Assert.Equal(new DateTime(2026, 11, 5, 0, 0, 0), DateTimeHelper.StartOfNextDay(day));
     }
+
+    /// <summary>TC-M10-03: From after To is refused; same day, open ends and empty dates are fine.</summary>
+    [Fact]
+    public void EnsureValidRange()
+    {
+        var day = new DateOnly(2026, 11, 4);
+        var ex = Assert.Throws<InstituteOfFineArts.Web.Exceptions.BusinessException>(() => DateTimeHelper.EnsureValidRange(day, day.AddDays(-1), "From"));
+        Assert.Equal(DateTimeHelper.InvalidDateRangeMessage, ex.Message);
+        Assert.Equal("From", ex.Field);
+
+        DateTimeHelper.EnsureValidRange(day, day);
+        DateTimeHelper.EnsureValidRange(day, null);
+        DateTimeHelper.EnsureValidRange(null, day);
+        DateTimeHelper.EnsureValidRange(null, null);
+    }
 }
