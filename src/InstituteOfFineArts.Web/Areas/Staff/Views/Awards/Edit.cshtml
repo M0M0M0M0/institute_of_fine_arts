@@ -1,0 +1,46 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.Awards.AwardIssuedFormVm
+@*
+    Staff – edit or revoke an issued award (/staff/awards/{id}/edit, SCR-28, F-M08-02/03): change the entry, award,
+    date or remarks with the same rules as issuing; revoking needs a reason, which is logged (BR-33).
+    Minimal version created by BE1 (BE1-11); FE1 builds the real design in FE1-07.
+*@
+@{
+    ViewData["Title"] = "Edit issued award";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="h3 mb-1">Edit issued award</h1>
+        <p class="text-muted">
+            @Model.CompetitionTitle · @Model.CompetitionCode
+            @if (Model.CompetitionStatus is { } status)
+            {
+                <text>·</text> <partial name="~/Areas/Staff/Views/Competitions/_Status.cshtml" model="status" />
+            }
+        </p>
+
+        <partial name="_Alerts" />
+
+        <form asp-action="Edit" asp-route-id="@Model.Id" method="post" novalidate>
+            <partial name="_Form" model="Model" />
+            <button type="submit" class="btn btn-primary">Save changes</button>
+            <a asp-controller="Competitions" asp-action="Details" asp-route-id="@Model.CompetitionId" class="btn btn-link">Cancel</a>
+        </form>
+
+        @* Revoke (F-M08-03, BR-33): POST with anti-forgery token, reason required, the browser asks for confirmation *@
+        <hr class="my-4" />
+        <h2 class="h5 text-danger">Revoke this award</h2>
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Revoke this award?');">
+            <div class="mb-3">
+                <label for="Reason" class="form-label">Reason</label>
+                <textarea name="Reason" id="Reason" class="form-control" rows="2" maxlength="500" required></textarea>
+                <div class="form-text">Required. The reason is recorded in the system log.</div>
+            </div>
+            <button type="submit" class="btn btn-outline-danger">Revoke award</button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
