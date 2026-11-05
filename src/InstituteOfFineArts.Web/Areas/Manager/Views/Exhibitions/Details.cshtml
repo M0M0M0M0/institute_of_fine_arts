@@ -1,0 +1,11 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.Exhibitions.ExhibitionDetailsVm
+@*
+    Manager – exhibition details (/manager/exhibitions/{id}, SCR-56): information, status, artworks by status.
+    The markup is shared with the other area (Views/Shared/Exhibitions/_ExhibitionDetails.cshtml).
+    Minimal version created by BE2-09; FE2 builds the real design in FE2-07.
+*@
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<partial name="~/Views/Shared/Exhibitions/_ExhibitionDetails.cshtml" model="Model" />

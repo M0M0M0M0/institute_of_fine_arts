@@ -1,0 +1,20 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.Exhibitions.ExhibitionFormVm
+@*
+    Manager – edit exhibition (/manager/exhibitions/{id}/edit, SCR-56). Form shared with the other area
+    (Views/Shared/Exhibitions/_ExhibitionForm.cshtml).
+    Minimal version created by BE2-09; FE2 builds the real design in FE2-07.
+*@
+@{
+    ViewData["Title"] = "Edit exhibition";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="h3 mb-3">Edit exhibition</h1>
+        <partial name="~/Views/Shared/Exhibitions/_ExhibitionForm.cshtml" model="Model" />
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

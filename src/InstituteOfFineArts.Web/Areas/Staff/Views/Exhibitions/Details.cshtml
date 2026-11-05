@@ -1,0 +1,13 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.Exhibitions.ExhibitionDetailsVm
+@*
+    Staff – exhibition details (/staff/exhibitions/{id}, SCR-29): information, status, artworks by status.
+    The markup is shared with the other area (Views/Shared/Exhibitions/_ExhibitionDetails.cshtml).
+    Minimal version created by BE2-09; FE2 builds the real design in FE2-07.
+*@
+@{
+    ViewData["Title"] = Model.Name;
+    // Staff only: link to the artworks of this exhibition (page built by BE1-12)
+    ViewData["ArtworksUrl"] = $"/staff/exhibition-entries?exhibitionId={Model.Id}";
+}
+
+<partial name="~/Views/Shared/Exhibitions/_ExhibitionDetails.cshtml" model="Model" />
