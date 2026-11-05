@@ -88,14 +88,7 @@ public class PublicSiteService : IPublicSiteService
         }
 
         // Status for today: same rule as CompetitionStatusResolver, run in SQL (GRADED is stored)
-        query = search.Status switch
-        {
-            CompetitionStatus.GRADED => query.Where(c => c.Status == CompetitionStatus.GRADED),
-            CompetitionStatus.UPCOMING => query.Where(c => c.Status != CompetitionStatus.GRADED && c.StartDate > today),
-            CompetitionStatus.ONGOING => query.Where(c => c.Status != CompetitionStatus.GRADED && c.StartDate <= today && c.EndDate >= today),
-            CompetitionStatus.CLOSED => query.Where(c => c.Status != CompetitionStatus.GRADED && c.EndDate < today),
-            _ => query,
-        };
+        query = query.WhereStatus(search.Status, today);
 
         // Newest competitions first; summary only (no entries, no results)
         var rows = query

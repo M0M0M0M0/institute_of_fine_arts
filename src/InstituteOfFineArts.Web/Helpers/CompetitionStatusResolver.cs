@@ -70,4 +70,40 @@ public static class CompetitionStatusResolver
 
         return day <= exhibition.EndDate ? ExhibitionStatus.ONGOING : ExhibitionStatus.FINISHED;
     }
+
+    /// <summary>
+    /// Keeps only the competitions whose actual status on <paramref name="today"/> is <paramref name="status"/>.
+    /// Same rule as <see cref="Resolve(Competition, DateOnly?)"/>, written as a query so SQL Server filters it
+    /// (and paging stays correct). No status = no filter.
+    /// </summary>
+    /// <param name="query">Competitions to filter</param>
+    /// <param name="status">Wanted status, or null for all</param>
+    /// <param name="today">Current date in the institute time zone</param>
+    public static IQueryable<Competition> WhereStatus(this IQueryable<Competition> query, CompetitionStatus? status, DateOnly today)
+        => status switch
+        {
+            // GRADED is stored when results are published; the other statuses come from the dates
+            CompetitionStatus.GRADED => query.Where(c => c.Status == CompetitionStatus.GRADED),
+            CompetitionStatus.UPCOMING => query.Where(c => c.Status != CompetitionStatus.GRADED && c.StartDate > today),
+            CompetitionStatus.ONGOING => query.Where(c => c.Status != CompetitionStatus.GRADED && c.StartDate <= today && c.EndDate >= today),
+            CompetitionStatus.CLOSED => query.Where(c => c.Status != CompetitionStatus.GRADED && c.EndDate < today),
+            _ => query,
+        };
+
+    /// <summary>
+    /// Keeps only the exhibitions whose actual status on <paramref name="today"/> is <paramref name="status"/>.
+    /// Same rule as <see cref="Resolve(Exhibition, DateOnly?)"/>, written as a query for SQL Server. No status = no filter.
+    /// </summary>
+    /// <param name="query">Exhibitions to filter</param>
+    /// <param name="status">Wanted status, or null for all</param>
+    /// <param name="today">Current date in the institute time zone</param>
+    public static IQueryable<Exhibition> WhereStatus(this IQueryable<Exhibition> query, ExhibitionStatus? status, DateOnly today)
+        => status switch
+        {
+            // Exhibition status follows the dates only (BR-42)
+            ExhibitionStatus.UPCOMING => query.Where(e => e.StartDate > today),
+            ExhibitionStatus.ONGOING => query.Where(e => e.StartDate <= today && e.EndDate >= today),
+            ExhibitionStatus.FINISHED => query.Where(e => e.EndDate < today),
+            _ => query,
+        };
 }

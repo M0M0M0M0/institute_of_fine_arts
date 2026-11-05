@@ -107,13 +107,7 @@ public class ExhibitionService : IExhibitionService
         }
 
         // Status calculated from the dates (BR-42)
-        query = search.Status switch
-        {
-            ExhibitionStatus.UPCOMING => query.Where(e => e.StartDate > today),
-            ExhibitionStatus.ONGOING => query.Where(e => e.StartDate <= today && e.EndDate >= today),
-            ExhibitionStatus.FINISHED => query.Where(e => e.EndDate < today),
-            _ => query,
-        };
+        query = query.WhereStatus(search.Status, today);
 
         // Date range: exhibitions whose period overlaps [From, To]
         if (search.From is { } from)
