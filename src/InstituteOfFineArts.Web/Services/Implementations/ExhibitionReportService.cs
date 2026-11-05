@@ -22,9 +22,6 @@ public class ExhibitionReportService : IExhibitionReportService
     /// <summary>Maximum number of rows shown in a report (a warning is shown above it).</summary>
     public const int MaxRows = 1000;
 
-    /// <summary>Message when the "From" date is after the "To" date (TC-M10-03).</summary>
-    public const string DateRangeMessage = "The \"From\" date must be on or before the \"To\" date.";
-
     /// <summary>Statuses of a painting actually sent to an exhibition (not a proposal, not rejected).</summary>
     private static readonly EntryStatus[] SentStatuses = { EntryStatus.ACCEPTED, EntryStatus.SOLD, EntryStatus.UNSOLD };
 
@@ -40,7 +37,7 @@ public class ExhibitionReportService : IExhibitionReportService
     /// <inheritdoc />
     public async Task<ExhibitionSalesReportVm> GetSalesReportAsync(ExhibitionSalesSearchVm search)
     {
-        CheckDateRange(search.From, search.To, nameof(ExhibitionSalesSearchVm.From));
+        DateTimeHelper.EnsureValidRange(search.From, search.To, nameof(ExhibitionSalesSearchVm.From));
         var query = WhereExhibitionAndStudent(_db.ExhibitionEntries.AsNoTracking(), search.ExhibitionId, search.Student);
 
         // Entry status
@@ -124,7 +121,7 @@ public class ExhibitionReportService : IExhibitionReportService
     /// <inheritdoc />
     public async Task<StudentDebtReportVm> GetStudentDebtReportAsync(StudentDebtSearchVm search, DateOnly? today = null)
     {
-        CheckDateRange(search.From, search.To, nameof(StudentDebtSearchVm.From));
+        DateTimeHelper.EnsureValidRange(search.From, search.To, nameof(StudentDebtSearchVm.From));
         var day = today ?? DateTimeHelper.Today;
 
         // Sold and not paid yet = money owed to the student (BR-45)
@@ -170,18 +167,6 @@ public class ExhibitionReportService : IExhibitionReportService
             Count = await query.CountAsync(),
             TotalUnpaid = await query.SumAsync(e => e.SoldPrice ?? 0m),
         };
-    }
-
-    /// <summary>Throws BusinessException when both dates are given and From is after To (TC-M10-03).</summary>
-    /// <param name="from">From date</param>
-    /// <param name="to">To date</param>
-    /// <param name="field">Form field the error is shown next to</param>
-    public static void CheckDateRange(DateOnly? from, DateOnly? to, string field)
-    {
-        if (from is { } f && to is { } t && f > t)
-        {
-            throw new BusinessException(DateRangeMessage, field);
-        }
     }
 
     /// <summary>Filters shared by RPT-04 and RPT-05: exhibition and student (part of the name or the code).</summary>

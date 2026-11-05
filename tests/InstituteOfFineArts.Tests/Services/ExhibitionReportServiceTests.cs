@@ -1,4 +1,5 @@
 using InstituteOfFineArts.Web.Exceptions;
+using InstituteOfFineArts.Web.Helpers;
 using InstituteOfFineArts.Web.Models.Enums;
 using InstituteOfFineArts.Web.Services.Implementations;
 using InstituteOfFineArts.Web.ViewModels.Reports;
@@ -132,8 +133,8 @@ public class ExhibitionReportServiceTests : IDisposable
         var sales = await Assert.ThrowsAsync<BusinessException>(() => Service.GetSalesReportAsync(new ExhibitionSalesSearchVm { From = from, To = to }));
         var debt = await Assert.ThrowsAsync<BusinessException>(() => Service.GetStudentDebtReportAsync(new StudentDebtSearchVm { From = from, To = to }));
 
-        Assert.Equal(ExhibitionReportService.DateRangeMessage, sales.Message);
-        Assert.Equal(ExhibitionReportService.DateRangeMessage, debt.Message);
+        Assert.Equal(DateTimeHelper.InvalidDateRangeMessage, sales.Message);
+        Assert.Equal(DateTimeHelper.InvalidDateRangeMessage, debt.Message);
         Assert.Equal(nameof(ExhibitionSalesSearchVm.From), sales.Field);
     }
 

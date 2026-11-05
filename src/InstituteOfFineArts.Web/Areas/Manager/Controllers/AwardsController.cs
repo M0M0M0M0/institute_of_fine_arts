@@ -1,4 +1,6 @@
+using InstituteOfFineArts.Web.Exceptions;
 using InstituteOfFineArts.Web.Services.Interfaces;
+using InstituteOfFineArts.Web.ViewModels.Common;
 using InstituteOfFineArts.Web.ViewModels.Staff.Awards;
 using Microsoft.AspNetCore.Mvc;
 
@@ -27,6 +29,15 @@ public class AwardsController : ManagerBaseController
     {
         ViewBag.Search = search;
         ViewBag.Competitions = await _awards.GetCompetitionOptionsAsync();
-        return View(await _awards.SearchAsync(search));
+        try
+        {
+            return View(await _awards.SearchAsync(search));
+        }
+        catch (BusinessException ex)
+        {
+            // Invalid filter (e.g. From after To): show the message and an empty list
+            TempData["Error"] = ex.Message;
+            return View(new PagedResult<AwardIssuedListItemVm> { Page = 1, PageSize = 10 });
+        }
     }
 }

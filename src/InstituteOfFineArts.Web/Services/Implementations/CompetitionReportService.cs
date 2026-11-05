@@ -26,9 +26,6 @@ public class CompetitionReportService : ICompetitionReportService
     /// <summary>Maximum length of the comment summary in RPT-06.</summary>
     public const int CommentSummaryLength = 100;
 
-    /// <summary>Message when From is after To (TC-M10-03).</summary>
-    public const string InvalidDateRangeMessage = "Invalid date range: the From date must be on or before the To date.";
-
     /// <summary>Message when RPT-01 is run without a (valid) competition.</summary>
     public const string ChooseCompetitionMessage = "Please choose a competition.";
 
@@ -52,7 +49,7 @@ public class CompetitionReportService : ICompetitionReportService
         {
             throw new BusinessException(ChooseCompetitionMessage, nameof(Rpt01FilterVm.CompetitionId));
         }
-        CheckDateRange(filter.From, filter.To);
+        DateTimeHelper.EnsureValidRange(filter.From, filter.To);
         var competition = await _db.Competitions.AsNoTracking()
             .Where(c => c.Id == competitionId)
             .Select(c => new { c.Code, c.Title })
@@ -114,7 +111,7 @@ public class CompetitionReportService : ICompetitionReportService
     /// <inheritdoc />
     public async Task<Rpt02ResultVm> GetParticipationAsync(Rpt02FilterVm filter, DateOnly? today = null, int maxRows = MaxRows)
     {
-        CheckDateRange(filter.From, filter.To);
+        DateTimeHelper.EnsureValidRange(filter.From, filter.To);
         var day = today ?? DateTimeHelper.Today;
 
         // Competitions whose period overlaps the chosen period, with the actual status
@@ -196,7 +193,7 @@ public class CompetitionReportService : ICompetitionReportService
     /// <inheritdoc />
     public async Task<Rpt03ResultVm> GetAwardsIssuedAsync(Rpt03FilterVm filter, int maxRows = MaxRows)
     {
-        CheckDateRange(filter.From, filter.To);
+        DateTimeHelper.EnsureValidRange(filter.From, filter.To);
         var query = _db.AwardsIssued.AsNoTracking().AsQueryable();
 
         // Competition
@@ -261,7 +258,7 @@ public class CompetitionReportService : ICompetitionReportService
         {
             throw new BusinessException(ChooseStudentMessage, nameof(Rpt06FilterVm.StudentId));
         }
-        CheckDateRange(filter.From, filter.To);
+        DateTimeHelper.EnsureValidRange(filter.From, filter.To);
         var vm = await _db.StudentProfiles.AsNoTracking()
             .Where(p => p.Id == studentId)
             .Select(p => new Rpt06ResultVm
@@ -366,16 +363,6 @@ public class CompetitionReportService : ICompetitionReportService
         return vm;
     }
 
-    /// <summary>Refuses a date range whose From is after its To (TC-M10-03).</summary>
-    /// <param name="from">From day</param>
-    /// <param name="to">To day</param>
-    private static void CheckDateRange(DateOnly? from, DateOnly? to)
-    {
-        if (from is { } f && to is { } t && f > t)
-        {
-            throw new BusinessException(InvalidDateRangeMessage, "From");
-        }
-    }
 
     /// <summary>Submitted from 00:00 of <paramref name="from"/> to 23:59:59 of <paramref name="to"/> (TC-M10-02).</summary>
     /// <param name="query">Entries to filter</param>

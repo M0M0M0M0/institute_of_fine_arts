@@ -6,6 +6,8 @@
 *@
 @{
     ViewData["Title"] = Model.Name;
+    // Read-only list of the artworks of this exhibition (BE2-13, /manager/exhibition-entries)
+    ViewData["ArtworksUrl"] = $"/manager/exhibition-entries?exhibitionId={Model.Id}";
 }
 
 <partial name="~/Views/Shared/Exhibitions/_ExhibitionDetails.cshtml" model="Model" />

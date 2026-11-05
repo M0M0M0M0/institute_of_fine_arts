@@ -69,6 +69,9 @@ public class AwardIssuedService : IAwardIssuedService
     /// <inheritdoc />
     public async Task<PagedResult<AwardIssuedListItemVm>> SearchAsync(AwardIssuedSearchVm search, int pageSize = 10)
     {
+        // From after To is refused like in the reports (TC-M10-03)
+        DateTimeHelper.EnsureValidRange(search.From, search.To, nameof(search.From));
+
         var query = _db.AwardsIssued.AsNoTracking().AsQueryable();
 
         // Competition

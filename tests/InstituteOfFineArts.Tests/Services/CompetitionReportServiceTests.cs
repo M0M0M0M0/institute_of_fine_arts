@@ -201,7 +201,7 @@ public class CompetitionReportServiceTests
             CompetitionId = data.A.Id, From = new DateOnly(2026, 1, 10), To = new DateOnly(2026, 1, 5),
         }));
 
-        Assert.Equal(CompetitionReportService.InvalidDateRangeMessage, ex.Message);
+        Assert.Equal(DateTimeHelper.InvalidDateRangeMessage, ex.Message);
         Assert.Equal("From", ex.Field);
     }
 
@@ -376,7 +376,7 @@ public class CompetitionReportServiceTests
             service.GetParticipationAsync(new Rpt02FilterVm { From = new DateOnly(2026, 2, 1), To = new DateOnly(2026, 1, 1) }, Today));
         var empty = await service.GetParticipationAsync(new Rpt02FilterVm { From = new DateOnly(2000, 1, 1), To = new DateOnly(2000, 12, 31) }, Today);
 
-        Assert.Equal(CompetitionReportService.InvalidDateRangeMessage, ex.Message);
+        Assert.Equal(DateTimeHelper.InvalidDateRangeMessage, ex.Message);
         Assert.Empty(empty.Rows);
         Assert.Equal(0, empty.TotalSubmissions);
         Assert.Equal(0m, empty.TotalParticipationPercent);
@@ -508,7 +508,7 @@ public class CompetitionReportServiceTests
 
         Assert.Equal(CompetitionReportService.ChooseStudentMessage, none.Message);
         Assert.Equal(CompetitionReportService.ChooseStudentMessage, unknown.Message);
-        Assert.Equal(CompetitionReportService.InvalidDateRangeMessage, range.Message);
+        Assert.Equal(DateTimeHelper.InvalidDateRangeMessage, range.Message);
     }
 
     /// <summary>RPT-06 comment summary: long comments are cut with "…".</summary>

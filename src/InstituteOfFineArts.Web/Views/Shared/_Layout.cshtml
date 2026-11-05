@@ -10,7 +10,8 @@
     <link rel="stylesheet" href="~/InstituteOfFineArts.Web.styles.css" asp-append-version="true" />
 </head>
 <body>
-    <header>
+    @* d-print-none: menu and footer are left out when a report is printed (F-M10-08) *@
+    <header class="d-print-none">
         <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
             <div class="container-fluid">
                 <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">InstituteOfFineArts.Web</a>
@@ -24,17 +25,20 @@
                         var menu = new List<(string Text, string Url)>();
                         if (User.IsInRole(InstituteOfFineArts.Web.Helpers.RoleNames.Admin))
                         {
-                            menu.AddRange([("Dashboard", "/admin"), ("Staff", "/admin/staff"), ("Students", "/admin/students")]);
+                            menu.AddRange([("Dashboard", "/admin"), ("Staff", "/admin/staff"), ("Students", "/admin/students"), ("Reports", "/reports")]);
                         }
                         else if (User.IsInRole(InstituteOfFineArts.Web.Helpers.RoleNames.Manager))
                         {
-                            menu.AddRange([("Dashboard", "/manager"), ("Exhibitions", "/manager/exhibitions")]);
+                            menu.AddRange([("Dashboard", "/manager"), ("Students", "/manager/students"), ("Staff", "/manager/staff"),
+                                ("Competitions", "/manager/competitions"), ("Submissions", "/manager/submissions"), ("Awards", "/manager/awards"),
+                                ("Exhibitions", "/manager/exhibitions"), ("Artworks", "/manager/exhibition-entries"),
+                                ("Customers", "/manager/customers"), ("Reports", "/reports")]);
                         }
                         else if (User.IsInRole(InstituteOfFineArts.Web.Helpers.RoleNames.Staff))
                         {
                             menu.AddRange([("Dashboard", "/staff"), ("Competitions", "/staff/competitions"), ("Submissions", "/staff/submissions"),
                                 ("Awards", "/staff/awards"), ("Students", "/staff/students"), ("Exhibitions", "/staff/exhibitions"),
-                                ("Artworks", "/staff/exhibition-entries"), ("Customers", "/staff/customers")]);
+                                ("Artworks", "/staff/exhibition-entries"), ("Customers", "/staff/customers"), ("Reports", "/reports")]);
                         }
                         else if (User.IsInRole(InstituteOfFineArts.Web.Helpers.RoleNames.Student))
                         {
@@ -82,7 +86,7 @@
         </main>
     </div>
 
-    <footer class="border-top footer text-muted">
+    <footer class="border-top footer text-muted d-print-none">
         <div class="container">
             &copy; 2026 - InstituteOfFineArts.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
         </div>

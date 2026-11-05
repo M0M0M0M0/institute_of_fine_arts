@@ -464,4 +464,16 @@ public class AwardIssuedServiceTests
         Assert.Equal(2, (await service.SearchAsync(new AwardIssuedSearchVm { From = Today.AddDays(-1), To = Today })).TotalCount);
         Assert.Equal(0, (await service.SearchAsync(new AwardIssuedSearchVm { CompetitionId = 999 })).TotalCount);
     }
+
+    /// <summary>TC-M10-03 (same rule as the reports): From after To is refused with the shared message.</summary>
+    [Fact]
+    public async Task Search_FromAfterTo_Refused()
+    {
+        var d = Seed();
+        using var db = d.Db;
+        var service = Service(db);
+
+        var ex = await Assert.ThrowsAsync<BusinessException>(() => service.SearchAsync(new AwardIssuedSearchVm { From = Today, To = Today.AddDays(-1) }));
+        Assert.Equal(DateTimeHelper.InvalidDateRangeMessage, ex.Message);
+    }
 }
