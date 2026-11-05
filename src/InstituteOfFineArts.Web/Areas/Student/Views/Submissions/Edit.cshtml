@@ -1,0 +1,42 @@
+@model InstituteOfFineArts.Web.ViewModels.Student.Submissions.SubmissionEditVm
+@*
+    Student – edit an entry / replace its image (/student/submissions/{id}/edit, SCR-43, F-M06-02, F-M06-03).
+    Only while the competition is ongoing (BR-13). Minimal version created by BE1 (BE1-09); FE1 builds the real design in FE1-05.
+*@
+@{
+    ViewData["Title"] = "Edit entry";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <h1 class="h3 mb-1">Edit entry</h1>
+        <p class="text-muted">@Model.CompetitionTitle · you can change your entry until @Model.Deadline.ToString("dd MMM yyyy"), 23:59:59.</p>
+
+        <partial name="_Alerts" />
+
+        @* multipart/form-data is required to upload a new image *@
+        <form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" novalidate>
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+            <div class="mb-3">
+                <div class="mb-2">
+                    <img src="/files/submissions/@Model.Id/thumb" alt="Current image" class="img-thumbnail" style="max-height:160px" />
+                    <div class="small text-muted">Current file: @Model.OriginalFileName</div>
+                </div>
+                <label asp-for="NewImage" class="form-label"></label>
+                <input asp-for="NewImage" type="file" accept=".jpg,.jpeg,image/jpeg" class="form-control" />
+                <div class="form-text">Leave empty to keep the current image. The old image is deleted when you choose a new one.</div>
+                <span asp-validation-for="NewImage" class="text-danger"></span>
+            </div>
+
+            <partial name="_Form" model="Model" />
+
+            <button type="submit" class="btn btn-primary">Save changes</button>
+            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link">Cancel</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

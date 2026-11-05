@@ -1,6 +1,6 @@
 @*
     Temporary home page of the Student area (/student).
-    Created by BE1 to test the login flow (Competitions link added in BE1-06); FE builds the real page.
+    Created by BE1 to test the login flow (Competitions link added in BE1-06, My entries in BE1-08); FE builds the real page.
     The layout comes from Areas/Student/Views/_ViewStart.cshtml.
 *@
 @{
@@ -10,7 +10,7 @@
 <h1 class="h3">Welcome, @User.GetFullName()</h1>
 <p>You are on the home page of the <strong>Student</strong> area (role STUDENT).</p>
 
-<p><a href="/student/competitions">Competitions</a> · <a href="/profile">My profile</a> · <a href="/profile/change-password">Change password</a></p>
+<p><a href="/student/competitions">Competitions</a> · <a href="/student/submissions">My entries</a> · <a href="/profile">My profile</a> · <a href="/profile/change-password">Change password</a></p>
 
 @* Log out with POST plus the anti-forgery token *@
 <form method="post" action="/logout">
