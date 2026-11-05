@@ -1,0 +1,110 @@
+@model Rpt03PageVm
+@*
+    RPT-03 – Awards issued (/reports/rpt-03; F-M10-03): awards by competition, issued date range and student, with
+    the number of awards and the total prize value (Financial). Read only; Print button.
+    Minimal version created by BE2-12; FE builds the real design in FE2-09.
+*@
+@{
+    ViewData["Title"] = "RPT-03 Awards issued";
+    var report = ReportCatalog.All.First(r => r.Code == "RPT-03");
+    var filter = Model.Filter;
+    var result = Model.Result;
+    var detailsBase = User.IsInRole(RoleNames.Manager) ? "/manager/submissions/" : "/staff/submissions/";
+    var competition = Model.Competitions.FirstOrDefault(c => c.Id == filter.CompetitionId);
+}
+
+<partial name="_ReportHeader" model="report" />
+
+<form method="get" action="/reports/rpt-03" class="row g-2 align-items-end mb-3 d-print-none" id="report-filters">
+    <div class="col-md-4">
+        <label class="form-label" for="CompetitionId">Competition</label>
+        <select class="form-select" id="CompetitionId" name="CompetitionId">
+            <option value="">All competitions</option>
+            @foreach (var c in Model.Competitions)
+            {
+                <option value="@c.Id" selected="@(filter.CompetitionId == c.Id)">@c.Code – @c.Title</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="From">Issued from</label>
+        <input class="form-control" type="date" id="From" name="From" value="@filter.From?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="To">Issued to</label>
+        <input class="form-control" type="date" id="To" name="To" value="@filter.To?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label" for="Student">Student name or code</label>
+        <input class="form-control" id="Student" name="Student" value="@filter.Student" maxlength="100" />
+    </div>
+    <div class="col-md-1">
+        <button type="submit" class="btn btn-outline-primary w-100">View</button>
+    </div>
+</form>
+
+<div asp-validation-summary="All" class="text-danger mb-2" id="report-errors"></div>
+
+@if (result != null)
+{
+    <p class="mb-2" id="report-criteria">
+        Competition: @(competition == null ? "all" : competition.Code + " – " + competition.Title)
+        · Issued @(filter.From?.ToString("dd MMM yyyy") ?? "any") to @(filter.To?.ToString("dd MMM yyyy") ?? "any")
+        · Student: @(string.IsNullOrWhiteSpace(filter.Student) ? "all" : filter.Student)
+    </p>
+
+    if (result.TotalCount == 0)
+    {
+        <p class="text-muted" id="no-data">No data</p>
+    }
+    else
+    {
+        if (result.IsTruncated)
+        {
+            <partial name="_Truncated" model="result.TotalCount" />
+        }
+        <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle" id="report-table">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Competition</th>
+                        <th>Award</th>
+                        <th class="text-end">Rank</th>
+                        <th class="text-end">Prize value</th>
+                        <th>Student</th>
+                        <th>Painting</th>
+                        <th>Issued on</th>
+                        <th>Issued by</th>
+                        <th>Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in result.Rows)
+                    {
+                        <tr>
+                            <td>@row.No</td>
+                            <td>@row.CompetitionCode – @row.CompetitionTitle</td>
+                            <td>@row.AwardName</td>
+                            <td class="text-end">@row.Rank</td>
+                            <td class="text-end">@row.PrizeValue.ToString("$#,##0.00")</td>
+                            <td>@row.StudentCode – @row.StudentName</td>
+                            <td><a href="@(detailsBase + row.SubmissionId)">@row.SubmissionTitle</a></td>
+                            <td>@row.IssuedDate.ToString("dd MMM yyyy")</td>
+                            <td>@row.IssuedByName</td>
+                            <td style="white-space: pre-line">@row.Remarks</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @* Totals of §7: number of awards and total prize value *@
+    <table class="table table-sm table-bordered w-auto" id="report-totals">
+        <tbody>
+            <tr><th>Total awards</th><td class="text-end" data-total="count">@result.TotalCount</td></tr>
+            <tr><th>Total prize value</th><td class="text-end" data-total="value">@result.TotalPrizeValue.ToString("$#,##0.00")</td></tr>
+        </tbody>
+    </table>
+}
