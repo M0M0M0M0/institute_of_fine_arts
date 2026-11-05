@@ -1,8 +1,133 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+﻿@model InstituteOfFineArts.Web.ViewModels.Public.HomeVm
+@*
+    Public home page (/, SCR-01, F-M02-01..04, 06, US-02, TC-M02-01..04): upcoming competitions, ongoing competitions
+    with days left and number of entries, winners of the most recent GRADED competition, upcoming exhibitions.
+    Open to guests and every role; no evaluation and no submission text is shown.
+    Minimal version created by BE2 (BE2-11); FE2 builds the real design in FE2-08.
+*@
+@{
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<partial name="_Alerts" />
+
+<div class="text-center mb-4">
+    <h1 class="display-6">Institute of Fine Arts</h1>
+    <p class="text-muted">Painting competitions, results and exhibitions of our students.</p>
+    <a href="/competitions" class="btn btn-outline-primary btn-sm">All competitions</a>
+    <a href="/gallery" class="btn btn-outline-primary btn-sm">Gallery</a>
+</div>
+
+<div class="row g-4">
+    @* F-M02-02, 03: ongoing competitions with days left and number of entries *@
+    <section class="col-lg-6">
+        <h2 class="h5">Ongoing competitions</h2>
+        @if (Model.Ongoing.Count == 0)
+        {
+            <p class="text-muted">No competition is open for entries right now.</p>
+        }
+        else
+        {
+            <ul class="list-group">
+                @foreach (var c in Model.Ongoing)
+                {
+                    <li class="list-group-item">
+                        <a href="/competitions/@c.Id" class="fw-semibold">@c.Title</a>
+                        <div class="small text-muted">
+                            @c.StartDate.ToString("dd MMM yyyy") – @c.EndDate.ToString("dd MMM yyyy") ·
+                            @(c.DaysLeft == 0 ? "last day" : c.DaysLeft == 1 ? "1 day left" : $"{c.DaysLeft} days left") ·
+                            <span class="submission-count">@c.SubmissionCount</span> entr@(c.SubmissionCount == 1 ? "y" : "ies")
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+
+    @* F-M02-01: upcoming competitions *@
+    <section class="col-lg-6">
+        <h2 class="h5">Upcoming competitions</h2>
+        @if (Model.Upcoming.Count == 0)
+        {
+            <p class="text-muted">No upcoming competition.</p>
+        }
+        else
+        {
+            <ul class="list-group">
+                @foreach (var c in Model.Upcoming)
+                {
+                    <li class="list-group-item">
+                        <a href="/competitions/@c.Id" class="fw-semibold">@c.Title</a>
+                        <div class="small text-muted">@c.StartDate.ToString("dd MMM yyyy") – @c.EndDate.ToString("dd MMM yyyy")</div>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+
+    @* F-M02-04: winners of the most recent GRADED competition (never a CLOSED one, US-02 AC4) *@
+    <section class="col-lg-6">
+        <h2 class="h5">Latest award winners</h2>
+        @if (Model.LatestResults is not { } latest)
+        {
+            <p class="text-muted">No results have been published yet.</p>
+        }
+        else
+        {
+            <p class="mb-2">
+                <a href="/competitions/@latest.CompetitionId">@latest.CompetitionTitle</a>
+                @if (latest.PublishedAt is { } published)
+                {
+                    <span class="small text-muted">· published @published.ToString("dd MMM yyyy")</span>
+                }
+            </p>
+            @if (latest.Winners.Count == 0)
+            {
+                <p class="text-muted">No awards were issued in this competition.</p>
+            }
+            else
+            {
+                <ul class="list-group">
+                    @foreach (var w in latest.Winners)
+                    {
+                        <li class="list-group-item d-flex gap-3 align-items-center">
+                            <div style="width:70px" class="flex-shrink-0">
+                                @if (w.HasThumbnail)
+                                {
+                                    <img src="/files/submissions/@w.SubmissionId/thumb" alt="@w.ArtworkTitle" class="img-thumbnail" style="max-height:60px" />
+                                }
+                            </div>
+                            <div>
+                                <div class="fw-semibold">@w.StudentName</div>
+                                <div class="small"><span class="badge bg-success">@w.AwardName</span> “@w.ArtworkTitle”</div>
+                            </div>
+                        </li>
+                    }
+                </ul>
+            }
+        }
+    </section>
+
+    @* F-M02-06: upcoming exhibitions *@
+    <section class="col-lg-6">
+        <h2 class="h5">Upcoming exhibitions</h2>
+        @if (Model.UpcomingExhibitions.Count == 0)
+        {
+            <p class="text-muted">No upcoming exhibition.</p>
+        }
+        else
+        {
+            <ul class="list-group">
+                @foreach (var e in Model.UpcomingExhibitions)
+                {
+                    <li class="list-group-item">
+                        <div class="fw-semibold">@e.Name</div>
+                        <div class="small text-muted">
+                            @e.Venue, @e.City · @e.StartDate.ToString("dd MMM yyyy") – @e.EndDate.ToString("dd MMM yyyy")
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
 </div>
