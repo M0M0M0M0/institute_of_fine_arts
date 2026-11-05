@@ -1,0 +1,89 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.ExhibitionEntries.EntryDetailsVm
+@*
+    Manager – exhibition entry details, read only (/manager/exhibition-entries/{id}, SCR-55; F-M09-11 = F-M11-07):
+    painting, student, exhibition, asking / sold price, customer, payment to the student. The Can* flags and action
+    forms of the model are ignored on purpose: only STAFF changes entries.
+    Minimal version created by BE2-13; FE2 builds the real design in FE2-10.
+*@
+@{
+    ViewData["Title"] = $"Entry – {Model.Title}";
+}
+
+<partial name="_Alerts" />
+
+<div class="mb-3">
+    <h1 class="h3 mb-1">@Model.Title</h1>
+    <div class="text-muted">
+        @Model.StudentName (@Model.StudentCode) · @Model.ExhibitionName · <partial name="_Status" model="Model.Status" />
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <img src="/files/submissions/@Model.SubmissionId/thumb" alt="@Model.Title" class="img-fluid rounded border mb-2" />
+        <div class="small">
+            @* Manager read-only submission page (BE2-13 part 1) *@
+            <a href="/manager/submissions/@Model.SubmissionId">Submission details</a> · @Model.CompetitionTitle
+            @if (Model.Rating is { } rating)
+            {
+                <span>· @rating</span>
+            }
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <dl class="row">
+            <dt class="col-sm-4">Exhibition</dt>
+            <dd class="col-sm-8">
+                <a asp-controller="Exhibitions" asp-action="Details" asp-route-id="@Model.ExhibitionId">@Model.ExhibitionName</a>, @Model.City
+                <div class="small text-muted">@Model.StartDate.ToString("dd MMM yyyy") – @Model.EndDate.ToString("dd MMM yyyy") (@Model.ExhibitionStatus)</div>
+            </dd>
+            <dt class="col-sm-4">Asking price</dt>
+            <dd class="col-sm-8">@Model.AskingPrice.ToString("$#,##0.00")</dd>
+            <dt class="col-sm-4">Created</dt>
+            <dd class="col-sm-8">
+                @Model.CreatedAt.ToString("dd MMM yyyy HH:mm") by @Model.ProposedByName
+                <span class="small text-muted">(@(Model.ProposedByRole == Role.STUDENT ? "student proposal" : "sent by staff"))</span>
+            </dd>
+            @if (Model.Notes != null)
+            {
+                <dt class="col-sm-4">Notes</dt>
+                <dd class="col-sm-8" style="white-space: pre-line">@Model.Notes</dd>
+            }
+            @if (Model.ReviewedByName != null)
+            {
+                <dt class="col-sm-4">Reviewed by</dt>
+                <dd class="col-sm-8">@Model.ReviewedByName</dd>
+            }
+            @if (Model.RejectReason != null)
+            {
+                <dt class="col-sm-4">Reason for rejecting</dt>
+                <dd class="col-sm-8" style="white-space: pre-line">@Model.RejectReason</dd>
+            }
+            @* Sale and payment only exist once the painting is SOLD *@
+            @if (Model.Status == EntryStatus.SOLD)
+            {
+                <dt class="col-sm-4">Sold</dt>
+                <dd class="col-sm-8">@Model.SoldPrice?.ToString("$#,##0.00") on @Model.SoldDate?.ToString("dd MMM yyyy")</dd>
+                <dt class="col-sm-4">Customer</dt>
+                <dd class="col-sm-8">
+                    @Model.CustomerName
+                    <div class="small text-muted">@Model.CustomerPhone @Model.CustomerEmail</div>
+                </dd>
+                <dt class="col-sm-4">Paid to student</dt>
+                <dd class="col-sm-8">
+                    @if (Model.PaidToStudent)
+                    {
+                        <span class="badge bg-success">Paid</span>
+                        <span>@Model.PaidAmount?.ToString("$#,##0.00") on @Model.PaidDate?.ToString("dd MMM yyyy")</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-warning text-dark">Not paid to student</span>
+                    }
+                </dd>
+            }
+        </dl>
+    </div>
+</div>
+
+<a asp-action="Index" asp-route-exhibitionId="@Model.ExhibitionId" class="btn btn-link px-0">Back to the entries</a>

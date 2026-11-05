@@ -1,0 +1,13 @@
+@model InstituteOfFineArts.Web.Models.Enums.EntryStatus
+@* Coloured badge for an exhibition entry status (PENDING / ACCEPTED / REJECTED / SOLD / UNSOLD); same as the Staff partial (BE2-13). *@
+@{
+    var css = Model switch
+    {
+        EntryStatus.PENDING => "bg-warning text-dark",
+        EntryStatus.ACCEPTED => "bg-info text-dark",
+        EntryStatus.REJECTED => "bg-danger",
+        EntryStatus.SOLD => "bg-success",
+        _ => "bg-secondary",
+    };
+}
+<span class="badge @css">@Model</span>
