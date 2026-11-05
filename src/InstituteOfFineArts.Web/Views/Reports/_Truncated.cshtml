@@ -1,0 +1,7 @@
+@model int
+@* Warning shown when a report matched more rows than it displays (cap: CompetitionReportService.MaxRows). *@
+<div class="alert alert-warning" id="rows-truncated">
+    The result has @Model.ToString("#,##0") rows; only the first
+    @InstituteOfFineArts.Web.Services.Implementations.CompetitionReportService.MaxRows.ToString("#,##0") are shown.
+    Narrow the filters to see every row.
+</div>

@@ -1,0 +1,167 @@
+@model Rpt02PageVm
+@*
+    RPT-02 – Participation & ratings per competition (/reports/rpt-02; F-M10-02; BR-12). One row per competition with
+    the count per rating, the totals row, and the list of active students who have not submitted to a chosen competition.
+    Minimal version created by BE2-12; FE builds the real design in FE2-09.
+*@
+@{
+    ViewData["Title"] = "RPT-02 Participation & ratings";
+    var report = ReportCatalog.All.First(r => r.Code == "RPT-02");
+    var filter = Model.Filter;
+    var result = Model.Result;
+    var ratings = Enum.GetValues<Rating>();
+    // Link to the same report with the BR-12 list of one competition (keeps the other filters)
+    string NotSubmittedUrl(long competitionId) => Url.Action("Rpt02", new
+    {
+        From = filter.From?.ToString("yyyy-MM-dd"), To = filter.To?.ToString("yyyy-MM-dd"), filter.Status,
+        NotSubmittedCompetitionId = competitionId,
+    })! + "#not-submitted";
+}
+
+<partial name="_ReportHeader" model="report" />
+
+<form method="get" action="/reports/rpt-02" class="row g-2 align-items-end mb-3 d-print-none" id="report-filters">
+    <div class="col-md-2">
+        <label class="form-label" for="From">Period from</label>
+        <input class="form-control" type="date" id="From" name="From" value="@filter.From?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="To">Period to</label>
+        <input class="form-control" type="date" id="To" name="To" value="@filter.To?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="Status">Status</label>
+        <select class="form-select" id="Status" name="Status">
+            <option value="">All</option>
+            @foreach (var s in Enum.GetValues<CompetitionStatus>())
+            {
+                <option value="@s" selected="@(filter.Status == s)">@s</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label" for="NotSubmittedCompetitionId">Students who have not submitted to</label>
+        <select class="form-select" id="NotSubmittedCompetitionId" name="NotSubmittedCompetitionId">
+            <option value="">– None –</option>
+            @foreach (var c in Model.Competitions)
+            {
+                <option value="@c.Id" selected="@(filter.NotSubmittedCompetitionId == c.Id)">@c.Code – @c.Title</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-primary w-100">View</button>
+    </div>
+</form>
+
+<div asp-validation-summary="All" class="text-danger mb-2" id="report-errors"></div>
+
+@if (result != null)
+{
+    <p class="mb-2" id="report-criteria">
+        Period @(filter.From?.ToString("dd MMM yyyy") ?? "any") to @(filter.To?.ToString("dd MMM yyyy") ?? "any")
+        · Status: @(filter.Status?.ToString() ?? "all")
+        · Active students today: <strong id="active-students">@result.ActiveStudents</strong>
+    </p>
+
+    if (result.TotalCount == 0)
+    {
+        <p class="text-muted" id="no-data">No data</p>
+    }
+    else
+    {
+        if (result.IsTruncated)
+        {
+            <partial name="_Truncated" model="result.TotalCount" />
+        }
+        <div class="table-responsive">
+            <table class="table table-sm table-striped align-middle" id="report-table">
+                <thead>
+                    <tr>
+                        <th>Competition</th>
+                        <th>Start – End</th>
+                        <th>Status</th>
+                        <th class="text-end">Active students</th>
+                        <th class="text-end">Submissions</th>
+                        <th class="text-end">Participation</th>
+                        @foreach (var r in ratings)
+                        {
+                            <th class="text-end">@r</th>
+                        }
+                        <th class="text-end">Not graded</th>
+                        <th class="text-end">Not submitted</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in result.Rows)
+                    {
+                        <tr data-competition-id="@row.CompetitionId">
+                            <td>@row.Code – @row.Title</td>
+                            <td class="text-nowrap">@row.StartDate.ToString("dd MMM yyyy") – @row.EndDate.ToString("dd MMM yyyy")</td>
+                            <td><partial name="_Status" model="row.Status" /></td>
+                            <td class="text-end">@row.ActiveStudents</td>
+                            <td class="text-end" data-col="submissions">@row.Submissions</td>
+                            <td class="text-end" data-col="participation">@row.ParticipationPercent.ToString("0.0")%</td>
+                            @foreach (var r in ratings)
+                            {
+                                <td class="text-end" data-col="@r">@row.CountByRating[r]</td>
+                            }
+                            <td class="text-end" data-col="NOT_GRADED">@row.NotGraded</td>
+                            <td class="text-end" data-col="not-submitted"><a href="@NotSubmittedUrl(row.CompetitionId)">@row.NotSubmitted</a></td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    @* Totals row of §7 *@
+                    <tr class="fw-bold" id="report-totals">
+                        <td>Total (@result.TotalCount competitions)</td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td class="text-end" data-col="submissions">@result.TotalSubmissions</td>
+                        <td class="text-end" data-col="participation">@result.TotalParticipationPercent.ToString("0.0")%</td>
+                        @foreach (var r in ratings)
+                        {
+                            <td class="text-end" data-col="@r">@result.TotalByRating[r]</td>
+                        }
+                        <td class="text-end" data-col="NOT_GRADED">@result.TotalNotGraded</td>
+                        <td></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <p class="small text-muted">Participation = active students with an entry / active students. The total participation is the average over the competitions.</p>
+    }
+
+    @* BR-12: active students who have not submitted to the chosen competition *@
+    if (result.NotSubmitted is { } missing)
+    {
+        <h2 class="h5 mt-4" id="not-submitted">Students who have not submitted – @missing.Code – @missing.Title</h2>
+        if (missing.Students.Count == 0)
+        {
+            <p class="text-muted" id="not-submitted-none">Every active student has submitted.</p>
+        }
+        else
+        {
+            <table class="table table-sm table-striped" id="not-submitted-table">
+                <thead>
+                    <tr><th>No.</th><th>Student code</th><th>Full name</th><th>Class</th><th>Course</th><th>Email</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var s in missing.Students)
+                    {
+                        <tr data-student-id="@s.StudentId">
+                            <td>@s.No</td>
+                            <td>@s.StudentCode</td>
+                            <td>@s.FullName</td>
+                            <td>@s.ClassName</td>
+                            <td>@s.CourseName</td>
+                            <td>@s.Email</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <p class="small">Total: <strong id="not-submitted-count">@missing.Students.Count</strong> student(s)</p>
+        }
+    }
+}
