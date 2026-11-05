@@ -1,7 +1,7 @@
 @model InstituteOfFineArts.Web.ViewModels.Staff.ExhibitionEntries.EntryDetailsVm
 @*
     Staff – exhibition entry details and actions (/staff/exhibition-entries/{id}, SCR-30, SCR-31; F-M09-05, 06, 08):
-    accept / reject (PENDING), sold / unsold (ACCEPTED), paid to student (SOLD), delete (before the exhibition starts).
+    accept / reject (PENDING), sold (ACCEPTED, or UNSOLD entered late) / unsold (ACCEPTED), paid to student (SOLD), delete (before the exhibition starts).
     Only the actions allowed in the current state are shown; the server checks every rule again (state diagram §4.7c).
     Minimal version created by BE1 (BE1-12, BE1-13); FE1 builds the real design in FE1-08 / FE1-09.
 *@
@@ -116,7 +116,7 @@
             </div>
         }
 
-        @* ACCEPTED: record the sale (BR-44) *@
+        @* ACCEPTED (or UNSOLD entered late, after the status job): record the sale (BR-44) *@
         @if (Model.CanSell)
         {
             <div class="card mb-3">

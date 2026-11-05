@@ -30,8 +30,11 @@ public class ExhibitionEntryService : IExhibitionEntryService
     /// <summary>Message when a proposal is accepted after the exhibition has started (BR-42).</summary>
     public const string AcceptStartedMessage = "The exhibition has already started; a proposal can only be accepted before the exhibition starts.";
 
-    /// <summary>Message when a sale is recorded for an entry that is not ACCEPTED.</summary>
+    /// <summary>Message when a sale is recorded for an entry that is not ACCEPTED (or UNSOLD after the exhibition).</summary>
     public const string SellNotAcceptedMessage = "Only an accepted painting can be marked as sold.";
+
+    /// <summary>Message when an UNSOLD painting has since been sent to / sold at another exhibition (BR-43).</summary>
+    public const string SellMovedOnMessage = "This painting has since been sent to another exhibition, so this sale cannot be recorded.";
 
     /// <summary>Message when a sale is recorded before the exhibition starts.</summary>
     public const string SellNotStartedMessage = "The exhibition has not started yet, so no sale can be recorded.";
@@ -269,7 +272,10 @@ public class ExhibitionEntryService : IExhibitionEntryService
         vm.ExhibitionStatus = exhibitionStatus;
         vm.CanAccept = vm.Status == EntryStatus.PENDING && exhibitionStatus == ExhibitionStatus.UPCOMING;
         vm.CanReject = vm.Status == EntryStatus.PENDING;
-        vm.CanSell = vm.Status == EntryStatus.ACCEPTED && exhibitionStatus != ExhibitionStatus.UPCOMING;
+        // A sale can also be entered for an UNSOLD painting (late entry after the status job), unless it has moved on
+        vm.CanSell = (vm.Status == EntryStatus.ACCEPTED && exhibitionStatus != ExhibitionStatus.UPCOMING)
+                     || (vm.Status == EntryStatus.UNSOLD && !await _db.ExhibitionEntries.AnyAsync(e => e.SubmissionId == vm.SubmissionId && e.Id != vm.Id
+                         && (e.Status == EntryStatus.PENDING || e.Status == EntryStatus.ACCEPTED || e.Status == EntryStatus.SOLD)));
         vm.CanMarkUnsold = vm.Status == EntryStatus.ACCEPTED && exhibitionStatus == ExhibitionStatus.FINISHED;
         vm.CanPay = vm.Status == EntryStatus.SOLD && !vm.PaidToStudent;
         vm.CanDelete = CanDelete(vm.Status, exhibitionStatus);
@@ -334,7 +340,17 @@ public class ExhibitionEntryService : IExhibitionEntryService
     public async Task MarkSoldAsync(long id, SoldFormVm form, long staffProfileId)
     {
         var entry = await FindAsync(id);
-        EnsureStatus(entry, EntryStatus.ACCEPTED, SellNotAcceptedMessage);
+
+        // ACCEPTED, or UNSOLD: the status job turns accepted paintings into UNSOLD as soon as the exhibition ends,
+        // so a sale made on the last day and entered the next morning must still be recordable
+        if (entry.Status is not (EntryStatus.ACCEPTED or EntryStatus.UNSOLD))
+        {
+            throw new BusinessException(SellNotAcceptedMessage);
+        }
+        if (entry.Status == EntryStatus.UNSOLD && await IsInAnotherExhibitionAsync(entry))
+        {
+            throw new BusinessException(SellMovedOnMessage);
+        }
 
         // The painting can only be sold at the exhibition, i.e. once it has started
         var today = DateTimeHelper.Today;
@@ -478,4 +494,13 @@ public class ExhibitionEntryService : IExhibitionEntryService
             throw new BusinessException(message);
         }
     }
+
+    /// <summary>
+    /// True when the painting of an UNSOLD entry has since been sent to another exhibition (PENDING / ACCEPTED) or sold
+    /// there (BR-43); the old unsold entry can then no longer become a sale.
+    /// </summary>
+    /// <param name="entry">The unsold entry</param>
+    private Task<bool> IsInAnotherExhibitionAsync(ExhibitionEntry entry)
+        => _db.ExhibitionEntries.AnyAsync(e => e.SubmissionId == entry.SubmissionId && e.Id != entry.Id
+            && (e.Status == EntryStatus.PENDING || e.Status == EntryStatus.ACCEPTED || e.Status == EntryStatus.SOLD));
 }

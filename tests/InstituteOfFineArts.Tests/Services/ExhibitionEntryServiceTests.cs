@@ -227,11 +227,41 @@ public class ExhibitionEntryServiceTests : IDisposable
         Assert.Equal(nameof(SoldFormVm.SoldDate), future.Field);
     }
 
-    /// <summary>Sale only from ACCEPTED (PENDING, UNSOLD, SOLD refused) and only once the exhibition has started.</summary>
+    /// <summary>
+    /// The status job turns ACCEPTED into UNSOLD when the exhibition ends; a sale made on the last day and entered
+    /// afterwards is still recorded (sale date inside the exhibition, BR-44).
+    /// </summary>
+    [Fact]
+    public async Task Sold_FromUnsold_AfterExhibition_Recorded()
+    {
+        var id = Entry(EntryStatus.UNSOLD, "finished");
+
+        await Service.MarkSoldAsync(id, SoldForm(date: _data.Finished.EndDate), _data.StaffId);
+
+        var e = _data.Reload(id)!;
+        Assert.Equal(EntryStatus.SOLD, e.Status);
+        Assert.Equal(_data.Finished.EndDate, e.SoldDate);
+        Assert.Equal(_data.Customer.Id, e.CustomerId);
+    }
+
+    /// <summary>BR-43: an UNSOLD painting that has since been sent to another exhibition cannot become a sale of the old one.</summary>
+    [Fact]
+    public async Task Sold_FromUnsold_SentElsewhere_Refused()
+    {
+        var s = _data.AddPainting(_data.Student1, Rating.BEST);
+        var old = _data.AddEntry(s, _data.Finished, EntryStatus.UNSOLD);
+        _data.AddEntry(s, _data.Upcoming, EntryStatus.PENDING);
+
+        var ex = await Assert.ThrowsAsync<BusinessException>(() => Service.MarkSoldAsync(old.Id, SoldForm(date: _data.Finished.EndDate), _data.StaffId));
+        Assert.Equal(ExhibitionEntryService.SellMovedOnMessage, ex.Message);
+        Assert.Equal(EntryStatus.UNSOLD, _data.Reload(old.Id)!.Status);
+    }
+
+    /// <summary>Sale only from ACCEPTED or UNSOLD (PENDING, REJECTED, SOLD refused) and only once the exhibition has started.</summary>
     [Fact]
     public async Task Sold_WrongState_Refused()
     {
-        foreach (var status in new[] { EntryStatus.PENDING, EntryStatus.UNSOLD, EntryStatus.SOLD })
+        foreach (var status in new[] { EntryStatus.PENDING, EntryStatus.REJECTED, EntryStatus.SOLD })
         {
             var id = Entry(status);
             var ex = await Assert.ThrowsAsync<BusinessException>(() => Service.MarkSoldAsync(id, SoldForm(), _data.StaffId));
