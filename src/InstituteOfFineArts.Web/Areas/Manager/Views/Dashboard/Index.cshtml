@@ -1,15 +1,105 @@
+@model InstituteOfFineArts.Web.ViewModels.Manager.ManagerDashboardVm
 @*
-    Temporary home page of the Manager area (/manager).
-    Created by BE1 to test the login flow; BE2-13 adds the figures and FE builds the real page.
+    Manager – dashboard (/manager, SCR-50; F-M11-01, US-15 AC3): students, staff, competitions by status,
+    submissions, awards issued, paintings sold and total sales. Read only.
+    Minimal version created by BE (BE2-13); FE2 builds the real design in FE2-10.
 *@
 @{
     ViewData["Title"] = "Manager";
 }
 
-<h1 class="h3">Welcome, @User.GetFullName()</h1>
-<p>You are on the home page of the <strong>Manager</strong> area (role MANAGER).</p>
+<partial name="_Alerts" />
 
-<p><a href="/profile">My profile</a> · <a href="/profile/change-password">Change password</a></p>
+<h1 class="h3">Welcome, @User.GetFullName()</h1>
+
+@* Links to the read-only pages of the area (awards, exhibition entries and customers come with BE2-13 part 2) *@
+<p>
+    <a href="/manager/students">Students</a> · <a href="/manager/staff">Staff</a> · <a href="/manager/competitions">Competitions</a> ·
+    <a href="/manager/submissions">Submissions</a> · <a href="/manager/awards">Awards</a> · <a href="/manager/exhibitions">Exhibitions</a> ·
+    <a href="/manager/exhibition-entries">Exhibition entries</a> · <a href="/manager/customers">Customers</a> · <a href="/manager/reports">Reports</a> ·
+    <a href="/profile">My profile</a> · <a href="/profile/change-password">Change password</a>
+</p>
+
+@* Summary cards: one per area, each with its breakdown *@
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100" id="card-students">
+            <div class="card-body">
+                <h2 class="h6 text-uppercase text-muted">Students</h2>
+                <div class="display-6" data-stat="students-total">@Model.StudentsTotal</div>
+                <ul class="list-unstyled small mb-0">
+                    <li>Active accounts: <strong data-stat="students-active">@Model.StudentsActive</strong></li>
+                    @foreach (var (status, count) in Model.StudentsByEnrollment)
+                    {
+                        <li>@status: <strong data-stat="enrollment-@status">@count</strong></li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100" id="card-staff">
+            <div class="card-body">
+                <h2 class="h6 text-uppercase text-muted">Staff</h2>
+                <div class="display-6" data-stat="staff-total">@Model.StaffTotal</div>
+                <ul class="list-unstyled small mb-0">
+                    @foreach (var (role, count) in Model.StaffByRole)
+                    {
+                        <li>@role: <strong data-stat="staff-@role">@count</strong></li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100" id="card-competitions">
+            <div class="card-body">
+                <h2 class="h6 text-uppercase text-muted">Competitions</h2>
+                <div class="display-6" data-stat="competitions-total">@Model.CompetitionsTotal</div>
+                <ul class="list-unstyled small mb-0">
+                    @foreach (var (status, count) in Model.CompetitionsByStatus)
+                    {
+                        <li><a href="/manager/competitions?Status=@status">@status</a>: <strong data-stat="competition-@status">@count</strong></li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100" id="card-submissions">
+            <div class="card-body">
+                <h2 class="h6 text-uppercase text-muted">Submissions</h2>
+                <div class="display-6" data-stat="submissions-total">@Model.SubmissionsTotal</div>
+                <ul class="list-unstyled small mb-0">
+                    <li>Evaluated: <strong data-stat="submissions-evaluated">@Model.SubmissionsEvaluated</strong></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100" id="card-awards">
+            <div class="card-body">
+                <h2 class="h6 text-uppercase text-muted">Awards issued</h2>
+                <div class="display-6" data-stat="awards-issued">@Model.AwardsIssued</div>
+                <ul class="list-unstyled small mb-0">
+                    <li>Total prize value: <strong data-stat="awards-prize-total">@Model.AwardsPrizeTotal.ToString("$#,##0.00")</strong></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-xl-3">
+        <div class="card h-100" id="card-sales">
+            <div class="card-body">
+                <h2 class="h6 text-uppercase text-muted">Paintings sold</h2>
+                <div class="display-6" data-stat="paintings-sold">@Model.PaintingsSold</div>
+                <ul class="list-unstyled small mb-0">
+                    <li>Total sales: <strong data-stat="total-sales">@Model.TotalSales.ToString("$#,##0.00")</strong></li>
+                    <li>Paid to students: <strong data-stat="paid-to-students">@Model.PaidToStudents.ToString("$#,##0.00")</strong></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
 
 @* Log out with POST plus the anti-forgery token *@
 <form method="post" action="/logout">
