@@ -26,6 +26,9 @@ logs/
 database/backups/*
 !database/backups/.gitkeep
 
+# ===== Claude Code (settings, skills, agent worktrees): NEVER commit =====
+.claude/
+
 # ===== OS / Office junk files =====
 Thumbs.db
 .DS_Store
