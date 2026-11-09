@@ -561,3 +561,51 @@ a.artwork-frame:hover img { transform: scale(1.025); }
     .tag { border: 1px solid #999; background: none !important; color: #000 !important; }
     h1 { font-size: 20pt; }
 }
+
+/* ---------- Agent S (FE1-04, FE1-05, FE1-08, FE2-06, FE2-07): student area ---------- */
+/* Deadline inside a wall label: same voice, label size */
+.wall-label .deadline { font-size: .875rem; }
+.wall-label .wl-actions { margin-top: .5rem; display: flex; flex-wrap: wrap; gap: .4rem; }
+/* Segmented pills built by upload-preview.js from a <select data-seg-pills>; keyboard focus on the pill */
+.seg-pills { display: flex; width: fit-content; max-width: 100%; flex-wrap: wrap; }
+/* Painting page: keep a visible stage while the image loads or is missing */
+.artwork-stage .artwork-frame { min-height: 14rem; }
+.seg > input:focus-visible + label { outline: 2px solid var(--ifa-ink); outline-offset: -4px; }
+/* Live preview of the chosen JPEG (upload-preview.js) and the current image on the edit form */
+.upload-preview { margin-top: .9rem; display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); gap: 1rem 1.25rem; align-items: start; }
+.upload-preview .wall-label { padding-top: 0; }
+.upload-preview .wl-note { color: var(--ifa-warning); }
+@media (max-width: 575.98px) { .upload-preview { grid-template-columns: 1fr; } }
+/* Next steps on the student dashboard: a quiet list of rows, not a card grid */
+.next-steps { list-style: none; padding: 0; margin: 0 0 2rem; border-top: 1px solid var(--ifa-text); }
+.next-steps > li { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr) auto; gap: .25rem 1rem; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--ifa-line); }
+.next-steps > li > .bi { font-size: 1.35rem; color: var(--ifa-ink); }
+.next-steps .step-title { font-family: var(--ifa-font-display); font-size: 1.25rem; line-height: 1.25; }
+.next-steps .step-title a { color: var(--ifa-text); text-decoration: none; }
+.next-steps .step-title a:hover { text-decoration: underline; }
+.next-steps p { margin: .15rem 0 0; color: var(--ifa-muted); font-size: .9375rem; }
+@media (max-width: 575.98px) { .next-steps > li { grid-template-columns: 2rem minmax(0, 1fr); } .next-steps > li > .step-action { grid-column: 2; } }
+/* My results ledger: each entry is a <tbody class="card mb-3"> (kept for the e2e scripts), drawn as table rows */
+.result-ledger > tbody.card { display: table-row-group; border: 0; border-radius: 0; background: none; margin: 0 !important; }
+.result-ledger > tbody > tr.result-comments > td { padding-top: 0; color: var(--ifa-text); }
+.result-ledger > tbody > tr:not(:last-child) > td { border-bottom-width: 0; }
+.result-ledger .details { margin: 0; font-size: .9375rem; }
+.result-ledger .details dd { white-space: pre-line; max-width: 70ch; }
+/* Phones: each entry stacks (painting, title, competition, rating, comments) instead of scrolling sideways */
+@media (max-width: 575.98px) {
+    .result-ledger > thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .result-ledger, .result-ledger > tbody.card, .result-ledger tr, .result-ledger td { display: block; }
+    .result-ledger > tbody.card { border-bottom: 1px solid var(--ifa-line); padding: .75rem 0; }
+    .result-ledger > tbody > tr > td { border: 0; padding: .2rem 0; }
+    .result-ledger > tbody > tr > td:empty { display: none; }
+}
+/* Staff comments folded under a wall label (Best works) */
+.wall-label details { margin-top: .5rem; color: var(--ifa-text); }
+.wall-label details summary { cursor: pointer; color: var(--ifa-ink); font-weight: 500; }
+.wall-label details dl { margin: .5rem 0 0; }
+.wall-label details dt { font-weight: 500; color: var(--ifa-muted); margin-top: .35rem; }
+.wall-label details dd { margin: 0; white-space: pre-line; }
+/* Evaluation block on a painting's page */
+.evaluation { background: var(--ifa-mist); padding: 1.25rem 1.5rem; }
+.evaluation .details { margin-bottom: 0; }
+.evaluation .details dd { white-space: pre-line; }

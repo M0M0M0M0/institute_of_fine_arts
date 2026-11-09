@@ -1,19 +1,72 @@
 @*
-    Temporary home page of the Student area (/student).
-    Created by BE1 to test the login flow (Competitions link added in BE1-06, My entries in BE1-08); FE builds the real page.
+    Student – home page (/student): what to do next, as a quiet list of steps with links.
+    Created by BE1 (BE1-02, links added in BE1-06 / BE1-08); styled by FE1-04.
+    The page has no view model yet, so it cannot list open competitions or the latest results itself (see the PR notes).
     The layout comes from Areas/Student/Views/_ViewStart.cshtml.
 *@
 @{
     ViewData["Title"] = "Student";
 }
 
-<h1 class="h3">Welcome, @User.GetFullName()</h1>
-<p>You are on the home page of the <strong>Student</strong> area (role STUDENT).</p>
+<div class="page-head">
+    <div>
+        <h1>Welcome, @User.GetFullName()</h1>
+        <p class="page-sub">Enter a competition, follow your paintings through grading, and send your best works to an exhibition.</p>
+    </div>
+    <div class="page-actions">
+        <a href="/student/competitions" class="btn btn-primary"><i class="bi bi-easel" aria-hidden="true"></i>Find a competition</a>
+    </div>
+</div>
 
-<p><a href="/student/competitions">Competitions</a> · <a href="/student/submissions">My entries</a> · <a href="/profile">My profile</a> · <a href="/profile/change-password">Change password</a></p>
+<partial name="_Alerts" />
 
-@* Log out with POST plus the anti-forgery token *@
-<form method="post" action="/logout">
-    @Html.AntiForgeryToken()
-    <button type="submit" class="btn btn-outline-secondary">Log out</button>
-</form>
+<section class="section" aria-labelledby="next-title">
+    <div class="section-head"><h2 id="next-title">What to do next</h2></div>
+    <ul class="next-steps">
+        <li>
+            <i class="bi bi-easel" aria-hidden="true"></i>
+            <div>
+                <div class="step-title"><a href="/student/competitions">Competitions</a></div>
+                <p>See which competitions are open for entries, their deadlines and awards.</p>
+            </div>
+            <a href="/student/competitions" class="btn btn-sm btn-outline-primary step-action">Open competitions</a>
+        </li>
+        <li>
+            <i class="bi bi-images" aria-hidden="true"></i>
+            <div>
+                <div class="step-title"><a href="/student/submissions">My entries</a></div>
+                <p>Your paintings with the time left to edit them, or their rating once results are published.</p>
+            </div>
+            <a href="/student/submissions" class="btn btn-sm btn-outline-primary step-action">View my entries</a>
+        </li>
+        <li>
+            <i class="bi bi-clipboard-check" aria-hidden="true"></i>
+            <div>
+                <div class="step-title"><a href="/student/results">My results</a></div>
+                <p>Ratings, awards and the staff comments on each of your entries.</p>
+            </div>
+            <a href="/student/results" class="btn btn-sm btn-outline-primary step-action">View results</a>
+        </li>
+        <li>
+            <i class="bi bi-bank" aria-hidden="true"></i>
+            <div>
+                <div class="step-title"><a href="/student/exhibitions">Exhibitions</a></div>
+                <p>Propose a painting rated BEST or BETTER to an upcoming exhibition and follow its sale.</p>
+            </div>
+            <a href="/student/exhibition-entries" class="btn btn-sm btn-outline-primary step-action">My artworks on show</a>
+        </li>
+    </ul>
+</section>
+
+<section class="section" aria-labelledby="account-title">
+    <div class="section-head"><h2 id="account-title">Your account</h2></div>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <a href="/profile" class="btn btn-sm btn-outline-primary"><i class="bi bi-person" aria-hidden="true"></i>My profile</a>
+        <a href="/profile/change-password" class="btn btn-sm btn-outline-primary"><i class="bi bi-key" aria-hidden="true"></i>Change password</a>
+        @* Log out with POST plus the anti-forgery token *@
+        <form method="post" action="/logout" class="m-0">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-sm btn-link">Log out</button>
+        </form>
+    </div>
+</section>
