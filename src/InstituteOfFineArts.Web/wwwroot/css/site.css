@@ -618,3 +618,53 @@ a.artwork-frame:hover img { transform: scale(1.025); }
 .rating-pills .rating-DISQUALIFIED { border-color: var(--ifa-danger); color: var(--ifa-danger); }
 .rating-pills input:checked + .rating-DISQUALIFIED { background: var(--ifa-danger); color: #fff; }
 .late-warning { font-size: 1.0625rem; padding: 1.1rem 1.25rem; }
+
+/* ---------- Agent P (FE2-08, FE1-02, QA-03, QA-05, FE1-OPT): public home lists, sign-in sheet, error, read pages ---------- */
+/* Calm list of competitions / exhibitions / notifications: hairline rows, title left, facts and action right */
+.calm-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ifa-line-strong); }
+.calm-list > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem 1.5rem; align-items: center; padding: 1.1rem 0; border-bottom: 1px solid var(--ifa-line-strong); }
+.calm-list .cl-title { font-family: var(--ifa-font-display); font-size: 1.375rem; line-height: 1.2; color: var(--ifa-text); margin: 0; }
+.calm-list .cl-title a { color: inherit; text-decoration: none; }
+.calm-list .cl-title a:hover { text-decoration: underline; }
+.calm-list .cl-meta { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; margin-top: .3rem; color: var(--ifa-muted); font-size: .9375rem; }
+.calm-list .cl-meta .bi { margin-right: .3rem; }
+.calm-list .cl-action { display: flex; gap: .5rem; align-items: center; }
+.band-mist .calm-list, .band-stone .calm-list { border-top-color: var(--ifa-text); }
+@media (max-width: 575.98px) { .calm-list > li { grid-template-columns: 1fr; } }
+/* Notifications: unread rows sit on mist with a bold title */
+.calm-list > li.is-unread { background: var(--ifa-mist); padding-left: 1rem; padding-right: 1rem; }
+.calm-list > li.is-unread .cl-head { font-weight: 600; }
+.calm-list .cl-body { margin-top: .2rem; white-space: pre-line; max-width: 70ch; }
+
+/* Home: two calm lists side by side on the stone band; section heads on bands */
+.split-2 { display: grid; gap: 2.5rem 4rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); }
+.split-2 h2 { margin-top: 0; }
+.band-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem 1.5rem; margin-bottom: 1.5rem; }
+.band-head h2 { margin: 0; font-size: clamp(2rem, 1.4rem + 2vw, 3rem); }
+.band-head p { margin: .35rem 0 0; color: var(--ifa-muted); }
+.hero-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+.band-ink a.btn-on-ink, .band-ink a.btn-on-ink:hover { color: var(--ifa-ink); }
+/* Competition page: the cover as a shorter painted band, title one step below the home title */
+.hero.is-short { min-height: min(56vh, 30rem); }
+.hero-title.is-page { font-size: clamp(2.25rem, 1.5rem + 3vw, 4rem); max-width: 20ch; }
+.breadcrumb.on-ink a, .breadcrumb.on-ink .active { color: rgba(255, 255, 255, .88); }
+.breadcrumb.on-ink { --bs-breadcrumb-divider-color: rgba(255, 255, 255, .7); }
+.table .prize { color: var(--ifa-gilt-text); font-weight: 600; }
+@media (max-width: 575.98px) { .hero-credit { position: static; text-align: left; padding: 0 var(--ifa-gutter) 1rem; max-width: none; } }
+
+/* Sign-in / password sheets: one calm white sheet centred on the mist band */
+.auth-band { min-height: 70vh; display: grid; place-items: start center; }
+.auth-sheet { width: min(100%, 27rem); background: var(--ifa-wall); padding: clamp(1.5rem, 4vw, 2.5rem); box-shadow: var(--ifa-shadow); }
+.auth-sheet .wordmark { margin-bottom: 1.5rem; }
+.auth-sheet h1 { font-size: 2rem; }
+.auth-sheet .auth-foot { margin: 1.25rem 0 0; padding-top: 1rem; border-top: 1px solid var(--ifa-line); text-align: center; }
+
+/* Error page: the status number is the page's subject */
+.error-page { text-align: center; padding: clamp(2rem, 8vw, 5rem) 0; }
+.error-page .error-code { font-family: var(--ifa-font-display); font-size: clamp(5rem, 3rem + 10vw, 9rem); line-height: 1; color: var(--ifa-ink); margin: 0 0 .5rem; }
+.error-page p { margin-left: auto; margin-right: auto; }
+.error-page code { color: var(--ifa-muted); }
+
+/* Read mode (About, Privacy): comfortable measure */
+.read { max-width: 40rem; }
+.read p, .read li { font-size: 1.0625rem; line-height: 1.65; }
