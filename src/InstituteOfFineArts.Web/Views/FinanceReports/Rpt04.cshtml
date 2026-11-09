@@ -20,8 +20,10 @@
     <div class="d-print-none">
         <a href="/reports" class="btn btn-outline-secondary">All reports</a>
         <button type="button" class="btn btn-outline-primary" onclick="window.print()">Print</button>
+        <partial name="~/Views/Reports/_ExportButtons.cshtml" model='"/reports/rpt-04"' />
     </div>
 </div>
+<partial name="_Alerts" />
 
 @* Filters: hidden when printing, replaced by a one-line summary *@
 <form method="get" asp-action="Rpt04" class="row g-2 align-items-end mb-3 d-print-none">

@@ -1,7 +1,8 @@
 @model InstituteOfFineArts.Web.ViewModels.Reports.ReportLinkVm
 @*
-    Header of every report page of ReportsController: code + title, time the report was produced, Print and
-    "All reports" buttons (F-M10-08). Minimal version created by BE2-12; FE builds the real design in FE2-09.
+    Header of every report page of ReportsController: code + title, time the report was produced, Print,
+    Export Excel / PDF (BE2-OPT 1, F-M14-01) and "All reports" buttons (F-M10-08); TempData alerts (refused export).
+    Minimal version created by BE2-12; FE builds the real design in FE2-09.
 *@
 <div class="d-flex justify-content-between align-items-start mb-3">
     <div>
@@ -11,5 +12,7 @@
     <div class="d-print-none text-nowrap">
         <a href="/reports" class="btn btn-outline-secondary">All reports</a>
         <button type="button" class="btn btn-primary" id="print-report" onclick="window.print()">Print</button>
+        <partial name="_ExportButtons" model="Model.Url" />
     </div>
 </div>
+<partial name="_Alerts" />

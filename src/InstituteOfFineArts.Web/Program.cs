@@ -73,6 +73,9 @@ builder.Services.Configure<UploadOptions>(builder.Configuration.GetSection(Uploa
 // E-mail settings (SMTP or .eml pickup folder) used by EmailService – task BE1-OPT
 builder.Services.Configure<InstituteOfFineArts.Web.Infrastructure.Email.EmailOptions>(builder.Configuration.GetSection("Email"));
 
+// QuestPDF (report PDF export, F-M14-01): free Community license, set once for the whole application
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 // Background jobs: every BackgroundService in Infrastructure/BackgroundJobs is registered automatically
 builder.Services.AddBackgroundJobs();
 
