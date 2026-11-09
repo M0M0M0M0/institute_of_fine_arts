@@ -33,11 +33,15 @@ public class CompetitionResultService : ICompetitionResultService
     /// <summary>Logs published results.</summary>
     private readonly ILogger<CompetitionResultService> _logger;
 
+    /// <summary>Tells the participants that the results are out (optional feature M12).</summary>
+    private readonly INotificationService _notifications;
+
     /// <summary>Receives the required services through Dependency Injection.</summary>
-    public CompetitionResultService(AppDbContext db, ILogger<CompetitionResultService> logger)
+    public CompetitionResultService(AppDbContext db, ILogger<CompetitionResultService> logger, INotificationService notifications)
     {
         _db = db;
         _logger = logger;
+        _notifications = notifications;
     }
 
     /// <summary>
@@ -88,6 +92,9 @@ public class CompetitionResultService : ICompetitionResultService
         var awardCount = await _db.AwardsIssued.CountAsync(a => a.CompetitionAward.CompetitionId == competitionId);
         _logger.LogInformation("Results of competition {Code} published by staff {StaffId} ({AwardCount} award(s) issued)",
             competition.Code, staffProfileId, awardCount);
+
+        // M12: every student who submitted is told (in-app + e-mail; never fails the publish)
+        await _notifications.ResultsPublishedAsync(competitionId);
         return awardCount;
     }
 }

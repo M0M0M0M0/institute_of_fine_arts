@@ -52,8 +52,11 @@ public class CompetitionResultServiceTests
         return db;
     }
 
+    /// <summary>Fake notification service (M12): the tests check which event is raised.</summary>
+    private readonly Mock<INotificationService> _notifications = new();
+
     /// <summary>Service under test.</summary>
-    private static CompetitionResultService Service(AppDbContext db) => new(db, NullLogger<CompetitionResultService>.Instance);
+    private CompetitionResultService Service(AppDbContext db) => new(db, NullLogger<CompetitionResultService>.Instance, _notifications.Object);
 
     /// <summary>
     /// Adds a competition in the given calculated status with three entries; the first <paramref name="evaluated"/>
@@ -122,6 +125,9 @@ public class CompetitionResultServiceTests
         Assert.True(saved.PublishedAt >= before);
         Assert.Equal(_staffId, saved.PublishedBy);
         Assert.Equal("Congratulations to the winners.", saved.ResultRemarks);
+
+        // M12 event 2: the participants are told once
+        _notifications.Verify(n => n.ResultsPublishedAsync(c.Id), Times.Once);
     }
 
     /// <summary>US-10 AC1: two entries not evaluated → "2 submissions have not been graded yet."; nothing changes.</summary>
@@ -136,6 +142,7 @@ public class CompetitionResultServiceTests
         Assert.Equal("2 submissions have not been graded yet.", ex.Message);
         Assert.Equal(CompetitionResultService.NotGradedMessage(2), ex.Message);
         Assert.Equal("1 submission has not been graded yet.", CompetitionResultService.NotGradedMessage(1));
+        _notifications.Verify(n => n.ResultsPublishedAsync(It.IsAny<long>()), Times.Never);
         var saved = await db.Competitions.AsNoTracking().SingleAsync();
         Assert.NotEqual(CompetitionStatus.GRADED, saved.Status);
         Assert.Null(saved.PublishedAt);
@@ -209,7 +216,7 @@ public class CompetitionResultServiceTests
     public async Task Details_ProgressWinnersAndPublishFlags()
     {
         using var db = CreateDb();
-        var details = new CompetitionService(db, new Mock<IFileStorageService>().Object, NullLogger<CompetitionService>.Instance);
+        var details = new CompetitionService(db, new Mock<IFileStorageService>().Object, NullLogger<CompetitionService>.Instance, _notifications.Object);
         var c = Add(db, evaluated: 2);
 
         // CLOSED, 2/3 graded, no award yet
@@ -247,7 +254,7 @@ public class CompetitionResultServiceTests
     public async Task Details_Ongoing_NoPublishNoIssue()
     {
         using var db = CreateDb();
-        var details = new CompetitionService(db, new Mock<IFileStorageService>().Object, NullLogger<CompetitionService>.Instance);
+        var details = new CompetitionService(db, new Mock<IFileStorageService>().Object, NullLogger<CompetitionService>.Instance, _notifications.Object);
         var c = Add(db, CompetitionStatus.ONGOING, evaluated: 0);
 
         var vm = await details.GetDetailsAsync(c.Id);

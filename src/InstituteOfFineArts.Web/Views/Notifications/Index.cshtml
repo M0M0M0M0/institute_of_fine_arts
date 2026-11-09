@@ -1,0 +1,70 @@
+@model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Notifications.NotificationItemVm>
+@*
+    My notifications (/notifications, F-M12-02) – every signed-in role: newest first, 10 per page.
+    "Open" marks the notification as read and follows its link; "Mark all as read" marks every unread one.
+    Minimal version created by BE1-OPT 3 + BE2-OPT 5; FE builds the real design in FE1-OPT.
+*@
+@{
+    ViewData["Title"] = "Notifications";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">Notifications</h1>
+    @if (Model.Items.Any(n => !n.IsRead))
+    {
+        <form method="post" action="/notifications/read-all">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline-secondary">Mark all as read</button>
+        </form>
+    }
+</div>
+
+<partial name="_Alerts" />
+
+@if (Model.TotalCount == 0)
+{
+    <p class="text-muted">You have no notifications.</p>
+}
+else
+{
+    <ul class="list-group mb-3">
+        @foreach (var n in Model.Items)
+        {
+            <li class="list-group-item d-flex justify-content-between align-items-start @(n.IsRead ? "" : "list-group-item-primary")" data-notification-id="@n.Id">
+                <div class="me-3">
+                    <div class="@(n.IsRead ? "" : "fw-semibold")">
+                        @n.Title
+                        @if (!n.IsRead)
+                        {
+                            <span class="badge bg-primary ms-1">New</span>
+                        }
+                    </div>
+                    <div style="white-space: pre-line">@n.Message</div>
+                    <small class="text-muted">@n.CreatedAt.ToString("dd MMM yyyy HH:mm")</small>
+                </div>
+                @* Opening marks the notification as read (POST with the anti-forgery token) *@
+                @if (n.Link != null || !n.IsRead)
+                {
+                    <form method="post" action="/notifications/@n.Id/read">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-sm btn-outline-primary">@(n.Link != null ? "Open" : "Mark as read")</button>
+                    </form>
+                }
+            </li>
+        }
+    </ul>
+
+    <nav class="d-flex justify-content-between align-items-center">
+        <span class="text-muted small">@Model.TotalCount notification@(Model.TotalCount == 1 ? "" : "s") · page @Model.Page of @Model.TotalPages</span>
+        <div>
+            @if (Model.HasPrevious)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", new { page = Model.Page - 1 })">Previous</a>
+            }
+            @if (Model.HasNext)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", new { page = Model.Page + 1 })">Next</a>
+            }
+        </div>
+    </nav>
+}

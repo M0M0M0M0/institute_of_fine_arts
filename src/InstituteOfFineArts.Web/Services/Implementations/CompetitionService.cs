@@ -47,12 +47,17 @@ public class CompetitionService : ICompetitionService
     /// <summary>Logs created / changed / deleted competitions.</summary>
     private readonly ILogger<CompetitionService> _logger;
 
+    /// <summary>Tells the students about a new competition (optional feature M12).</summary>
+    private readonly INotificationService _notifications;
+
     /// <summary>Receives the required services through Dependency Injection.</summary>
-    public CompetitionService(AppDbContext db, IFileStorageService files, ILogger<CompetitionService> logger)
+    public CompetitionService(AppDbContext db, IFileStorageService files, ILogger<CompetitionService> logger,
+        INotificationService notifications)
     {
         _db = db;
         _files = files;
         _logger = logger;
+        _notifications = notifications;
     }
 
     /// <inheritdoc />
@@ -240,6 +245,9 @@ public class CompetitionService : ICompetitionService
         }
 
         _logger.LogInformation("Competition {Code} created by staff {StaffId}", competition.Code, staffProfileId);
+
+        // M12: every active student hears about the new competition (in-app + e-mail; never fails the save)
+        await _notifications.CompetitionCreatedAsync(competition.Id);
         return competition.Id;
     }
 

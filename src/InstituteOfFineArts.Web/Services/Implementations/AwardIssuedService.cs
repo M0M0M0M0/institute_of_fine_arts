@@ -59,11 +59,15 @@ public class AwardIssuedService : IAwardIssuedService
     /// <summary>Logs issued / changed / revoked awards (with the revoke reason, BR-33).</summary>
     private readonly ILogger<AwardIssuedService> _logger;
 
+    /// <summary>Tells the winner about the award (optional feature M12).</summary>
+    private readonly INotificationService _notifications;
+
     /// <summary>Receives the required services through Dependency Injection.</summary>
-    public AwardIssuedService(AppDbContext db, ILogger<AwardIssuedService> logger)
+    public AwardIssuedService(AppDbContext db, ILogger<AwardIssuedService> logger, INotificationService notifications)
     {
         _db = db;
         _logger = logger;
+        _notifications = notifications;
     }
 
     /// <inheritdoc />
@@ -230,6 +234,9 @@ public class AwardIssuedService : IAwardIssuedService
         await SaveAsync();
         _logger.LogInformation("Award {AwardName} of competition {Code} issued to submission {SubmissionId} by staff {StaffId}",
             award.AwardName, competition.Code, submission.Id, staffProfileId);
+
+        // M12: the winner is told (in-app + e-mail; never fails the save)
+        await _notifications.AwardIssuedAsync(issued.Id);
         return issued.Id;
     }
 
