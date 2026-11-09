@@ -26,6 +26,11 @@ logs/
 database/backups/*
 !database/backups/.gitkeep
 
+# ===== Claude Code (settings, skills, agent worktrees): NEVER commit =====
+.claude/
+# Lock file written by the agent-skills CLI (npx skills add) – local tooling, not project code
+skills-lock.json
+
 # ===== OS / Office junk files =====
 Thumbs.db
 .DS_Store
