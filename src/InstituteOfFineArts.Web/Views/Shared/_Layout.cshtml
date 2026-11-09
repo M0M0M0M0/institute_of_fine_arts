@@ -26,7 +26,7 @@
                         var menu = new List<(string Text, string Url)>();
                         if (User.IsInRole(InstituteOfFineArts.Web.Helpers.RoleNames.Admin))
                         {
-                            menu.AddRange([("Dashboard", "/admin"), ("Staff", "/admin/staff"), ("Students", "/admin/students"), ("Reports", "/reports")]);
+                            menu.AddRange([("Dashboard", "/admin"), ("Staff", "/admin/staff"), ("Students", "/admin/students"), ("Audit log", "/admin/audit-log"), ("Reports", "/reports")]);
                         }
                         else if (User.IsInRole(InstituteOfFineArts.Web.Helpers.RoleNames.Manager))
                         {

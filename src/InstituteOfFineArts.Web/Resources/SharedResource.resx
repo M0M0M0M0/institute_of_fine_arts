@@ -295,4 +295,10 @@
   <data name="Request ID:" xml:space="preserve">
     <value>Request ID:</value>
   </data>
+  <data name="Audit log" xml:space="preserve">
+    <value>Audit log</value>
+  </data>
+  <data name="Forgot password?" xml:space="preserve">
+    <value>Forgot password?</value>
+  </data>
 </root>
