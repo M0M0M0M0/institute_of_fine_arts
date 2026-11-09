@@ -69,8 +69,10 @@ public class FilesController : Controller
             return NotFound();
         }
 
-        // Public images may be cached by any cache; private ones only by this user's browser, briefly
-        Response.Headers.CacheControl = image.IsPublic ? "public, max-age=3600" : "private, max-age=300";
+        // The same URL returns the original to the owner / staff and a watermarked copy to everyone else (F-M13-02),
+        // so no shared cache may keep it: only the viewer's own browser, and it must not reuse it after log in / log out
+        Response.Headers.CacheControl = image.IsPublic ? "private, max-age=3600" : "private, max-age=300";
+        Response.Headers.Vary = "Cookie";
         Response.Headers.XContentTypeOptions = "nosniff";
 
         // Watermarked copy (F-M13-02): built in memory; an undecodable file is never sent without the watermark

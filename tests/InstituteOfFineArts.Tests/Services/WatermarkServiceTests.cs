@@ -82,7 +82,9 @@ public class WatermarkServiceTests
             Assert.Equal("image/jpeg", result.ContentType);
             Assert.NotEqual(original, result.FileContents);
             Assert.Equal(original, await File.ReadAllBytesAsync(path));
-            Assert.Equal("public, max-age=3600", controller.Response.Headers.CacheControl.ToString());
+            // Same URL, different bytes per viewer → never in a shared cache, and keyed on the login cookie
+            Assert.Equal("private, max-age=3600", controller.Response.Headers.CacheControl.ToString());
+            Assert.Equal("Cookie", controller.Response.Headers.Vary.ToString());
         }
         finally
         {
