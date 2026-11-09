@@ -3,69 +3,81 @@
     Staff – send a BEST/BETTER painting directly to an upcoming exhibition (/staff/exhibition-entries/new?exhibitionId={id},
     SCR-30, F-M09-05, UC-07 3b): the price is the one the student quoted, with a note about its source (BR-41);
     the entry is accepted at once.
-    Minimal version created by BE1 (BE1-12); FE1 builds the real design in FE1-08.
+    Created by BE1 (BE1-12); styled by FE1-08 (page head, form sheet).
 *@
 @{
     ViewData["Title"] = "Add a painting to the exhibition";
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <h1 class="h3 mb-1">Add a painting to the exhibition</h1>
-        <p class="text-muted">@Model.ExhibitionName · @Model.StartDate.ToString("dd MMM yyyy") – @Model.EndDate.ToString("dd MMM yyyy")</p>
-
-        <partial name="_Alerts" />
-
-        @if (Model.Candidates.Count == 0)
-        {
-            @* Nothing left to send; a refused POST still shows its reason *@
-            <div asp-validation-summary="All" class="text-danger mb-2"></div>
-            <div class="alert alert-info">
-                No painting can be sent: only paintings rated BEST or BETTER in a competition with published results,
-                without an active entry and never sold, are listed.
-            </div>
-            <a asp-action="Index" asp-route-exhibitionId="@Model.ExhibitionId" class="btn btn-link px-0">Back to the entries</a>
-        }
-        else
-        {
-            <form asp-action="Create" asp-route-exhibitionId="@Model.ExhibitionId" method="post" novalidate>
-                <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
-                <input type="hidden" asp-for="ExhibitionId" />
-
-                <div class="mb-3">
-                    <label asp-for="SubmissionId" class="form-label"></label>
-                    <select asp-for="SubmissionId" class="form-select">
-                        <option value="">Choose a painting…</option>
-                        @foreach (var c in Model.Candidates)
-                        {
-                            <option value="@c.Id">@c.Title – @c.StudentName (@c.StudentCode) – @c.CompetitionTitle (@c.Rating)</option>
-                        }
-                    </select>
-                    <span asp-validation-for="SubmissionId" class="text-danger"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="AskingPrice" class="form-label"></label>
-                    <div class="input-group">
-                        <span class="input-group-text">$</span>
-                        <input asp-for="AskingPrice" type="number" min="0.01" step="0.01" class="form-control" />
-                    </div>
-                    <div class="form-text">The price is decided by the student (BR-41); enter the price they gave you.</div>
-                    <span asp-validation-for="AskingPrice" class="text-danger"></span>
-                </div>
-
-                <div class="mb-3">
-                    <label asp-for="Notes" class="form-label"></label>
-                    <textarea asp-for="Notes" class="form-control" rows="2" placeholder="e.g. Quoted by the student by email on 12 Nov 2026"></textarea>
-                    <span asp-validation-for="Notes" class="text-danger"></span>
-                </div>
-
-                <button type="submit" class="btn btn-primary">Add painting</button>
-                <a asp-action="Index" asp-route-exhibitionId="@Model.ExhibitionId" class="btn btn-link">Cancel</a>
-            </form>
-        }
+<div class="page-head">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">Exhibition entries</a></li>
+                <li class="breadcrumb-item"><a asp-action="Index" asp-route-exhibitionId="@Model.ExhibitionId">@(Model.ExhibitionName ?? "Exhibition")</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Add a painting</li>
+            </ol>
+        </nav>
+        <h1>Add a painting to the exhibition</h1>
+        <p class="page-sub">@Model.ExhibitionName, <span class="num">@Model.StartDate.ToString("dd MMM yyyy") – @Model.EndDate.ToString("dd MMM yyyy")</span></p>
     </div>
 </div>
+
+<partial name="_Alerts" />
+
+@if (Model.Candidates.Count == 0)
+{
+    @* Nothing left to send; a refused POST still shows its reason *@
+    <div asp-validation-summary="All" class="text-danger mb-2"></div>
+    <div class="empty">
+        <i class="bi bi-easel2" aria-hidden="true"></i>
+        <p>
+            No painting can be sent: only paintings rated BEST or BETTER in a competition with published results,
+            without an active entry and never sold, are listed.
+        </p>
+        <a asp-action="Index" asp-route-exhibitionId="@Model.ExhibitionId" class="btn btn-outline-primary">Back to the entries</a>
+    </div>
+}
+else
+{
+    <form asp-action="Create" asp-route-exhibitionId="@Model.ExhibitionId" method="post" novalidate class="form-sheet">
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+        <input type="hidden" asp-for="ExhibitionId" />
+
+        <div class="mb-3">
+            <label asp-for="SubmissionId" class="form-label"></label>
+            <select asp-for="SubmissionId" class="form-select">
+                <option value="">Choose a painting…</option>
+                @foreach (var c in Model.Candidates)
+                {
+                    <option value="@c.Id">@c.Title – @c.StudentName (@c.StudentCode) – @c.CompetitionTitle (@c.Rating)</option>
+                }
+            </select>
+            <span asp-validation-for="SubmissionId" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="AskingPrice" class="form-label"></label>
+            <div class="input-group">
+                <span class="input-group-text">$</span>
+                <input asp-for="AskingPrice" type="number" min="0.01" step="0.01" class="form-control" aria-describedby="price-hint" />
+            </div>
+            <div class="form-text" id="price-hint">The price is decided by the student (BR-41); enter the price they gave you.</div>
+            <span asp-validation-for="AskingPrice" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Notes" class="form-label"></label>
+            <textarea asp-for="Notes" class="form-control" rows="2" placeholder="e.g. Quoted by the student by email on 12 Nov 2026"></textarea>
+            <span asp-validation-for="Notes" class="text-danger"></span>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i>Add painting</button>
+            <a asp-action="Index" asp-route-exhibitionId="@Model.ExhibitionId" class="btn btn-link">Cancel</a>
+        </div>
+    </form>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

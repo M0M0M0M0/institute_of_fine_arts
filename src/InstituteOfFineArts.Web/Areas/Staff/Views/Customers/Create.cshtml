@@ -1,22 +1,32 @@
 @model InstituteOfFineArts.Web.ViewModels.Staff.Customers.CustomerFormVm
 @*
     Staff – new customer (/staff/customers/new, SCR-32).
-    Minimal version created by BE2-10; FE2 builds the real design in FE2-07.
+    Created by BE2-10; styled by FE2-07 (page head, form sheet).
 *@
 @{
     ViewData["Title"] = "New customer";
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <h1 class="h3 mb-3">New customer</h1>
-        <form asp-action="Create" method="post" novalidate>
-            <partial name="_Form" model="Model" />
-            <button type="submit" class="btn btn-primary">Create customer</button>
-            <a asp-action="Index" class="btn btn-link">Cancel</a>
-        </form>
+<div class="page-head">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">Customers</a></li>
+                <li class="breadcrumb-item active" aria-current="page">New customer</li>
+            </ol>
+        </nav>
+        <h1>New customer</h1>
+        <p class="page-sub">Record the buyer once; their purchases are then linked to them.</p>
     </div>
 </div>
+
+<form asp-action="Create" method="post" novalidate class="form-sheet">
+    <partial name="_Form" model="Model" />
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Create customer</button>
+        <a asp-action="Index" class="btn btn-link">Cancel</a>
+    </div>
+</form>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

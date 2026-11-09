@@ -3,105 +3,142 @@
     Manager – submission details, read only (/manager/submissions/{id}, SCR-53; F-M11-05, F-M11-06, TC-M11-03):
     painting + download, texts, student, competition, dates, rating and staff comments, award, exhibition entries.
     No evaluate link: evaluating stays in the Staff area.
-    Minimal version created by BE (BE2-13); FE2 builds the real design in FE2-10.
+    Created by BE (BE2-13); styled by FE2-10 (artwork stage with the wall label, poem in .artwork-text, evaluation / award / exhibitions sections).
 *@
 @{
     ViewData["Title"] = Model.Title;
+    var awarded = Model.Award != null || Model.Evaluation?.Rating == Rating.BEST;
 }
 
-<partial name="_Alerts" />
-
-<div class="mb-3">
-    <h1 class="h3 mb-1">@Model.Title</h1>
-    <div class="text-muted">
-        <a asp-controller="Competitions" asp-action="Details" asp-route-id="@Model.CompetitionId">@Model.CompetitionCode – @Model.CompetitionTitle</a>
-        · <partial name="~/Areas/Staff/Views/Competitions/_Status.cshtml" model="Model.CompetitionStatus" />
+<div class="page-head">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">Submissions</a></li>
+                <li class="breadcrumb-item"><a asp-action="Index" asp-route-competitionId="@Model.CompetitionId">@Model.CompetitionCode</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+            </ol>
+        </nav>
+        <h1>@Model.Title</h1>
+        <p class="page-sub">
+            <a asp-controller="Competitions" asp-action="Details" asp-route-id="@Model.CompetitionId">@Model.CompetitionCode – @Model.CompetitionTitle</a>
+            <partial name="~/Areas/Staff/Views/Competitions/_Status.cshtml" model="Model.CompetitionStatus" />
+        </p>
+    </div>
+    <div class="page-actions">
+        <a href="/files/submissions/@Model.Id?download=true" class="btn btn-outline-primary" id="download-link"><i class="bi bi-download" aria-hidden="true"></i>Download original</a>
     </div>
 </div>
 
-<div class="row g-4">
-    <div class="col-lg-6">
-        @* SubmissionImagePolicy gives MANAGER view + download of every image *@
-        <img src="/files/submissions/@Model.Id" alt="@Model.Title" class="img-fluid rounded border" />
-        <div class="mt-2">
-            <a href="/files/submissions/@Model.Id?download=true" class="btn btn-sm btn-outline-secondary" id="download-link">Download original</a>
-            <span class="text-muted small ms-2">@Model.OriginalFileName · @((Model.FileSize / 1024.0).ToString("#,##0")) KB</span>
+<partial name="_Alerts" />
+
+<div class="artwork-stage">
+    @* SubmissionImagePolicy gives MANAGER view + download of every image *@
+    <figure class="artwork@(awarded ? " is-awarded" : "")">
+        <div class="artwork-frame">
+            <img src="/files/submissions/@Model.Id" alt="@Model.Title – @Model.StudentName" />
         </div>
-    </div>
-    <div class="col-lg-6">
-        <dl class="row">
-            <dt class="col-sm-4">Student</dt>
-            <dd class="col-sm-8"><a asp-controller="Students" asp-action="Details" asp-route-id="@Model.StudentId">@Model.StudentName</a> (@Model.StudentCode)</dd>
-            <dt class="col-sm-4">Submitted</dt>
-            <dd class="col-sm-8">
-                @Model.SubmittedAt.ToString("dd MMM yyyy HH:mm")
+        <figcaption class="wall-label">
+            <span class="wl-title">@Model.Title</span>
+            <span class="wl-artist">@Model.StudentName</span>
+            <span class="wl-meta">@Model.CompetitionTitle</span>
+            <span class="wl-meta num">@Model.OriginalFileName, @((Model.FileSize / 1024.0).ToString("#,##0")) KB</span>
+            <span class="wl-state">
+                @if (Model.Evaluation is { } ev)
+                {
+                    <span class="tag tag-@ev.Rating">@ev.Rating</span>
+                }
+                @if (Model.Award is { } aw)
+                {
+                    <span class="tag tag-award"><i class="bi bi-award" aria-hidden="true"></i>@aw.AwardName</span>
+                }
+            </span>
+        </figcaption>
+    </figure>
+
+    <div>
+        <dl class="details">
+            <dt>Student</dt>
+            <dd><a asp-controller="Students" asp-action="Details" asp-route-id="@Model.StudentId">@Model.StudentName</a> (@Model.StudentCode)</dd>
+            <dt>Submitted</dt>
+            <dd>
+                <span class="num">@Model.SubmittedAt.ToString("dd MMM yyyy HH:mm")</span>
                 @if (Model.IsLate)
                 {
-                    <span class="badge bg-danger" id="late-badge">Late entry</span>
+                    <span class="tag tag-REJECTED" id="late-badge">Late entry</span>
                 }
             </dd>
-            <dt class="col-sm-4">Deadline</dt>
-            <dd class="col-sm-8">@Model.CompetitionEndDate.ToString("dd MMM yyyy"), 23:59:59</dd>
+            <dt>Deadline</dt>
+            <dd class="num">@Model.CompetitionEndDate.ToString("dd MMM yyyy"), 23:59:59</dd>
             @if (Model.UpdatedAt is { } updated)
             {
-                <dt class="col-sm-4">Last modified</dt>
-                <dd class="col-sm-8">@updated.ToString("dd MMM yyyy HH:mm")</dd>
+                <dt>Last modified</dt>
+                <dd class="num">@updated.ToString("dd MMM yyyy HH:mm")</dd>
             }
         </dl>
 
-        @* white-space: pre-line keeps the student's line breaks; Razor still encodes the text (no HTML/XSS) *@
-        <h2 class="h5">@Model.TextType</h2>
-        <p style="white-space: pre-line">@Model.TextContent</p>
+        @* .artwork-text keeps the student's line breaks; Razor still encodes the text (no HTML/XSS) *@
+        <h2 class="h3">@Model.TextType</h2>
+        <p class="artwork-text">@Model.TextContent</p>
 
-        <h2 class="h5">Description</h2>
-        <p style="white-space: pre-line">@Model.Description</p>
+        <h2 class="h3">Description</h2>
+        <p class="pre-line">@Model.Description</p>
     </div>
 </div>
 
 @* Rating and staff comments (F-M11-06, TC-M11-03), read only *@
-<h2 class="h5 mt-4">Evaluation</h2>
-@if (Model.Evaluation is { } e)
-{
-    <div id="evaluation">
-        <p><span class="badge bg-primary fs-6" id="rating">@e.Rating</span> <span class="text-muted small">by @e.EvaluatorName, @e.EvaluatedAt.ToString("dd MMM yyyy HH:mm")</span></p>
-        <dl class="row">
-            <dt class="col-sm-3">Positive points</dt>
-            <dd class="col-sm-9" style="white-space: pre-line">@(e.PositivePoints ?? "–")</dd>
-            <dt class="col-sm-3">Negative points</dt>
-            <dd class="col-sm-9" style="white-space: pre-line">@(e.NegativePoints ?? "–")</dd>
-            <dt class="col-sm-3">Improvement areas</dt>
-            <dd class="col-sm-9" style="white-space: pre-line">@(e.ImprovementAreas ?? "–")</dd>
-        </dl>
-    </div>
-}
-else
-{
-    <p class="text-muted">Not evaluated</p>
-}
+<section class="section" aria-labelledby="evaluation-heading">
+    <div class="section-head"><h2 id="evaluation-heading">Evaluation</h2></div>
+    @if (Model.Evaluation is { } e)
+    {
+        <div id="evaluation">
+            <p><span class="tag tag-@e.Rating" id="rating">@e.Rating</span> <span class="text-muted small ms-1">by @e.EvaluatorName, @e.EvaluatedAt.ToString("dd MMM yyyy HH:mm")</span></p>
+            <dl class="details">
+                <dt>Positive points</dt>
+                <dd class="pre-line">@(e.PositivePoints ?? "–")</dd>
+                <dt>Negative points</dt>
+                <dd class="pre-line">@(e.NegativePoints ?? "–")</dd>
+                <dt>Improvement areas</dt>
+                <dd class="pre-line">@(e.ImprovementAreas ?? "–")</dd>
+            </dl>
+        </div>
+    }
+    else
+    {
+        <p class="text-muted">Not evaluated</p>
+    }
+</section>
 
-<h2 class="h5">Award</h2>
-@if (Model.Award is { } a)
-{
-    <p id="award"><strong>@a.AwardName</strong> (rank @a.Rank, @a.PrizeValue.ToString("$#,##0.00")) · given @a.IssuedDate.ToString("dd MMM yyyy")
-        @if (a.Remarks != null)
-        {
-            <br /><span class="text-muted">@a.Remarks</span>
-        }
-    </p>
-}
-else
-{
-    <p class="text-muted">No award.</p>
-}
+<section class="section" aria-labelledby="award-heading">
+    <div class="section-head"><h2 id="award-heading">Award</h2></div>
+    @if (Model.Award is { } a)
+    {
+        <p id="award"><span class="tag tag-award"><i class="bi bi-award" aria-hidden="true"></i>@a.AwardName</span>
+            <span class="ms-1">rank @a.Rank, <span class="num">@a.PrizeValue.ToString("$#,##0.00")</span>, given @a.IssuedDate.ToString("dd MMM yyyy")</span>
+            @if (a.Remarks != null)
+            {
+                <br /><span class="text-muted">@a.Remarks</span>
+            }
+        </p>
+    }
+    else
+    {
+        <p class="text-muted">No award.</p>
+    }
+</section>
 
-<h2 class="h5">Exhibitions</h2>
-@if (Model.ExhibitionEntries.Count == 0)
-{
-    <p class="text-muted">Not sent to any exhibition.</p>
-}
-else
-{
-    <partial name="~/Areas/Staff/Views/StudentHistory/_ExhibitionEntries.cshtml" model="Model.ExhibitionEntries" />
-}
+<section class="section" aria-labelledby="exhibitions-heading">
+    <div class="section-head"><h2 id="exhibitions-heading">Exhibitions</h2></div>
+    @if (Model.ExhibitionEntries.Count == 0)
+    {
+        <p class="text-muted">Not sent to any exhibition.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <partial name="~/Areas/Staff/Views/StudentHistory/_ExhibitionEntries.cshtml" model="Model.ExhibitionEntries" />
+        </div>
+    }
+</section>
 
-<a asp-action="Index" asp-route-competitionId="@Model.CompetitionId" class="btn btn-link px-0">Back to submissions</a>
+<p class="mt-4"><a asp-action="Index" asp-route-competitionId="@Model.CompetitionId" class="btn btn-link px-0"><i class="bi bi-arrow-left" aria-hidden="true"></i>Back to submissions</a></p>
