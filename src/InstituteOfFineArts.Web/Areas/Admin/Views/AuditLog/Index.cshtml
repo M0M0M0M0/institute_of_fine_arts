@@ -1,0 +1,82 @@
+@model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Admin.AuditLog.AuditLogListItemVm>
+@*
+    Admin – audit log, read only (/admin/audit-log, F-M17-01): who did what and when; filters user, action,
+    date range; newest first, 10 per page.
+    Minimal version created by BE1-OPT; FE builds the real design in FE1-OPT.
+*@
+@{
+    ViewData["Title"] = "Audit log";
+    var search = (InstituteOfFineArts.Web.ViewModels.Admin.AuditLog.AuditLogSearchVm)ViewBag.Search;
+    // Keeps the filters when moving between pages
+    object PageRoute(int page) => new
+    {
+        search.User, search.Activity,
+        From = search.From?.ToString("yyyy-MM-dd"), To = search.To?.ToString("yyyy-MM-dd"), page,
+    };
+}
+
+<h1 class="h3 mb-3">Audit log</h1>
+
+<partial name="_Alerts" />
+
+<form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
+    <div class="col-md-3">
+        <label class="form-label" for="User">User</label>
+        <input class="form-control" id="User" name="User" value="@search.User" />
+    </div>
+    <div class="col-md-3">
+        <label class="form-label" for="Activity">Action</label>
+        <input class="form-control" id="Activity" name="Activity" value="@search.Activity" placeholder="e.g. LOGIN or Competitions/Delete" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="From">From</label>
+        <input class="form-control" type="date" id="From" name="From" value="@search.From?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-2">
+        <label class="form-label" for="To">To</label>
+        <input class="form-control" type="date" id="To" name="To" value="@search.To?.ToString("yyyy-MM-dd")" />
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    </div>
+</form>
+
+@if (Model.TotalCount == 0)
+{
+    <p class="text-muted">No log entries found.</p>
+}
+else
+{
+    <table class="table table-sm table-hover align-middle">
+        <thead>
+            <tr><th>Time</th><th>User</th><th>Action</th><th>Object</th><th>Details</th><th>IP address</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var l in Model.Items)
+            {
+                <tr>
+                    <td class="text-nowrap">@l.CreatedAt.ToString("dd MMM yyyy HH:mm")</td>
+                    <td>@(l.Username ?? "–")</td>
+                    <td>@l.Action</td>
+                    <td>@l.Entity @(l.EntityId.HasValue ? "#" + l.EntityId : "")</td>
+                    <td class="small">@l.Details</td>
+                    <td class="small text-muted">@l.IpAddress</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <nav class="d-flex justify-content-between align-items-center">
+        <span class="text-muted small">@Model.TotalCount entr@(Model.TotalCount == 1 ? "y" : "ies") · page @Model.Page of @Model.TotalPages</span>
+        <div>
+            @if (Model.HasPrevious)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
+            }
+            @if (Model.HasNext)
+            {
+                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
+            }
+        </div>
+    </nav>
+}

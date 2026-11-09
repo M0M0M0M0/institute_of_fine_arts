@@ -85,6 +85,40 @@ public class ImageAccessServiceTests
         Assert.False(download.IsPublic);
     }
 
+    /// <summary>Signed-in user with the given role and student profile id.</summary>
+    private static ClaimsPrincipal UserWith(string role, string profileId = "99") => new(new ClaimsIdentity(new[]
+    {
+        new Claim(ClaimTypes.Role, role), new Claim(ClaimsPrincipalExtensions.ProfileIdClaim, profileId),
+    }, "Test"));
+
+    /// <summary>F-M13-02: guests and other students get the public image watermarked (view and thumbnail).</summary>
+    [Fact]
+    public async Task Watermark_GuestAndOtherStudent()
+    {
+        var (db, _, publicId, _) = CreateDb();
+        using var _ = db;
+        var service = new ImageAccessService(db);
+
+        Assert.True((await service.GetSubmissionImageAsync(publicId, Guest, false, false))!.Watermark);
+        Assert.True((await service.GetSubmissionImageAsync(publicId, Guest, true, false))!.Watermark);
+        Assert.True((await service.GetSubmissionImageAsync(publicId, UserWith(RoleNames.Student), false, false))!.Watermark);
+    }
+
+    /// <summary>F-M13-02: owner, staff, manager and admin get the original (no watermark), downloads included.</summary>
+    [Fact]
+    public async Task Watermark_NotForOwnerStaffManagerAdmin()
+    {
+        var (db, privateId, publicId, _) = CreateDb();
+        using var _ = db;
+        var service = new ImageAccessService(db);
+
+        Assert.False((await service.GetSubmissionImageAsync(publicId, Owner, false, false))!.Watermark);
+        Assert.False((await service.GetSubmissionImageAsync(privateId, Owner, false, true))!.Watermark);
+        Assert.False((await service.GetSubmissionImageAsync(privateId, UserWith(RoleNames.Staff), false, true))!.Watermark);
+        Assert.False((await service.GetSubmissionImageAsync(privateId, UserWith(RoleNames.Manager), true, false))!.Watermark);
+        Assert.False((await service.GetSubmissionImageAsync(publicId, UserWith(RoleNames.Admin), false, false))!.Watermark);
+    }
+
     /// <summary>Cover: returned when set, null for an unknown competition.</summary>
     [Fact]
     public async Task Cover()
