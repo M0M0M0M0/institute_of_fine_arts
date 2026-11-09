@@ -18,8 +18,14 @@ var builder = WebApplication.CreateBuilder(args);
 // ===== Service registration (Dependency Injection) =====
 
 // MVC: controllers + Razor views; validate the anti-forgery token on every POST form (CSRF protection)
+// Texts translated through Resources/SharedResource*.resx (Vietnamese UI, F-M19-01); validation messages and
+// display names use the same file, keyed by their English text, so untranslated texts stay English
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.AddControllersWithViews(options =>
-    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
+    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()))
+    .AddViewLocalization()
+    .AddDataAnnotationsLocalization(options =>
+        options.DataAnnotationLocalizerProvider = (_, factory) => factory.Create(typeof(InstituteOfFineArts.Web.SharedResource)));
 
 // Keep non-ASCII characters (e.g. Vietnamese text entered by users) as-is in the generated HTML
 // instead of &#x...; entities. Dangerous characters < > & " ' are still encoded, so XSS protection is unchanged.
@@ -106,15 +112,17 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// The UI is English: fix the culture to en-US so numbers, dates and USD amounts are parsed and
-// formatted the same way on every machine, even when Windows uses another language (e.g. vi-VN uses "," for decimals).
-// Vietnamese UI is an optional feature (M19); vi-VN will be added to the supported cultures then.
-var english = new CultureInfo("en-US");
+// Formatting culture fixed to en-US so numbers, dates and USD amounts are parsed and formatted the same way on every
+// machine, even when Windows uses another language (e.g. vi-VN uses "," for decimals).
+// UI texts: English by default, Vietnamese (M19) when the culture cookie set by POST /culture asks for it.
+// Only the cookie decides (no Accept-Language / query string), so pages stay English unless the user switches.
+var english = new CultureInfo(InstituteOfFineArts.Web.Helpers.AppCultures.English);
 app.UseRequestLocalization(new RequestLocalizationOptions
 {
     DefaultRequestCulture = new RequestCulture(english),
     SupportedCultures = new[] { english },
-    SupportedUICultures = new[] { english },
+    SupportedUICultures = InstituteOfFineArts.Web.Helpers.AppCultures.UiCultures.Select(c => new CultureInfo(c)).ToList(),
+    RequestCultureProviders = [new CookieRequestCultureProvider()],
 });
 
 app.UseHttpsRedirection();

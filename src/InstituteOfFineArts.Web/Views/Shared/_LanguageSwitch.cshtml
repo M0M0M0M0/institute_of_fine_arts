@@ -1,0 +1,19 @@
+@using InstituteOfFineArts.Web.Helpers
+@using Microsoft.AspNetCore.Localization
+@*
+    Language switch shown in the layout (POST /culture, F-M19-01).
+    Minimal version created by BE (BE1-OPT 5); FE1 builds the real design in FE1-OPT.
+*@
+@{
+    // Current UI language and the page to come back to
+    var current = Context.Features.Get<IRequestCultureFeature>()?.RequestCulture.UICulture.Name ?? AppCultures.English;
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+<form method="post" action="/culture" class="d-flex align-items-center gap-1 ms-sm-2">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="returnUrl" value="@returnUrl" />
+    <button type="submit" name="culture" value="@AppCultures.English" lang="en" title="English"
+            class="btn btn-sm @(current == AppCultures.English ? "btn-secondary" : "btn-outline-secondary")">EN</button>
+    <button type="submit" name="culture" value="@AppCultures.Vietnamese" lang="vi" title="Tiếng Việt"
+            class="btn btn-sm @(current == AppCultures.Vietnamese ? "btn-secondary" : "btn-outline-secondary")">VI</button>
+</form>

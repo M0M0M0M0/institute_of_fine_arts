@@ -1,3 +1,4 @@
+using InstituteOfFineArts.Web.Exceptions;
 using InstituteOfFineArts.Web.ViewModels.Admin.Students;
 using InstituteOfFineArts.Web.ViewModels.Common;
 
@@ -23,6 +24,18 @@ public interface IStudentService
 
     /// <summary>Creates the STUDENT account and its student profile in one save (one transaction); returns the profile id.</summary>
     Task<long> CreateAsync(CreateStudentVm form);
+
+    /// <summary>
+    /// The create rules that need the database (BR-01 unique username / email / code) plus BR-02, without saving:
+    /// every violation found, empty when the form can be created. Used by the CSV import preview (F-M04-08).
+    /// </summary>
+    Task<IReadOnlyList<BusinessException>> CheckNewAsync(CreateStudentVm form);
+
+    /// <summary>
+    /// Creates several students with exactly the same rules as <see cref="CreateAsync"/> in one save (one transaction):
+    /// either all are created or, on the first violation, none (BusinessException naming the username). Returns the count.
+    /// </summary>
+    Task<int> CreateManyAsync(IReadOnlyList<CreateStudentVm> forms);
 
     /// <summary>Saves changes (not the username, not the role). Applies BR-01.</summary>
     Task UpdateAsync(long id, StudentFormVm form);

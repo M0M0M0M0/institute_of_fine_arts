@@ -4,6 +4,7 @@ using InstituteOfFineArts.Web.Services.Interfaces;
 using InstituteOfFineArts.Web.ViewModels.Profile;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace InstituteOfFineArts.Web.Controllers;
 
@@ -25,10 +26,14 @@ public class ProfileController : Controller
     /// <summary>Profile service.</summary>
     private readonly IProfileService _profileService;
 
-    /// <summary>Receives the profile service through Dependency Injection.</summary>
-    public ProfileController(IProfileService profileService)
+    /// <summary>Translates the password messages when the Vietnamese UI is chosen (F-M19-01); English stays unchanged.</summary>
+    private readonly IStringLocalizer<SharedResource> _localizer;
+
+    /// <summary>Receives the profile service and the text localizer through Dependency Injection.</summary>
+    public ProfileController(IProfileService profileService, IStringLocalizer<SharedResource> localizer)
     {
         _profileService = profileService;
+        _localizer = localizer;
     }
 
     /// <summary>Shows the signed-in user's profile.</summary>
@@ -94,7 +99,7 @@ public class ProfileController : Controller
             catch (BusinessException ex)
             {
                 // Wrong current password → error under that field; password rules → under the new password
-                ModelState.AddModelError(ex.Field ?? string.Empty, ex.Message);
+                ModelState.AddModelError(ex.Field ?? string.Empty, _localizer[ex.Message].Value);
             }
             catch (NotFoundException)
             {

@@ -150,6 +150,71 @@ public class StudentServiceTests
         Assert.Contains(errors, e => e.MemberNames.Contains(nameof(StudentFormVm.DateOfBirth)));
     }
 
+    // ------------------------------------------------------------------ create many / check (CSV import, BE2-OPT 4)
+
+    /// <summary>F-M04-08: CheckNewAsync lists every BR-01 / BR-02 violation without saving.</summary>
+    [Fact]
+    public async Task CheckNew_ListsAllViolations()
+    {
+        var (db, _) = CreateDb();
+        using var _ = db;
+        var form = NewForm("student01", "STUDENT02@ifa.local");
+        form.StudentCode = "hv0007";
+        form.Password = "weak";
+
+        var errors = await Service(db).CheckNewAsync(form);
+
+        Assert.Equal(new[] { StudentService.UsernameTakenMessage, StudentService.EmailTakenMessage, StudentService.CodeTakenMessage },
+            errors.Take(3).Select(e => e.Message));
+        Assert.Equal(nameof(CreateStudentVm.Password), errors[3].Field);
+        Assert.Empty(await Service(db).CheckNewAsync(NewForm()));
+        Assert.Equal(3, await db.StudentProfiles.CountAsync());
+    }
+
+    /// <summary>F-M04-08: CreateManyAsync creates every student with generated codes in order (HV0008, HV0009).</summary>
+    [Fact]
+    public async Task CreateMany_AllSaved()
+    {
+        var (db, _) = CreateDb();
+        using var _ = db;
+
+        var count = await Service(db).CreateManyAsync([NewForm("student11", "s11@ifa.local"), NewForm("student12", "s12@ifa.local")]);
+
+        Assert.Equal(2, count);
+        var codes = await db.StudentProfiles.Where(s => s.Account.Username.StartsWith("student1")).OrderBy(s => s.StudentCode)
+            .Select(s => s.StudentCode).ToListAsync();
+        Assert.Equal(new[] { "HV0008", "HV0009" }, codes);
+    }
+
+    /// <summary>F-M04-08: one invalid student (BR-01) → BusinessException naming the username, nothing saved (all or nothing).</summary>
+    [Fact]
+    public async Task CreateMany_OneInvalid_NothingSaved()
+    {
+        var (db, _) = CreateDb();
+        using var _ = db;
+
+        var ex = await Assert.ThrowsAsync<BusinessException>(() =>
+            Service(db).CreateManyAsync([NewForm("student11", "s11@ifa.local"), NewForm("student02", "s99@ifa.local")]));
+
+        Assert.Equal($"student02: {StudentService.UsernameTakenMessage}", ex.Message);
+        Assert.Equal(3, await db.StudentProfiles.CountAsync());
+        Assert.Equal(3, await db.Accounts.CountAsync());
+    }
+
+    /// <summary>F-M04-08: the same username or email twice inside one batch is refused (BR-01), nothing saved.</summary>
+    [Fact]
+    public async Task CreateMany_DuplicateInBatch_Refused()
+    {
+        var (db, _) = CreateDb();
+        using var _ = db;
+
+        var ex = await Assert.ThrowsAsync<BusinessException>(() =>
+            Service(db).CreateManyAsync([NewForm("student11", "same@ifa.local"), NewForm("student12", "SAME@ifa.local")]));
+
+        Assert.Equal($"student12: {StudentService.EmailTakenMessage}", ex.Message);
+        Assert.Equal(3, await db.StudentProfiles.CountAsync());
+    }
+
     // ------------------------------------------------------------------ search / details
 
     /// <summary>Search by part of the name, code, course, class, study status, enrollment date and account status.</summary>

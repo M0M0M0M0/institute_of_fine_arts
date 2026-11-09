@@ -1,20 +1,21 @@
 @model InstituteOfFineArts.Web.ViewModels.Profile.ProfileVm
+@inject Microsoft.Extensions.Localization.IStringLocalizer<InstituteOfFineArts.Web.SharedResource> L
 @*
     My profile (/profile) – every signed-in role.
     Minimal version created by BE1 so the feature works; FE1 builds the real design in task FE1-02.
     Only Phone and Address are posted; the other fields are display-only.
 *@
 @{
-    ViewData["Title"] = "My profile";
+    ViewData["Title"] = L["My profile"].Value;
 }
 
 <div class="row justify-content-center">
     <div class="col-lg-7">
-        <h1 class="h3 mb-3">My profile</h1>
+        <h1 class="h3 mb-3">@L["My profile"]</h1>
 
         @if (TempData["Success"] is string success)
         {
-            <div class="alert alert-success">@success</div>
+            <div class="alert alert-success">@L[success]</div>
         }
 
         <dl class="row">
@@ -37,7 +38,7 @@
             }
             @if (Model.CourseOrPosition != null)
             {
-                <dt class="col-sm-4">@(Model.Role == InstituteOfFineArts.Web.Models.Enums.Role.STUDENT ? "Course" : "Position")</dt>
+                <dt class="col-sm-4">@L[Model.Role == InstituteOfFineArts.Web.Models.Enums.Role.STUDENT ? "Course" : "Position"]</dt>
                 <dd class="col-sm-8">@Model.CourseOrPosition</dd>
             }
             @if (Model.Classes != null)
@@ -52,7 +53,7 @@
             }
             @if (Model.SinceDate is { } since)
             {
-                <dt class="col-sm-4">@(Model.Role == InstituteOfFineArts.Web.Models.Enums.Role.STUDENT ? "Enrolled on" : "Joined on")</dt>
+                <dt class="col-sm-4">@L[Model.Role == InstituteOfFineArts.Web.Models.Enums.Role.STUDENT ? "Enrolled on" : "Joined on"]</dt>
                 <dd class="col-sm-8">@since.ToString("dd MMM yyyy")</dd>
             }
             @if (Model.DateOfBirth is { } dob)
@@ -72,7 +73,7 @@
             }
         </dl>
 
-        <h2 class="h5 mt-4">Contact details</h2>
+        <h2 class="h5 mt-4">@L["Contact details"]</h2>
         @* Posts only Phone and Address (EditProfileVm); asp-* adds the anti-forgery token *@
         <form asp-controller="Profile" asp-action="Index" method="post" novalidate>
             <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
@@ -89,8 +90,8 @@
                 <span asp-validation-for="Address" class="text-danger"></span>
             </div>
 
-            <button type="submit" class="btn btn-primary">Save changes</button>
-            <a asp-controller="Profile" asp-action="ChangePassword" class="btn btn-outline-secondary ms-2">Change password</a>
+            <button type="submit" class="btn btn-primary">@L["Save changes"]</button>
+            <a asp-controller="Profile" asp-action="ChangePassword" class="btn btn-outline-secondary ms-2">@L["Change password"]</a>
         </form>
     </div>
 </div>

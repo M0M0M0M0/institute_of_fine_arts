@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace InstituteOfFineArts.Web.Controllers;
 
@@ -25,10 +26,14 @@ public class AccountController : Controller
     /// <summary>Authentication service.</summary>
     private readonly IAuthService _authService;
 
-    /// <summary>Receives the authentication service through Dependency Injection.</summary>
-    public AccountController(IAuthService authService)
+    /// <summary>Translates the login messages when the Vietnamese UI is chosen (F-M19-01); English stays unchanged.</summary>
+    private readonly IStringLocalizer<SharedResource> _localizer;
+
+    /// <summary>Receives the authentication service and the text localizer through Dependency Injection.</summary>
+    public AccountController(IAuthService authService, IStringLocalizer<SharedResource> localizer)
     {
         _authService = authService;
+        _localizer = localizer;
     }
 
     /// <summary>
@@ -69,7 +74,7 @@ public class AccountController : Controller
         if (result.Status != LoginStatus.Success || result.Principal == null)
         {
             var message = result.Status == LoginStatus.Locked ? LockedMessage : InvalidCredentialsMessage;
-            ModelState.AddModelError(string.Empty, message);
+            ModelState.AddModelError(string.Empty, _localizer[message].Value);
             form.Password = string.Empty;
             return View(form);
         }
