@@ -2,7 +2,7 @@
 @*
     RPT-07 Account statistics (/reports/rpt-07, SCR-33; F-M10-07, F-M10-08): accounts per role and status, students per
     course / class and enrollment status. ADMIN, MANAGER.
-    Minimal version created by BE2 (BE2-12); FE2 builds the real design in FE2-09.
+    Created by BE2-12; styled by FE2-09 / QA-07 (page head with pills, filters bar, print summary, ledgers, totals rows, A4 landscape print).
 *@
 @using InstituteOfFineArts.Web.Helpers
 @using InstituteOfFineArts.Web.Models.Enums
@@ -13,19 +13,28 @@
     var statuses = Enum.GetValues<EnrollmentStatus>();
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">RPT-07 Account statistics</h1>
-    <div class="d-print-none">
-        <a href="/reports" class="btn btn-outline-secondary">All reports</a>
-        <button type="button" class="btn btn-outline-primary" onclick="window.print()">Print</button>
+<div class="report-page">
+<div class="page-head">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/reports">All reports</a></li>
+                <li class="breadcrumb-item active" aria-current="page">RPT-07</li>
+            </ol>
+        </nav>
+        <h1>RPT-07 Account statistics</h1>
+        <p class="page-sub">Accounts per role and status, and students per course, class and study status.</p>
+    </div>
+    <div class="page-actions d-print-none">
+        <button type="button" class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer" aria-hidden="true"></i>Print</button>
         <partial name="~/Views/Reports/_ExportButtons.cshtml" model='"/reports/rpt-07"' />
     </div>
 </div>
 <partial name="_Alerts" />
 
 @* Filters: hidden when printing, replaced by a one-line summary *@
-<form method="get" asp-action="Rpt07" class="row g-2 align-items-end mb-3 d-print-none">
-    <div class="col-md-3">
+<form method="get" asp-action="Rpt07" class="filters d-print-none">
+    <div class="filter">
         <label class="form-label" for="Role">Role</label>
         <select class="form-select" id="Role" name="Role">
             <option value="">All roles</option>
@@ -35,7 +44,7 @@
             }
         </select>
     </div>
-    <div class="col-md-3">
+    <div class="filter">
         <label class="form-label" for="Active">Account status</label>
         <select class="form-select" id="Active" name="Active">
             <option value="">Active and inactive</option>
@@ -43,103 +52,118 @@
             <option value="false" selected="@(search.Active == false)">Inactive (locked)</option>
         </select>
     </div>
-    <div class="col-md-4">
+    <div class="filter">
         <label class="form-label" for="ClassOrCourse">Class or course</label>
         <input class="form-control" id="ClassOrCourse" name="ClassOrCourse" value="@search.ClassOrCourse" placeholder="e.g. Painting" />
     </div>
-    <div class="col-md-2">
-        <button type="submit" class="btn btn-primary w-100">View</button>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-funnel" aria-hidden="true"></i>View</button>
+        <a href="/reports/rpt-07" class="btn btn-link">Clear</a>
     </div>
 </form>
 
-<p class="d-none d-print-block small">
-    Role @(search.Role?.ToString() ?? "all") · status @(search.Active switch { true => "active", false => "inactive", _ => "all" })
-    · class / course @(string.IsNullOrWhiteSpace(search.ClassOrCourse) ? "all" : search.ClassOrCourse)
-    · printed @DateTimeHelper.Now.ToString("dd MMM yyyy HH:mm")
-</p>
+<dl class="criteria d-none d-print-flex">
+    <div><dt>Role</dt><dd>@(search.Role?.ToString() ?? "all")</dd></div>
+    <div><dt>Status</dt><dd>@(search.Active switch { true => "active", false => "inactive", _ => "all" })</dd></div>
+    <div><dt>Class / course</dt><dd>@(string.IsNullOrWhiteSpace(search.ClassOrCourse) ? "all" : search.ClassOrCourse)</dd></div>
+    <div><dt>Printed</dt><dd>@DateTimeHelper.Now.ToString("dd MMM yyyy HH:mm")</dd></div>
+</dl>
 
-<h2 class="h5">Accounts per role</h2>
-@if (Model.TotalAccounts == 0)
-{
-    <p class="text-muted">No data</p>
-}
-else
-{
-    <table class="table table-sm table-bordered w-auto">
-        <thead class="table-light">
-            <tr><th>Role</th><th class="text-end">Active</th><th class="text-end">Inactive</th><th class="text-end">Total</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var r in Model.Roles)
-            {
-                <tr>
-                    <td>@r.Role</td>
-                    <td class="text-end">@r.Active</td>
-                    <td class="text-end">@r.Inactive</td>
-                    <td class="text-end">@r.Total</td>
-                </tr>
-            }
-        </tbody>
-        <tfoot>
-            <tr class="fw-bold">
-                <td>Total</td>
-                <td class="text-end">@Model.TotalActive</td>
-                <td class="text-end">@Model.TotalInactive</td>
-                <td class="text-end">@Model.TotalAccounts</td>
-            </tr>
-        </tfoot>
-    </table>
-}
-
-@* Students per course / class: only when students are part of the selection *@
-@if (Model.ShowStudents)
-{
-    <h2 class="h5 mt-4">Students per course and class</h2>
-    if (Model.Classes.Count == 0)
+<section class="section mt-0">
+    <div class="section-head"><h2>Accounts per role</h2></div>
+    @if (Model.TotalAccounts == 0)
     {
-        <p class="text-muted">No data</p>
+        <div class="empty">
+            <i class="bi bi-inbox" aria-hidden="true"></i>
+            <p>No data</p>
+        </div>
     }
     else
     {
-        var totals = Model.StudentsByStatus;
         <div class="table-responsive">
-            <table class="table table-sm table-bordered">
-                <thead class="table-light">
-                    <tr>
-                        <th>Course</th><th>Class</th>
-                        @foreach (var s in statuses)
-                        {
-                            <th class="text-end">@s</th>
-                        }
-                        <th class="text-end">Total</th>
-                    </tr>
+            <table class="table table-sm w-auto">
+                <thead>
+                    <tr><th>Role</th><th class="text-end">Active</th><th class="text-end">Inactive</th><th class="text-end">Total</th></tr>
                 </thead>
                 <tbody>
-                    @foreach (var c in Model.Classes)
+                    @foreach (var r in Model.Roles)
                     {
                         <tr>
-                            <td>@c.CourseName</td>
-                            <td>@(c.ClassName ?? "–")</td>
-                            @foreach (var s in statuses)
-                            {
-                                <td class="text-end">@c.ByStatus[s]</td>
-                            }
-                            <td class="text-end">@c.Total</td>
+                            <td>@r.Role</td>
+                            <td class="text-end">@r.Active</td>
+                            <td class="text-end">@r.Inactive</td>
+                            <td class="text-end">@r.Total</td>
                         </tr>
                     }
                 </tbody>
                 <tfoot>
-                    <tr class="fw-bold">
-                        <td colspan="2">Total</td>
-                        @foreach (var s in statuses)
-                        {
-                            <td class="text-end">@totals[s]</td>
-                        }
-                        <td class="text-end">@Model.TotalStudents</td>
+                    <tr>
+                        <td>Total</td>
+                        <td class="text-end">@Model.TotalActive</td>
+                        <td class="text-end">@Model.TotalInactive</td>
+                        <td class="text-end">@Model.TotalAccounts</td>
                     </tr>
                 </tfoot>
             </table>
         </div>
-        <p class="text-muted small">@Model.Classes.Count course / class row(s).</p>
     }
+</section>
+
+@* Students per course / class: only when students are part of the selection *@
+@if (Model.ShowStudents)
+{
+    <section class="section">
+        <div class="section-head"><h2>Students per course and class</h2></div>
+        @if (Model.Classes.Count == 0)
+        {
+            <div class="empty">
+                <i class="bi bi-inbox" aria-hidden="true"></i>
+                <p>No data</p>
+            </div>
+        }
+        else
+        {
+            var totals = Model.StudentsByStatus;
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead>
+                        <tr>
+                            <th>Course</th><th>Class</th>
+                            @foreach (var s in statuses)
+                            {
+                                <th class="text-end">@s</th>
+                            }
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var c in Model.Classes)
+                        {
+                            <tr>
+                                <td>@c.CourseName</td>
+                                <td>@(c.ClassName ?? "–")</td>
+                                @foreach (var s in statuses)
+                                {
+                                    <td class="text-end">@c.ByStatus[s]</td>
+                                }
+                                <td class="text-end">@c.Total</td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="2">Total</td>
+                            @foreach (var s in statuses)
+                            {
+                                <td class="text-end">@totals[s]</td>
+                            }
+                            <td class="text-end">@Model.TotalStudents</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            <p class="text-muted small">@Model.Classes.Count course / class row(s).</p>
+        }
+    </section>
 }
+</div>
