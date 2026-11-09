@@ -48,6 +48,15 @@ public class AppDbContext : DbContext
     /// <summary>Painting buyers.</summary>
     public DbSet<Customer> Customers => Set<Customer>();
 
+    /// <summary>In-app notifications (optional feature M12).</summary>
+    public DbSet<Notification> Notifications => Set<Notification>();
+
+    /// <summary>Activity log (optional feature M17).</summary>
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
+    /// <summary>Forgot-password tokens (optional feature M16).</summary>
+    public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
+
     /// <summary>
     /// Model configuration: UTF-8 collation, per-table configuration, common audit columns.
     /// </summary>
