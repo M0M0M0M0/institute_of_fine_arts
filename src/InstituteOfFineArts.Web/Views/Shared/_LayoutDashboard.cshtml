@@ -1,0 +1,75 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<InstituteOfFineArts.Web.SharedResource> L
+@using InstituteOfFineArts.Web.Infrastructure.Security
+@*
+    Layout of the working screens (FE1-01 + FE2-01): navy rail with the wordmark and the role menu,
+    a top bar (language, notifications, account) and the white work area.
+    Used by every area (_ViewStart) and by /profile, /notifications and /reports.
+*@
+@{
+    var fullName = User.Identity?.IsAuthenticated == true ? User.GetFullName() : "";
+    // Initials for the account chip, e.g. "Nguyen Van An" -> "NA"
+    var parts = fullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+    var initials = parts.Length == 0 ? "?" : parts.Length == 1 ? parts[0][..1] : $"{parts[0][..1]}{parts[^1][..1]}";
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <partial name="_Head" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+    <a class="skip-link" href="#content">@L["Skip to content"]</a>
+    <div class="app" id="app">
+        <aside class="rail d-print-none" id="rail">
+            <a class="wordmark" href="/" aria-label="Institute of Fine Arts – home"><partial name="_Wordmark" model="@("white")" /></a>
+            <partial name="_RailNav" />
+            <div class="rail-foot">
+                <a href="/">@L["Public site"]</a>
+            </div>
+        </aside>
+        <div class="rail-backdrop d-print-none" data-rail-close></div>
+
+        <div class="app-main">
+            <header class="app-top d-print-none">
+                <button type="button" class="btn btn-sm btn-outline-primary app-menu-toggle" data-rail-toggle aria-controls="rail" aria-expanded="false">
+                    <i class="bi bi-list" aria-hidden="true"></i>@L["Menu"]
+                </button>
+                <div class="lang-switch"><partial name="_LanguageSwitch" /></div>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <ul class="list-unstyled d-flex align-items-center m-0">
+                        @* Notification bell (F-M12-02): unread count + 5 newest *@
+                        @await Component.InvokeAsync("NotificationBell")
+                    </ul>
+                    <div class="dropdown">
+                        <button type="button" class="btn btn-link app-user p-0 text-decoration-none" data-bs-toggle="dropdown" aria-expanded="false">
+                            <span class="avatar" aria-hidden="true">@initials</span>
+                            <span class="d-none d-sm-inline">@fullName</span>
+                            <i class="bi bi-chevron-down small" aria-hidden="true"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/profile"><i class="bi bi-person me-2" aria-hidden="true"></i>@L["Profile"]</a></li>
+                            <li><a class="dropdown-item" href="/profile/change-password"><i class="bi bi-key me-2" aria-hidden="true"></i>@L["Change password"]</a></li>
+                            <li><hr class="dropdown-divider" /></li>
+                            <li>
+                                @* Log out with POST plus the anti-forgery token *@
+                                <form method="post" action="/logout">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="dropdown-item"><i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>@L["Log out"]</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                }
+            </header>
+
+            <main class="app-content" id="content" tabindex="-1">
+                @* Views place <partial name="_Alerts" /> themselves, right under their page head *@
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+    <partial name="_Scripts" />
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

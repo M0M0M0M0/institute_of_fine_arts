@@ -1,0 +1,15 @@
+/* General Sans (Indian Type Foundry, ITF Free Font License, fontshare.com) - self-hosted variable font, weight 200-700 */
+@font-face {
+  font-family: 'General Sans';
+  font-style: normal;
+  font-weight: 200 700;
+  font-display: swap;
+  src: url('general-sans/GeneralSans-Variable.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'General Sans';
+  font-style: italic;
+  font-weight: 200 700;
+  font-display: swap;
+  src: url('general-sans/GeneralSans-VariableItalic.woff2') format('woff2');
+}

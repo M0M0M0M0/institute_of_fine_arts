@@ -1,0 +1,12 @@
+@*
+    Institute of Fine Arts wordmark (outlined Bodoni Moda, SIL OFL) as a cached image.
+    Model: "ink" (navy, on white – default) or "white" (on the navy rail / footer); add "-line" for the one-line version.
+    Created by FE1-01; replace the files in wwwroot/img when a real logo exists.
+*@
+@model string?
+@{
+    var variant = string.IsNullOrEmpty(Model) ? "ink" : Model;
+    var line = variant.EndsWith("-line");
+    var file = line ? $"wordmark-line-{variant[..^5]}.svg" : $"wordmark-{variant}.svg";
+}
+<img src="~/img/@file" alt="Institute of Fine Arts" width="@(line ? 354 : 160)" height="@(line ? 30 : 64)" asp-append-version="true" />
