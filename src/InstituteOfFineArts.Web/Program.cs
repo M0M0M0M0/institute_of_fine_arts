@@ -18,8 +18,14 @@ var builder = WebApplication.CreateBuilder(args);
 // ===== Service registration (Dependency Injection) =====
 
 // MVC: controllers + Razor views; validate the anti-forgery token on every POST form (CSRF protection)
+// + audit log row for every POST in the Admin/Staff/Manager/Student areas (F-M17-01, Infrastructure/Filters)
 builder.Services.AddControllersWithViews(options =>
-    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
+{
+    options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+    options.Filters.Add<InstituteOfFineArts.Web.Infrastructure.Filters.AuditActionFilter>();
+});
+// The audit log service reads the current user and IP through IHttpContextAccessor
+builder.Services.AddHttpContextAccessor();
 
 // Keep non-ASCII characters (e.g. Vietnamese text entered by users) as-is in the generated HTML
 // instead of &#x...; entities. Dangerous characters < > & " ' are still encoded, so XSS protection is unchanged.
