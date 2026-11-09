@@ -91,6 +91,8 @@ h1, h2, h3, .h1, .h2, .h3, .display-title {
     letter-spacing: -0.01em;
     line-height: 1.12;
     text-wrap: balance;
+    font-kerning: normal;
+    font-optical-sizing: auto;
 }
 h1, .h1 { font-size: clamp(2rem, 1.4rem + 2vw, 2.75rem); margin-bottom: .5rem; }
 h2, .h2 { font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem); margin-top: 2.25rem; margin-bottom: .75rem; }
@@ -203,6 +205,9 @@ html { scrollbar-color: var(--ifa-line-strong) transparent; caret-color: var(--i
 }
 .form-control::placeholder { color: #6f6a60; opacity: 1; }
 .form-control-sm, .form-select-sm { padding: .35rem .6rem; font-size: .875rem; border-radius: var(--ifa-radius-field); }
+/* Selects keep room for their chevron (the shared padding above would run the text under it) */
+.form-select { padding-right: 2.25rem; }
+.form-select-sm { padding-right: 2rem; }
 .form-text { color: var(--ifa-muted); }
 .form-check-input:checked { background-color: var(--ifa-ink); border-color: var(--ifa-ink); }
 .input-group-text { background: var(--ifa-mist); border-color: var(--ifa-line-strong); color: var(--ifa-muted); }
@@ -278,7 +283,7 @@ textarea.form-control { line-height: 1.55; }
 .tag-PAID { background: var(--ifa-ongoing-soft); color: var(--ifa-ongoing); }
 .tag-UNPAID { background: var(--ifa-warning-soft); color: var(--ifa-warning); }
 /* Award */
-.tag-award { background: var(--ifa-gilt); color: #fff; }
+.tag-award { background: var(--ifa-gilt-text); color: #fff; }
 .tag-award::before { display: none; }
 /* Account */
 .tag-ACTIVE { background: var(--ifa-ongoing-soft); color: var(--ifa-ongoing); }
@@ -842,3 +847,14 @@ progress.meter.progress-inline::-webkit-progress-bar { background: var(--ifa-wal
 .chart-figure.is-wide { grid-column: 1 / -1; }
 .chart-box { position: relative; height: 18rem; }
 .chart-status { color: var(--ifa-muted); font-size: .9375rem; }
+
+/* ---------- Finish review fixes (integration) ---------- */
+/* Paintings are hung whole: no crop in grids, the stone mat shows around the work (principle: the artwork leads) */
+.art-grid .artwork-frame img { object-fit: contain; padding: .5rem; }
+.hero-title, .band-title, .wall-label .wl-title { font-kerning: normal; font-optical-sizing: auto; }
+/* A painting named in a table row reads as a painting name, like its wall label */
+.table td a[href*="/submissions/"]:not(.btn), .table td a[href*="/exhibition-entries/"]:not(.btn) {
+    font-family: var(--ifa-font-display); font-style: italic; font-size: 1.0625rem;
+}
+/* Text links among page actions sit flush instead of wrapping with button padding */
+.page-actions .btn-link { padding-inline: 0; }
