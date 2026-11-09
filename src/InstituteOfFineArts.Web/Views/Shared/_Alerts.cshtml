@@ -1,13 +1,13 @@
-@* Success / warning / error messages passed with TempData after a redirect (shared by all areas). *@
+@* Success / warning / error messages passed with TempData after a redirect (shared by all areas). Styled by FE2-01. *@
 @if (TempData["Success"] is string success)
 {
-    <div class="alert alert-success">@success</div>
+    <div class="alert alert-success" role="status"><i class="bi bi-check-circle" aria-hidden="true"></i><div>@success</div></div>
 }
 @if (TempData["Warning"] is string warning)
 {
-    <div class="alert alert-warning">@warning</div>
+    <div class="alert alert-warning" role="status"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i><div>@warning</div></div>
 }
 @if (TempData["Error"] is string error)
 {
-    <div class="alert alert-danger">@error</div>
+    <div class="alert alert-danger" role="alert"><i class="bi bi-x-circle" aria-hidden="true"></i><div>@error</div></div>
 }

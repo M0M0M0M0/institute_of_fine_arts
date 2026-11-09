@@ -1,0 +1,97 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<InstituteOfFineArts.Web.SharedResource> L
+@using InstituteOfFineArts.Web.Helpers
+@*
+    Role menu of the working screens (FE2-01): one list per role, grouped, with Bootstrap Icons.
+    The link whose URL is the longest prefix of the current path is marked aria-current="page".
+*@
+@{
+    // (group, text, url, icon); group "" = no heading
+    var items = new List<(string Group, string Text, string Url, string Icon)>();
+    string role;
+    if (User.IsInRole(RoleNames.Admin))
+    {
+        role = "Administrator";
+        items.AddRange([
+            ("", "Dashboard", "/admin", "bi-speedometer2"),
+            ("Accounts", "Staff", "/admin/staff", "bi-person-badge"),
+            ("Accounts", "Students", "/admin/students", "bi-people"),
+            ("Accounts", "Audit log", "/admin/audit-log", "bi-journal-text"),
+            ("Insight", "Reports", "/reports", "bi-file-earmark-bar-graph"),
+        ]);
+    }
+    else if (User.IsInRole(RoleNames.Manager))
+    {
+        role = "Manager";
+        items.AddRange([
+            ("", "Dashboard", "/manager", "bi-speedometer2"),
+            ("People", "Students", "/manager/students", "bi-people"),
+            ("People", "Staff", "/manager/staff", "bi-person-badge"),
+            ("Competitions", "Competitions", "/manager/competitions", "bi-easel"),
+            ("Competitions", "Submissions", "/manager/submissions", "bi-images"),
+            ("Competitions", "Awards", "/manager/awards", "bi-trophy"),
+            ("Exhibitions", "Exhibitions", "/manager/exhibitions", "bi-bank"),
+            ("Exhibitions", "Artworks", "/manager/exhibition-entries", "bi-easel2"),
+            ("Exhibitions", "Customers", "/manager/customers", "bi-person-vcard"),
+            ("Insight", "Reports", "/reports", "bi-file-earmark-bar-graph"),
+        ]);
+    }
+    else if (User.IsInRole(RoleNames.Staff))
+    {
+        role = "Staff";
+        items.AddRange([
+            ("", "Dashboard", "/staff", "bi-speedometer2"),
+            ("Competitions", "Competitions", "/staff/competitions", "bi-easel"),
+            ("Competitions", "Submissions", "/staff/submissions", "bi-images"),
+            ("Competitions", "By rating", "/staff/submissions/by-rating", "bi-funnel"),
+            ("Competitions", "Awards", "/staff/awards", "bi-trophy"),
+            ("People", "Students", "/staff/students", "bi-people"),
+            ("Exhibitions", "Exhibitions", "/staff/exhibitions", "bi-bank"),
+            ("Exhibitions", "Artworks", "/staff/exhibition-entries", "bi-easel2"),
+            ("Exhibitions", "Customers", "/staff/customers", "bi-person-vcard"),
+            ("Insight", "Reports", "/reports", "bi-file-earmark-bar-graph"),
+        ]);
+    }
+    else
+    {
+        role = "Student";
+        items.AddRange([
+            ("", "Dashboard", "/student", "bi-house"),
+            ("Competitions", "Competitions", "/student/competitions", "bi-easel"),
+            ("Competitions", "My entries", "/student/submissions", "bi-images"),
+            ("Competitions", "My results", "/student/results", "bi-clipboard-check"),
+            ("Gallery", "Best works", "/student/best", "bi-stars"),
+            ("Gallery", "Awards", "/student/awards", "bi-trophy"),
+            ("Exhibitions", "Exhibitions", "/student/exhibitions", "bi-bank"),
+            ("Exhibitions", "My artworks on show", "/student/exhibition-entries", "bi-easel2"),
+        ]);
+    }
+
+    // Current page = the longest menu URL the path starts with ("/staff" must not win over "/staff/awards")
+    var path = (Context.Request.Path.Value ?? "/").TrimEnd('/').ToLowerInvariant();
+    if (path.Length == 0) { path = "/"; }
+    var current = items
+        .Where(i => path == i.Url || path.StartsWith(i.Url + "/"))
+        .OrderByDescending(i => i.Url.Length)
+        .Select(i => i.Url)
+        .FirstOrDefault();
+}
+<div class="rail-role">@L[role]</div>
+<nav aria-label="@L["Main menu"]">
+    @foreach (var group in items.GroupBy(i => i.Group))
+    {
+        if (group.Key != "")
+        {
+            <div class="rail-group" id="rail-@group.Key.ToLowerInvariant()">@L[group.Key]</div>
+        }
+        <ul class="rail-nav" aria-labelledby="@(group.Key != "" ? $"rail-{group.Key.ToLowerInvariant()}" : null)">
+            @foreach (var item in group)
+            {
+                <li>
+                    <a href="@item.Url" aria-current="@(item.Url == current ? "page" : null)">
+                        <i class="bi @item.Icon" aria-hidden="true"></i>@L[item.Text]
+                    </a>
+                </li>
+            }
+        </ul>
+    }
+</nav>

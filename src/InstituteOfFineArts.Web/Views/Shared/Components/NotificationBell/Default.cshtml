@@ -1,18 +1,27 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<InstituteOfFineArts.Web.SharedResource> L
 @model InstituteOfFineArts.Web.ViewModels.Notifications.NotificationBellVm
 @*
-    Notification bell in the menu (F-M12-02), rendered by NotificationBellViewComponent for signed-in users:
+    Notification bell in the top bar (F-M12-02), rendered by NotificationBellViewComponent for signed-in users:
     unread count + the 5 newest notifications; clicking one marks it as read and opens its link.
-    Minimal version created by BE1-OPT 3 + BE2-OPT 5; FE builds the real design (_NotificationBell) in FE1-OPT.
+    Created by BE1-OPT 3 + BE2-OPT 5; styled by FE1-OPT (id, data-unread-count and data-notification-id are kept for tests).
 *@
 <li class="nav-item dropdown" id="notification-bell">
-    <a class="nav-link text-dark dropdown-toggle" href="/notifications" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-        <span aria-hidden="true">&#128276;</span> Notifications
+    <a class="btn btn-link p-1 position-relative text-decoration-none" href="/notifications" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+       aria-label="@(Model.UnreadCount > 0 ? $"Notifications, {Model.UnreadCount} unread" : "Notifications")">
+        <i class="bi bi-bell fs-5" aria-hidden="true"></i>
         @if (Model.UnreadCount > 0)
         {
-            <span class="badge rounded-pill bg-danger" data-unread-count="@Model.UnreadCount">@Model.UnreadCount</span>
+            <span class="bell-count position-absolute top-0 start-100 translate-middle" data-unread-count="@Model.UnreadCount">@Model.UnreadCount</span>
         }
     </a>
-    <ul class="dropdown-menu dropdown-menu-end" style="min-width: 20rem">
+    <ul class="dropdown-menu dropdown-menu-end" style="width: min(22rem, 92vw)">
+        <li class="px-2 pt-1 pb-2 d-flex justify-content-between align-items-baseline">
+            <span class="fw-semibold">@L["Notifications"]</span>
+            @if (Model.UnreadCount > 0)
+            {
+                <span class="small text-muted">@Model.UnreadCount @L["unread"]</span>
+            }
+        </li>
         @if (Model.Items.Count == 0)
         {
             <li><span class="dropdown-item-text text-muted">You have no notifications.</span></li>
@@ -23,9 +32,12 @@
                 @* Opening marks the notification as read (POST with the anti-forgery token) *@
                 <form method="post" action="/notifications/@n.Id/read">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="dropdown-item text-wrap @(n.IsRead ? "" : "fw-semibold")" data-notification-id="@n.Id">
-                        @n.Title
-                        <small class="d-block text-muted fw-normal">@n.CreatedAt.ToString("dd MMM yyyy HH:mm")</small>
+                    <button type="submit" class="dropdown-item text-wrap d-flex gap-2 @(n.IsRead ? "" : "fw-semibold")" data-notification-id="@n.Id">
+                        <i class="bi @(n.IsRead ? "bi-circle" : "bi-circle-fill") small mt-1" style="color: var(--ifa-ink); font-size: .5rem" aria-hidden="true"></i>
+                        <span>
+                            @n.Title
+                            <small class="d-block text-muted fw-normal">@n.CreatedAt.ToString("dd MMM yyyy HH:mm")</small>
+                        </span>
                     </button>
                 </form>
             </li>
