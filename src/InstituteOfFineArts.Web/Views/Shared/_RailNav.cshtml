@@ -92,9 +92,7 @@
             @foreach (var item in group)
             {
                 <li>
-                    <a href="@item.Url" aria-current="@(item.Url == current ? "page" : null)">
-                        <i class="bi @item.Icon" aria-hidden="true"></i>@L[item.Text]
-                    </a>
+                    <a href="@item.Url" aria-current="@(item.Url == current ? "page" : null)"><i class="bi @item.Icon" aria-hidden="true"></i>@L[item.Text]</a>
                 </li>
             }
         </ul>

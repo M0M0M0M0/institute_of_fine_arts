@@ -476,6 +476,8 @@ a.artwork-frame:hover img { transform: scale(1.025); }
 
 /* ---------- 12. Working shell: navy rail + white work area ---------- */
 .app { display: grid; grid-template-columns: var(--ifa-rail-width) minmax(0, 1fr); min-height: 100vh; }
+/* The rail's column stays navy for the whole page height, also below the sticky rail on long pages */
+@media (min-width: 992px) { .app { background: linear-gradient(to right, var(--ifa-ink) var(--ifa-rail-width), var(--ifa-wall) var(--ifa-rail-width)); } }
 .rail {
     background: var(--ifa-ink); color: var(--ifa-on-ink);
     position: sticky; top: 0; height: 100vh; overflow-y: auto;
@@ -508,7 +510,7 @@ a.artwork-frame:hover img { transform: scale(1.025); }
 .app-top .app-user { display: flex; align-items: center; gap: .5rem; color: var(--ifa-text); font-weight: 500; text-decoration: none; }
 .app-top .app-user .avatar {
     width: 2rem; height: 2rem; border-radius: 50%; display: grid; place-items: center;
-    background: var(--ifa-stone); color: var(--ifa-ink); font-family: var(--ifa-font-display); font-weight: 600;
+    background: var(--ifa-stone); color: var(--ifa-ink); font-family: var(--ifa-font-ui); font-weight: 600; font-size: .8125rem; letter-spacing: .02em;
 }
 .app-menu-toggle { display: none; margin-right: auto; }
 .app-content { padding: clamp(1.25rem, 3vw, 2.25rem) var(--ifa-gutter) 3rem; width: 100%; max-width: 92rem; }
