@@ -1,27 +1,38 @@
 @model IReadOnlyList<ReportLinkVm>
 @*
     Report index (/reports, F-M10-08, US-14): only the reports the current role may open, with a one-line description.
-    Minimal version created by BE2-12; FE builds the real design in FE2-09.
+    Created by BE2-12; styled by FE2-09 (a calm list with hairlines, no card grid).
 *@
 @{
     ViewData["Title"] = "Reports";
 }
 
-<h1 class="h3 mb-3">Reports</h1>
+<div class="page-head">
+    <div>
+        <h1>Reports</h1>
+        <p class="page-sub">Each report can be filtered, printed and exported to Excel or PDF.</p>
+    </div>
+</div>
 
 @if (Model.Count == 0)
 {
-    <p class="text-muted">No reports are available for your role.</p>
+    <div class="empty">
+        <i class="bi bi-file-earmark-bar-graph" aria-hidden="true"></i>
+        <p>No reports are available for your role.</p>
+    </div>
 }
 else
 {
-    <div class="list-group" id="report-list">
+    <ul class="report-list" id="report-list">
         @foreach (var report in Model)
         {
-            <a href="@report.Url" class="list-group-item list-group-item-action">
-                <div class="fw-semibold">@report.Code – @report.Title</div>
-                <div class="small text-muted">@report.Description</div>
-            </a>
+            <li>
+                <a href="@report.Url">
+                    <span class="report-code">@report.Code</span>
+                    <span class="report-title">@report.Title</span>
+                    <span class="report-desc">@report.Description</span>
+                </a>
+            </li>
         }
-    </div>
+    </ul>
 }

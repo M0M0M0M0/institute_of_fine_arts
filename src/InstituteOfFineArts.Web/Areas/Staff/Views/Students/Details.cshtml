@@ -1,24 +1,32 @@
 @model InstituteOfFineArts.Web.ViewModels.Admin.Students.StudentDetailsVm
 @*
-    Minimal version created by BE (BE2-03); FE2 builds the real design in FE2-03.
     Staff – student details, read only (/staff/students/{id}, F-M04-06): personal and study information,
     no account actions. Reuses the information partial of the Admin area.
+    Created by BE2-03; styled by FE2-03 (page head, dl.details groups).
 *@
 @{
     ViewData["Title"] = Model.FullName;
 }
 
-<div class="mb-3">
-    <h1 class="h3 mb-1">@Model.FullName</h1>
-    <div class="text-muted">
-        @Model.StudentCode · @Model.CourseName @Model.ClassName ·
-        @if (Model.Active) { <span class="badge bg-success">Active</span> } else { <span class="badge bg-secondary">Locked</span> }
+<div class="page-head">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">Students</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.FullName</li>
+            </ol>
+        </nav>
+        <h1>@Model.FullName</h1>
+        <p class="page-sub d-flex flex-wrap gap-2 align-items-center">
+            <span>@Model.StudentCode</span><span>@Model.CourseName @Model.ClassName</span>
+            @if (Model.Active) { <span class="tag tag-ACTIVE">Active</span> } else { <span class="tag tag-INACTIVE">Locked</span> }
+        </p>
+    </div>
+    <div class="page-actions">
+        <a asp-controller="StudentHistory" asp-action="Index" asp-route-studentId="@Model.Id" class="btn btn-outline-primary"><i class="bi bi-clock-history" aria-hidden="true"></i>History</a>
     </div>
 </div>
 
 <partial name="~/Areas/Admin/Views/Students/_Info.cshtml" model="Model" />
 
-<div class="mt-3">
-    <a asp-controller="StudentHistory" asp-action="Index" asp-route-studentId="@Model.Id" class="btn btn-outline-primary">History</a>
-    <a asp-action="Index" class="btn btn-link">Back to student list</a>
-</div>
+<a asp-action="Index" class="btn btn-link px-0 mt-4"><i class="bi bi-arrow-left" aria-hidden="true"></i>Back to student list</a>

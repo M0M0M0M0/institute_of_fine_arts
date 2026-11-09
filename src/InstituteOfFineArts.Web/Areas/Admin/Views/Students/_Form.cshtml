@@ -1,11 +1,11 @@
 @model InstituteOfFineArts.Web.ViewModels.Admin.Students.StudentFormVm
 @*
-    Minimal version created by BE (BE2-03); FE2 builds the real design in FE2-03.
+    Created by BE2-03; styled by FE2-03 (group headings inside the form sheet).
     Personal and study fields shared by the create and edit forms (SCR-15).
     The username / password fields are in Create.cshtml (they cannot be edited later).
 *@
 
-<h2 class="h6 text-uppercase text-muted mt-3">Personal information</h2>
+<h2 class="details-head mt-4">Personal information</h2>
 <div class="row">
     <div class="col-md-6 mb-3">
         <label asp-for="FullName" class="form-label"></label>
@@ -43,7 +43,7 @@
     </div>
 </div>
 
-<h2 class="h6 text-uppercase text-muted mt-3">Study</h2>
+<h2 class="details-head mt-4">Study</h2>
 <div class="row">
     <div class="col-md-4 mb-3">
         <label asp-for="StudentCode" class="form-label"></label>

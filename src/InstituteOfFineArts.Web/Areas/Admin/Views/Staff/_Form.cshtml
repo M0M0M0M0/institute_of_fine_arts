@@ -2,12 +2,13 @@
 @*
     Personal and job fields shared by the create and edit forms (SCR-12).
     The username / password fields are in Create.cshtml (they cannot be edited later).
+    Created by BE2-02; styled by FE2-02 (group headings inside the form sheet).
 *@
 @{
     var roles = new[] { Role.STAFF, Role.MANAGER, Role.ADMIN };
 }
 
-<h2 class="h6 text-uppercase text-muted mt-3">Account</h2>
+<h2 class="details-head mt-4">Account</h2>
 <div class="row">
     <div class="col-md-6 mb-3">
         <label asp-for="Email" class="form-label"></label>
@@ -26,7 +27,7 @@
     </div>
 </div>
 
-<h2 class="h6 text-uppercase text-muted mt-3">Personal information</h2>
+<h2 class="details-head mt-4">Personal information</h2>
 <div class="row">
     <div class="col-md-6 mb-3">
         <label asp-for="FullName" class="form-label"></label>
@@ -59,7 +60,7 @@
     </div>
 </div>
 
-<h2 class="h6 text-uppercase text-muted mt-3">Job</h2>
+<h2 class="details-head mt-4">Job</h2>
 <div class="row">
     <div class="col-md-4 mb-3">
         <label asp-for="StaffCode" class="form-label"></label>

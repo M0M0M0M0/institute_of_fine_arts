@@ -2,7 +2,7 @@
 @*
     Manager – staff details, read only (/manager/staff/{id}, SCR-51; F-M11-02): login, personal and job information
     and related data counts; no account actions (they stay in the Admin area).
-    Minimal version created by BE (BE2-13); FE2 builds the real design in FE2-10.
+    Created by BE2-13; styled by FE2-03 (dl.details groups).
 *@
 @{
     ViewData["Title"] = Model.FullName;
@@ -10,49 +10,57 @@
     string Day(DateOnly? d) => d?.ToString("dd MMM yyyy") ?? "–";
 }
 
-<div class="mb-3">
-    <h1 class="h3 mb-1">@Model.FullName</h1>
-    <div class="text-muted">
-        @Model.StaffCode · @Model.Role ·
-        @if (Model.Active) { <span class="badge bg-success">Active</span> } else { <span class="badge bg-secondary">Locked</span> }
+<div class="page-head">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">Staff</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.FullName</li>
+            </ol>
+        </nav>
+        <h1>@Model.FullName</h1>
+        <p class="page-sub d-flex flex-wrap gap-2 align-items-center">
+            <span>@Model.StaffCode</span><span>@Model.Role</span>
+            @if (Model.Active) { <span class="tag tag-ACTIVE">Active</span> } else { <span class="tag tag-INACTIVE">Locked</span> }
+        </p>
     </div>
 </div>
 
-<div class="row">
+<div class="row g-4">
     <div class="col-lg-6">
-        <h2 class="h6 text-uppercase text-muted">Login</h2>
-        <dl class="row">
-            <dt class="col-sm-5">Username</dt><dd class="col-sm-7">@Model.Username</dd>
-            <dt class="col-sm-5">Email</dt><dd class="col-sm-7">@Model.Email</dd>
-            <dt class="col-sm-5">Last login</dt><dd class="col-sm-7">@(Model.LastLoginAt?.ToString("dd MMM yyyy HH:mm") ?? "Never")</dd>
-            <dt class="col-sm-5">Created</dt><dd class="col-sm-7">@Model.CreatedAt.ToString("dd MMM yyyy")</dd>
+        <h2 class="details-head">Login</h2>
+        <dl class="details">
+            <dt>Username</dt><dd>@Model.Username</dd>
+            <dt>Email</dt><dd>@Model.Email</dd>
+            <dt>Last login</dt><dd>@(Model.LastLoginAt?.ToString("dd MMM yyyy HH:mm") ?? "Never")</dd>
+            <dt>Created</dt><dd>@Model.CreatedAt.ToString("dd MMM yyyy")</dd>
         </dl>
-        <h2 class="h6 text-uppercase text-muted">Personal</h2>
-        <dl class="row">
-            <dt class="col-sm-5">Gender</dt><dd class="col-sm-7">@(Model.Gender?.ToString() ?? "–")</dd>
-            <dt class="col-sm-5">Date of birth</dt><dd class="col-sm-7">@Day(Model.DateOfBirth)</dd>
-            <dt class="col-sm-5">Phone</dt><dd class="col-sm-7">@Show(Model.Phone)</dd>
-            <dt class="col-sm-5">Address</dt><dd class="col-sm-7">@Show(Model.Address)</dd>
+        <h2 class="details-head">Personal</h2>
+        <dl class="details">
+            <dt>Gender</dt><dd>@(Model.Gender?.ToString() ?? "–")</dd>
+            <dt>Date of birth</dt><dd>@Day(Model.DateOfBirth)</dd>
+            <dt>Phone</dt><dd>@Show(Model.Phone)</dd>
+            <dt>Address</dt><dd>@Show(Model.Address)</dd>
         </dl>
     </div>
     <div class="col-lg-6">
-        <h2 class="h6 text-uppercase text-muted">Job</h2>
-        <dl class="row">
-            <dt class="col-sm-5">Joined</dt><dd class="col-sm-7">@Day(Model.JoinedDate)</dd>
-            <dt class="col-sm-5">Position</dt><dd class="col-sm-7">@Show(Model.Position)</dd>
-            <dt class="col-sm-5">Classes in charge</dt><dd class="col-sm-7">@Show(Model.ClassesInCharge)</dd>
-            <dt class="col-sm-5">Subjects in charge</dt><dd class="col-sm-7">@Show(Model.SubjectsInCharge)</dd>
-            <dt class="col-sm-5">Qualification</dt><dd class="col-sm-7">@Show(Model.Qualification)</dd>
-            <dt class="col-sm-5">Notes</dt><dd class="col-sm-7">@Show(Model.Notes)</dd>
+        <h2 class="details-head">Job</h2>
+        <dl class="details">
+            <dt>Joined</dt><dd>@Day(Model.JoinedDate)</dd>
+            <dt>Position</dt><dd>@Show(Model.Position)</dd>
+            <dt>Classes in charge</dt><dd>@Show(Model.ClassesInCharge)</dd>
+            <dt>Subjects in charge</dt><dd>@Show(Model.SubjectsInCharge)</dd>
+            <dt>Qualification</dt><dd>@Show(Model.Qualification)</dd>
+            <dt>Notes</dt><dd>@Show(Model.Notes)</dd>
         </dl>
-        <h2 class="h6 text-uppercase text-muted">Related data</h2>
-        <dl class="row">
-            <dt class="col-sm-5">Competitions</dt><dd class="col-sm-7">@Model.CompetitionCount</dd>
-            <dt class="col-sm-5">Evaluations</dt><dd class="col-sm-7">@Model.EvaluationCount</dd>
-            <dt class="col-sm-5">Awards issued</dt><dd class="col-sm-7">@Model.AwardCount</dd>
-            <dt class="col-sm-5">Exhibition work</dt><dd class="col-sm-7">@Model.ExhibitionCount</dd>
+        <h2 class="details-head">Related data</h2>
+        <dl class="details">
+            <dt>Competitions</dt><dd class="num">@Model.CompetitionCount</dd>
+            <dt>Evaluations</dt><dd class="num">@Model.EvaluationCount</dd>
+            <dt>Awards issued</dt><dd class="num">@Model.AwardCount</dd>
+            <dt>Exhibition work</dt><dd class="num">@Model.ExhibitionCount</dd>
         </dl>
     </div>
 </div>
 
-<a asp-action="Index" class="btn btn-link px-0 mt-3">Back to staff list</a>
+<a asp-action="Index" class="btn btn-link px-0 mt-4"><i class="bi bi-arrow-left" aria-hidden="true"></i>Back to staff list</a>

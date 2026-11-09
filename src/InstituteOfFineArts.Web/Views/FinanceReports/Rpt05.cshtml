@@ -1,7 +1,7 @@
 @model InstituteOfFineArts.Web.ViewModels.Reports.StudentDebtReportVm?
 @*
     RPT-05 Money owed to students (/reports/rpt-05, SCR-33; F-M10-05, F-M10-08; BR-45): sold paintings not paid yet. STAFF, MANAGER.
-    Minimal version created by BE2 (BE2-12); FE2 builds the real design in FE2-09.
+    Created by BE2-12; styled by FE2-09 / QA-07 (page head with pills, filters bar, print summary, ledger, totals row, A4 landscape print).
 *@
 @using InstituteOfFineArts.Web.Helpers
 @using InstituteOfFineArts.Web.Services.Implementations
@@ -14,20 +14,29 @@
     var exhibitionName = exhibitions.FirstOrDefault(x => x.Id == search.ExhibitionId)?.Name ?? "All exhibitions";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">RPT-05 Money owed to students</h1>
-    <div class="d-print-none">
-        <a href="/reports" class="btn btn-outline-secondary">All reports</a>
-        <button type="button" class="btn btn-outline-primary" onclick="window.print()">Print</button>
+<div class="report-page">
+<div class="page-head">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/reports">All reports</a></li>
+                <li class="breadcrumb-item active" aria-current="page">RPT-05</li>
+            </ol>
+        </nav>
+        <h1>RPT-05 Money owed to students</h1>
+        <p class="page-sub">Sold paintings whose price has not been paid to the student yet.</p>
+    </div>
+    <div class="page-actions d-print-none">
+        <button type="button" class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer" aria-hidden="true"></i>Print</button>
         <partial name="~/Views/Reports/_ExportButtons.cshtml" model='"/reports/rpt-05"' />
     </div>
 </div>
 <partial name="_Alerts" />
 
 @* Filters: hidden when printing, replaced by a one-line summary *@
-<form method="get" asp-action="Rpt05" class="row g-2 align-items-end mb-3 d-print-none">
-    <div asp-validation-summary="All" class="text-danger col-12"></div>
-    <div class="col-md-3">
+<form method="get" asp-action="Rpt05" class="filters d-print-none">
+    <div asp-validation-summary="All" class="text-danger w-100"></div>
+    <div class="filter">
         <label class="form-label" for="ExhibitionId">Exhibition</label>
         <select class="form-select" id="ExhibitionId" name="ExhibitionId">
             <option value="">All exhibitions</option>
@@ -37,28 +46,30 @@
             }
         </select>
     </div>
-    <div class="col-md-3">
+    <div class="filter">
         <label class="form-label" for="Student">Student name or code</label>
         <input class="form-control" id="Student" name="Student" value="@search.Student" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="From">Sold from</label>
         <input class="form-control" type="date" id="From" name="From" value="@search.From?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="To">Sold to</label>
         <input class="form-control" type="date" id="To" name="To" value="@search.To?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-2">
-        <button type="submit" class="btn btn-primary w-100">View</button>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-funnel" aria-hidden="true"></i>View</button>
+        <a href="/reports/rpt-05" class="btn btn-link">Clear</a>
     </div>
 </form>
 
-<p class="d-none d-print-block small">
-    @exhibitionName · sold @(search.From?.ToString("dd MMM yyyy") ?? "…") – @(search.To?.ToString("dd MMM yyyy") ?? "…")
-    · student @(string.IsNullOrWhiteSpace(search.Student) ? "all" : search.Student)
-    · printed @DateTimeHelper.Now.ToString("dd MMM yyyy HH:mm")
-</p>
+<dl class="criteria d-none d-print-flex">
+    <div><dt>Exhibition</dt><dd>@exhibitionName</dd></div>
+    <div><dt>Sold</dt><dd>@(search.From?.ToString("dd MMM yyyy") ?? "…") – @(search.To?.ToString("dd MMM yyyy") ?? "…")</dd></div>
+    <div><dt>Student</dt><dd>@(string.IsNullOrWhiteSpace(search.Student) ? "all" : search.Student)</dd></div>
+    <div><dt>Printed</dt><dd>@DateTimeHelper.Now.ToString("dd MMM yyyy HH:mm")</dd></div>
+</dl>
 
 @if (Model == null)
 {
@@ -66,19 +77,22 @@
 }
 else if (Model.Count == 0)
 {
-    <p class="text-muted">No data</p>
+    <div class="empty">
+        <i class="bi bi-inbox" aria-hidden="true"></i>
+        <p>No data</p>
+    </div>
 }
 else
 {
     if (Model.Truncated)
     {
-        <div class="alert alert-warning">Only the first @ExhibitionReportService.MaxRows rows are shown; the total includes every matching painting. Narrow the filters to see all rows.</div>
+        <div class="alert alert-warning"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i><div>Only the first @ExhibitionReportService.MaxRows rows are shown; the total includes every matching painting. Narrow the filters to see all rows.</div></div>
     }
     <div class="table-responsive">
-        <table class="table table-sm table-bordered align-middle">
-            <thead class="table-light">
+        <table class="table table-sm table-hover">
+            <thead>
                 <tr>
-                    <th>#</th><th>Student</th><th>Student code</th><th>Painting</th><th>Exhibition</th><th>Sold date</th>
+                    <th class="text-end">#</th><th>Student</th><th>Student code</th><th>Painting</th><th>Exhibition</th><th class="text-end">Sold date</th>
                     <th class="text-end">Sold price</th><th class="text-end">Days unpaid</th>
                 </tr>
             </thead>
@@ -87,12 +101,12 @@ else
                 {
                     var r = Model.Rows[i];
                     <tr>
-                        <td>@(i + 1)</td>
+                        <td class="text-end">@(i + 1)</td>
                         <td>@r.StudentName</td>
                         <td>@r.StudentCode</td>
                         <td>@r.Title</td>
                         <td>@r.ExhibitionName</td>
-                        <td>@r.SoldDate.ToString("dd MMM yyyy")</td>
+                        <td class="text-end text-nowrap">@r.SoldDate.ToString("dd MMM yyyy")</td>
                         <td class="text-end">@r.SoldPrice.ToString("$#,##0.00")</td>
                         <td class="text-end">@r.DaysUnpaid</td>
                     </tr>
@@ -100,7 +114,7 @@ else
             </tbody>
             <tfoot>
                 @* Total of §7 over every matching painting *@
-                <tr class="fw-bold">
+                <tr>
                     <td colspan="6">Total unpaid (@Model.Count painting(s))</td>
                     <td class="text-end">@Model.TotalUnpaid.ToString("$#,##0.00")</td>
                     <td></td>
@@ -110,3 +124,4 @@ else
     </div>
     <p class="text-muted small">@Model.Rows.Count row(s) shown.</p>
 }
+</div>

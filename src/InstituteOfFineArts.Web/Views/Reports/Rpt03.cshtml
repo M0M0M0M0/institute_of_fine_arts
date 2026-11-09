@@ -2,7 +2,7 @@
 @*
     RPT-03 – Awards issued (/reports/rpt-03; F-M10-03): awards by competition, issued date range and student, with
     the number of awards and the total prize value (Financial). Read only; Print button.
-    Minimal version created by BE2-12; FE builds the real design in FE2-09.
+    Created by BE2-12; styled by FE2-09 / QA-07 (page head with pills, filters bar, filter summary, ledger, totals, A4 landscape print).
 *@
 @{
     ViewData["Title"] = "RPT-03 Awards issued";
@@ -13,10 +13,11 @@
     var competition = Model.Competitions.FirstOrDefault(c => c.Id == filter.CompetitionId);
 }
 
+<div class="report-page">
 <partial name="_ReportHeader" model="report" />
 
-<form method="get" action="/reports/rpt-03" class="row g-2 align-items-end mb-3 d-print-none" id="report-filters">
-    <div class="col-md-4">
+<form method="get" action="/reports/rpt-03" class="filters d-print-none" id="report-filters">
+    <div class="filter">
         <label class="form-label" for="CompetitionId">Competition</label>
         <select class="form-select" id="CompetitionId" name="CompetitionId">
             <option value="">All competitions</option>
@@ -26,20 +27,21 @@
             }
         </select>
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="From">Issued from</label>
         <input class="form-control" type="date" id="From" name="From" value="@filter.From?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="To">Issued to</label>
         <input class="form-control" type="date" id="To" name="To" value="@filter.To?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-3">
+    <div class="filter">
         <label class="form-label" for="Student">Student name or code</label>
         <input class="form-control" id="Student" name="Student" value="@filter.Student" maxlength="100" />
     </div>
-    <div class="col-md-1">
-        <button type="submit" class="btn btn-outline-primary w-100">View</button>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-funnel" aria-hidden="true"></i>View</button>
+        <a href="/reports/rpt-03" class="btn btn-link">Clear</a>
     </div>
 </form>
 
@@ -47,15 +49,18 @@
 
 @if (result != null)
 {
-    <p class="mb-2" id="report-criteria">
-        Competition: @(competition == null ? "all" : competition.Code + " – " + competition.Title)
-        · Issued @(filter.From?.ToString("dd MMM yyyy") ?? "any") to @(filter.To?.ToString("dd MMM yyyy") ?? "any")
-        · Student: @(string.IsNullOrWhiteSpace(filter.Student) ? "all" : filter.Student)
-    </p>
+    <dl class="criteria" id="report-criteria">
+        <div><dt>Competition</dt><dd>@(competition == null ? "all" : competition.Code + " – " + competition.Title)</dd></div>
+        <div><dt>Issued</dt><dd>@(filter.From?.ToString("dd MMM yyyy") ?? "any") to @(filter.To?.ToString("dd MMM yyyy") ?? "any")</dd></div>
+        <div><dt>Student</dt><dd>@(string.IsNullOrWhiteSpace(filter.Student) ? "all" : filter.Student)</dd></div>
+    </dl>
 
     if (result.TotalCount == 0)
     {
-        <p class="text-muted" id="no-data">No data</p>
+        <div class="empty" id="no-data">
+            <i class="bi bi-inbox" aria-hidden="true"></i>
+            <p>No data</p>
+        </div>
     }
     else
     {
@@ -64,17 +69,17 @@
             <partial name="_Truncated" model="result.TotalCount" />
         }
         <div class="table-responsive">
-            <table class="table table-sm table-striped align-middle" id="report-table">
+            <table class="table table-sm table-hover" id="report-table">
                 <thead>
                     <tr>
-                        <th>No.</th>
+                        <th class="text-end">No.</th>
                         <th>Competition</th>
                         <th>Award</th>
                         <th class="text-end">Rank</th>
                         <th class="text-end">Prize value</th>
                         <th>Student</th>
                         <th>Painting</th>
-                        <th>Issued on</th>
+                        <th class="text-end">Issued on</th>
                         <th>Issued by</th>
                         <th>Remarks</th>
                     </tr>
@@ -83,14 +88,14 @@
                     @foreach (var row in result.Rows)
                     {
                         <tr>
-                            <td>@row.No</td>
+                            <td class="text-end">@row.No</td>
                             <td>@row.CompetitionCode – @row.CompetitionTitle</td>
-                            <td>@row.AwardName</td>
+                            <td><span class="tag tag-award">@row.AwardName</span></td>
                             <td class="text-end">@row.Rank</td>
                             <td class="text-end">@row.PrizeValue.ToString("$#,##0.00")</td>
                             <td>@row.StudentCode – @row.StudentName</td>
                             <td><a href="@(detailsBase + row.SubmissionId)">@row.SubmissionTitle</a></td>
-                            <td>@row.IssuedDate.ToString("dd MMM yyyy")</td>
+                            <td class="text-end text-nowrap">@row.IssuedDate.ToString("dd MMM yyyy")</td>
                             <td>@row.IssuedByName</td>
                             <td style="white-space: pre-line">@row.Remarks</td>
                         </tr>
@@ -101,10 +106,12 @@
     }
 
     @* Totals of §7: number of awards and total prize value *@
-    <table class="table table-sm table-bordered w-auto" id="report-totals">
+    <h2 class="visually-hidden">Totals</h2>
+    <table class="table table-sm table-totals" id="report-totals">
         <tbody>
             <tr><th>Total awards</th><td class="text-end" data-total="count">@result.TotalCount</td></tr>
             <tr><th>Total prize value</th><td class="text-end" data-total="value">@result.TotalPrizeValue.ToString("$#,##0.00")</td></tr>
         </tbody>
     </table>
 }
+</div>
