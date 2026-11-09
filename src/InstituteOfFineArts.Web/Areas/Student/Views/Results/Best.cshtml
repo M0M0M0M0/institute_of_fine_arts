@@ -2,7 +2,7 @@
 @*
     Student – best works (/student/best, SCR-46, F-M06-08, US-10 AC4): BEST entries of every student in GRADED
     competitions with the staff comments; filter by competition, paged.
-    Minimal version created by BE2 (BE2-08); FE2 builds the real design in FE2-06.
+    Created by BE2 (BE2-08); styled by FE2-06: a wall of gilt-framed paintings, the staff comments folded under each label.
 *@
 @{
     ViewData["Title"] = "Best Works";
@@ -12,15 +12,24 @@
     object PageRoute(int page) => new { search.CompetitionId, page };
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Best Works</h1>
-    <a href="/student/results" class="btn btn-outline-secondary">My Results</a>
+<div class="page-head">
+    <div>
+        <h1>Best Works</h1>
+        <p class="page-sub">Paintings rated BEST in competitions with published results, with what the staff said about them.</p>
+    </div>
+    <div class="page-actions">
+        <div class="seg" role="group" aria-label="Results">
+            <a href="/student/results">My Results</a>
+            <a href="/student/best" aria-current="page">Best Works</a>
+            <a href="/student/awards">Awards</a>
+        </div>
+    </div>
 </div>
 
 <partial name="_Alerts" />
 
-<form method="get" asp-action="Best" class="row g-2 align-items-end mb-3">
-    <div class="col-md-6">
+<form method="get" asp-action="Best" class="filters">
+    <div class="filter">
         <label class="form-label" for="CompetitionId">Competition</label>
         <select class="form-select" id="CompetitionId" name="CompetitionId">
             <option value="">All</option>
@@ -30,60 +39,74 @@
             }
         </select>
     </div>
-    <div class="col-md-2">
-        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>Search</button>
+        <a href="/student/best" class="btn btn-link">Clear</a>
     </div>
 </form>
 
 @if (Model.TotalCount == 0)
 {
-    <p class="text-muted">No results found.</p>
+    <div class="empty">
+        <i class="bi bi-stars" aria-hidden="true"></i>
+        <p>No results found.</p>
+        <a href="/student/best" class="btn btn-outline-primary">Show all competitions</a>
+    </div>
 }
 else
 {
-    @foreach (var b in Model.Items)
-    {
-        <div class="card mb-3">
-            <div class="card-body d-flex gap-3">
-                <div style="width:130px" class="flex-shrink-0">
+    <div class="art-grid is-large">
+        @foreach (var b in Model.Items)
+        {
+            <figure class="artwork is-awarded">
+                <div class="artwork-frame">
                     @if (b.HasThumbnail)
                     {
                         @* Public image: BEST entry of a GRADED competition (BR-20, SubmissionImagePolicy) *@
-                        <img src="/files/submissions/@b.Id/thumb" alt="@b.Title" class="img-thumbnail" style="max-height:120px" />
+                        <img src="/files/submissions/@b.Id/thumb" alt="@b.Title – @b.StudentName" loading="lazy" />
+                    }
+                    else
+                    {
+                        <span class="artwork-missing">Image not available</span>
                     }
                 </div>
-                <div class="flex-grow-1">
-                    <h2 class="h6 mb-1">
-                        @b.Title
+                <figcaption class="wall-label">
+                    <span class="wl-title">@b.Title</span>
+                    <span class="wl-artist">@b.StudentName</span>
+                    <span class="wl-meta">@b.CompetitionTitle</span>
+                    <span class="wl-state">
+                        <span class="tag tag-BEST">BEST</span>
                         @if (b.AwardName != null)
                         {
-                            <span class="badge bg-success ms-1">@b.AwardName</span>
+                            <span class="tag tag-award"><i class="bi bi-trophy" aria-hidden="true"></i>@b.AwardName</span>
                         }
-                    </h2>
-                    <div class="text-muted small mb-2">by @b.StudentName · @b.CompetitionTitle</div>
-                    <dl class="row mb-0 small">
-                        <dt class="col-sm-3">Strengths</dt>
-                        <dd class="col-sm-9" style="white-space: pre-line">@(b.PositivePoints ?? "–")</dd>
-                        <dt class="col-sm-3">Weaknesses</dt>
-                        <dd class="col-sm-9" style="white-space: pre-line">@(b.NegativePoints ?? "–")</dd>
-                        <dt class="col-sm-3">Areas of improvement</dt>
-                        <dd class="col-sm-9 mb-0" style="white-space: pre-line">@(b.ImprovementAreas ?? "–")</dd>
-                    </dl>
-                </div>
-            </div>
-        </div>
-    }
+                    </span>
+                    <details>
+                        <summary>Staff comments</summary>
+                        <dl>
+                            <dt>Strengths</dt>
+                            <dd>@(b.PositivePoints ?? "–")</dd>
+                            <dt>Weaknesses</dt>
+                            <dd>@(b.NegativePoints ?? "–")</dd>
+                            <dt>Areas of improvement</dt>
+                            <dd>@(b.ImprovementAreas ?? "–")</dd>
+                        </dl>
+                    </details>
+                </figcaption>
+            </figure>
+        }
+    </div>
 
-    <nav class="d-flex justify-content-between align-items-center">
-        <span class="text-muted small">@Model.TotalCount work@(Model.TotalCount == 1 ? "" : "s") · page @Model.Page of @Model.TotalPages</span>
-        <div>
+    <nav class="pager" aria-label="Pages">
+        <span>@Model.TotalCount work@(Model.TotalCount == 1 ? "" : "s"), page @Model.Page of @Model.TotalPages</span>
+        <div class="pager-links">
             @if (Model.HasPrevious)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Best", PageRoute(Model.Page - 1))">Previous</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Best", PageRoute(Model.Page - 1))"><i class="bi bi-chevron-left" aria-hidden="true"></i>Previous</a>
             }
             @if (Model.HasNext)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Best", PageRoute(Model.Page + 1))">Next</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Best", PageRoute(Model.Page + 1))">Next<i class="bi bi-chevron-right ms-1 me-0" aria-hidden="true"></i></a>
             }
         </div>
     </nav>
