@@ -1,60 +1,84 @@
 @model List<InstituteOfFineArts.Web.ViewModels.Student.Competitions.StudentCompetitionListItemVm>
 @*
-    Student – upcoming and ongoing competitions (/student/competitions, SCR-41, F-M05-09).
-    Minimal version created by BE1 (BE1-06); FE1 builds the real design in FE1-04.
+    Student – upcoming and ongoing competitions (/student/competitions, SCR-41, F-M05-09): each cover hangs with a
+    wall label (dates, status, deadline countdown while open, awards, own entry).
+    Created by BE1 (BE1-06); styled by FE1-04.
 *@
+@using System.Globalization
+@using InstituteOfFineArts.Web.Helpers
 @{
     ViewData["Title"] = "Competitions";
 }
 
-<partial name="_Alerts" />
+<div class="page-head">
+    <div>
+        <h1>Competitions</h1>
+        <p class="page-sub">Competitions that are open for entries now or starting soon.</p>
+    </div>
+    <div class="page-actions">
+        <a href="/student/submissions" class="btn btn-outline-primary"><i class="bi bi-images" aria-hidden="true"></i>My entries</a>
+    </div>
+</div>
 
-<h1 class="h3 mb-3">Competitions</h1>
-<p class="text-muted">Competitions that are open for entries now or starting soon.</p>
+<partial name="_Alerts" />
 
 @if (Model.Count == 0)
 {
-    <p class="text-muted">There are no upcoming or ongoing competitions at the moment.</p>
+    <div class="empty">
+        <i class="bi bi-easel" aria-hidden="true"></i>
+        <p>There are no upcoming or ongoing competitions at the moment.</p>
+        <a href="/student/results" class="btn btn-outline-primary">See my results</a>
+    </div>
 }
 else
 {
-    <div class="row g-3">
+    <div class="art-grid is-large">
         @foreach (var c in Model)
         {
-            <div class="col-md-6 col-lg-4">
-                <div class="card h-100">
+            <figure class="artwork">
+                <a class="artwork-frame" asp-action="Details" asp-route-id="@c.Id" tabindex="-1" aria-hidden="true">
                     @if (c.HasCover)
                     {
-                        <img src="/files/competitions/@c.Id/cover" alt="Cover of @c.Title" class="card-img-top" style="max-height:160px; object-fit:cover" />
+                        <img src="/files/competitions/@c.Id/cover" alt="Cover of @c.Title" loading="lazy" />
                     }
-                    <div class="card-body">
-                        <h2 class="h5 card-title">
-                            <a asp-action="Details" asp-route-id="@c.Id">@c.Title</a>
-                        </h2>
-                        <div class="mb-2"><partial name="_Status" model="c.Status" /></div>
-                        <p class="card-text small mb-1">
-                            @c.StartDate.ToString("dd MMM yyyy") – @c.EndDate.ToString("dd MMM yyyy")
-                        </p>
-                        @* Award summary: number of awards and the highest prize *@
-                        <p class="card-text small mb-1">
-                            @if (c.AwardCount == 0)
-                            {
-                                <span class="text-muted">Awards to be announced</span>
-                            }
-                            else
-                            {
-                                @($"{c.AwardCount} award(s) · top prize {c.TopPrize.ToString("$#,##0.00")}")
-                            }
-                        </p>
+                    else
+                    {
+                        <span class="artwork-missing"><i class="bi bi-easel" aria-hidden="true"></i></span>
+                    }
+                </a>
+                <figcaption class="wall-label">
+                    <span class="wl-title"><a asp-action="Details" asp-route-id="@c.Id">@c.Title</a></span>
+                    <span class="wl-meta">@c.StartDate.ToString("dd MMM yyyy") – @c.EndDate.ToString("dd MMM yyyy")</span>
+                    @* Award summary: number of awards and the highest prize *@
+                    <span class="wl-meta">
+                        @if (c.AwardCount == 0)
+                        {
+                            <span>Awards to be announced</span>
+                        }
+                        else
+                        {
+                            @($"{c.AwardCount} award(s), top prize {c.TopPrize.ToString("$#,##0.00")}")
+                        }
+                    </span>
+                    <span class="wl-state">
+                        <partial name="_Status" model="c.Status" />
                         @if (c.HasSubmitted)
                         {
-                            <span class="badge bg-light text-success border">You have already submitted</span>
+                            <span class="tag tag-plain tag-ACCEPTED"><i class="bi bi-check2" aria-hidden="true"></i>You have already submitted</span>
                         }
-                    </div>
-                </div>
-            </div>
+                    </span>
+                    @if (c.Status == CompetitionStatus.ONGOING)
+                    {
+                        <span class="wl-note deadline" data-deadline="@CompetitionStatusResolver.SubmissionDeadline(c.EndDate).ToString("yyyy-MM-dd'T'HH:mm:ss", CultureInfo.InvariantCulture)">
+                            <i class="bi bi-hourglass-split" aria-hidden="true"></i><span data-countdown-text>Deadline @c.EndDate.ToString("dd MMM yyyy"), 23:59:59</span>
+                        </span>
+                    }
+                </figcaption>
+            </figure>
         }
     </div>
 }
 
-<a href="/student" class="btn btn-link px-0 mt-3">Back to home</a>
+@section Scripts {
+    <script src="~/js/countdown.js" asp-append-version="true"></script>
+}

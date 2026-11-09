@@ -2,66 +2,107 @@
 @*
     Student – exhibition details (/student/exhibitions/{id}, SCR-48, F-M09-03): information, status, own artworks.
     While UPCOMING the "Propose an artwork" link opens /student/exhibition-entries/new?exhibitionId={id} (BE1-12).
-    Minimal version created by BE2-09; FE2 builds the real design in FE2-07.
+    Created by BE2-09; styled by FE2-07. The status cell of "My artworks" stays plain text right after the asking price
+    (an e2e script reads that pair).
 *@
 @{
     ViewData["Title"] = Model.Name;
 }
 
-<partial name="_Alerts" />
-
-<div class="d-flex justify-content-between align-items-start mb-3">
+<div class="page-head">
     <div>
-        <h1 class="h3 mb-1">@Model.Name</h1>
-        <div class="text-muted">@Model.City · <partial name="~/Views/Shared/Exhibitions/_ExhibitionStatus.cshtml" model="Model.Status" /></div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">Exhibitions</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.Name</li>
+            </ol>
+        </nav>
+        <h1>@Model.Name</h1>
+        <p class="page-sub d-flex flex-wrap align-items-center gap-2"><span>@Model.City</span> <partial name="~/Views/Shared/Exhibitions/_ExhibitionStatus.cshtml" model="Model.Status" /></p>
     </div>
     @* BR-42: artworks can only be sent to an exhibition that has not started *@
     @if (Model.CanPropose)
     {
-        <a href="/student/exhibition-entries/new?exhibitionId=@Model.Id" class="btn btn-primary">Propose an artwork</a>
+        <div class="page-actions">
+            <a href="/student/exhibition-entries/new?exhibitionId=@Model.Id" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i>Propose an artwork</a>
+        </div>
     }
 </div>
 
-<dl class="row">
-    <dt class="col-sm-3">Venue</dt>
-    <dd class="col-sm-9">@Model.Venue</dd>
-    <dt class="col-sm-3">City / province</dt>
-    <dd class="col-sm-9">@Model.City</dd>
-    <dt class="col-sm-3">Organizer</dt>
-    <dd class="col-sm-9">@(Model.Organizer ?? "–")</dd>
-    <dt class="col-sm-3">Dates</dt>
-    <dd class="col-sm-9">@Model.StartDate.ToString("dd MMM yyyy") – @Model.EndDate.ToString("dd MMM yyyy")</dd>
+<partial name="_Alerts" />
+
+<dl class="details">
+    <dt>Venue</dt>
+    <dd>@Model.Venue</dd>
+    <dt>City / province</dt>
+    <dd>@Model.City</dd>
+    <dt>Organizer</dt>
+    <dd>@(Model.Organizer ?? "–")</dd>
+    <dt>Dates</dt>
+    <dd class="num">@Model.StartDate.ToString("dd MMM yyyy") – @Model.EndDate.ToString("dd MMM yyyy")</dd>
 </dl>
 
 @* white-space: pre-line keeps the line breaks typed by staff; Razor still encodes the text (no HTML/XSS) *@
-<h2 class="h5">Description</h2>
-<p style="white-space: pre-line">@(Model.Description ?? "–")</p>
+<section class="section" aria-labelledby="description-title">
+    <div class="section-head"><h2 id="description-title">Description</h2></div>
+    <p style="white-space: pre-line">@(Model.Description ?? "–")</p>
+</section>
 
 @* Only the student's own artworks in this exhibition *@
-<h2 class="h5">My artworks in this exhibition</h2>
-@if (Model.MyEntries.Count == 0)
-{
-    <p class="text-muted">You have not sent any artwork to this exhibition.</p>
-}
-else
-{
-    <table class="table table-sm">
-        <thead>
-            <tr><th>Artwork</th><th class="text-end">Asking price</th><th>Status</th><th class="text-end">Sold price</th><th>Paid to you</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var x in Model.MyEntries)
+<section class="section" aria-labelledby="mine-title">
+    <div class="section-head">
+        <h2 id="mine-title">My artworks in this exhibition</h2>
+        <a href="/student/exhibition-entries?ExhibitionId=@Model.Id" class="btn btn-sm btn-outline-primary">Open in my artworks on show</a>
+    </div>
+    @if (Model.MyEntries.Count == 0)
+    {
+        <div class="empty">
+            <i class="bi bi-easel2" aria-hidden="true"></i>
+            <p>You have not sent any artwork to this exhibition.</p>
+            @if (Model.CanPropose)
             {
-                <tr>
-                    <td>@x.ArtworkTitle</td>
-                    <td class="text-end">@x.AskingPrice.ToString("$#,##0.00")</td>
-                    <td>@x.Status</td>
-                    <td class="text-end">@(x.SoldPrice?.ToString("$#,##0.00") ?? "–")</td>
-                    <td>@(x.Status == EntryStatus.SOLD ? (x.PaidToStudent ? "Yes" : "Not yet") : "–")</td>
-                </tr>
+                <a href="/student/exhibition-entries/new?exhibitionId=@Model.Id" class="btn btn-outline-primary">Propose an artwork</a>
             }
-        </tbody>
-    </table>
-}
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr><th>Artwork</th><th class="text-end">Asking price</th><th>Status</th><th class="text-end">Sold price</th><th>Paid to you</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var x in Model.MyEntries)
+                    {
+                        <tr>
+                            <td><a class="row-title" href="/student/exhibition-entries/@x.EntryId"><em>@x.ArtworkTitle</em></a></td>
+                            <td class="text-end">@x.AskingPrice.ToString("$#,##0.00")</td>
+                            <td>@x.Status</td>
+                            <td class="text-end">@(x.SoldPrice?.ToString("$#,##0.00") ?? "–")</td>
+                            <td>
+                                @if (x.Status == EntryStatus.SOLD)
+                                {
+                                    if (x.PaidToStudent)
+                                    {
+                                        <span class="tag tag-PAID">Yes</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="tag tag-UNPAID">Not yet</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">–</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
 
-<a asp-action="Index" class="btn btn-link px-0">Back to exhibitions</a>
+<a asp-action="Index" class="btn btn-link px-0"><i class="bi bi-arrow-left" aria-hidden="true"></i>Back to exhibitions</a>

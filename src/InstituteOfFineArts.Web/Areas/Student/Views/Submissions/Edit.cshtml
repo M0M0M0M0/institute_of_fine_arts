@@ -1,42 +1,72 @@
 @model InstituteOfFineArts.Web.ViewModels.Student.Submissions.SubmissionEditVm
 @*
     Student – edit an entry / replace its image (/student/submissions/{id}/edit, SCR-43, F-M06-02, F-M06-03).
-    Only while the competition is ongoing (BR-13). Minimal version created by BE1 (BE1-09); FE1 builds the real design in FE1-05.
+    Only while the competition is ongoing (BR-13). Created by BE1 (BE1-09); styled by FE1-05: form sheet, current
+    image with its wall label, live preview of a replacement JPEG (upload-preview.js), text type pills, countdown.
 *@
+@using System.Globalization
+@using InstituteOfFineArts.Web.Helpers
 @{
     ViewData["Title"] = "Edit entry";
+    var deadlineIso = CompetitionStatusResolver.SubmissionDeadline(Model.Deadline).ToString("yyyy-MM-dd'T'HH:mm:ss", CultureInfo.InvariantCulture);
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <h1 class="h3 mb-1">Edit entry</h1>
-        <p class="text-muted">@Model.CompetitionTitle · you can change your entry until @Model.Deadline.ToString("dd MMM yyyy"), 23:59:59.</p>
-
-        <partial name="_Alerts" />
-
-        @* multipart/form-data is required to upload a new image *@
-        <form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" novalidate>
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
-
-            <div class="mb-3">
-                <div class="mb-2">
-                    <img src="/files/submissions/@Model.Id/thumb" alt="Current image" class="img-thumbnail" style="max-height:160px" />
-                    <div class="small text-muted">Current file: @Model.OriginalFileName</div>
-                </div>
-                <label asp-for="NewImage" class="form-label"></label>
-                <input asp-for="NewImage" type="file" accept=".jpg,.jpeg,image/jpeg" class="form-control" />
-                <div class="form-text">Leave empty to keep the current image. The old image is deleted when you choose a new one.</div>
-                <span asp-validation-for="NewImage" class="text-danger"></span>
-            </div>
-
-            <partial name="_Form" model="Model" />
-
-            <button type="submit" class="btn btn-primary">Save changes</button>
-            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link">Cancel</a>
-        </form>
+<div class="page-head">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/student/submissions">My entries</a></li>
+                <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">Entry details</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Edit</li>
+            </ol>
+        </nav>
+        <h1>Edit entry</h1>
+        <p class="page-sub">@Model.CompetitionTitle: you can change your entry until @Model.Deadline.ToString("dd MMM yyyy"), 23:59:59.</p>
+        <p class="deadline mt-2 mb-0" data-deadline="@deadlineIso"><i class="bi bi-hourglass-split" aria-hidden="true"></i><span data-countdown-text></span></p>
     </div>
 </div>
 
+<partial name="_Alerts" />
+
+@* multipart/form-data is required to upload a new image *@
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" novalidate class="form-sheet">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+
+    <div class="mb-4">
+        <div class="upload-preview mt-0 mb-3">
+            <div class="artwork-frame is-contain"><img src="/files/submissions/@Model.Id/thumb" alt="Current image" /></div>
+            <div class="wall-label">
+                <span class="wl-artist">Current image</span>
+                <span class="wl-meta">Current file: @Model.OriginalFileName</span>
+            </div>
+        </div>
+        <label asp-for="NewImage" class="form-label"></label>
+        <input asp-for="NewImage" type="file" accept=".jpg,.jpeg,image/jpeg" class="form-control" data-upload-preview="image-preview" />
+        <div class="form-text">Leave empty to keep the current image. The old image is deleted when you choose a new one.</div>
+        <span asp-validation-for="NewImage" class="text-danger"></span>
+
+        @* Filled by upload-preview.js once a file is chosen; it only informs, the server checks the file *@
+        <div id="image-preview" class="upload-preview" hidden>
+            <div class="artwork-frame is-contain"><img alt="" /></div>
+            <div class="wall-label" aria-live="polite">
+                <span class="wl-artist">New image</span>
+                <span class="wl-title" data-preview-name></span>
+                <span class="wl-meta" data-preview-meta></span>
+                <span class="wl-note" data-preview-warn hidden></span>
+            </div>
+        </div>
+    </div>
+
+    <partial name="_Form" model="Model" />
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check2" aria-hidden="true"></i>Save changes</button>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link">Cancel</a>
+    </div>
+</form>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/upload-preview.js" asp-append-version="true"></script>
+    <script src="~/js/countdown.js" asp-append-version="true"></script>
 }

@@ -1,7 +1,7 @@
 @model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Student.Exhibitions.StudentExhibitionListItemVm>
 @*
     Student – exhibitions (/student/exhibitions, SCR-48, F-M09-02/03): search, upcoming exhibitions first.
-    Minimal version created by BE2-09; FE2 builds the real design in FE2-07.
+    Created by BE2-09; styled by FE2-07 (ledger with status tags).
 *@
 @{
     ViewData["Title"] = "Exhibitions";
@@ -10,21 +10,28 @@
     object PageRoute(int page) => new { search.Keyword, search.City, search.Status, From = search.From?.ToString("yyyy-MM-dd"), To = search.To?.ToString("yyyy-MM-dd"), page };
 }
 
+<div class="page-head">
+    <div>
+        <h1>Exhibitions</h1>
+        <p class="page-sub">Upcoming exhibitions are listed first. You can propose your BEST / BETTER artworks to an upcoming exhibition.</p>
+    </div>
+    <div class="page-actions">
+        <a href="/student/exhibition-entries" class="btn btn-outline-primary"><i class="bi bi-easel2" aria-hidden="true"></i>My artworks on show</a>
+    </div>
+</div>
+
 <partial name="_Alerts" />
 
-<h1 class="h3 mb-3">Exhibitions</h1>
-<p class="text-muted">Upcoming exhibitions are listed first. You can propose your BEST / BETTER artworks to an upcoming exhibition.</p>
-
-<form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
-    <div class="col-md-3">
+<form method="get" asp-action="Index" class="filters">
+    <div class="filter">
         <label class="form-label" for="Keyword">Name</label>
         <input class="form-control" id="Keyword" name="Keyword" value="@search.Keyword" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="City">City</label>
         <input class="form-control" id="City" name="City" value="@search.City" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="Status">Status</label>
         <select class="form-select" id="Status" name="Status">
             <option value="">All</option>
@@ -34,57 +41,62 @@
             }
         </select>
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="From">From</label>
         <input class="form-control" type="date" id="From" name="From" value="@search.From?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="To">To</label>
         <input class="form-control" type="date" id="To" name="To" value="@search.To?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-1">
-        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>Search</button>
+        <a href="/student/exhibitions" class="btn btn-link">Clear</a>
     </div>
 </form>
 
 @if (Model.TotalCount == 0)
 {
-    <p class="text-muted">No exhibitions found.</p>
+    <div class="empty">
+        <i class="bi bi-bank" aria-hidden="true"></i>
+        <p>No exhibitions found.</p>
+        <a href="/student/exhibitions" class="btn btn-outline-primary">Show all exhibitions</a>
+    </div>
 }
 else
 {
-    <table class="table table-hover align-middle">
-        <thead>
-            <tr><th>Name</th><th>City</th><th>Venue</th><th>Dates</th><th>Status</th><th class="text-end">My artworks</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var e in Model.Items)
-            {
-                <tr>
-                    <td><a asp-action="Details" asp-route-id="@e.Id">@e.Name</a></td>
-                    <td>@e.City</td>
-                    <td>@e.Venue</td>
-                    <td>@e.StartDate.ToString("dd MMM yyyy") – @e.EndDate.ToString("dd MMM yyyy")</td>
-                    <td><partial name="~/Views/Shared/Exhibitions/_ExhibitionStatus.cshtml" model="e.Status" /></td>
-                    <td class="text-end">@e.MyEntryCount</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr><th>Name</th><th>City</th><th>Venue</th><th>Dates</th><th>Status</th><th class="text-end">My artworks</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var e in Model.Items)
+                {
+                    <tr>
+                        <td><a class="row-title" asp-action="Details" asp-route-id="@e.Id">@e.Name</a></td>
+                        <td>@e.City</td>
+                        <td>@e.Venue</td>
+                        <td class="text-nowrap num">@e.StartDate.ToString("dd MMM yyyy") – @e.EndDate.ToString("dd MMM yyyy")</td>
+                        <td><partial name="~/Views/Shared/Exhibitions/_ExhibitionStatus.cshtml" model="e.Status" /></td>
+                        <td class="text-end">@e.MyEntryCount</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
-    <nav class="d-flex justify-content-between align-items-center">
-        <span class="text-muted small">@Model.TotalCount exhibition(s) · page @Model.Page of @Model.TotalPages</span>
-        <div>
+    <nav class="pager" aria-label="Pages">
+        <span>@Model.TotalCount exhibition(s), page @Model.Page of @Model.TotalPages</span>
+        <div class="pager-links">
             @if (Model.HasPrevious)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page - 1))"><i class="bi bi-chevron-left" aria-hidden="true"></i>Previous</a>
             }
             @if (Model.HasNext)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next<i class="bi bi-chevron-right ms-1 me-0" aria-hidden="true"></i></a>
             }
         </div>
     </nav>
 }
-
-<a href="/student" class="btn btn-link px-0 mt-3">Back to home</a>
