@@ -41,6 +41,9 @@
         if (!(form instanceof HTMLFormElement) || !form.dataset.confirm || form.dataset.confirmed === "1") {
             return;
         }
+        // Client-side validation already stopped the submit (missing field…): no dialog for a form that will not be sent
+        if (e.defaultPrevented) { return; }
+        if (window.jQuery && jQuery.fn.valid && jQuery(form).data("validator") && !jQuery(form).valid()) { return; }
         if (typeof Swal === "undefined") {
             if (!window.confirm(form.dataset.confirm)) { e.preventDefault(); }
             return;
