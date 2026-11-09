@@ -64,6 +64,9 @@ builder.Services.AddApplicationServices();
 // Upload settings (root folder, 5 MB limit, thumbnail width) used by FileStorageService – task BE1-04
 builder.Services.Configure<UploadOptions>(builder.Configuration.GetSection(UploadOptions.SectionName));
 
+// QuestPDF (report PDF export, F-M14-01): free Community license, set once for the whole application
+QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
 // Background jobs: every BackgroundService in Infrastructure/BackgroundJobs is registered automatically
 builder.Services.AddBackgroundJobs();
 

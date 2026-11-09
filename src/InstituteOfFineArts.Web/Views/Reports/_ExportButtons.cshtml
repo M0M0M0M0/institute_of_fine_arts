@@ -1,0 +1,14 @@
+@model string
+@*
+    "Export Excel" / "Export PDF" buttons of a report (F-M14-01): link to {report URL}/export?format=xlsx|pdf with the
+    current filters of the page. Model = report URL, e.g. /reports/rpt-01. Hidden when printing.
+    Minimal version created by BE2-OPT 1; FE builds the real design in FE2-09.
+*@
+@using InstituteOfFineArts.Web.Services.Implementations
+@{
+    var exportPath = Model + "/export";
+}
+<a class="btn btn-outline-success d-print-none" id="export-xlsx"
+   href="@ReportExportService.HtmlReportUrl(exportPath, Context.Request.Query, "xlsx")">Export Excel</a>
+<a class="btn btn-outline-danger d-print-none" id="export-pdf"
+   href="@ReportExportService.HtmlReportUrl(exportPath, Context.Request.Query, "pdf")">Export PDF</a>
