@@ -9,7 +9,10 @@
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3 mb-0">Students</h1>
-    <a asp-action="Create" class="btn btn-primary">New student</a>
+    <div>
+        <a href="/admin/students/import" class="btn btn-outline-secondary">Import from CSV</a>
+        <a asp-action="Create" class="btn btn-primary">New student</a>
+    </div>
 </div>
 
 <partial name="_Alerts" />

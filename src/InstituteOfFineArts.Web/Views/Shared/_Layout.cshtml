@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿@inject Microsoft.Extensions.Localization.IStringLocalizer<InstituteOfFineArts.Web.SharedResource> L
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -55,7 +56,7 @@
                         @foreach (var item in menu)
                         {
                             <li class="nav-item">
-                                <a class="nav-link text-dark" href="@item.Url">@item.Text</a>
+                                <a class="nav-link text-dark" href="@item.Url">@L[item.Text]</a>
                             </li>
                         }
                     </ul>
@@ -64,20 +65,22 @@
                         {
                             @* Notification bell (M12, F-M12-02): unread count + 5 newest *@
                             @await Component.InvokeAsync("NotificationBell")
-                            <li class="nav-item"><a class="nav-link text-dark" href="/profile">Profile</a></li>
+                            <li class="nav-item"><a class="nav-link text-dark" href="/profile">@L["Profile"]</a></li>
                             <li class="nav-item">
                                 @* Log out with POST plus the anti-forgery token *@
                                 <form method="post" action="/logout" class="d-inline">
                                     @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-link nav-link text-dark">Log out</button>
+                                    <button type="submit" class="btn btn-link nav-link text-dark">@L["Log out"]</button>
                                 </form>
                             </li>
                         }
                         else
                         {
-                            <li class="nav-item"><a class="nav-link text-dark" href="/login">Log in</a></li>
+                            <li class="nav-item"><a class="nav-link text-dark" href="/login">@L["Log in"]</a></li>
                         }
                     </ul>
+                    @* English / Vietnamese switch (F-M19-01) *@
+                    <partial name="_LanguageSwitch" />
                 </div>
             </div>
         </nav>

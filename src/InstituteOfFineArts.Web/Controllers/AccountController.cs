@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace InstituteOfFineArts.Web.Controllers;
 
@@ -30,11 +31,15 @@ public class AccountController : Controller
     /// <summary>Records log in / log out in the audit log (F-M17-01).</summary>
     private readonly IAuditLogService _audit;
 
-    /// <summary>Receives the required services through Dependency Injection.</summary>
-    public AccountController(IAuthService authService, IAuditLogService audit)
+    /// <summary>Translates the login messages when the Vietnamese UI is chosen (F-M19-01); English stays unchanged.</summary>
+    private readonly IStringLocalizer<SharedResource> _localizer;
+
+    /// <summary>Receives the authentication service, the audit log and the text localizer through Dependency Injection.</summary>
+    public AccountController(IAuthService authService, IAuditLogService audit, IStringLocalizer<SharedResource> localizer)
     {
         _authService = authService;
         _audit = audit;
+        _localizer = localizer;
     }
 
     /// <summary>
@@ -75,7 +80,7 @@ public class AccountController : Controller
         if (result.Status != LoginStatus.Success || result.Principal == null)
         {
             var message = result.Status == LoginStatus.Locked ? LockedMessage : InvalidCredentialsMessage;
-            ModelState.AddModelError(string.Empty, message);
+            ModelState.AddModelError(string.Empty, _localizer[message].Value);
 
             // Audit (F-M17-01): the user name that was tried and why, never the password
             await _audit.LogAsAsync(null, form.Username, AuditLogService.LoginFailedAction,
