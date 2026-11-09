@@ -1,0 +1,128 @@
+@model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Staff.ExhibitionEntries.EntryListItemVm>
+@*
+    Result of the exhibition entry lists, shared by /staff/exhibition-entries (SCR-30) and /manager/exhibition-entries (SCR-54).
+    One exhibition chosen (?exhibitionId=, the "Artworks" link of the exhibition page): its paintings hang as a wall-labelled
+    grid (title, student, asking price, status, sold price, payment). All exhibitions: a dense ledger table with thumbnails.
+    Pager keeps the filters (ViewBag.Search). Created by BE1-12 / BE2-13; styled by FE1-08, FE1-09, FE2-10.
+*@
+@using InstituteOfFineArts.Web.ViewModels.Staff.ExhibitionEntries
+@using InstituteOfFineArts.Web.Models.Enums
+@{
+    var search = (EntrySearchVm)ViewBag.Search;
+    var asWall = search.ExhibitionId != null;
+    // Keeps the filters when moving between pages
+    object PageRoute(int page) => new { search.ExhibitionId, search.Status, search.Paid, search.Student, page };
+}
+
+@if (Model.TotalCount == 0)
+{
+    <div class="empty">
+        <i class="bi bi-easel2" aria-hidden="true"></i>
+        <p>No exhibition entries found.</p>
+    </div>
+}
+else if (asWall)
+{
+    <div class="art-grid">
+        @foreach (var e in Model.Items)
+        {
+            <figure class="artwork">
+                @* The frame repeats the title link, so it is hidden from the keyboard and screen readers *@
+                <a class="artwork-frame" asp-action="Details" asp-route-id="@e.Id" tabindex="-1" aria-hidden="true">
+                    @if (e.HasThumbnail)
+                    {
+                        <img src="/files/submissions/@e.SubmissionId/thumb" alt="@e.Title – @e.StudentName" loading="lazy" />
+                    }
+                    else
+                    {
+                        <span class="artwork-missing">Image not available</span>
+                    }
+                </a>
+                <figcaption class="wall-label">
+                    <span class="wl-title"><a asp-action="Details" asp-route-id="@e.Id">@e.Title</a></span>
+                    <span class="wl-artist">@e.StudentName <span class="text-muted">(@e.StudentCode)</span></span>
+                    <span class="wl-meta num">Asking price @e.AskingPrice.ToString("$#,##0.00")</span>
+                    @if (e.SoldPrice is { } sold)
+                    {
+                        <span class="wl-meta num">Sold for @sold.ToString("$#,##0.00")</span>
+                    }
+                    <span class="wl-state">
+                        <span class="tag tag-@e.Status">@e.Status</span>
+                        @if (e.PaidToStudent)
+                        {
+                            <span class="tag tag-PAID">Paid</span>
+                        }
+                        else if (e.Status == EntryStatus.SOLD)
+                        {
+                            <span class="tag tag-UNPAID">Not paid to student</span>
+                        }
+                    </span>
+                </figcaption>
+            </figure>
+        }
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th scope="col"><span class="visually-hidden">Image</span></th><th scope="col">Painting</th><th scope="col">Student</th><th scope="col">Exhibition</th>
+                    <th scope="col" class="text-end">Asking price</th><th scope="col">Status</th><th scope="col" class="text-end">Sold price</th><th scope="col">Paid to student</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var e in Model.Items)
+                {
+                    <tr>
+                        <td>
+                            @if (e.HasThumbnail)
+                            {
+                                <img src="/files/submissions/@e.SubmissionId/thumb" alt="@e.Title – @e.StudentName" class="table-thumb" loading="lazy" />
+                            }
+                        </td>
+                        <td class="row-title"><a asp-action="Details" asp-route-id="@e.Id">@e.Title</a></td>
+                        <td>@e.StudentName <span class="small text-muted">(@e.StudentCode)</span></td>
+                        <td><a asp-controller="Exhibitions" asp-action="Details" asp-route-id="@e.ExhibitionId">@e.ExhibitionName</a></td>
+                        <td class="text-end">@e.AskingPrice.ToString("$#,##0.00")</td>
+                        <td><span class="tag tag-@e.Status">@e.Status</span></td>
+                        <td class="text-end">@(e.SoldPrice?.ToString("$#,##0.00") ?? "–")</td>
+                        <td>
+                            @if (e.PaidToStudent)
+                            {
+                                <span class="tag tag-PAID">Paid</span>
+                                <span class="small text-muted num">@e.PaidDate?.ToString("dd MMM yyyy")</span>
+                            }
+                            else if (e.Status == EntryStatus.SOLD)
+                            {
+                                <span class="tag tag-UNPAID">Not paid to student</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">–</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (Model.TotalCount > 0)
+{
+    <nav class="pager" aria-label="Pages">
+        <span>@Model.TotalCount entr@(Model.TotalCount == 1 ? "y" : "ies"), page @Model.Page of @Model.TotalPages</span>
+        <div class="pager-links">
+            @if (Model.HasPrevious)
+            {
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page - 1))"><i class="bi bi-chevron-left" aria-hidden="true"></i>Previous</a>
+            }
+            @if (Model.HasNext)
+            {
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next<i class="bi bi-chevron-right ms-1" aria-hidden="true"></i></a>
+            }
+        </div>
+    </nav>
+}

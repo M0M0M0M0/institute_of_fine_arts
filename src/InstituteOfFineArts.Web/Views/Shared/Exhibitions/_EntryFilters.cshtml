@@ -1,0 +1,54 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.ExhibitionEntries.EntrySearchVm
+@*
+    GET filters of the exhibition entry lists, shared by /staff/exhibition-entries (SCR-30) and /manager/exhibition-entries (SCR-54):
+    exhibition / status / paid to student / student. The exhibition options come from ViewBag.Exhibitions.
+    Markup moved out of the two Index views by FE1-08 / FE2-10 (field names unchanged).
+*@
+@using InstituteOfFineArts.Web.ViewModels.Staff.ExhibitionEntries
+@using InstituteOfFineArts.Web.Models.Enums
+@{
+    var exhibitions = (List<EntryExhibitionOptionVm>)ViewBag.Exhibitions;
+    var filtered = Model.ExhibitionId != null || Model.Status != null || Model.Paid != null || !string.IsNullOrEmpty(Model.Student);
+}
+
+<form method="get" asp-action="Index" class="filters" role="search">
+    <div class="filter is-wide">
+        <label class="form-label" for="ExhibitionId">Exhibition</label>
+        <select class="form-select" id="ExhibitionId" name="ExhibitionId">
+            <option value="">All exhibitions</option>
+            @foreach (var x in exhibitions)
+            {
+                <option value="@x.Id" selected="@(Model.ExhibitionId == x.Id)">@x.Name (@x.StartDate.ToString("dd MMM yyyy"))</option>
+            }
+        </select>
+    </div>
+    <div class="filter">
+        <label class="form-label" for="Status">Status</label>
+        <select class="form-select" id="Status" name="Status">
+            <option value="">All</option>
+            @foreach (var s in Enum.GetValues<EntryStatus>())
+            {
+                <option value="@s" selected="@(Model.Status == s)">@s</option>
+            }
+        </select>
+    </div>
+    <div class="filter">
+        <label class="form-label" for="Paid">Paid to student</label>
+        <select class="form-select" id="Paid" name="Paid">
+            <option value="">All</option>
+            <option value="true" selected="@(Model.Paid == true)">Paid</option>
+            <option value="false" selected="@(Model.Paid == false)">Sold, not paid</option>
+        </select>
+    </div>
+    <div class="filter">
+        <label class="form-label" for="Student">Student name or code</label>
+        <input class="form-control" id="Student" name="Student" value="@Model.Student" />
+    </div>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>Search</button>
+        @if (filtered)
+        {
+            <a asp-action="Index" class="btn btn-link">Clear</a>
+        }
+    </div>
+</form>
