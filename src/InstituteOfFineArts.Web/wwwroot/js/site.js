@@ -77,8 +77,7 @@
     });
 
     // ---- 3. Image fallback ----
-    document.addEventListener("error", function (e) {
-        const img = e.target;
+    function markMissing(img) {
         if (!(img instanceof HTMLImageElement) || img.dataset.fallbackDone) { return; }
         const frame = img.closest(".artwork-frame");
         if (!frame) { return; }
@@ -88,5 +87,11 @@
         note.className = "artwork-missing";
         note.textContent = "Image not available";
         frame.appendChild(note);
-    }, true);
+    }
+    // Images that fail after this script runs
+    document.addEventListener("error", function (e) { markMissing(e.target); }, true);
+    // Images that already failed before it ran (scripts load at the end of the page)
+    document.querySelectorAll(".artwork-frame img").forEach(function (img) {
+        if (img.complete && img.naturalWidth === 0 && img.getAttribute("src")) { markMissing(img); }
+    });
 })();

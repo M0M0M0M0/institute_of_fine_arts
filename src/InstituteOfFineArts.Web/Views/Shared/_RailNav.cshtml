@@ -69,6 +69,11 @@
     // Current page = the longest menu URL the path starts with ("/staff" must not win over "/staff/awards")
     var path = (Context.Request.Path.Value ?? "/").TrimEnd('/').ToLowerInvariant();
     if (path.Length == 0) { path = "/"; }
+    // The grading screen is reached from Submissions and lives under /staff/evaluations: highlight Submissions
+    if (path.StartsWith("/staff/evaluations"))
+    {
+        path = "/staff/submissions";
+    }
     var current = items
         .Where(i => path == i.Url || path.StartsWith(i.Url + "/"))
         .OrderByDescending(i => i.Url.Length)
