@@ -3,128 +3,148 @@
     Public competition details (/competitions/{id}, SCR-02, F-M02-05, TC-M02-05): description, rules, dates, awards
     and, when GRADED, the winners. Guests get "Log in to submit"; signed-in students get "Submit an entry" while
     the competition is ONGOING. No entry texts and no evaluations are shown (role matrix §2.3).
-    Minimal version created by BE2 (BE2-11); FE2 builds the real design in FE2-08.
+    Created by BE2 (BE2-11); styled by FE2-08: the cover as a painted band (mist band without a cover), facts and
+    texts in read mode, awards ledger with gilt prizes, winners as labelled works on the wall.
 *@
 @using InstituteOfFineArts.Web.Helpers
 @using InstituteOfFineArts.Web.Models.Enums
 @{
     ViewData["Title"] = Model.Title;
+    ViewData["FullBleed"] = true;
     var isGuest = User.Identity?.IsAuthenticated != true;
     var isStudent = User.IsInRole(RoleNames.Student);
 }
 
-<partial name="_Alerts" />
+<section class="@(Model.HasCover ? "hero is-short" : "band band-mist")" aria-labelledby="competition-title">
+    @if (Model.HasCover)
+    {
+        <div class="hero-art"><img src="/files/competitions/@Model.Id/cover" alt="Cover of @Model.Title" /></div>
+    }
+    <div class="@(Model.HasCover ? "hero-body" : "band-inner")">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb@(Model.HasCover ? " on-ink" : "")">
+                <li class="breadcrumb-item"><a href="/competitions">Competitions</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.Code</li>
+            </ol>
+        </nav>
+        <h1 class="@(Model.HasCover ? "hero-title is-page" : "")" id="competition-title">@Model.Title</h1>
+        <div class="hero-meta mb-3@(Model.HasCover ? "" : " text-muted")">
+            <span>@Model.Code</span>
+            <partial name="_Status" model="Model.Status" />
+            <span><i class="bi bi-calendar3 me-1" aria-hidden="true"></i>@Model.StartDate.ToString("dd MMM yyyy") – @Model.EndDate.ToString("dd MMM yyyy")</span>
+        </div>
 
-<div class="mb-3">
-    <h1 class="h3 mb-1">@Model.Title</h1>
-    <div class="text-muted">@Model.Code · <partial name="_Status" model="Model.Status" /></div>
-</div>
-
-@if (Model.HasCover)
-{
-    <img src="/files/competitions/@Model.Id/cover" alt="Cover of @Model.Title" class="img-fluid rounded mb-3" style="max-height:280px" />
-}
-
-<dl class="row">
-    <dt class="col-sm-3">Start date</dt>
-    <dd class="col-sm-9">@Model.StartDate.ToString("dd MMM yyyy")</dd>
-    <dt class="col-sm-3">Submission deadline</dt>
-    <dd class="col-sm-9">@Model.EndDate.ToString("dd MMM yyyy"), 23:59:59</dd>
-    <dt class="col-sm-3">Entries</dt>
-    <dd class="col-sm-9">@Model.SubmissionCount</dd>
-</dl>
-
-@* How to take part: guests log in first, students submit while ONGOING (BR-13) *@
-@if (Model.Status == CompetitionStatus.ONGOING)
-{
-    <div class="card mb-4">
-        <div class="card-body">
+        @* How to take part: guests log in first, students submit while ONGOING (BR-13) *@
+        @if (Model.Status == CompetitionStatus.ONGOING)
+        {
             @if (isGuest)
             {
-                <p>Students of the institute can submit one painting to this competition.</p>
-                <a href="/login?returnUrl=/student/competitions/@Model.Id" class="btn btn-primary">Log in to submit</a>
+                <p class="mb-3">Students of the institute can submit one painting to this competition.</p>
+                <div class="hero-actions">
+                    <a href="/login?returnUrl=/student/competitions/@Model.Id" class="btn btn-lg @(Model.HasCover ? "btn-on-ink" : "btn-primary")">Log in to submit</a>
+                </div>
             }
             else if (isStudent)
             {
-                <a href="/student/submissions/new?competitionId=@Model.Id" class="btn btn-primary">Submit an entry</a>
-                <a href="/student/competitions/@Model.Id" class="btn btn-link">My entry for this competition</a>
+                <div class="hero-actions">
+                    <a href="/student/submissions/new?competitionId=@Model.Id" class="btn btn-lg @(Model.HasCover ? "btn-on-ink" : "btn-primary")">Submit an entry</a>
+                    <a href="/student/competitions/@Model.Id" class="btn btn-lg @(Model.HasCover ? "btn-ghost-on-ink" : "btn-outline-primary")">My entry for this competition</a>
+                </div>
             }
             else
             {
-                <p class="mb-0 text-muted">This competition is open for student entries.</p>
+                <p class="mb-0">This competition is open for student entries.</p>
             }
-        </div>
+        }
+        else if (Model.Status == CompetitionStatus.UPCOMING)
+        {
+            <p class="mb-0">Entries open on @Model.StartDate.ToString("dd MMM yyyy").</p>
+        }
     </div>
-}
-else if (Model.Status == CompetitionStatus.UPCOMING)
-{
-    <p class="text-muted">Entries open on @Model.StartDate.ToString("dd MMM yyyy").</p>
-}
+</section>
 
-@* white-space: pre-line keeps the line breaks typed by staff; Razor still encodes the text (no HTML/XSS) *@
-<h2 class="h5">Description</h2>
-<p style="white-space: pre-line">@(Model.Description ?? "–")</p>
+<div class="page">
+    <partial name="_Alerts" />
 
-<h2 class="h5">Rules &amp; conditions</h2>
-<p style="white-space: pre-line">@(Model.Rules ?? "–")</p>
+    <dl class="details">
+        <dt>Start date</dt>
+        <dd>@Model.StartDate.ToString("dd MMM yyyy")</dd>
+        <dt>Submission deadline</dt>
+        <dd>@Model.EndDate.ToString("dd MMM yyyy"), 23:59:59</dd>
+        <dt>Entries</dt>
+        <dd class="num">@Model.SubmissionCount</dd>
+    </dl>
 
-<h2 class="h5">Awards</h2>
-@if (Model.Awards.Count == 0)
-{
-    <p class="text-muted">Awards will be announced soon.</p>
-}
-else
-{
-    <table class="table table-sm">
-        <thead><tr><th>Rank</th><th>Award</th><th class="text-end">Prize</th><th class="text-end">Quantity</th><th>Description</th></tr></thead>
-        <tbody>
-            @foreach (var a in Model.Awards)
-            {
-                <tr>
-                    <td>@a.Rank</td>
-                    <td>@a.Name</td>
-                    <td class="text-end">@a.PrizeValue.ToString("$#,##0.00")</td>
-                    <td class="text-end">@a.Quantity</td>
-                    <td>@a.Description</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+    @* white-space: pre-line keeps the line breaks typed by staff; Razor still encodes the text (no HTML/XSS) *@
+    <div class="read">
+        <h2>Description</h2>
+        <p style="white-space: pre-line">@(Model.Description ?? "–")</p>
 
-@* Winners only once the results are published (US-02 AC4) *@
-@if (Model.Status == CompetitionStatus.GRADED)
-{
-    <h2 class="h5 mt-4">Winners</h2>
-    @if (Model.ResultRemarks != null)
-    {
-        <p style="white-space: pre-line">@Model.ResultRemarks</p>
-    }
-    @if (Model.Winners.Count == 0)
-    {
-        <p class="text-muted">No awards were issued in this competition.</p>
-    }
-    else
-    {
-        <div class="row g-3">
-            @foreach (var w in Model.Winners)
-            {
-                <div class="col-6 col-md-3">
-                    <div class="card h-100">
-                        @if (w.HasThumbnail)
+        <h2>Rules &amp; conditions</h2>
+        <p style="white-space: pre-line">@(Model.Rules ?? "–")</p>
+    </div>
+
+    <section class="section" aria-labelledby="awards-title">
+        <div class="section-head"><h2 id="awards-title">Awards</h2></div>
+        @if (Model.Awards.Count == 0)
+        {
+            <p class="text-muted">Awards will be announced soon.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th class="text-end">Rank</th><th>Award</th><th class="text-end">Prize</th><th class="text-end">Quantity</th><th>Description</th></tr></thead>
+                    <tbody>
+                        @foreach (var a in Model.Awards)
                         {
-                            <img src="/files/submissions/@w.SubmissionId/thumb" alt="@w.ArtworkTitle" class="card-img-top" />
+                            <tr>
+                                <td class="text-end">@a.Rank</td>
+                                <td class="row-title">@a.Name</td>
+                                <td class="text-end prize">@a.PrizeValue.ToString("$#,##0.00")</td>
+                                <td class="text-end">@a.Quantity</td>
+                                <td>@a.Description</td>
+                            </tr>
                         }
-                        <div class="card-body p-2">
-                            <div class="small"><span class="badge bg-success">@w.AwardName</span></div>
-                            <div class="fw-semibold">“@w.ArtworkTitle”</div>
-                            <div class="small text-muted">@w.StudentName</div>
-                        </div>
-                    </div>
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+
+    @* Winners only once the results are published (US-02 AC4) *@
+    @if (Model.Status == CompetitionStatus.GRADED)
+    {
+        <section class="section" aria-labelledby="winners-title">
+            <div class="section-head"><h2 id="winners-title">Winners</h2></div>
+            @if (Model.ResultRemarks != null)
+            {
+                <p class="artwork-text mb-4">@Model.ResultRemarks</p>
+            }
+            @if (Model.Winners.Count == 0)
+            {
+                <p class="text-muted">No awards were issued in this competition.</p>
+            }
+            else
+            {
+                <div class="art-grid">
+                    @foreach (var w in Model.Winners)
+                    {
+                        <figure class="artwork is-awarded">
+                            <div class="artwork-frame">
+                                <img src="/files/submissions/@w.SubmissionId@(w.HasThumbnail ? "/thumb" : "")" alt="@w.ArtworkTitle – @w.StudentName" loading="lazy" />
+                            </div>
+                            <figcaption class="wall-label">
+                                <span class="wl-title">@w.ArtworkTitle</span>
+                                <span class="wl-artist">@w.StudentName</span>
+                                <span class="wl-state"><span class="tag tag-award"><i class="bi bi-award" aria-hidden="true"></i>@w.AwardName</span></span>
+                            </figcaption>
+                        </figure>
+                    }
                 </div>
             }
-        </div>
+        </section>
     }
-}
 
-<a asp-action="Index" class="btn btn-link px-0 mt-3">Back to competitions</a>
+    <a asp-action="Index" class="btn btn-link px-0 mt-3"><i class="bi bi-arrow-left" aria-hidden="true"></i>Back to competitions</a>
+</div>

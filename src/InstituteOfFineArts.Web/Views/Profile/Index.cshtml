@@ -2,80 +2,87 @@
 @inject Microsoft.Extensions.Localization.IStringLocalizer<InstituteOfFineArts.Web.SharedResource> L
 @*
     My profile (/profile) – every signed-in role.
-    Minimal version created by BE1 so the feature works; FE1 builds the real design in task FE1-02.
+    Created by BE1; styled by FE1-02: page head, account details as a dl.details list, contact details in a form sheet.
     Only Phone and Address are posted; the other fields are display-only.
 *@
 @{
     ViewData["Title"] = L["My profile"].Value;
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-7">
-        <h1 class="h3 mb-3">@L["My profile"]</h1>
+<div class="page-head">
+    <div>
+        <h1>@L["My profile"]</h1>
+    </div>
+    <div class="page-actions">
+        <a asp-controller="Profile" asp-action="ChangePassword" class="btn btn-outline-primary"><i class="bi bi-key" aria-hidden="true"></i>@L["Change password"]</a>
+    </div>
+</div>
+<div>
+    <div>
 
         @if (TempData["Success"] is string success)
         {
-            <div class="alert alert-success">@L[success]</div>
+            <div class="alert alert-success" role="status"><i class="bi bi-check-circle" aria-hidden="true"></i><div>@L[success]</div></div>
         }
 
-        <dl class="row">
-            <dt class="col-sm-4">@Html.DisplayNameFor(m => m.FullName)</dt>
-            <dd class="col-sm-8">@Model.FullName</dd>
+        <dl class="details">
+            <dt>@Html.DisplayNameFor(m => m.FullName)</dt>
+            <dd>@Model.FullName</dd>
 
-            <dt class="col-sm-4">@Html.DisplayNameFor(m => m.Username)</dt>
-            <dd class="col-sm-8">@Model.Username</dd>
+            <dt>@Html.DisplayNameFor(m => m.Username)</dt>
+            <dd>@Model.Username</dd>
 
-            <dt class="col-sm-4">@Html.DisplayNameFor(m => m.Role)</dt>
-            <dd class="col-sm-8">@Model.Role</dd>
+            <dt>@Html.DisplayNameFor(m => m.Role)</dt>
+            <dd>@Model.Role</dd>
 
-            <dt class="col-sm-4">@Html.DisplayNameFor(m => m.Email)</dt>
-            <dd class="col-sm-8">@Model.Email</dd>
+            <dt>@Html.DisplayNameFor(m => m.Email)</dt>
+            <dd>@Model.Email</dd>
 
             @if (Model.Code != null)
             {
-                <dt class="col-sm-4">@Html.DisplayNameFor(m => m.Code)</dt>
-                <dd class="col-sm-8">@Model.Code</dd>
+                <dt>@Html.DisplayNameFor(m => m.Code)</dt>
+                <dd>@Model.Code</dd>
             }
             @if (Model.CourseOrPosition != null)
             {
-                <dt class="col-sm-4">@L[Model.Role == InstituteOfFineArts.Web.Models.Enums.Role.STUDENT ? "Course" : "Position"]</dt>
-                <dd class="col-sm-8">@Model.CourseOrPosition</dd>
+                <dt>@L[Model.Role == InstituteOfFineArts.Web.Models.Enums.Role.STUDENT ? "Course" : "Position"]</dt>
+                <dd>@Model.CourseOrPosition</dd>
             }
             @if (Model.Classes != null)
             {
-                <dt class="col-sm-4">@Html.DisplayNameFor(m => m.Classes)</dt>
-                <dd class="col-sm-8">@Model.Classes</dd>
+                <dt>@Html.DisplayNameFor(m => m.Classes)</dt>
+                <dd>@Model.Classes</dd>
             }
             @if (Model.Subjects != null)
             {
-                <dt class="col-sm-4">@Html.DisplayNameFor(m => m.Subjects)</dt>
-                <dd class="col-sm-8">@Model.Subjects</dd>
+                <dt>@Html.DisplayNameFor(m => m.Subjects)</dt>
+                <dd>@Model.Subjects</dd>
             }
             @if (Model.SinceDate is { } since)
             {
-                <dt class="col-sm-4">@L[Model.Role == InstituteOfFineArts.Web.Models.Enums.Role.STUDENT ? "Enrolled on" : "Joined on"]</dt>
-                <dd class="col-sm-8">@since.ToString("dd MMM yyyy")</dd>
+                <dt>@L[Model.Role == InstituteOfFineArts.Web.Models.Enums.Role.STUDENT ? "Enrolled on" : "Joined on"]</dt>
+                <dd>@since.ToString("dd MMM yyyy")</dd>
             }
             @if (Model.DateOfBirth is { } dob)
             {
-                <dt class="col-sm-4">@Html.DisplayNameFor(m => m.DateOfBirth)</dt>
-                <dd class="col-sm-8">@dob.ToString("dd MMM yyyy")</dd>
+                <dt>@Html.DisplayNameFor(m => m.DateOfBirth)</dt>
+                <dd>@dob.ToString("dd MMM yyyy")</dd>
             }
             @if (Model.Gender != null)
             {
-                <dt class="col-sm-4">@Html.DisplayNameFor(m => m.Gender)</dt>
-                <dd class="col-sm-8">@Model.Gender</dd>
+                <dt>@Html.DisplayNameFor(m => m.Gender)</dt>
+                <dd>@Model.Gender</dd>
             }
             @if (Model.LastLoginAt is { } lastLogin)
             {
-                <dt class="col-sm-4">@Html.DisplayNameFor(m => m.LastLoginAt)</dt>
-                <dd class="col-sm-8">@lastLogin.ToString("dd MMM yyyy HH:mm")</dd>
+                <dt>@Html.DisplayNameFor(m => m.LastLoginAt)</dt>
+                <dd>@lastLogin.ToString("dd MMM yyyy HH:mm")</dd>
             }
         </dl>
 
-        <h2 class="h5 mt-4">@L["Contact details"]</h2>
+        <div class="section-head mt-5"><h2>@L["Contact details"]</h2></div>
         @* Posts only Phone and Address (EditProfileVm); asp-* adds the anti-forgery token *@
-        <form asp-controller="Profile" asp-action="Index" method="post" novalidate>
+        <form asp-controller="Profile" asp-action="Index" method="post" novalidate class="form-sheet">
             <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
 
             <div class="mb-3">
@@ -90,8 +97,9 @@
                 <span asp-validation-for="Address" class="text-danger"></span>
             </div>
 
-            <button type="submit" class="btn btn-primary">@L["Save changes"]</button>
-            <a asp-controller="Profile" asp-action="ChangePassword" class="btn btn-outline-secondary ms-2">@L["Change password"]</a>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">@L["Save changes"]</button>
+            </div>
         </form>
     </div>
 </div>

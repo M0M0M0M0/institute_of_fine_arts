@@ -2,7 +2,8 @@
 @*
     Public competition list (/competitions, SCR-02, F-M02-05, TC-M02-05): search by title / code and status
     (calculated for today), summary only, paged. Open to guests and every role.
-    Minimal version created by BE2 (BE2-11); FE2 builds the real design in FE2-08.
+    Created by BE2 (BE2-11); styled by FE2-08: filters on the mist bar, one calm row per competition with its status tag.
+    Each competition is linked exactly once (the e2e scripts count the links).
 *@
 @using InstituteOfFineArts.Web.Models.Enums
 @{
@@ -12,16 +13,21 @@
     object PageRoute(int page) => new { search.Keyword, search.Status, page };
 }
 
-<h1 class="h3 mb-3">Competitions</h1>
+<div class="page-head">
+    <div>
+        <h1>Competitions</h1>
+        <p class="page-sub">Painting competitions of the institute: open for entries, coming soon and with results.</p>
+    </div>
+</div>
 
 <partial name="_Alerts" />
 
-<form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
-    <div class="col-md-5">
+<form method="get" asp-action="Index" class="filters" role="search">
+    <div class="filter">
         <label class="form-label" for="Keyword">Title</label>
         <input class="form-control" id="Keyword" name="Keyword" value="@search.Keyword" />
     </div>
-    <div class="col-md-3">
+    <div class="filter">
         <label class="form-label" for="Status">Status</label>
         <select class="form-select" id="Status" name="Status">
             <option value="">All</option>
@@ -31,46 +37,50 @@
             }
         </select>
     </div>
-    <div class="col-md-2">
-        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>Search</button>
+        <a href="/competitions" class="btn btn-link">Clear</a>
     </div>
 </form>
 
 @if (Model.TotalCount == 0)
 {
-    <p class="text-muted">No results found.</p>
+    <div class="empty">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <p>No results found.</p>
+        <a href="/competitions" class="btn btn-outline-primary">Show all competitions</a>
+    </div>
 }
 else
 {
-    <table class="table table-hover align-middle">
-        <thead>
-            <tr><th>Code</th><th>Title</th><th>Dates</th><th>Status</th><th class="text-end">Awards</th><th class="text-end">Top prize</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var c in Model.Items)
-            {
-                <tr>
-                    <td>@c.Code</td>
-                    <td><a asp-action="Details" asp-route-id="@c.Id">@c.Title</a></td>
-                    <td>@c.StartDate.ToString("dd MMM yyyy") – @c.EndDate.ToString("dd MMM yyyy")</td>
-                    <td><partial name="_Status" model="c.Status" /></td>
-                    <td class="text-end">@c.AwardCount</td>
-                    <td class="text-end">@c.TopPrize.ToString("$#,##0.00")</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <ul class="calm-list">
+        @foreach (var c in Model.Items)
+        {
+            <li>
+                <div>
+                    <h2 class="cl-title"><a asp-action="Details" asp-route-id="@c.Id">@c.Title</a></h2>
+                    <div class="cl-meta">
+                        <span>@c.Code</span>
+                        <span><i class="bi bi-calendar3" aria-hidden="true"></i>@c.StartDate.ToString("dd MMM yyyy") – @c.EndDate.ToString("dd MMM yyyy")</span>
+                        <span><i class="bi bi-award" aria-hidden="true"></i>@c.AwardCount award@(c.AwardCount == 1 ? "" : "s")@if (c.TopPrize > 0)
+                            {<text>, top prize <span class="num">@c.TopPrize.ToString("$#,##0.00")</span></text>}</span>
+                    </div>
+                </div>
+                <div class="cl-action"><partial name="_Status" model="c.Status" /></div>
+            </li>
+        }
+    </ul>
 
-    <nav class="d-flex justify-content-between align-items-center">
-        <span class="text-muted small">@Model.TotalCount competition@(Model.TotalCount == 1 ? "" : "s") · page @Model.Page of @Model.TotalPages</span>
-        <div>
+    <nav class="pager" aria-label="Competition pages">
+        <span>@Model.TotalCount competition@(Model.TotalCount == 1 ? "" : "s"), page @Model.Page of @Model.TotalPages</span>
+        <div class="pager-links">
             @if (Model.HasPrevious)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page - 1))"><i class="bi bi-arrow-left" aria-hidden="true"></i>Previous</a>
             }
             @if (Model.HasNext)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next<i class="bi bi-arrow-right ms-1 me-0" aria-hidden="true"></i></a>
             }
         </div>
     </nav>
