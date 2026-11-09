@@ -1,16 +1,16 @@
 @model InstituteOfFineArts.Web.Models.Enums.CompetitionStatus
 @*
-    Coloured badge for a competition status on the public pages (/competitions, /competitions/{id}).
-    Minimal version created by BE2 (BE2-11); FE2 restyles it in FE2-08.
+    Status tag of a competition on the public pages (/competitions, /competitions/{id}).
+    Created by BE2 (BE2-11); styled by FE2-08 (tag of the design system, public wording kept).
 *@
 @using InstituteOfFineArts.Web.Models.Enums
 @{
-    var (css, text) = Model switch
+    var text = Model switch
     {
-        CompetitionStatus.UPCOMING => ("bg-info text-dark", "Upcoming"),
-        CompetitionStatus.ONGOING => ("bg-success", "Open for entries"),
-        CompetitionStatus.CLOSED => ("bg-secondary", "Closed"),
-        _ => ("bg-primary", "Results published"),
+        CompetitionStatus.UPCOMING => "Upcoming",
+        CompetitionStatus.ONGOING => "Open for entries",
+        CompetitionStatus.CLOSED => "Closed",
+        _ => "Results published",
     };
 }
-<span class="badge @css">@text</span>
+<span class="tag tag-@Model">@text</span>
