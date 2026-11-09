@@ -1,21 +1,54 @@
 @using InstituteOfFineArts.Web.Infrastructure.Security
 @*
-    Temporary home page of the Staff area (/staff).
-    Created by BE1 to test the login flow; FE builds the real page
-    (remove the Layout line below once the area has its own _ViewStart).
+    Home page of the Staff area (/staff): where staff start their work.
+    Created by BE1 (login flow); styled by FE1-03 as a work start with quick links.
+    The controller passes no data yet, so per-competition grading progress and pending exhibition proposals
+    are not listed here (they live on /staff/competitions/{id} and /staff/exhibition-entries).
+    Log out is in the account menu of the top bar.
 *@
 @{
-    Layout = "_Layout";
     ViewData["Title"] = "Staff";
+    var links = new (string Href, string Icon, string Title, string Text)[]
+    {
+        ("/staff/submissions", "bi-pencil-square", "Submissions", "Review the entries of each competition and grade them."),
+        ("/staff/competitions", "bi-easel", "Competitions", "Create competitions, define their awards and publish results."),
+        ("/staff/awards", "bi-trophy", "Issued awards", "Issue, edit or revoke awards for BEST entries."),
+        ("/staff/submissions/by-rating", "bi-funnel", "Search by rating", "Find graded paintings, for example the BEST ones for an exhibition."),
+        ("/staff/students", "bi-people", "Students", "Look up a student and their study history."),
+        ("/staff/exhibitions", "bi-bank", "Exhibitions", "Plan exhibitions and send paintings to them."),
+        ("/staff/exhibition-entries", "bi-easel2", "Artworks", "Follow paintings on show: proposed, accepted, sold and paid."),
+        ("/staff/customers", "bi-person-vcard", "Customers", "Keep the buyers of exhibited paintings."),
+    };
 }
 
-<h1 class="h3">Welcome, @User.GetFullName()</h1>
-<p>You are on the home page of the <strong>Staff</strong> area (role STAFF).</p>
+<div class="page-head">
+    <div>
+        <h1>Welcome, @User.GetFullName()</h1>
+        <p class="page-sub">You are on the home page of the Staff area (role STAFF). Pick up where the work is.</p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-primary" href="/staff/submissions?evaluated=false"><i class="bi bi-pencil-square" aria-hidden="true"></i>Entries to grade</a>
+        <a class="btn btn-outline-primary" href="/staff/competitions/new"><i class="bi bi-plus-lg" aria-hidden="true"></i>New competition</a>
+    </div>
+</div>
+<partial name="_Alerts" />
 
-<p><a href="/staff/competitions">Competitions</a> · <a href="/staff/students">Students</a> · <a href="/staff/submissions">Submissions</a> · <a href="/profile">My profile</a> · <a href="/profile/change-password">Change password</a></p>
+<section aria-labelledby="work-title">
+    <div class="section-head"><h2 id="work-title">Your work</h2></div>
+    <ul class="quick-links">
+        @foreach (var l in links)
+        {
+            <li>
+                <a href="@l.Href">
+                    <i class="bi @l.Icon" aria-hidden="true"></i>
+                    <span class="ql-title">@l.Title</span>
+                    <span class="ql-text">@l.Text</span>
+                </a>
+            </li>
+        }
+    </ul>
+</section>
 
-@* Log out with POST plus the anti-forgery token *@
-<form method="post" action="/logout">
-    @Html.AntiForgeryToken()
-    <button type="submit" class="btn btn-outline-secondary">Log out</button>
-</form>
+<p class="text-muted mt-4">
+    <a href="/profile">My profile</a> or <a href="/profile/change-password">change password</a>.
+</p>

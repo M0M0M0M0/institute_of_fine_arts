@@ -2,74 +2,102 @@
 @*
     Staff – study history of one student (/staff/students/{studentId}/history, SCR-22; F-M07-07): every entry with
     rating, comments, award and exhibition entries.
-    Minimal version created by BE2 (BE2-07); FE2 builds the real design in FE2-05.
+    Created by BE2 (BE2-07); styled by FE2-05: key figures as a ledger, each painting with its wall label and the comments.
 *@
 @{
     ViewData["Title"] = $"History – {Model.FullName}";
 }
 
-<div class="mb-3">
-    <h1 class="h3 mb-1">Study history: @Model.FullName</h1>
-    <div class="text-muted">
-        @Model.StudentCode · @Model.CourseName @Model.ClassName ·
-        @Model.Entries.Count entry(ies), @Model.EvaluatedCount evaluated, @Model.AwardCount award(s)
+<div class="page-head">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Students" asp-action="Index">Students</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Students" asp-action="Details" asp-route-id="@Model.StudentId">@Model.StudentCode</a></li>
+                <li class="breadcrumb-item active" aria-current="page">History</li>
+            </ol>
+        </nav>
+        <h1>Study history: @Model.FullName</h1>
+        <p class="page-sub">@Model.StudentCode, @Model.CourseName @Model.ClassName</p>
     </div>
 </div>
+<partial name="_Alerts" />
+
+<p class="visually-hidden">@Model.Entries.Count entry(ies), @Model.EvaluatedCount evaluated, @Model.AwardCount award(s)</p>
+<dl class="ledger" aria-hidden="true">
+    <div><dt>Entries</dt><dd>@Model.Entries.Count</dd></div>
+    <div><dt>Evaluated</dt><dd>@Model.EvaluatedCount</dd></div>
+    <div><dt>Awards</dt><dd>@Model.AwardCount</dd></div>
+</dl>
 
 @if (Model.Entries.Count == 0)
 {
-    <p class="text-muted">This student has not submitted any entries yet.</p>
-}
-
-@foreach (var s in Model.Entries)
-{
-    <div class="card mb-3" id="entry-@s.Id">
-        <div class="card-body">
-            <div class="d-flex gap-3">
-                <img src="/files/submissions/@s.Id/thumb" alt="Thumbnail of @s.Title" width="96" height="96" class="rounded" style="object-fit: cover" />
-                <div class="flex-grow-1">
-                    <h2 class="h5 mb-1"><a asp-controller="Submissions" asp-action="Details" asp-route-id="@s.Id">@s.Title</a></h2>
-                    <div class="text-muted small mb-2">
-                        <a asp-controller="Competitions" asp-action="Details" asp-route-id="@s.CompetitionId">@s.CompetitionTitle</a>
-                        · <partial name="~/Areas/Staff/Views/Competitions/_Status.cshtml" model="s.CompetitionStatus" />
-                        · submitted @s.SubmittedAt.ToString("dd MMM yyyy HH:mm")
-                        @if (s.IsLate)
-                        {
-                            <span class="badge bg-danger">Late entry</span>
-                        }
-                    </div>
-
-                    @if (s.Evaluation is { } e)
-                    {
-                        <p class="mb-1"><span class="badge bg-primary">@e.Rating</span> <span class="text-muted small">by @e.EvaluatorName, @e.EvaluatedAt.ToString("dd MMM yyyy")</span></p>
-                        @* Comments keep their line breaks; Razor encodes the text *@
-                        <dl class="row small mb-1">
-                            <dt class="col-sm-3">Positive points</dt>
-                            <dd class="col-sm-9" style="white-space: pre-line">@(e.PositivePoints ?? "–")</dd>
-                            <dt class="col-sm-3">Negative points</dt>
-                            <dd class="col-sm-9" style="white-space: pre-line">@(e.NegativePoints ?? "–")</dd>
-                            <dt class="col-sm-3">Improvement areas</dt>
-                            <dd class="col-sm-9" style="white-space: pre-line">@(e.ImprovementAreas ?? "–")</dd>
-                        </dl>
-                    }
-                    else
-                    {
-                        <p class="text-muted mb-1">Not evaluated</p>
-                    }
-
-                    @if (s.Award is { } a)
-                    {
-                        <p class="mb-1">Award: <strong>@a.AwardName</strong> (@a.PrizeValue.ToString("$#,##0.00"), @a.IssuedDate.ToString("dd MMM yyyy"))</p>
-                    }
-
-                    @if (s.ExhibitionEntries.Count > 0)
-                    {
-                        <partial name="_ExhibitionEntries" model="s.ExhibitionEntries" />
-                    }
-                </div>
-            </div>
-        </div>
+    <div class="empty">
+        <i class="bi bi-easel" aria-hidden="true"></i>
+        <p>This student has not submitted any entries yet.</p>
     </div>
 }
 
-<a asp-controller="Students" asp-action="Details" asp-route-id="@Model.StudentId" class="btn btn-link px-0">Back to student</a>
+<ol class="history-list">
+    @foreach (var s in Model.Entries)
+    {
+        var awarded = s.Award != null || s.Evaluation?.Rating == Rating.BEST;
+        <li id="entry-@s.Id">
+            <figure class="artwork @(awarded ? "is-awarded" : "")">
+                <a class="artwork-frame" asp-controller="Submissions" asp-action="Details" asp-route-id="@s.Id">
+                    <img src="/files/submissions/@s.Id/thumb" alt="@s.Title – @Model.FullName" loading="lazy" />
+                </a>
+                <figcaption class="wall-label">
+                    <span class="wl-title"><a asp-controller="Submissions" asp-action="Details" asp-route-id="@s.Id">@s.Title</a></span>
+                    <span class="wl-meta"><a asp-controller="Competitions" asp-action="Details" asp-route-id="@s.CompetitionId">@s.CompetitionTitle</a></span>
+                    <span class="wl-meta num">submitted @s.SubmittedAt.ToString("dd MMM yyyy HH:mm")</span>
+                    <span class="wl-state">
+                        <partial name="~/Areas/Staff/Views/Competitions/_Status.cshtml" model="s.CompetitionStatus" />
+                        @if (s.Evaluation is { } ev)
+                        {
+                            <span class="tag tag-@ev.Rating">@ev.Rating</span>
+                        }
+                        @if (s.IsLate)
+                        {
+                            <span class="tag tag-DISQUALIFIED tag-plain"><i class="bi bi-clock-history" aria-hidden="true"></i>Late entry</span>
+                        }
+                    </span>
+                </figcaption>
+            </figure>
+
+            <div class="history-body">
+                @* The wall label shows the title; the heading keeps the page outline for screen readers *@
+                <h2 class="visually-hidden">@s.Title</h2>
+                @if (s.Evaluation is { } e)
+                {
+                    <p class="text-muted small mb-2">Rated <span class="tag tag-@e.Rating">@e.Rating</span> by @e.EvaluatorName, @e.EvaluatedAt.ToString("dd MMM yyyy")</p>
+                    @* Comments keep their line breaks; Razor encodes the text *@
+                    <dl class="details">
+                        <dt>Positive points</dt>
+                        <dd style="white-space: pre-line">@(e.PositivePoints ?? "–")</dd>
+                        <dt>Negative points</dt>
+                        <dd style="white-space: pre-line">@(e.NegativePoints ?? "–")</dd>
+                        <dt>Improvement areas</dt>
+                        <dd style="white-space: pre-line">@(e.ImprovementAreas ?? "–")</dd>
+                    </dl>
+                }
+                else
+                {
+                    <p class="text-muted mb-2">Not evaluated</p>
+                }
+
+                @if (s.Award is { } a)
+                {
+                    <p class="award-line">Award: <span class="tag tag-award"><i class="bi bi-award-fill" aria-hidden="true"></i>@a.AwardName</span> (<span class="num">@a.PrizeValue.ToString("$#,##0.00")</span>, @a.IssuedDate.ToString("dd MMM yyyy"))</p>
+                }
+
+                @if (s.ExhibitionEntries.Count > 0)
+                {
+                    <partial name="_ExhibitionEntries" model="s.ExhibitionEntries" />
+                }
+            </div>
+        </li>
+    }
+</ol>
+
+<p class="mt-4"><a asp-controller="Students" asp-action="Details" asp-route-id="@Model.StudentId" class="btn btn-link px-0">Back to student</a></p>
