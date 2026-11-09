@@ -62,6 +62,8 @@
                     <ul class="navbar-nav">
                         @if (User.Identity?.IsAuthenticated == true)
                         {
+                            @* Notification bell (M12, F-M12-02): unread count + 5 newest *@
+                            @await Component.InvokeAsync("NotificationBell")
                             <li class="nav-item"><a class="nav-link text-dark" href="/profile">Profile</a></li>
                             <li class="nav-item">
                                 @* Log out with POST plus the anti-forgery token *@

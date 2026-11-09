@@ -1,9 +1,11 @@
 using InstituteOfFineArts.Web.Exceptions;
 using InstituteOfFineArts.Web.Models.Enums;
 using InstituteOfFineArts.Web.Services.Implementations;
+using InstituteOfFineArts.Web.Services.Interfaces;
 using InstituteOfFineArts.Web.ViewModels.Staff.ExhibitionEntries;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 
 namespace InstituteOfFineArts.Tests.Services;
 
@@ -21,8 +23,11 @@ public class ExhibitionEntryServiceTests : IDisposable
     /// <summary>Today in the institute time zone.</summary>
     private static readonly DateOnly Today = ExhibitionEntryTestData.Today;
 
+    /// <summary>Fake notification service (M12): the tests check which event is raised.</summary>
+    private readonly Mock<INotificationService> _notifications = new();
+
     /// <summary>Service under test.</summary>
-    private ExhibitionEntryService Service => new(_data.Db, NullLogger<ExhibitionEntryService>.Instance);
+    private ExhibitionEntryService Service => new(_data.Db, NullLogger<ExhibitionEntryService>.Instance, _notifications.Object);
 
     /// <summary>Disposes the test database.</summary>
     public void Dispose() => _data.Dispose();
@@ -119,6 +124,7 @@ public class ExhibitionEntryServiceTests : IDisposable
         var e = _data.Reload(id)!;
         Assert.Equal(EntryStatus.ACCEPTED, e.Status);
         Assert.Equal(_data.StaffId, e.ReviewedBy);
+        _notifications.Verify(n => n.EntryReviewedAsync(id), Times.Once);
     }
 
     /// <summary>Accept only from PENDING.</summary>
@@ -144,6 +150,7 @@ public class ExhibitionEntryServiceTests : IDisposable
 
         Assert.Equal(ExhibitionEntryService.AcceptStartedMessage, ex.Message);
         Assert.Equal(EntryStatus.PENDING, _data.Reload(id)!.Status);
+        _notifications.Verify(n => n.EntryReviewedAsync(It.IsAny<long>()), Times.Never);
     }
 
     /// <summary>UC-07 3a: PENDING → REJECTED with the reason, also after the exhibition started.</summary>
@@ -158,6 +165,7 @@ public class ExhibitionEntryServiceTests : IDisposable
         Assert.Equal(EntryStatus.REJECTED, e.Status);
         Assert.Equal("Too dark for the venue", e.RejectReason);
         Assert.Equal(_data.StaffId, e.ReviewedBy);
+        _notifications.Verify(n => n.EntryReviewedAsync(id), Times.Once);
     }
 
     /// <summary>The reason is required; only PENDING can be rejected.</summary>
@@ -190,6 +198,7 @@ public class ExhibitionEntryServiceTests : IDisposable
         Assert.Equal(_data.Customer.Id, e.CustomerId);
         Assert.False(e.PaidToStudent);
         Assert.Equal(_data.StaffId, e.ReviewedBy);
+        _notifications.Verify(n => n.EntrySoldAsync(id), Times.Once);
     }
 
     /// <summary>US-13 AC3, TC-M09-06: no customer / no price / price 0 → error on the field, nothing saved.</summary>
@@ -322,6 +331,8 @@ public class ExhibitionEntryServiceTests : IDisposable
         Assert.Equal(250m, e.PaidAmount);
         Assert.Equal(Today, e.PaidDate);
         Assert.Equal(EntryStatus.SOLD, e.Status);
+        _notifications.Verify(n => n.EntryPaidAsync(id), Times.Once);
+        _notifications.Verify(n => n.EntrySoldAsync(It.IsAny<long>()), Times.Never);
     }
 
     /// <summary>US-13 AC4, TC-M09-08: not SOLD (PENDING, ACCEPTED) → "Not sold yet".</summary>
@@ -338,6 +349,7 @@ public class ExhibitionEntryServiceTests : IDisposable
         Assert.Equal(ExhibitionEntryService.NotSoldMessage, ex.Message);
         Assert.StartsWith("Not sold yet", ex.Message);
         Assert.False(_data.Reload(id)!.PaidToStudent);
+        _notifications.Verify(n => n.EntryPaidAsync(It.IsAny<long>()), Times.Never);
     }
 
     /// <summary>BR-45: already paid, partial amount, date before the sale or in the future → refused.</summary>

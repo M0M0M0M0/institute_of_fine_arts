@@ -78,11 +78,15 @@ public class ExhibitionEntryService : IExhibitionEntryService
     /// <summary>Logs every state change.</summary>
     private readonly ILogger<ExhibitionEntryService> _logger;
 
+    /// <summary>Tells the student about review, sale and payment (optional feature M12).</summary>
+    private readonly INotificationService _notifications;
+
     /// <summary>Receives the required services through Dependency Injection.</summary>
-    public ExhibitionEntryService(AppDbContext db, ILogger<ExhibitionEntryService> logger)
+    public ExhibitionEntryService(AppDbContext db, ILogger<ExhibitionEntryService> logger, INotificationService notifications)
     {
         _db = db;
         _logger = logger;
+        _notifications = notifications;
     }
 
     /// <inheritdoc />
@@ -313,6 +317,9 @@ public class ExhibitionEntryService : IExhibitionEntryService
         entry.ReviewedBy = staffProfileId;
         await _db.SaveChangesAsync();
         _logger.LogInformation("Exhibition entry {EntryId} accepted by staff {StaffId}", entry.Id, staffProfileId);
+
+        // M12: the student is told in the application
+        await _notifications.EntryReviewedAsync(entry.Id);
     }
 
     /// <inheritdoc />
@@ -334,6 +341,9 @@ public class ExhibitionEntryService : IExhibitionEntryService
         entry.ReviewedBy = staffProfileId;
         await _db.SaveChangesAsync();
         _logger.LogInformation("Exhibition entry {EntryId} rejected by staff {StaffId}", entry.Id, staffProfileId);
+
+        // M12: the student is told in the application, with the reason
+        await _notifications.EntryReviewedAsync(entry.Id);
     }
 
     /// <inheritdoc />
@@ -395,6 +405,9 @@ public class ExhibitionEntryService : IExhibitionEntryService
         await _db.SaveChangesAsync();
         _logger.LogInformation("Exhibition entry {EntryId} sold for {Price} on {Date} to customer {CustomerId}, recorded by staff {StaffId}",
             entry.Id, price, soldDate.ToString("dd MMM yyyy"), customerId, staffProfileId);
+
+        // M12: the student is told (in-app + e-mail; never fails the save)
+        await _notifications.EntrySoldAsync(entry.Id);
     }
 
     /// <inheritdoc />
@@ -456,6 +469,9 @@ public class ExhibitionEntryService : IExhibitionEntryService
         await _db.SaveChangesAsync();
         _logger.LogInformation("Exhibition entry {EntryId}: {Amount} paid to the student on {Date}, recorded by staff {StaffId}",
             entry.Id, amount, paidDate.ToString("dd MMM yyyy"), staffProfileId);
+
+        // M12: the student is told in the application
+        await _notifications.EntryPaidAsync(entry.Id);
     }
 
     /// <inheritdoc />
