@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 namespace InstituteOfFineArts.Web.Services.Implementations;
 
 /// <summary>
-/// Looks up image paths in the database and checks who may see them (BR-20).
+/// Looks up image paths in the database, checks who may see them (BR-20) and who gets a watermarked copy (F-M13-02).
 /// </summary>
 public class ImageAccessService : IImageAccessService
 {
@@ -45,15 +45,24 @@ public class ImageAccessService : IImageAccessService
         }
 
         var isPublic = SubmissionImagePolicy.IsPublic(submission);
+        var watermark = NeedsWatermark(submission, user);
         if (download)
         {
-            return new ImageFile(submission.ImagePath, DownloadName(submission.OriginalFileName), isPublic);
+            return new ImageFile(submission.ImagePath, DownloadName(submission.OriginalFileName), isPublic, watermark);
         }
 
         // Thumbnail when asked and available, otherwise the original
         var path = thumbnail && !string.IsNullOrEmpty(submission.ThumbnailPath) ? submission.ThumbnailPath : submission.ImagePath;
-        return new ImageFile(path, null, isPublic);
+        return new ImageFile(path, null, isPublic, watermark);
     }
+
+    /// <summary>
+    /// F-M13-02: the original goes to the owner, STAFF, MANAGER and ADMIN; everyone else (guests, other students)
+    /// receives a watermarked copy. Full access (owner, staff, manager) is exactly who may download (BR-20).
+    /// </summary>
+    private static bool NeedsWatermark(Models.Entities.Submission submission, ClaimsPrincipal user)
+        => !SubmissionImagePolicy.CanDownload(submission, user)
+           && !(user.Identity?.IsAuthenticated == true && user.IsInRole(RoleNames.Admin));
 
     /// <inheritdoc />
     public async Task<ImageFile?> GetCompetitionCoverAsync(long competitionId)

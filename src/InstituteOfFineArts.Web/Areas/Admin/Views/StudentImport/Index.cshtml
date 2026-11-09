@@ -1,0 +1,52 @@
+@using InstituteOfFineArts.Web.Services.Implementations
+@*
+    Admin – import students from CSV, step 1 upload (/admin/students/import, F-M04-08).
+    Minimal version created by BE (BE2-OPT 4); FE2 builds the real design in FE2-OPT.
+*@
+@{
+    ViewData["Title"] = "Import students";
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <h1 class="h3 mb-3">Import students from CSV</h1>
+        <partial name="_Alerts" />
+
+        <p>
+            Upload a UTF-8 CSV file (at most 1 MB and @StudentImportService.MaxRows students) whose first row contains the column names.
+            Every row is checked with the same rules as the <a href="/admin/students/new">New student</a> form; you see the result before anything is saved.
+        </p>
+        <p><a href="/admin/students/import/template.csv" class="btn btn-outline-secondary btn-sm">Download the template</a></p>
+
+        <table class="table table-sm w-auto">
+            <thead><tr><th>Column</th><th>Required</th><th>Format</th></tr></thead>
+            <tbody>
+                <tr><td>StudentCode</td><td>No</td><td>Letters, digits and dashes; empty = next HVnnnn code</td></tr>
+                <tr><td>FullName</td><td>Yes</td><td>At most 100 characters</td></tr>
+                <tr><td>Username</td><td>Yes</td><td>3–50 letters, digits, dots or underscores; unique</td></tr>
+                <tr><td>Email</td><td>Yes</td><td>Valid email address; unique</td></tr>
+                <tr><td>Password</td><td>Yes</td><td>At least 8 characters with a letter and a digit</td></tr>
+                <tr><td>Gender</td><td>No</td><td>M, F or O</td></tr>
+                <tr><td>DateOfBirth</td><td>No</td><td>2004-05-01 or 01/05/2004, in the past</td></tr>
+                <tr><td>Phone</td><td>No</td><td>Phone number</td></tr>
+                <tr><td>Address</td><td>No</td><td>At most 255 characters</td></tr>
+                <tr><td>EnrollmentDate</td><td>Yes</td><td>2025-09-01 or 01/09/2025</td></tr>
+                <tr><td>Course</td><td>Yes</td><td>e.g. Painting</td></tr>
+                <tr><td>Class</td><td>No</td><td>e.g. PT03</td></tr>
+                <tr><td>Status</td><td>No</td><td>STUDYING (default), GRADUATED, SUSPENDED or DROPPED</td></tr>
+                <tr><td>Notes</td><td>No</td><td>At most 500 characters</td></tr>
+            </tbody>
+        </table>
+
+        <form method="post" action="/admin/students/import" enctype="multipart/form-data" novalidate>
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="All" class="text-danger mb-2"></div>
+            <div class="mb-3">
+                <label for="file" class="form-label">CSV file</label>
+                <input type="file" id="file" name="file" accept=".csv,text/csv" class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-primary">Check the file</button>
+            <a href="/admin/students" class="btn btn-link">Cancel</a>
+        </form>
+    </div>
+</div>

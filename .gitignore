@@ -17,6 +17,7 @@ appsettings.*.local.json
 # ===== Runtime data =====
 src/InstituteOfFineArts.Web/uploads/*
 !src/InstituteOfFineArts.Web/uploads/.gitkeep
+src/InstituteOfFineArts.Web/mail-pickup/
 logs/
 *.log
 

@@ -1,9 +1,12 @@
+using InstituteOfFineArts.Web.Infrastructure.Security;
+using InstituteOfFineArts.Web.Services.Implementations;
 using InstituteOfFineArts.Web.Services.Interfaces;
 using InstituteOfFineArts.Web.ViewModels.Account;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Localization;
 
 namespace InstituteOfFineArts.Web.Controllers;
 
@@ -25,10 +28,18 @@ public class AccountController : Controller
     /// <summary>Authentication service.</summary>
     private readonly IAuthService _authService;
 
-    /// <summary>Receives the authentication service through Dependency Injection.</summary>
-    public AccountController(IAuthService authService)
+    /// <summary>Records log in / log out in the audit log (F-M17-01).</summary>
+    private readonly IAuditLogService _audit;
+
+    /// <summary>Translates the login messages when the Vietnamese UI is chosen (F-M19-01); English stays unchanged.</summary>
+    private readonly IStringLocalizer<SharedResource> _localizer;
+
+    /// <summary>Receives the authentication service, the audit log and the text localizer through Dependency Injection.</summary>
+    public AccountController(IAuthService authService, IAuditLogService audit, IStringLocalizer<SharedResource> localizer)
     {
         _authService = authService;
+        _audit = audit;
+        _localizer = localizer;
     }
 
     /// <summary>
@@ -69,7 +80,11 @@ public class AccountController : Controller
         if (result.Status != LoginStatus.Success || result.Principal == null)
         {
             var message = result.Status == LoginStatus.Locked ? LockedMessage : InvalidCredentialsMessage;
-            ModelState.AddModelError(string.Empty, message);
+            ModelState.AddModelError(string.Empty, _localizer[message].Value);
+
+            // Audit (F-M17-01): the user name that was tried and why, never the password
+            await _audit.LogAsAsync(null, form.Username, AuditLogService.LoginFailedAction,
+                result.Status == LoginStatus.Locked ? "Account locked" : "Invalid username or password");
             form.Password = string.Empty;
             return View(form);
         }
@@ -81,6 +96,10 @@ public class AccountController : Controller
             properties.ExpiresUtc = DateTimeOffset.UtcNow.Add(RememberMeDuration);
         }
         await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, result.Principal, properties);
+
+        // Audit (F-M17-01): the cookie is only read on the next request, so pass the new user explicitly
+        await _audit.LogAsAsync(result.Principal.GetAccountId(), result.Principal.Identity?.Name,
+            AuditLogService.LoginAction);
 
         // Go back to the requested page (local paths only – prevents open redirects), otherwise to the role's home page
         if (!string.IsNullOrEmpty(form.ReturnUrl) && Url.IsLocalUrl(form.ReturnUrl))
@@ -97,6 +116,11 @@ public class AccountController : Controller
     [HttpPost("/logout")]
     public async Task<IActionResult> Logout()
     {
+        // Audit (F-M17-01) while the user is still known
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            await _audit.LogAsync(AuditLogService.LogoutAction);
+        }
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         return LocalRedirect("/");
     }

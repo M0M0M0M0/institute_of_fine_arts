@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Shared UI texts, Vietnamese (F-M19-01, task BE1-OPT 5). Keys are the English texts; texts without a translation stay English. -->
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Dashboard" xml:space="preserve">
+    <value>Bảng điều khiển</value>
+  </data>
+  <data name="Staff" xml:space="preserve">
+    <value>Nhân viên</value>
+  </data>
+  <data name="Students" xml:space="preserve">
+    <value>Học viên</value>
+  </data>
+  <data name="Reports" xml:space="preserve">
+    <value>Báo cáo</value>
+  </data>
+  <data name="Competitions" xml:space="preserve">
+    <value>Cuộc thi</value>
+  </data>
+  <data name="Submissions" xml:space="preserve">
+    <value>Bài dự thi</value>
+  </data>
+  <data name="Awards" xml:space="preserve">
+    <value>Giải thưởng</value>
+  </data>
+  <data name="Exhibitions" xml:space="preserve">
+    <value>Triển lãm</value>
+  </data>
+  <data name="Artworks" xml:space="preserve">
+    <value>Tác phẩm</value>
+  </data>
+  <data name="Customers" xml:space="preserve">
+    <value>Khách hàng</value>
+  </data>
+  <data name="My entries" xml:space="preserve">
+    <value>Bài dự thi của tôi</value>
+  </data>
+  <data name="My results" xml:space="preserve">
+    <value>Kết quả của tôi</value>
+  </data>
+  <data name="Best works" xml:space="preserve">
+    <value>Tác phẩm xuất sắc</value>
+  </data>
+  <data name="My artworks on show" xml:space="preserve">
+    <value>Tác phẩm của tôi tại triển lãm</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>Trang chủ</value>
+  </data>
+  <data name="Gallery" xml:space="preserve">
+    <value>Phòng tranh</value>
+  </data>
+  <data name="About" xml:space="preserve">
+    <value>Giới thiệu</value>
+  </data>
+  <data name="Profile" xml:space="preserve">
+    <value>Hồ sơ</value>
+  </data>
+  <data name="Log out" xml:space="preserve">
+    <value>Đăng xuất</value>
+  </data>
+  <data name="Log in" xml:space="preserve">
+    <value>Đăng nhập</value>
+  </data>
+  <data name="Privacy" xml:space="preserve">
+    <value>Quyền riêng tư</value>
+  </data>
+  <data name="Username" xml:space="preserve">
+    <value>Tên đăng nhập</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Mật khẩu</value>
+  </data>
+  <data name="Remember me" xml:space="preserve">
+    <value>Ghi nhớ đăng nhập</value>
+  </data>
+  <data name="Please enter your username" xml:space="preserve">
+    <value>Vui lòng nhập tên đăng nhập</value>
+  </data>
+  <data name="Please enter your password" xml:space="preserve">
+    <value>Vui lòng nhập mật khẩu</value>
+  </data>
+  <data name="Username must be at most 50 characters" xml:space="preserve">
+    <value>Tên đăng nhập tối đa 50 ký tự</value>
+  </data>
+  <data name="Invalid username or password." xml:space="preserve">
+    <value>Tên đăng nhập hoặc mật khẩu không đúng.</value>
+  </data>
+  <data name="Your account has been locked. Please contact the administrator." xml:space="preserve">
+    <value>Tài khoản của bạn đã bị khóa. Vui lòng liên hệ quản trị viên.</value>
+  </data>
+  <data name="My profile" xml:space="preserve">
+    <value>Hồ sơ của tôi</value>
+  </data>
+  <data name="Full name" xml:space="preserve">
+    <value>Họ và tên</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Role" xml:space="preserve">
+    <value>Vai trò</value>
+  </data>
+  <data name="Date of birth" xml:space="preserve">
+    <value>Ngày sinh</value>
+  </data>
+  <data name="Gender" xml:space="preserve">
+    <value>Giới tính</value>
+  </data>
+  <data name="Phone" xml:space="preserve">
+    <value>Số điện thoại</value>
+  </data>
+  <data name="Address" xml:space="preserve">
+    <value>Địa chỉ</value>
+  </data>
+  <data name="Last login" xml:space="preserve">
+    <value>Lần đăng nhập gần nhất</value>
+  </data>
+  <data name="Code" xml:space="preserve">
+    <value>Mã số</value>
+  </data>
+  <data name="Course / Position" xml:space="preserve">
+    <value>Khóa học / Chức vụ</value>
+  </data>
+  <data name="Course" xml:space="preserve">
+    <value>Khóa học</value>
+  </data>
+  <data name="Position" xml:space="preserve">
+    <value>Chức vụ</value>
+  </data>
+  <data name="Class(es)" xml:space="preserve">
+    <value>Lớp</value>
+  </data>
+  <data name="Subjects" xml:space="preserve">
+    <value>Môn dạy</value>
+  </data>
+  <data name="Since" xml:space="preserve">
+    <value>Từ ngày</value>
+  </data>
+  <data name="Enrolled on" xml:space="preserve">
+    <value>Ngày nhập học</value>
+  </data>
+  <data name="Joined on" xml:space="preserve">
+    <value>Ngày vào làm</value>
+  </data>
+  <data name="Contact details" xml:space="preserve">
+    <value>Thông tin liên hệ</value>
+  </data>
+  <data name="Save changes" xml:space="preserve">
+    <value>Lưu thay đổi</value>
+  </data>
+  <data name="Change password" xml:space="preserve">
+    <value>Đổi mật khẩu</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Hủy</value>
+  </data>
+  <data name="Your profile has been updated." xml:space="preserve">
+    <value>Hồ sơ của bạn đã được cập nhật.</value>
+  </data>
+  <data name="Your password has been changed." xml:space="preserve">
+    <value>Mật khẩu của bạn đã được thay đổi.</value>
+  </data>
+  <data name="Phone must be at most 20 characters" xml:space="preserve">
+    <value>Số điện thoại tối đa 20 ký tự</value>
+  </data>
+  <data name="Please enter a valid phone number" xml:space="preserve">
+    <value>Vui lòng nhập số điện thoại hợp lệ</value>
+  </data>
+  <data name="Address must be at most 255 characters" xml:space="preserve">
+    <value>Địa chỉ tối đa 255 ký tự</value>
+  </data>
+  <data name="Current password" xml:space="preserve">
+    <value>Mật khẩu hiện tại</value>
+  </data>
+  <data name="New password" xml:space="preserve">
+    <value>Mật khẩu mới</value>
+  </data>
+  <data name="Confirm new password" xml:space="preserve">
+    <value>Xác nhận mật khẩu mới</value>
+  </data>
+  <data name="Please enter your current password" xml:space="preserve">
+    <value>Vui lòng nhập mật khẩu hiện tại</value>
+  </data>
+  <data name="Please enter a new password" xml:space="preserve">
+    <value>Vui lòng nhập mật khẩu mới</value>
+  </data>
+  <data name="Please confirm the new password" xml:space="preserve">
+    <value>Vui lòng xác nhận mật khẩu mới</value>
+  </data>
+  <data name="The new passwords do not match" xml:space="preserve">
+    <value>Mật khẩu mới không khớp</value>
+  </data>
+  <data name="At least 8 characters, with at least one letter and one digit." xml:space="preserve">
+    <value>Ít nhất 8 ký tự, có ít nhất một chữ cái và một chữ số.</value>
+  </data>
+  <data name="Your current password is incorrect." xml:space="preserve">
+    <value>Mật khẩu hiện tại không đúng.</value>
+  </data>
+  <data name="The new password must be different from the current password." xml:space="preserve">
+    <value>Mật khẩu mới phải khác mật khẩu hiện tại.</value>
+  </data>
+  <data name="Password must be 8–72 characters and contain at least one letter and one digit" xml:space="preserve">
+    <value>Mật khẩu phải dài 8–72 ký tự và có ít nhất một chữ cái và một chữ số</value>
+  </data>
+  <data name="Bad request" xml:space="preserve">
+    <value>Yêu cầu không hợp lệ</value>
+  </data>
+  <data name="The request could not be processed. Please go back and try again." xml:space="preserve">
+    <value>Không thể xử lý yêu cầu. Vui lòng quay lại và thử lại.</value>
+  </data>
+  <data name="Please log in" xml:space="preserve">
+    <value>Vui lòng đăng nhập</value>
+  </data>
+  <data name="You need to log in to view this page." xml:space="preserve">
+    <value>Bạn cần đăng nhập để xem trang này.</value>
+  </data>
+  <data name="Access denied" xml:space="preserve">
+    <value>Không có quyền truy cập</value>
+  </data>
+  <data name="You do not have permission to view this page." xml:space="preserve">
+    <value>Bạn không có quyền xem trang này.</value>
+  </data>
+  <data name="Page not found" xml:space="preserve">
+    <value>Không tìm thấy trang</value>
+  </data>
+  <data name="The page you are looking for does not exist or has been removed." xml:space="preserve">
+    <value>Trang bạn tìm không tồn tại hoặc đã bị xóa.</value>
+  </data>
+  <data name="Not allowed" xml:space="preserve">
+    <value>Không được phép</value>
+  </data>
+  <data name="This action is not allowed on this page." xml:space="preserve">
+    <value>Thao tác này không được phép trên trang này.</value>
+  </data>
+  <data name="File too large" xml:space="preserve">
+    <value>Tệp quá lớn</value>
+  </data>
+  <data name="The file is too large. Images must be 5 MB or smaller." xml:space="preserve">
+    <value>Tệp quá lớn. Ảnh phải có dung lượng tối đa 5 MB.</value>
+  </data>
+  <data name="Something went wrong" xml:space="preserve">
+    <value>Đã xảy ra lỗi</value>
+  </data>
+  <data name="An unexpected error occurred. Please try again later or contact the administrator." xml:space="preserve">
+    <value>Đã xảy ra lỗi không mong muốn. Vui lòng thử lại sau hoặc liên hệ quản trị viên.</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>Lỗi</value>
+  </data>
+  <data name="The request could not be completed." xml:space="preserve">
+    <value>Không thể hoàn tất yêu cầu.</value>
+  </data>
+  <data name="Go to the home page" xml:space="preserve">
+    <value>Về trang chủ</value>
+  </data>
+  <data name="Request ID:" xml:space="preserve">
+    <value>Mã yêu cầu:</value>
+  </data>
+  <data name="Audit log" xml:space="preserve">
+    <value>Nhật ký hoạt động</value>
+  </data>
+  <data name="Forgot password?" xml:space="preserve">
+    <value>Quên mật khẩu?</value>
+  </data>
+</root>

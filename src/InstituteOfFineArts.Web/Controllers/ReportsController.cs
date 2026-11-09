@@ -1,4 +1,5 @@
 using InstituteOfFineArts.Web.Exceptions;
+using InstituteOfFineArts.Web.Services.Implementations;
 using InstituteOfFineArts.Web.Services.Interfaces;
 using InstituteOfFineArts.Web.ViewModels.Reports;
 using Microsoft.AspNetCore.Authorization;
@@ -11,6 +12,8 @@ namespace InstituteOfFineArts.Web.Controllers;
 /// user's role may open) · /reports/rpt-01 submissions by rating · /reports/rpt-02 participation &amp; ratings ·
 /// /reports/rpt-03 awards issued · /reports/rpt-06 student achievement profile. RPT-04, 05, 07 are served by
 /// FinanceReportsController. Every report is a GET form + table + totals, read only, with a Print button.
+/// Export (task BE2-OPT 1; F-M14-01): GET /reports/rpt-0N/export?format=xlsx|pdf&amp;&lt;same filters&gt; runs the same
+/// report service and returns the same rows and totals as an Excel / PDF file; invalid filters → back to the page.
 /// </summary>
 [Route("reports")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
@@ -25,12 +28,17 @@ public class ReportsController : Controller
     /// <summary>Competition dropdown of RPT-03 (CLOSED / GRADED competitions, the only ones with awards).</summary>
     private readonly IAwardIssuedService _awards;
 
+    /// <summary>Excel / PDF writer of the reports.</summary>
+    private readonly IReportExportService _export;
+
     /// <summary>Receives the services through Dependency Injection.</summary>
-    public ReportsController(ICompetitionReportService reports, IStaffSubmissionService submissions, IAwardIssuedService awards)
+    public ReportsController(ICompetitionReportService reports, IStaffSubmissionService submissions, IAwardIssuedService awards,
+        IReportExportService export)
     {
         _reports = reports;
         _submissions = submissions;
         _awards = awards;
+        _export = export;
     }
 
     /// <summary>Index: the reports the current role may open, with a one-line description (F-M10-08).</summary>
@@ -144,5 +152,134 @@ public class ReportsController : Controller
             }
         }
         return View(vm);
+    }
+
+    // ------------------------------------------------------------------ Export (F-M14-01)
+
+    /// <summary>RPT-01 as Excel / PDF (same filters and roles as <see cref="Rpt01"/>).</summary>
+    /// <param name="filter">Filters from the query string</param>
+    /// <param name="format">xlsx or pdf</param>
+    [HttpGet("rpt-01/export")]
+    [Authorize(Roles = ReportCatalog.StaffAndManager)]
+    public async Task<IActionResult> Rpt01Export([FromQuery] Rpt01FilterVm filter, [FromQuery] string? format)
+    {
+        if (CheckExport(format, out var exportFormat) is { } refused)
+        {
+            return ExportRefused(nameof(Rpt01), refused);
+        }
+        try
+        {
+            var result = await _reports.GetSubmissionsByRatingAsync(filter);
+            return ExportFile(_export.BuildRpt01(result, filter), exportFormat);
+        }
+        catch (BusinessException ex)
+        {
+            return ExportRefused(nameof(Rpt01), ex.Message);
+        }
+    }
+
+    /// <summary>RPT-02 as Excel / PDF (same filters and roles as <see cref="Rpt02"/>).</summary>
+    /// <param name="filter">Filters from the query string</param>
+    /// <param name="format">xlsx or pdf</param>
+    [HttpGet("rpt-02/export")]
+    [Authorize(Roles = ReportCatalog.StaffAndManager)]
+    public async Task<IActionResult> Rpt02Export([FromQuery] Rpt02FilterVm filter, [FromQuery] string? format)
+    {
+        if (CheckExport(format, out var exportFormat) is { } refused)
+        {
+            return ExportRefused(nameof(Rpt02), refused);
+        }
+        try
+        {
+            var result = await _reports.GetParticipationAsync(filter);
+            return ExportFile(_export.BuildRpt02(result, filter), exportFormat);
+        }
+        catch (BusinessException ex)
+        {
+            return ExportRefused(nameof(Rpt02), ex.Message);
+        }
+    }
+
+    /// <summary>RPT-03 as Excel / PDF (same filters and roles as <see cref="Rpt03"/>).</summary>
+    /// <param name="filter">Filters from the query string</param>
+    /// <param name="format">xlsx or pdf</param>
+    [HttpGet("rpt-03/export")]
+    [Authorize(Roles = ReportCatalog.StaffAndManager)]
+    public async Task<IActionResult> Rpt03Export([FromQuery] Rpt03FilterVm filter, [FromQuery] string? format)
+    {
+        if (CheckExport(format, out var exportFormat) is { } refused)
+        {
+            return ExportRefused(nameof(Rpt03), refused);
+        }
+        try
+        {
+            var result = await _reports.GetAwardsIssuedAsync(filter);
+
+            // Competition named as on the page ("all" when none or unknown)
+            var competition = (await _awards.GetCompetitionOptionsAsync()).FirstOrDefault(c => c.Id == filter.CompetitionId);
+            var label = competition == null ? null : $"{competition.Code} – {competition.Title}";
+            return ExportFile(_export.BuildRpt03(result, filter, label), exportFormat);
+        }
+        catch (BusinessException ex)
+        {
+            return ExportRefused(nameof(Rpt03), ex.Message);
+        }
+    }
+
+    /// <summary>RPT-06 as Excel / PDF (same filters and roles as <see cref="Rpt06"/>).</summary>
+    /// <param name="filter">Filters from the query string</param>
+    /// <param name="format">xlsx or pdf</param>
+    [HttpGet("rpt-06/export")]
+    [Authorize(Roles = ReportCatalog.StaffAndManager)]
+    public async Task<IActionResult> Rpt06Export([FromQuery] Rpt06FilterVm filter, [FromQuery] string? format)
+    {
+        if (CheckExport(format, out var exportFormat) is { } refused)
+        {
+            return ExportRefused(nameof(Rpt06), refused);
+        }
+        try
+        {
+            var result = await _reports.GetStudentProfileAsync(filter);
+            return ExportFile(_export.BuildRpt06(result, filter), exportFormat);
+        }
+        catch (BusinessException ex)
+        {
+            return ExportRefused(nameof(Rpt06), ex.Message);
+        }
+    }
+
+    /// <summary>Checks the format and the filter validation; returns the error message, or null when the export may run.</summary>
+    /// <param name="format">Query value of format</param>
+    /// <param name="exportFormat">Parsed format</param>
+    private string? CheckExport(string? format, out ReportExportFormat exportFormat)
+    {
+        if (!ReportExportService.TryParseFormat(format, out exportFormat))
+        {
+            return ReportExportService.UnknownFormatMessage;
+        }
+
+        // Same DataAnnotations as the HTML page (required competition / student, lengths, bad dates)
+        return ModelState.IsValid
+            ? null
+            : ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).FirstOrDefault(m => m.Length > 0)
+              ?? ReportExportService.InvalidFiltersMessage;
+    }
+
+    /// <summary>Invalid filters: back to the HTML report with the same filters and the error message.</summary>
+    /// <param name="action">HTML report action</param>
+    /// <param name="message">Why the export was refused</param>
+    private RedirectResult ExportRefused(string action, string message)
+    {
+        TempData["Error"] = ReportExportService.ExportFailedMessage + message;
+        return Redirect(ReportExportService.HtmlReportUrl(Url.Action(action)!, Request.Query));
+    }
+
+    /// <summary>Writes the document and returns it as a download.</summary>
+    /// <param name="document">Report content</param>
+    /// <param name="format">Wanted format</param>
+    private FileContentResult ExportFile(ReportExportDocument document, ReportExportFormat format)
+    {
+        var file = _export.Render(document, format);
+        return File(file.Content, file.ContentType, file.FileName);
     }
 }

@@ -1,0 +1,36 @@
+@model InstituteOfFineArts.Web.ViewModels.Notifications.NotificationBellVm
+@*
+    Notification bell in the menu (F-M12-02), rendered by NotificationBellViewComponent for signed-in users:
+    unread count + the 5 newest notifications; clicking one marks it as read and opens its link.
+    Minimal version created by BE1-OPT 3 + BE2-OPT 5; FE builds the real design (_NotificationBell) in FE1-OPT.
+*@
+<li class="nav-item dropdown" id="notification-bell">
+    <a class="nav-link text-dark dropdown-toggle" href="/notifications" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <span aria-hidden="true">&#128276;</span> Notifications
+        @if (Model.UnreadCount > 0)
+        {
+            <span class="badge rounded-pill bg-danger" data-unread-count="@Model.UnreadCount">@Model.UnreadCount</span>
+        }
+    </a>
+    <ul class="dropdown-menu dropdown-menu-end" style="min-width: 20rem">
+        @if (Model.Items.Count == 0)
+        {
+            <li><span class="dropdown-item-text text-muted">You have no notifications.</span></li>
+        }
+        @foreach (var n in Model.Items)
+        {
+            <li>
+                @* Opening marks the notification as read (POST with the anti-forgery token) *@
+                <form method="post" action="/notifications/@n.Id/read">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="dropdown-item text-wrap @(n.IsRead ? "" : "fw-semibold")" data-notification-id="@n.Id">
+                        @n.Title
+                        <small class="d-block text-muted fw-normal">@n.CreatedAt.ToString("dd MMM yyyy HH:mm")</small>
+                    </button>
+                </form>
+            </li>
+        }
+        <li><hr class="dropdown-divider" /></li>
+        <li><a class="dropdown-item" href="/notifications">See all notifications</a></li>
+    </ul>
+</li>

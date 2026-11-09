@@ -17,8 +17,12 @@
   <ItemGroup>
     <!-- BCrypt password hashing -->
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
+    <!-- Excel export of the reports (optional feature M14) -->
+    <PackageReference Include="ClosedXML" Version="0.105.1" />
     <!-- Keep table/column names in snake_case as in the database design -->
     <PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />
+    <!-- Sending e-mail: forgot password and notifications (optional features M12, M16) -->
+    <PackageReference Include="MailKit" Version="4.18.2" />
     <!-- EF Core: migration tooling (development only) -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.14">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -29,6 +33,8 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <!-- PDF export of the reports (optional feature M14, Community licence) -->
+    <PackageReference Include="QuestPDF" Version="2026.9.1" />
     <!-- Logging to files -->
     <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
     <!-- Thumbnail generation when paintings are uploaded -->

@@ -531,3 +531,114 @@ END;
 COMMIT;
 GO
 
+BEGIN TRANSACTION;
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [migration_id] = N'20261109042442_OptionalFeatures'
+)
+BEGIN
+    CREATE TABLE [audit_log] (
+        [id] bigint NOT NULL IDENTITY,
+        [account_id] bigint NULL,
+        [username] varchar(50) NULL,
+        [action] varchar(50) NOT NULL,
+        [entity] varchar(50) NULL,
+        [entity_id] bigint NULL,
+        [details] nvarchar(500) NULL,
+        [ip_address] varchar(45) NULL,
+        [created_at] datetime2(0) NOT NULL DEFAULT (SYSDATETIME()),
+        [updated_at] datetime2(0) NULL,
+        CONSTRAINT [pk_audit_log] PRIMARY KEY ([id]),
+        CONSTRAINT [fk_audit_log_account_account_id] FOREIGN KEY ([account_id]) REFERENCES [account] ([id]) ON DELETE SET NULL
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [migration_id] = N'20261109042442_OptionalFeatures'
+)
+BEGIN
+    CREATE TABLE [notification] (
+        [id] bigint NOT NULL IDENTITY,
+        [account_id] bigint NOT NULL,
+        [title] nvarchar(150) NOT NULL,
+        [message] nvarchar(1000) NOT NULL,
+        [link] varchar(255) NULL,
+        [is_read] bit NOT NULL,
+        [created_at] datetime2(0) NOT NULL DEFAULT (SYSDATETIME()),
+        [updated_at] datetime2(0) NULL,
+        CONSTRAINT [pk_notification] PRIMARY KEY ([id]),
+        CONSTRAINT [fk_notification_account_account_id] FOREIGN KEY ([account_id]) REFERENCES [account] ([id]) ON DELETE CASCADE
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [migration_id] = N'20261109042442_OptionalFeatures'
+)
+BEGIN
+    CREATE TABLE [password_reset_token] (
+        [id] bigint NOT NULL IDENTITY,
+        [account_id] bigint NOT NULL,
+        [token_hash] char(64) NOT NULL,
+        [expires_at] datetime2 NOT NULL,
+        [used_at] datetime2 NULL,
+        [created_at] datetime2(0) NOT NULL DEFAULT (SYSDATETIME()),
+        [updated_at] datetime2(0) NULL,
+        CONSTRAINT [pk_password_reset_token] PRIMARY KEY ([id]),
+        CONSTRAINT [fk_password_reset_token_account_account_id] FOREIGN KEY ([account_id]) REFERENCES [account] ([id]) ON DELETE CASCADE
+    );
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [migration_id] = N'20261109042442_OptionalFeatures'
+)
+BEGIN
+    CREATE INDEX [IX_audit_log_account] ON [audit_log] ([account_id], [created_at]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [migration_id] = N'20261109042442_OptionalFeatures'
+)
+BEGIN
+    CREATE INDEX [IX_audit_log_created_at] ON [audit_log] ([created_at]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [migration_id] = N'20261109042442_OptionalFeatures'
+)
+BEGIN
+    CREATE INDEX [IX_notification_account_read] ON [notification] ([account_id], [is_read], [created_at]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [migration_id] = N'20261109042442_OptionalFeatures'
+)
+BEGIN
+    CREATE INDEX [ix_password_reset_token_account_id] ON [password_reset_token] ([account_id]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [migration_id] = N'20261109042442_OptionalFeatures'
+)
+BEGIN
+    CREATE UNIQUE INDEX [UX_password_reset_token_hash] ON [password_reset_token] ([token_hash]);
+END;
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [migration_id] = N'20261109042442_OptionalFeatures'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([migration_id], [product_version])
+    VALUES (N'20261109042442_OptionalFeatures', N'10.0.14');
+END;
+
+COMMIT;
+GO
+

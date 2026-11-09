@@ -8,10 +8,15 @@ namespace InstituteOfFineArts.Web.Services.Interfaces;
 /// <param name="RelativePath">Path below the upload root</param>
 /// <param name="DownloadName">File name for "Save as" when downloading; null = show inline</param>
 /// <param name="IsPublic">True when anyone may see it (allows public browser caching)</param>
-public record ImageFile(string RelativePath, string? DownloadName, bool IsPublic);
+/// <param name="Watermark">
+/// True when the image must be sent with the institute watermark (F-M13-02): the viewer is neither the owner
+/// nor STAFF / MANAGER / ADMIN
+/// </param>
+public record ImageFile(string RelativePath, string? DownloadName, bool IsPublic, bool Watermark = false);
 
 /// <summary>
-/// Finds stored images and applies the viewing rules (BR-20) before FilesController streams them.
+/// Finds stored images and applies the viewing rules (BR-20) before FilesController streams them,
+/// and tells which images must be watermarked (F-M13-02).
 /// </summary>
 public interface IImageAccessService
 {

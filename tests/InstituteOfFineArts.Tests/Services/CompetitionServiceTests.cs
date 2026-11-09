@@ -43,8 +43,11 @@ public class CompetitionServiceTests
         return db;
     }
 
+    /// <summary>Fake notification service (M12): the tests check which event is raised.</summary>
+    private readonly Mock<INotificationService> _notifications = new();
+
     /// <summary>Service with the fake storage.</summary>
-    private CompetitionService Service(AppDbContext db) => new(db, _files.Object, NullLogger<CompetitionService>.Instance);
+    private CompetitionService Service(AppDbContext db) => new(db, _files.Object, NullLogger<CompetitionService>.Instance, _notifications.Object);
 
     /// <summary>Valid form starting in <paramref name="startIn"/> days and lasting <paramref name="days"/> days.</summary>
     private static CompetitionFormVm Form(string title = "Lunar New Year 2027", int startIn = 3, int days = 17) => new()
@@ -105,12 +108,22 @@ public class CompetitionServiceTests
         Assert.Equal($"CT{year}-08", (await db.Competitions.SingleAsync(c => c.Id == id)).Code);
     }
 
+    /// <summary>M12 event 1 (F-M12-01/02): a saved competition raises "new competition" once, with its id.</summary>
+    [Fact]
+    public async Task Create_NotifiesStudents()
+    {
+        using var db = CreateDb();
+        var id = await Service(db).CreateAsync(Form(), _staffId);
+        _notifications.Verify(n => n.CompetitionCreatedAsync(id), Times.Once);
+    }
+
     /// <summary>BR-06: a new competition cannot end in the past.</summary>
     [Fact]
     public async Task Create_EndInPast_Rejected()
     {
         using var db = CreateDb();
         var ex = await Assert.ThrowsAsync<BusinessException>(() => Service(db).CreateAsync(Form(startIn: -10, days: 5), _staffId));
+        _notifications.Verify(n => n.CompetitionCreatedAsync(It.IsAny<long>()), Times.Never);
         Assert.Equal(CompetitionService.EndInPastMessage, ex.Message);
         Assert.Equal(nameof(CompetitionFormVm.EndDate), ex.Field);
         Assert.Empty(db.Competitions);

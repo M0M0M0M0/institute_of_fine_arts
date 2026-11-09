@@ -4,9 +4,11 @@ using InstituteOfFineArts.Web.Helpers;
 using InstituteOfFineArts.Web.Models.Entities;
 using InstituteOfFineArts.Web.Models.Enums;
 using InstituteOfFineArts.Web.Services.Implementations;
+using InstituteOfFineArts.Web.Services.Interfaces;
 using InstituteOfFineArts.Web.ViewModels.Staff.Awards;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
+using Moq;
 
 namespace InstituteOfFineArts.Tests.Services;
 
@@ -32,8 +34,11 @@ public class AwardIssuedServiceTests
     private sealed record Data(AppDbContext Db, Competition Competition, CompetitionAward First, CompetitionAward Mention,
         Dictionary<string, Submission> Entries);
 
+    /// <summary>Fake notification service (M12): the tests check which event is raised.</summary>
+    private readonly Mock<INotificationService> _notifications = new();
+
     /// <summary>Service under test.</summary>
-    private static AwardIssuedService Service(AppDbContext db) => new(db, NullLogger<AwardIssuedService>.Instance);
+    private AwardIssuedService Service(AppDbContext db) => new(db, NullLogger<AwardIssuedService>.Instance, _notifications.Object);
 
     /// <summary>Builds the test data with the competition in the given calculated status.</summary>
     private Data Seed(CompetitionStatus status = CompetitionStatus.CLOSED)
@@ -159,6 +164,9 @@ public class AwardIssuedServiceTests
         Assert.Equal(_staffId, issued.IssuedBy);
         Assert.Equal(Today, issued.IssuedDate);
         Assert.Equal("Outstanding use of light.", issued.Remarks);
+
+        // M12 event 3: the winner is told once
+        _notifications.Verify(n => n.AwardIssuedAsync(id), Times.Once);
     }
 
     /// <summary>BR-32 decision: a GRADED competition still accepts awards.</summary>

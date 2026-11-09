@@ -128,6 +128,77 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.AuditLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long?>("AccountId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("account_id");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("action");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<string>("Details")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("details");
+
+                    b.Property<string>("Entity")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("entity");
+
+                    b.Property<long?>("EntityId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("entity_id");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(45)")
+                        .HasColumnName("ip_address");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("Username")
+                        .HasMaxLength(50)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("username");
+
+                    b.HasKey("Id")
+                        .HasName("pk_audit_log");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("IX_audit_log_created_at");
+
+                    b.HasIndex("AccountId", "CreatedAt")
+                        .HasDatabaseName("IX_audit_log_account");
+
+                    b.ToTable("audit_log", (string)null);
+                });
+
             modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.AwardIssued", b =>
                 {
                     b.Property<long>("Id")
@@ -697,6 +768,116 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.Notification", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("AccountId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("account_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_read");
+
+                    b.Property<string>("Link")
+                        .HasMaxLength(255)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("link");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("message");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_notification");
+
+                    b.HasIndex("AccountId", "IsRead", "CreatedAt")
+                        .HasDatabaseName("IX_notification_account_read");
+
+                    b.ToTable("notification", (string)null);
+                });
+
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.PasswordResetToken", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("AccountId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("account_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .IsUnicode(false)
+                        .HasColumnType("char(64)")
+                        .HasColumnName("token_hash")
+                        .IsFixedLength();
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("updated_at");
+
+                    b.Property<DateTime?>("UsedAt")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("used_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_password_reset_token");
+
+                    b.HasIndex("AccountId")
+                        .HasDatabaseName("ix_password_reset_token_account_id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique()
+                        .HasDatabaseName("UX_password_reset_token_hash");
+
+                    b.ToTable("password_reset_token", (string)null);
+                });
+
             modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.StaffProfile", b =>
                 {
                     b.Property<long>("Id")
@@ -954,6 +1135,17 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.AuditLog", b =>
+                {
+                    b.HasOne("InstituteOfFineArts.Web.Models.Entities.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_audit_log_account_account_id");
+
+                    b.Navigation("Account");
+                });
+
             modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.AwardIssued", b =>
                 {
                     b.HasOne("InstituteOfFineArts.Web.Models.Entities.CompetitionAward", "CompetitionAward")
@@ -1093,6 +1285,30 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                     b.Navigation("ReviewedByStaff");
 
                     b.Navigation("Submission");
+                });
+
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.Notification", b =>
+                {
+                    b.HasOne("InstituteOfFineArts.Web.Models.Entities.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_notification_account_account_id");
+
+                    b.Navigation("Account");
+                });
+
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.PasswordResetToken", b =>
+                {
+                    b.HasOne("InstituteOfFineArts.Web.Models.Entities.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_password_reset_token_account_account_id");
+
+                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.StaffProfile", b =>
