@@ -64,6 +64,9 @@ builder.Services.AddApplicationServices();
 // Upload settings (root folder, 5 MB limit, thumbnail width) used by FileStorageService – task BE1-04
 builder.Services.Configure<UploadOptions>(builder.Configuration.GetSection(UploadOptions.SectionName));
 
+// E-mail settings (SMTP or .eml pickup folder) used by EmailService – task BE1-OPT
+builder.Services.Configure<InstituteOfFineArts.Web.Infrastructure.Email.EmailOptions>(builder.Configuration.GetSection("Email"));
+
 // Background jobs: every BackgroundService in Infrastructure/BackgroundJobs is registered automatically
 builder.Services.AddBackgroundJobs();
 
