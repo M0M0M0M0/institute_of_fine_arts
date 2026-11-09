@@ -1,17 +1,23 @@
 @model InstituteOfFineArts.Web.ViewModels.Reports.ReportLinkVm
 @*
     Header of every report page of ReportsController: code + title, time the report was produced, Print,
-    Export Excel / PDF (BE2-OPT 1, F-M14-01) and "All reports" buttons (F-M10-08); TempData alerts (refused export).
-    Minimal version created by BE2-12; FE builds the real design in FE2-09.
+    Export Excel / PDF (BE2-OPT 1, F-M14-01) and "All reports" link (F-M10-08); TempData alerts (refused export).
+    Created by BE2-12; styled by FE2-09 (page head with pills, hidden when printing).
 *@
-<div class="d-flex justify-content-between align-items-start mb-3">
+<div class="page-head">
     <div>
-        <h1 class="h3 mb-0">@Model.Code – @Model.Title</h1>
-        <div class="text-muted small">@Model.Description · Produced @DateTimeHelper.Now.ToString("dd MMM yyyy HH:mm")</div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/reports">All reports</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.Code</li>
+            </ol>
+        </nav>
+        <h1>@Model.Code – @Model.Title</h1>
+        <p class="page-sub">@Model.Description</p>
+        <p class="report-stamp">Produced @DateTimeHelper.Now.ToString("dd MMM yyyy HH:mm")</p>
     </div>
-    <div class="d-print-none text-nowrap">
-        <a href="/reports" class="btn btn-outline-secondary">All reports</a>
-        <button type="button" class="btn btn-primary" id="print-report" onclick="window.print()">Print</button>
+    <div class="page-actions d-print-none">
+        <button type="button" class="btn btn-primary" id="print-report" onclick="window.print()"><i class="bi bi-printer" aria-hidden="true"></i>Print</button>
         <partial name="_ExportButtons" model="Model.Url" />
     </div>
 </div>

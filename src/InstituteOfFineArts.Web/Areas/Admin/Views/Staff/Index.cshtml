@@ -1,7 +1,7 @@
 @model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Admin.Staff.StaffListItemVm>
 @*
     Admin – staff list & search (/admin/staff, SCR-11).
-    Minimal version created by BE (BE2-02); FE2 builds the real design in FE2-02.
+    Created by BE2-02; styled by FE2-02 (filters bar, ledger table with ACTIVE / INACTIVE tags, pager).
 *@
 @{
     ViewData["Title"] = "Staff";
@@ -9,19 +9,24 @@
     object PageRoute(int page) => new { search.Keyword, search.Role, search.Subject, search.ClassName, search.Active, page };
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Staff</h1>
-    <a asp-action="Create" class="btn btn-primary">New staff member</a>
+<div class="page-head">
+    <div>
+        <h1>Staff</h1>
+        <p class="page-sub">Teachers, managers and administrators with an account.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i>New staff member</a>
+    </div>
 </div>
 
 <partial name="_Alerts" />
 
-<form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
-    <div class="col-md-3">
+<form method="get" asp-action="Index" class="filters">
+    <div class="filter">
         <label class="form-label" for="Keyword">Name, username, code or email</label>
         <input class="form-control" id="Keyword" name="Keyword" value="@search.Keyword" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="Role">Role</label>
         <select class="form-select" id="Role" name="Role">
             <option value="">All</option>
@@ -31,15 +36,15 @@
             }
         </select>
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="Subject">Subject</label>
         <input class="form-control" id="Subject" name="Subject" value="@search.Subject" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="ClassName">Class</label>
         <input class="form-control" id="ClassName" name="ClassName" value="@search.ClassName" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="Active">Status</label>
         <select class="form-select" id="Active" name="Active">
             <option value="">All</option>
@@ -47,47 +52,54 @@
             <option value="false" selected="@(search.Active == false)">Locked</option>
         </select>
     </div>
-    <div class="col-md-1">
-        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>Search</button>
+        <a asp-action="Index" class="btn btn-link">Clear</a>
     </div>
 </form>
 
 @if (Model.TotalCount == 0)
 {
-    <p class="text-muted">No results found.</p>
+    <div class="empty">
+        <i class="bi bi-person-badge" aria-hidden="true"></i>
+        <p>No results found.</p>
+        <a asp-action="Index" class="btn btn-outline-primary btn-sm">Clear filters</a>
+    </div>
 }
 else
 {
-    <table class="table table-hover align-middle">
-        <thead>
-            <tr><th>Code</th><th>Name</th><th>Username</th><th>Role</th><th>Subjects</th><th>Classes</th><th>Status</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var s in Model.Items)
-            {
-                <tr>
-                    <td>@s.StaffCode</td>
-                    <td><a asp-action="Details" asp-route-id="@s.Id">@s.FullName</a><div class="small text-muted">@s.Position</div></td>
-                    <td>@s.Username</td>
-                    <td>@s.Role</td>
-                    <td>@s.SubjectsInCharge</td>
-                    <td>@s.ClassesInCharge</td>
-                    <td>@if (s.Active) { <span class="badge bg-success">Active</span> } else { <span class="badge bg-secondary">Locked</span> }</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr><th>Code</th><th>Name</th><th>Username</th><th>Role</th><th>Subjects</th><th>Classes</th><th>Status</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model.Items)
+                {
+                    <tr>
+                        <td>@s.StaffCode</td>
+                        <td><a class="row-title" asp-action="Details" asp-route-id="@s.Id">@s.FullName</a><div class="small text-muted">@s.Position</div></td>
+                        <td>@s.Username</td>
+                        <td>@s.Role</td>
+                        <td>@s.SubjectsInCharge</td>
+                        <td>@s.ClassesInCharge</td>
+                        <td>@if (s.Active) { <span class="tag tag-ACTIVE">Active</span> } else { <span class="tag tag-INACTIVE">Locked</span> }</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
-    <nav class="d-flex justify-content-between align-items-center">
-        <span class="text-muted small">@Model.TotalCount staff member(s) · page @Model.Page of @Model.TotalPages</span>
-        <div>
+    <nav class="pager" aria-label="Pages">
+        <span>@Model.TotalCount staff member(s). Page @Model.Page of @Model.TotalPages</span>
+        <div class="pager-links">
             @if (Model.HasPrevious)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page - 1))"><i class="bi bi-chevron-left" aria-hidden="true"></i>Previous</a>
             }
             @if (Model.HasNext)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next<i class="bi bi-chevron-right ms-1 me-0" aria-hidden="true"></i></a>
             }
         </div>
     </nav>

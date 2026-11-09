@@ -1,59 +1,68 @@
 @model InstituteOfFineArts.Web.ViewModels.Admin.Students.StudentDetailsVm
 @*
-    Minimal version created by BE (BE2-03); FE2 builds the real design in FE2-03.
     Admin – student details (/admin/students/{id}, SCR-16) with reset password, lock/unlock and delete.
+    Created by BE2-03; styled by FE2-03 (dl.details groups, account actions with styled confirmations).
 *@
 @{
     ViewData["Title"] = Model.FullName;
 }
 
-<partial name="_Alerts" />
-
-<div class="d-flex justify-content-between align-items-start mb-3">
+<div class="page-head">
     <div>
-        <h1 class="h3 mb-1">@Model.FullName</h1>
-        <div class="text-muted">
-            @Model.StudentCode · @Model.CourseName @Model.ClassName ·
-            @if (Model.Active) { <span class="badge bg-success">Active</span> } else { <span class="badge bg-secondary">Locked</span> }
-        </div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">Students</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.FullName</li>
+            </ol>
+        </nav>
+        <h1>@Model.FullName</h1>
+        <p class="page-sub d-flex flex-wrap gap-2 align-items-center">
+            <span>@Model.StudentCode</span><span>@Model.CourseName @Model.ClassName</span>
+            @if (Model.Active) { <span class="tag tag-ACTIVE">Active</span> } else { <span class="tag tag-INACTIVE">Locked</span> }
+        </p>
     </div>
-    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Edit</a>
+    <div class="page-actions">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary"><i class="bi bi-pencil" aria-hidden="true"></i>Edit</a>
+    </div>
 </div>
+
+<partial name="_Alerts" />
 
 <partial name="_Info" model="Model" />
 
-<hr />
-<h2 class="h5">Account actions</h2>
-<div class="row g-3 align-items-end">
-    @* Temporary password (BR-02) *@
-    <div class="col-md-6">
-        <form asp-action="ResetPassword" asp-route-id="@Model.Id" method="post" class="d-flex gap-2 align-items-end">
-            <div class="flex-grow-1">
+<section class="section">
+    <div class="section-head"><h2>Account actions</h2></div>
+    <div class="account-actions">
+        @* Temporary password (BR-02) *@
+        <form asp-action="ResetPassword" asp-route-id="@Model.Id" method="post" class="reset-form">
+            <div>
                 <label class="form-label" for="NewPassword">Temporary password</label>
                 <input class="form-control" type="password" id="NewPassword" name="NewPassword" autocomplete="new-password" />
             </div>
-            <button type="submit" class="btn btn-outline-secondary">Reset password</button>
+            <button type="submit" class="btn btn-outline-primary"><i class="bi bi-key" aria-hidden="true"></i>Reset password</button>
         </form>
-    </div>
-    @* Lock / unlock and delete (BR-04: locked instead of deleted when related data exists) *@
-    <div class="col-md-6 d-flex gap-2 justify-content-md-end">
-        @if (Model.Active)
-        {
-            <form asp-action="Lock" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Lock this account? The student will not be able to log in.');">
-                <button type="submit" class="btn btn-outline-warning">Lock</button>
+        @* Lock / unlock and delete (BR-04: locked instead of deleted when related data exists) *@
+        <div class="state-forms">
+            @if (Model.Active)
+            {
+                <form asp-action="Lock" asp-route-id="@Model.Id" method="post"
+                      data-confirm="Lock this account? The student will not be able to log in." data-confirm-ok="Lock">
+                    <button type="submit" class="btn btn-outline-danger"><i class="bi bi-lock" aria-hidden="true"></i>Lock</button>
+                </form>
+            }
+            else
+            {
+                <form asp-action="Unlock" asp-route-id="@Model.Id" method="post">
+                    <button type="submit" class="btn btn-outline-primary"><i class="bi bi-unlock" aria-hidden="true"></i>Unlock</button>
+                </form>
+            }
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
+                  data-confirm="@(Model.HasRelatedData ? "This student has submissions or exhibition entries, so the account will be locked instead of deleted. Continue?" : "Delete this student permanently?")"
+                  data-confirm-ok="@(Model.HasRelatedData ? "Lock instead" : "Delete")">
+                <button type="submit" class="btn btn-danger"><i class="bi bi-trash" aria-hidden="true"></i>Delete</button>
             </form>
-        }
-        else
-        {
-            <form asp-action="Unlock" asp-route-id="@Model.Id" method="post">
-                <button type="submit" class="btn btn-outline-success">Unlock</button>
-            </form>
-        }
-        <form asp-action="Delete" asp-route-id="@Model.Id" method="post"
-              onsubmit="return confirm('@(Model.HasRelatedData ? "This student has submissions or exhibition entries, so the account will be locked instead of deleted. Continue?" : "Delete this student permanently?")');">
-            <button type="submit" class="btn btn-outline-danger">Delete</button>
-        </form>
+        </div>
     </div>
-</div>
+</section>
 
-<a asp-action="Index" class="btn btn-link px-0 mt-3">Back to student list</a>
+<a asp-action="Index" class="btn btn-link px-0 mt-4"><i class="bi bi-arrow-left" aria-hidden="true"></i>Back to student list</a>

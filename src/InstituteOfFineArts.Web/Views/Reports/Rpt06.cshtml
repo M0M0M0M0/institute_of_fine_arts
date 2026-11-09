@@ -2,7 +2,7 @@
 @*
     RPT-06 – Student achievement profile (/reports/rpt-06; F-M10-06): one student's entries in a period with rating,
     comment summary, award and exhibitions; totals: competitions joined, BEST count, awards, total sales.
-    Minimal version created by BE2-12; FE builds the real design in FE2-09.
+    Created by BE2-12; styled by FE2-09 / QA-07 (page head with pills, filters bar, filter summary, ledger, totals, A4 landscape print).
 *@
 @{
     ViewData["Title"] = "RPT-06 Student achievement profile";
@@ -12,10 +12,11 @@
     var detailsBase = User.IsInRole(RoleNames.Manager) ? "/manager/submissions/" : "/staff/submissions/";
 }
 
+<div class="report-page">
 <partial name="_ReportHeader" model="report" />
 
-<form method="get" action="/reports/rpt-06" class="row g-2 align-items-end mb-3 d-print-none" id="report-filters">
-    <div class="col-md-5">
+<form method="get" action="/reports/rpt-06" class="filters d-print-none" id="report-filters">
+    <div class="filter">
         <label class="form-label" for="StudentId">Student *</label>
         <select class="form-select" id="StudentId" name="StudentId">
             <option value="">– Choose –</option>
@@ -25,16 +26,17 @@
             }
         </select>
     </div>
-    <div class="col-md-3">
+    <div class="filter">
         <label class="form-label" for="From">Submitted from</label>
         <input class="form-control" type="date" id="From" name="From" value="@filter.From?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-3">
+    <div class="filter">
         <label class="form-label" for="To">Submitted to</label>
         <input class="form-control" type="date" id="To" name="To" value="@filter.To?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-1">
-        <button type="submit" class="btn btn-outline-primary w-100">View</button>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-funnel" aria-hidden="true"></i>View</button>
+        <a href="/reports/rpt-06" class="btn btn-link">Clear</a>
     </div>
 </form>
 
@@ -42,15 +44,19 @@
 
 @if (result != null)
 {
-    <p class="mb-2" id="report-criteria">
-        <strong>@result.StudentCode – @result.FullName</strong>
-        · Class @(result.ClassName ?? "–") · Course @result.CourseName
-        · Submitted from @(filter.From?.ToString("dd MMM yyyy") ?? "the start") to @(filter.To?.ToString("dd MMM yyyy") ?? "now")
-    </p>
+    <dl class="criteria" id="report-criteria">
+        <div><dt>Student</dt><dd><strong>@result.StudentCode – @result.FullName</strong></dd></div>
+        <div><dt>Class</dt><dd>@(result.ClassName ?? "–")</dd></div>
+        <div><dt>Course</dt><dd>@result.CourseName</dd></div>
+        <div><dt>Submitted</dt><dd>from @(filter.From?.ToString("dd MMM yyyy") ?? "the start") to @(filter.To?.ToString("dd MMM yyyy") ?? "now")</dd></div>
+    </dl>
 
     if (result.TotalCount == 0)
     {
-        <p class="text-muted" id="no-data">No data</p>
+        <div class="empty" id="no-data">
+            <i class="bi bi-inbox" aria-hidden="true"></i>
+            <p>No data</p>
+        </div>
     }
     else
     {
@@ -59,13 +65,13 @@
             <partial name="_Truncated" model="result.TotalCount" />
         }
         <div class="table-responsive">
-            <table class="table table-sm table-striped align-middle" id="report-table">
+            <table class="table table-sm table-hover" id="report-table">
                 <thead>
                     <tr>
-                        <th>No.</th>
+                        <th class="text-end">No.</th>
                         <th>Competition</th>
                         <th>Painting</th>
-                        <th>Submitted</th>
+                        <th class="text-end">Submitted</th>
                         <th>Rating</th>
                         <th>Comment summary</th>
                         <th>Award</th>
@@ -76,21 +82,21 @@
                     @foreach (var row in result.Rows)
                     {
                         <tr data-submission-id="@row.SubmissionId">
-                            <td>@row.No</td>
+                            <td class="text-end">@row.No</td>
                             <td>@row.CompetitionCode – @row.CompetitionTitle</td>
                             <td><a href="@(detailsBase + row.SubmissionId)">@row.Title</a></td>
-                            <td>@row.SubmittedAt.ToString("dd MMM yyyy HH:mm")</td>
-                            <td>@(row.Rating?.ToString() ?? "Not graded")</td>
+                            <td class="text-end text-nowrap">@row.SubmittedAt.ToString("dd MMM yyyy HH:mm")</td>
+                            <td><span class="tag tag-@(row.Rating?.ToString() ?? "NOT_GRADED")">@(row.Rating?.ToString() ?? "Not graded")</span></td>
                             <td>@row.CommentSummary</td>
                             <td>@(row.AwardName == null ? "" : row.AwardName + " (" + row.PrizeValue!.Value.ToString("$#,##0.00") + ")")</td>
                             <td>
                                 @foreach (var e in row.Exhibitions)
                                 {
                                     <div>
-                                        @e.ExhibitionName – @e.Status
+                                        @e.ExhibitionName – <span class="tag tag-@e.Status">@e.Status</span>
                                         @if (e.Status == EntryStatus.SOLD && e.SoldPrice is { } price)
                                         {
-                                            <span>(sold @price.ToString("$#,##0.00"))</span>
+                                            <span class="num">(sold @price.ToString("$#,##0.00"))</span>
                                         }
                                     </div>
                                 }
@@ -103,7 +109,8 @@
     }
 
     @* Totals of §7: competitions joined, BEST entries, awards, total sales of the student's paintings *@
-    <table class="table table-sm table-bordered w-auto" id="report-totals">
+    <h2 class="visually-hidden">Totals</h2>
+    <table class="table table-sm table-totals" id="report-totals">
         <tbody>
             <tr><th>Entries</th><td class="text-end" data-total="entries">@result.TotalCount</td></tr>
             <tr><th>Competitions joined</th><td class="text-end" data-total="competitions">@result.CompetitionsJoined</td></tr>
@@ -116,5 +123,9 @@
 }
 else if (ViewData.ModelState.IsValid)
 {
-    <p class="text-muted">Choose a student and click View.</p>
+    <div class="empty">
+        <i class="bi bi-funnel" aria-hidden="true"></i>
+        <p>Choose a student and click View.</p>
+    </div>
 }
+</div>

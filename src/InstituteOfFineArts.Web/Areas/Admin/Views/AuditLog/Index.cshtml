@@ -2,7 +2,7 @@
 @*
     Admin – audit log, read only (/admin/audit-log, F-M17-01): who did what and when; filters user, action,
     date range; newest first, 10 per page.
-    Minimal version created by BE1-OPT; FE builds the real design in FE1-OPT.
+    Created by BE1-OPT; styled by FE2-02 (filters bar, dense ledger table, pager).
 *@
 @{
     ViewData["Title"] = "Audit log";
@@ -15,67 +15,79 @@
     };
 }
 
-<h1 class="h3 mb-3">Audit log</h1>
+<div class="page-head">
+    <div>
+        <h1>Audit log</h1>
+        <p class="page-sub">Who did what and when, newest first. Nothing here can be changed.</p>
+    </div>
+</div>
 
 <partial name="_Alerts" />
 
-<form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
-    <div class="col-md-3">
+<form method="get" asp-action="Index" class="filters">
+    <div class="filter">
         <label class="form-label" for="User">User</label>
         <input class="form-control" id="User" name="User" value="@search.User" />
     </div>
-    <div class="col-md-3">
+    <div class="filter">
         <label class="form-label" for="Activity">Action</label>
         <input class="form-control" id="Activity" name="Activity" value="@search.Activity" placeholder="e.g. LOGIN or Competitions/Delete" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="From">From</label>
         <input class="form-control" type="date" id="From" name="From" value="@search.From?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="To">To</label>
         <input class="form-control" type="date" id="To" name="To" value="@search.To?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-2">
-        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>Search</button>
+        <a asp-action="Index" class="btn btn-link">Clear</a>
     </div>
 </form>
 
 @if (Model.TotalCount == 0)
 {
-    <p class="text-muted">No log entries found.</p>
+    <div class="empty">
+        <i class="bi bi-journal-text" aria-hidden="true"></i>
+        <p>No log entries found.</p>
+        <a asp-action="Index" class="btn btn-outline-primary btn-sm">Clear filters</a>
+    </div>
 }
 else
 {
-    <table class="table table-sm table-hover align-middle">
-        <thead>
-            <tr><th>Time</th><th>User</th><th>Action</th><th>Object</th><th>Details</th><th>IP address</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var l in Model.Items)
-            {
-                <tr>
-                    <td class="text-nowrap">@l.CreatedAt.ToString("dd MMM yyyy HH:mm")</td>
-                    <td>@(l.Username ?? "–")</td>
-                    <td>@l.Action</td>
-                    <td>@l.Entity @(l.EntityId.HasValue ? "#" + l.EntityId : "")</td>
-                    <td class="small">@l.Details</td>
-                    <td class="small text-muted">@l.IpAddress</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover">
+            <thead>
+                <tr><th>Time</th><th>User</th><th>Action</th><th>Object</th><th>Details</th><th>IP address</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var l in Model.Items)
+                {
+                    <tr>
+                        <td class="text-nowrap num">@l.CreatedAt.ToString("dd MMM yyyy HH:mm")</td>
+                        <td>@(l.Username ?? "–")</td>
+                        <td class="row-title">@l.Action</td>
+                        <td class="text-nowrap">@l.Entity @(l.EntityId.HasValue ? "#" + l.EntityId : "")</td>
+                        <td class="small">@l.Details</td>
+                        <td class="small text-muted num">@l.IpAddress</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
-    <nav class="d-flex justify-content-between align-items-center">
-        <span class="text-muted small">@Model.TotalCount entr@(Model.TotalCount == 1 ? "y" : "ies") · page @Model.Page of @Model.TotalPages</span>
-        <div>
+    <nav class="pager" aria-label="Pages">
+        <span>@Model.TotalCount entr@(Model.TotalCount == 1 ? "y" : "ies"). Page @Model.Page of @Model.TotalPages</span>
+        <div class="pager-links">
             @if (Model.HasPrevious)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page - 1))"><i class="bi bi-chevron-left" aria-hidden="true"></i>Previous</a>
             }
             @if (Model.HasNext)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next<i class="bi bi-chevron-right ms-1 me-0" aria-hidden="true"></i></a>
             }
         </div>
     </nav>

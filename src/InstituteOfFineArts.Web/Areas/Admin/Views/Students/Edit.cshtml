@@ -1,23 +1,34 @@
 @model InstituteOfFineArts.Web.ViewModels.Admin.Students.StudentFormVm
 @*
-    Minimal version created by BE (BE2-03); FE2 builds the real design in FE2-03.
     Admin – edit student (/admin/students/{id}/edit, SCR-15). The username and the role cannot change.
+    Created by BE2-03; styled by FE2-03 (form sheet).
 *@
 @{
     ViewData["Title"] = "Edit student";
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-9">
-        <h1 class="h3 mb-3">Edit student <small class="text-muted">@Model.Username</small></h1>
-        <form asp-action="Edit" asp-route-id="@Model.Id" method="post" novalidate>
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
-            <partial name="_Form" model="Model" />
-            <button type="submit" class="btn btn-primary">Save changes</button>
-            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link">Cancel</a>
-        </form>
+<div class="page-head">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">Students</a></li>
+                <li class="breadcrumb-item"><a asp-action="Details" asp-route-id="@Model.Id">@Model.Username</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Edit</li>
+            </ol>
+        </nav>
+        <h1>Edit student</h1>
+        <p class="page-sub">Username <strong>@Model.Username</strong> (cannot change).</p>
     </div>
 </div>
+
+<form asp-action="Edit" asp-route-id="@Model.Id" method="post" novalidate class="form-sheet">
+    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+    <partial name="_Form" model="Model" />
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save changes</button>
+        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link">Cancel</a>
+    </div>
+</form>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
