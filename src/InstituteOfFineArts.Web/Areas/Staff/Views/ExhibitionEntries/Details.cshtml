@@ -3,194 +3,158 @@
     Staff – exhibition entry details and actions (/staff/exhibition-entries/{id}, SCR-30, SCR-31; F-M09-05, 06, 08):
     accept / reject (PENDING), sold (ACCEPTED, or UNSOLD entered late) / unsold (ACCEPTED), paid to student (SOLD), delete (before the exhibition starts).
     Only the actions allowed in the current state are shown; the server checks every rule again (state diagram §4.7c).
-    Minimal version created by BE1 (BE1-12, BE1-13); FE1 builds the real design in FE1-08 / FE1-09.
+    Created by BE1 (BE1-12, BE1-13); styled by FE1-08 / FE1-09: artwork stage with the painting left, the state ladder
+    and only the forms valid for the current state right, each state change confirmed (data-confirm).
 *@
 @{
     ViewData["Title"] = $"Entry – {Model.Title}";
 }
 
-<partial name="_Alerts" />
-
-<div class="d-flex justify-content-between align-items-start mb-3">
+<div class="page-head">
     <div>
-        <h1 class="h3 mb-1">@Model.Title</h1>
-        <div class="text-muted">
-            @Model.StudentName (@Model.StudentCode) · @Model.ExhibitionName · <partial name="_Status" model="Model.Status" />
-        </div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">Exhibition entries</a></li>
+                <li class="breadcrumb-item"><a asp-action="Index" asp-route-exhibitionId="@Model.ExhibitionId">@Model.ExhibitionName</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+            </ol>
+        </nav>
+        <h1>@Model.Title</h1>
+        <p class="page-sub"><partial name="_Status" model="Model.Status" /> <span class="ms-1">@Model.StudentName (@Model.StudentCode), @Model.ExhibitionName</span></p>
     </div>
     @if (Model.CanDelete)
     {
-        <form asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Delete this entry?');">
-            <button type="submit" class="btn btn-outline-danger">Delete</button>
-        </form>
+        <div class="page-actions">
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post" data-confirm="Delete this entry?" data-confirm-ok="Delete">
+                <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash" aria-hidden="true"></i>Delete</button>
+            </form>
+        </div>
     }
 </div>
 
-<div class="row g-4">
-    <div class="col-lg-4">
-        <img src="/files/submissions/@Model.SubmissionId/thumb" alt="@Model.Title" class="img-fluid rounded border mb-2" />
-        <div class="small">
-            <a href="/staff/submissions/@Model.SubmissionId">Submission details</a> · @Model.CompetitionTitle
-            @if (Model.Rating is { } rating)
-            {
-                <span>· @rating</span>
-            }
-        </div>
-    </div>
-    <div class="col-lg-8">
-        <dl class="row">
-            <dt class="col-sm-4">Exhibition</dt>
-            <dd class="col-sm-8">
-                <a asp-action="Index" asp-route-exhibitionId="@Model.ExhibitionId">@Model.ExhibitionName</a>, @Model.City
-                <div class="small text-muted">@Model.StartDate.ToString("dd MMM yyyy") – @Model.EndDate.ToString("dd MMM yyyy") (@Model.ExhibitionStatus)</div>
-            </dd>
-            <dt class="col-sm-4">Asking price</dt>
-            <dd class="col-sm-8">@Model.AskingPrice.ToString("$#,##0.00")</dd>
-            <dt class="col-sm-4">Created</dt>
-            <dd class="col-sm-8">
-                @Model.CreatedAt.ToString("dd MMM yyyy HH:mm") by @Model.ProposedByName
-                <span class="small text-muted">(@(Model.ProposedByRole == Role.STUDENT ? "student proposal" : "sent by staff"))</span>
-            </dd>
-            @if (Model.Notes != null)
-            {
-                <dt class="col-sm-4">Notes</dt>
-                <dd class="col-sm-8" style="white-space: pre-line">@Model.Notes</dd>
-            }
-            @if (Model.ReviewedByName != null)
-            {
-                <dt class="col-sm-4">Reviewed by</dt>
-                <dd class="col-sm-8">@Model.ReviewedByName</dd>
-            }
-            @if (Model.RejectReason != null)
-            {
-                <dt class="col-sm-4">Reason for rejecting</dt>
-                <dd class="col-sm-8" style="white-space: pre-line">@Model.RejectReason</dd>
-            }
-            @if (Model.Status == EntryStatus.SOLD)
-            {
-                <dt class="col-sm-4">Sold</dt>
-                <dd class="col-sm-8">@Model.SoldPrice?.ToString("$#,##0.00") on @Model.SoldDate?.ToString("dd MMM yyyy")</dd>
-                <dt class="col-sm-4">Customer</dt>
-                <dd class="col-sm-8">
-                    @Model.CustomerName
-                    <div class="small text-muted">@Model.CustomerPhone @Model.CustomerEmail</div>
-                </dd>
-                <dt class="col-sm-4">Paid to student</dt>
-                <dd class="col-sm-8">
-                    @if (Model.PaidToStudent)
-                    {
-                        <span class="badge bg-success">Paid</span>
-                        <span>@Model.PaidAmount?.ToString("$#,##0.00") on @Model.PaidDate?.ToString("dd MMM yyyy")</span>
-                    }
-                    else
-                    {
-                        <span class="badge bg-warning text-dark">Not paid to student</span>
-                    }
-                </dd>
-            }
-        </dl>
+<partial name="_Alerts" />
+
+<div class="artwork-stage">
+    <partial name="~/Views/Shared/Exhibitions/_EntryPainting.cshtml" model="Model" />
+
+    <div>
+        <partial name="~/Views/Shared/Exhibitions/_EntryFacts.cshtml" model="Model" />
 
         @* PENDING: accept (before the exhibition starts, BR-42) or reject with a reason *@
         @if (Model.CanAccept || Model.CanReject)
         {
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h2 class="h5">Review the proposal</h2>
-                    @if (Model.CanAccept)
-                    {
-                        <form asp-action="Accept" asp-route-id="@Model.Id" method="post" class="mb-3">
-                            <button type="submit" class="btn btn-success">Accept</button>
-                        </form>
-                    }
-                    else
-                    {
-                        <p class="small text-muted">The exhibition has started, so this proposal can only be rejected.</p>
-                    }
-                    <form asp-action="Reject" asp-route-id="@Model.Id" method="post" novalidate>
-                        <label asp-for="RejectForm.Reason" class="form-label"></label>
-                        <textarea asp-for="RejectForm.Reason" class="form-control mb-1" rows="2"></textarea>
-                        <span asp-validation-for="RejectForm.Reason" class="text-danger d-block mb-2"></span>
-                        <button type="submit" class="btn btn-outline-danger">Reject</button>
+            <section class="entry-action" aria-labelledby="review-heading">
+                <h2 id="review-heading">Review the proposal</h2>
+                @if (Model.CanAccept)
+                {
+                    <form asp-action="Accept" asp-route-id="@Model.Id" method="post" class="mb-3"
+                          data-confirm="Accept this painting for the exhibition?" data-confirm-ok="Accept" data-confirm-tone="neutral">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg" aria-hidden="true"></i>Accept</button>
                     </form>
-                </div>
-            </div>
+                }
+                else
+                {
+                    <p class="small text-muted">The exhibition has started, so this proposal can only be rejected.</p>
+                }
+                <form asp-action="Reject" asp-route-id="@Model.Id" method="post" novalidate
+                      data-confirm="Reject this proposal?" data-confirm-ok="Reject">
+                    <label asp-for="RejectForm.Reason" class="form-label"></label>
+                    <textarea asp-for="RejectForm.Reason" class="form-control mb-1" rows="2"></textarea>
+                    <span asp-validation-for="RejectForm.Reason" class="text-danger d-block"></span>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-lg" aria-hidden="true"></i>Reject</button>
+                    </div>
+                </form>
+            </section>
         }
 
         @* ACCEPTED (or UNSOLD entered late, after the status job): record the sale (BR-44) *@
         @if (Model.CanSell)
         {
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h2 class="h5">Record the sale</h2>
-                    <form asp-action="Sold" asp-route-id="@Model.Id" method="post" novalidate>
-                        <div class="row">
-                            <div class="col-md-4 mb-2">
-                                <label asp-for="SoldForm.SoldPrice" class="form-label"></label>
+            <section class="entry-action" aria-labelledby="sale-heading">
+                <h2 id="sale-heading">Record the sale</h2>
+                <form asp-action="Sold" asp-route-id="@Model.Id" method="post" novalidate
+                      data-confirm="Mark this painting as sold?" data-confirm-ok="Mark as sold" data-confirm-tone="neutral">
+                    <div class="row">
+                        <div class="col-sm-6 mb-2">
+                            <label asp-for="SoldForm.SoldPrice" class="form-label"></label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
                                 <input asp-for="SoldForm.SoldPrice" type="number" min="0.01" step="0.01" class="form-control" />
-                                <span asp-validation-for="SoldForm.SoldPrice" class="text-danger"></span>
                             </div>
-                            <div class="col-md-4 mb-2">
-                                <label asp-for="SoldForm.SoldDate" class="form-label"></label>
-                                <input asp-for="SoldForm.SoldDate" type="date" min="@Model.StartDate.ToString("yyyy-MM-dd")"
-                                       max="@Model.EndDate.ToString("yyyy-MM-dd")" class="form-control" />
-                                <span asp-validation-for="SoldForm.SoldDate" class="text-danger"></span>
-                            </div>
-                            <div class="col-md-4 mb-2">
-                                <label asp-for="SoldForm.CustomerId" class="form-label"></label>
-                                <select asp-for="SoldForm.CustomerId" class="form-select">
-                                    <option value="">Choose a customer…</option>
-                                    @foreach (var c in Model.Customers)
-                                    {
-                                        <option value="@c.Id">@c.FullName @(c.Phone ?? c.Email)</option>
-                                    }
-                                </select>
-                                <span asp-validation-for="SoldForm.CustomerId" class="text-danger"></span>
-                                <div class="form-text"><a href="/staff/customers/new">New customer</a></div>
-                            </div>
+                            <span asp-validation-for="SoldForm.SoldPrice" class="text-danger"></span>
                         </div>
-                        <button type="submit" class="btn btn-success">Mark as sold</button>
-                    </form>
-                </div>
-            </div>
+                        <div class="col-sm-6 mb-2">
+                            <label asp-for="SoldForm.SoldDate" class="form-label"></label>
+                            <input asp-for="SoldForm.SoldDate" type="date" min="@Model.StartDate.ToString("yyyy-MM-dd")"
+                                   max="@Model.EndDate.ToString("yyyy-MM-dd")" class="form-control" />
+                            <span asp-validation-for="SoldForm.SoldDate" class="text-danger"></span>
+                        </div>
+                        <div class="col-12 mb-2">
+                            <label asp-for="SoldForm.CustomerId" class="form-label"></label>
+                            <select asp-for="SoldForm.CustomerId" class="form-select">
+                                <option value="">Choose a customer…</option>
+                                @foreach (var c in Model.Customers)
+                                {
+                                    <option value="@c.Id">@c.FullName @(c.Phone ?? c.Email)</option>
+                                }
+                            </select>
+                            <span asp-validation-for="SoldForm.CustomerId" class="text-danger"></span>
+                            <div class="form-text"><a href="/staff/customers/new"><i class="bi bi-person-plus me-1" aria-hidden="true"></i>New customer</a></div>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-bag-check" aria-hidden="true"></i>Mark as sold</button>
+                    </div>
+                </form>
+            </section>
         }
 
         @* ACCEPTED after the exhibition: unsold (the nightly status job does the same) *@
         @if (Model.CanMarkUnsold)
         {
-            <form asp-action="Unsold" asp-route-id="@Model.Id" method="post" class="mb-3" onsubmit="return confirm('Mark this painting as unsold?');">
-                <button type="submit" class="btn btn-outline-secondary">Mark as unsold</button>
-            </form>
+            <section class="entry-action" aria-labelledby="unsold-heading">
+                <h2 id="unsold-heading">Not sold</h2>
+                <form asp-action="Unsold" asp-route-id="@Model.Id" method="post"
+                      data-confirm="Mark this painting as unsold?" data-confirm-ok="Mark as unsold" data-confirm-tone="neutral">
+                    <button type="submit" class="btn btn-outline-primary">Mark as unsold</button>
+                </form>
+            </section>
         }
 
         @* SOLD and not paid: record the payment of the whole sale price (BR-45) *@
         @if (Model.CanPay)
         {
-            <div class="card mb-3">
-                <div class="card-body">
-                    <h2 class="h5">Pay the student</h2>
-                    <form asp-action="Paid" asp-route-id="@Model.Id" method="post" novalidate>
-                        <div class="row">
-                            <div class="col-md-6 mb-2">
-                                <label asp-for="PaidForm.PaidAmount" class="form-label"></label>
-                                <input asp-for="PaidForm.PaidAmount" type="number" min="0.01" step="0.01" class="form-control" />
-                                <div class="form-text">The whole sale price goes to the student (no commission).</div>
-                                <span asp-validation-for="PaidForm.PaidAmount" class="text-danger"></span>
+            <section class="entry-action" aria-labelledby="pay-heading">
+                <h2 id="pay-heading">Pay the student</h2>
+                <form asp-action="Paid" asp-route-id="@Model.Id" method="post" novalidate
+                      data-confirm="Record the payment to the student?" data-confirm-ok="Record payment" data-confirm-tone="neutral">
+                    <div class="row">
+                        <div class="col-sm-6 mb-2">
+                            <label asp-for="PaidForm.PaidAmount" class="form-label"></label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input asp-for="PaidForm.PaidAmount" type="number" min="0.01" step="0.01" class="form-control" aria-describedby="paid-hint" />
                             </div>
-                            <div class="col-md-6 mb-2">
-                                <label asp-for="PaidForm.PaidDate" class="form-label"></label>
-                                <input asp-for="PaidForm.PaidDate" type="date" min="@Model.SoldDate?.ToString("yyyy-MM-dd")" class="form-control" />
-                                <span asp-validation-for="PaidForm.PaidDate" class="text-danger"></span>
-                            </div>
+                            <div class="form-text" id="paid-hint">The whole sale price goes to the student (no commission).</div>
+                            <span asp-validation-for="PaidForm.PaidAmount" class="text-danger"></span>
                         </div>
-                        <button type="submit" class="btn btn-success">Record payment</button>
-                    </form>
-                </div>
-            </div>
+                        <div class="col-sm-6 mb-2">
+                            <label asp-for="PaidForm.PaidDate" class="form-label"></label>
+                            <input asp-for="PaidForm.PaidDate" type="date" min="@Model.SoldDate?.ToString("yyyy-MM-dd")" class="form-control" />
+                            <span asp-validation-for="PaidForm.PaidDate" class="text-danger"></span>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-cash-coin" aria-hidden="true"></i>Record payment</button>
+                    </div>
+                </form>
+            </section>
         }
     </div>
 </div>
 
-<a asp-action="Index" asp-route-exhibitionId="@Model.ExhibitionId" class="btn btn-link px-0">Back to the entries</a>
+<p class="mt-4"><a asp-action="Index" asp-route-exhibitionId="@Model.ExhibitionId" class="btn btn-link px-0"><i class="bi bi-arrow-left" aria-hidden="true"></i>Back to the entries</a></p>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

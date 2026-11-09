@@ -2,19 +2,26 @@
 @*
     Staff – new exhibition (/staff/exhibitions/new, SCR-29). Form shared with the other area
     (Views/Shared/Exhibitions/_ExhibitionForm.cshtml).
-    Minimal version created by BE2-09; FE2 builds the real design in FE2-07.
+    Created by BE2-09; styled by FE2-07.
 *@
 @{
     ViewData["Title"] = "New exhibition";
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <h1 class="h3 mb-3">New exhibition</h1>
-        <p class="text-muted">The status (upcoming / ongoing / finished) follows the dates.</p>
-        <partial name="~/Views/Shared/Exhibitions/_ExhibitionForm.cshtml" model="Model" />
+<div class="page-head">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">Exhibitions</a></li>
+                <li class="breadcrumb-item active" aria-current="page">New exhibition</li>
+            </ol>
+        </nav>
+        <h1>New exhibition</h1>
+        <p class="page-sub">The status (upcoming / ongoing / finished) follows the dates.</p>
     </div>
 </div>
+
+<partial name="~/Views/Shared/Exhibitions/_ExhibitionForm.cshtml" model="Model" />
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

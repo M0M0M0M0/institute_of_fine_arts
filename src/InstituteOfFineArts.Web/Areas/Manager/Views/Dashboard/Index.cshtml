@@ -2,107 +2,132 @@
 @*
     Manager – dashboard (/manager, SCR-50; F-M11-01, US-15 AC3): students, staff, competitions by status,
     submissions, awards issued, paintings sold and total sales. Read only.
-    Minimal version created by BE (BE2-13); FE2 builds the real design in FE2-10.
+    Created by BE (BE2-13); styled by FE2-10: the key figures as one ledger strip (each with its breakdown underneath),
+    then three Chart.js charts fed by /charts/* (wwwroot/js/charts.js, with a visually hidden data table each).
 *@
 @{
     ViewData["Title"] = "Manager";
 }
 
-<partial name="_Alerts" />
-
-<h1 class="h3">Welcome, @User.GetFullName()</h1>
-
-@* Links to the read-only pages of the area (awards, exhibition entries and customers come with BE2-13 part 2) *@
-<p>
-    <a href="/manager/students">Students</a> · <a href="/manager/staff">Staff</a> · <a href="/manager/competitions">Competitions</a> ·
-    <a href="/manager/submissions">Submissions</a> · <a href="/manager/awards">Awards</a> · <a href="/manager/exhibitions">Exhibitions</a> ·
-    <a href="/manager/exhibition-entries">Exhibition entries</a> · <a href="/manager/customers">Customers</a> · <a href="/manager/reports">Reports</a> ·
-    <a href="/profile">My profile</a> · <a href="/profile/change-password">Change password</a>
-</p>
-
-@* Summary cards: one per area, each with its breakdown *@
-<div class="row g-3 mb-4">
-    <div class="col-md-6 col-xl-3">
-        <div class="card h-100" id="card-students">
-            <div class="card-body">
-                <h2 class="h6 text-uppercase text-muted">Students</h2>
-                <div class="display-6" data-stat="students-total">@Model.StudentsTotal</div>
-                <ul class="list-unstyled small mb-0">
-                    <li>Active accounts: <strong data-stat="students-active">@Model.StudentsActive</strong></li>
-                    @foreach (var (status, count) in Model.StudentsByEnrollment)
-                    {
-                        <li>@status: <strong data-stat="enrollment-@status">@count</strong></li>
-                    }
-                </ul>
-            </div>
-        </div>
+<div class="page-head">
+    <div>
+        <h1>Welcome, @User.GetFullName()</h1>
+        <p class="page-sub">The institute today: people, competitions, awards and sales. Read only.</p>
     </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card h-100" id="card-staff">
-            <div class="card-body">
-                <h2 class="h6 text-uppercase text-muted">Staff</h2>
-                <div class="display-6" data-stat="staff-total">@Model.StaffTotal</div>
-                <ul class="list-unstyled small mb-0">
-                    @foreach (var (role, count) in Model.StaffByRole)
-                    {
-                        <li>@role: <strong data-stat="staff-@role">@count</strong></li>
-                    }
-                </ul>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card h-100" id="card-competitions">
-            <div class="card-body">
-                <h2 class="h6 text-uppercase text-muted">Competitions</h2>
-                <div class="display-6" data-stat="competitions-total">@Model.CompetitionsTotal</div>
-                <ul class="list-unstyled small mb-0">
-                    @foreach (var (status, count) in Model.CompetitionsByStatus)
-                    {
-                        <li><a href="/manager/competitions?Status=@status">@status</a>: <strong data-stat="competition-@status">@count</strong></li>
-                    }
-                </ul>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card h-100" id="card-submissions">
-            <div class="card-body">
-                <h2 class="h6 text-uppercase text-muted">Submissions</h2>
-                <div class="display-6" data-stat="submissions-total">@Model.SubmissionsTotal</div>
-                <ul class="list-unstyled small mb-0">
-                    <li>Evaluated: <strong data-stat="submissions-evaluated">@Model.SubmissionsEvaluated</strong></li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card h-100" id="card-awards">
-            <div class="card-body">
-                <h2 class="h6 text-uppercase text-muted">Awards issued</h2>
-                <div class="display-6" data-stat="awards-issued">@Model.AwardsIssued</div>
-                <ul class="list-unstyled small mb-0">
-                    <li>Total prize value: <strong data-stat="awards-prize-total">@Model.AwardsPrizeTotal.ToString("$#,##0.00")</strong></li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card h-100" id="card-sales">
-            <div class="card-body">
-                <h2 class="h6 text-uppercase text-muted">Paintings sold</h2>
-                <div class="display-6" data-stat="paintings-sold">@Model.PaintingsSold</div>
-                <ul class="list-unstyled small mb-0">
-                    <li>Total sales: <strong data-stat="total-sales">@Model.TotalSales.ToString("$#,##0.00")</strong></li>
-                    <li>Paid to students: <strong data-stat="paid-to-students">@Model.PaidToStudents.ToString("$#,##0.00")</strong></li>
-                </ul>
-            </div>
-        </div>
+    <div class="page-actions">
+        <a href="/manager/reports" class="btn btn-outline-primary"><i class="bi bi-file-earmark-bar-graph" aria-hidden="true"></i>Reports</a>
     </div>
 </div>
 
-@* Log out with POST plus the anti-forgery token *@
-<form method="post" action="/logout">
-    @Html.AntiForgeryToken()
-    <button type="submit" class="btn btn-outline-secondary">Log out</button>
-</form>
+<partial name="_Alerts" />
+
+@* Key figures: one ledger strip; the breakdown of each figure sits under its number *@
+<dl class="ledger is-dense">
+    <div id="card-students">
+        <dt>Students</dt>
+        <dd data-stat="students-total">@Model.StudentsTotal</dd>
+        <dd class="ledger-sub">Active accounts: <strong data-stat="students-active">@Model.StudentsActive</strong></dd>
+        @foreach (var (status, count) in Model.StudentsByEnrollment)
+        {
+            <dd class="ledger-sub">@status: <strong data-stat="enrollment-@status">@count</strong></dd>
+        }
+    </div>
+    <div id="card-staff">
+        <dt>Staff</dt>
+        <dd data-stat="staff-total">@Model.StaffTotal</dd>
+        @foreach (var (role, count) in Model.StaffByRole)
+        {
+            <dd class="ledger-sub">@role: <strong data-stat="staff-@role">@count</strong></dd>
+        }
+    </div>
+    <div id="card-competitions">
+        <dt>Competitions</dt>
+        <dd data-stat="competitions-total">@Model.CompetitionsTotal</dd>
+        @foreach (var (status, count) in Model.CompetitionsByStatus)
+        {
+            <dd class="ledger-sub"><a href="/manager/competitions?Status=@status">@status</a>: <strong data-stat="competition-@status">@count</strong></dd>
+        }
+    </div>
+    <div id="card-submissions">
+        <dt>Submissions</dt>
+        <dd data-stat="submissions-total">@Model.SubmissionsTotal</dd>
+        <dd class="ledger-sub">Evaluated: <strong data-stat="submissions-evaluated">@Model.SubmissionsEvaluated</strong></dd>
+    </div>
+    <div id="card-awards">
+        <dt>Awards issued</dt>
+        <dd data-stat="awards-issued">@Model.AwardsIssued</dd>
+        <dd class="ledger-sub">Total prize value: <strong data-stat="awards-prize-total">@Model.AwardsPrizeTotal.ToString("$#,##0.00")</strong></dd>
+    </div>
+    <div id="card-sales">
+        <dt>Paintings sold</dt>
+        <dd data-stat="paintings-sold">@Model.PaintingsSold</dd>
+        <dd class="ledger-sub">Total sales: <strong data-stat="total-sales">@Model.TotalSales.ToString("$#,##0.00")</strong></dd>
+        <dd class="ledger-sub">Paid to students: <strong data-stat="paid-to-students">@Model.PaidToStudents.ToString("$#,##0.00")</strong></dd>
+    </div>
+</dl>
+
+@* Charts (F-M15-01): JSON from ChartsController, drawn by wwwroot/js/charts.js *@
+<section class="section" aria-labelledby="charts-heading">
+    <div class="section-head">
+        <h2 id="charts-heading">Competitions and sales</h2>
+        <a href="/manager/reports">Full reports</a>
+    </div>
+    <div class="chart-grid">
+        <figure class="chart-figure is-wide" data-chart="grouped" data-chart-url="/charts/submissions-by-competition">
+            <figcaption>
+                <h3>Submissions by competition</h3>
+                <p>Entries received and how many of them are graded.</p>
+            </figcaption>
+            <div class="chart-box"><canvas role="img" aria-label="Submissions by competition"></canvas></div>
+            <p class="chart-status" data-chart-status aria-live="polite">Loading the chart…</p>
+            <div class="visually-hidden" data-chart-table></div>
+        </figure>
+        <figure class="chart-figure" data-chart="rating" data-chart-url="/charts/ratings">
+            <figcaption>
+                <h3>Ratings</h3>
+                <p>How the staff rated every submission so far.</p>
+            </figcaption>
+            <div class="chart-box"><canvas role="img" aria-label="Ratings"></canvas></div>
+            <p class="chart-status" data-chart-status aria-live="polite">Loading the chart…</p>
+            <div class="visually-hidden" data-chart-table></div>
+        </figure>
+        <figure class="chart-figure" data-chart="revenue" data-chart-url="/charts/sales-by-exhibition">
+            <figcaption>
+                <h3>Sales by exhibition</h3>
+                <p>Revenue of the paintings sold at each exhibition.</p>
+            </figcaption>
+            <div class="chart-box"><canvas role="img" aria-label="Sales by exhibition"></canvas></div>
+            <p class="chart-status" data-chart-status aria-live="polite">Loading the chart…</p>
+            <div class="visually-hidden" data-chart-table></div>
+        </figure>
+    </div>
+</section>
+
+@* Links to the read-only pages of the area (also in the rail) *@
+<section class="section" aria-labelledby="pages-heading">
+    <div class="section-head"><h2 id="pages-heading">Pages</h2></div>
+    <ul class="list-inline mb-4">
+        <li class="list-inline-item me-3"><a href="/manager/students">Students</a></li>
+        <li class="list-inline-item me-3"><a href="/manager/staff">Staff</a></li>
+        <li class="list-inline-item me-3"><a href="/manager/competitions">Competitions</a></li>
+        <li class="list-inline-item me-3"><a href="/manager/submissions">Submissions</a></li>
+        <li class="list-inline-item me-3"><a href="/manager/awards">Awards</a></li>
+        <li class="list-inline-item me-3"><a href="/manager/exhibitions">Exhibitions</a></li>
+        <li class="list-inline-item me-3"><a href="/manager/exhibition-entries">Exhibition entries</a></li>
+        <li class="list-inline-item me-3"><a href="/manager/customers">Customers</a></li>
+        <li class="list-inline-item me-3"><a href="/manager/reports">Reports</a></li>
+        <li class="list-inline-item me-3"><a href="/profile">My profile</a></li>
+        <li class="list-inline-item me-3"><a href="/profile/change-password">Change password</a></li>
+    </ul>
+
+    @* Log out with POST plus the anti-forgery token *@
+    <form method="post" action="/logout">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-box-arrow-right" aria-hidden="true"></i>Log out</button>
+    </form>
+</section>
+
+@section Scripts {
+    <script src="~/lib/chart.js/chart.umd.js"></script>
+    <script src="~/js/charts.js" asp-append-version="true"></script>
+}

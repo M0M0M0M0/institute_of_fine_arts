@@ -1,0 +1,110 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.ExhibitionEntries.EntryDetailsVm
+@*
+    Right side of the exhibition entry page (staff SCR-30/31, manager SCR-55): where the entry stands on the ladder
+    PENDING -> ACCEPTED -> SOLD -> PAID (REJECTED / UNSOLD shown as side exits), then the recorded facts.
+    The forms that move the entry live in the Staff view only. Created by FE1-08 / FE1-09 / FE2-10 from the markup of BE1-12 and BE2-13.
+*@
+@using InstituteOfFineArts.Web.Models.Enums
+@{
+    var area = ViewContext.RouteData.Values["area"]?.ToString()?.ToLowerInvariant() ?? "staff";
+    // Position on the ladder: 0 pending, 1 accepted (or rejected), 2 sold (or unsold), 3 paid to student
+    var position = Model.Status switch
+    {
+        EntryStatus.PENDING => 0,
+        EntryStatus.ACCEPTED or EntryStatus.REJECTED => 1,
+        EntryStatus.SOLD when Model.PaidToStudent => 3,
+        _ => 2,
+    };
+    var exited = Model.Status is EntryStatus.REJECTED or EntryStatus.UNSOLD;
+    var steps = new[]
+    {
+        "Pending",
+        Model.Status == EntryStatus.REJECTED ? "Rejected" : "Accepted",
+        Model.Status == EntryStatus.UNSOLD ? "Unsold" : "Sold",
+        "Paid to student",
+    };
+    string StepClass(int i) => i < position ? "is-done" : i == position ? (exited ? "is-off" : "is-current") : exited ? "is-skipped" : "";
+}
+
+<h2 class="h3 mt-0">Where it stands</h2>
+<ol class="state-ladder" aria-label="State of the entry">
+    @for (var i = 0; i < steps.Length; i++)
+    {
+        var css = StepClass(i);
+        <li class="@css" aria-current="@(i == position ? "step" : null)">
+            @steps[i]
+            @if (i == 0)
+            {
+                <span class="ladder-note">@(Model.ProposedByRole == Role.STUDENT ? "student proposal" : "sent by staff")</span>
+            }
+            @if (i == 2 && Model.Status == EntryStatus.SOLD && Model.SoldDate is { } soldOn)
+            {
+                <span class="ladder-note num">@soldOn.ToString("dd MMM yyyy")</span>
+            }
+            @if (i == 3 && Model.PaidToStudent && Model.PaidDate is { } paidOn)
+            {
+                <span class="ladder-note num">@paidOn.ToString("dd MMM yyyy")</span>
+            }
+        </li>
+    }
+</ol>
+
+<dl class="details">
+    <dt>Exhibition</dt>
+    <dd>
+        @if (area == "manager")
+        {
+            <text><a asp-controller="Exhibitions" asp-action="Details" asp-route-id="@Model.ExhibitionId">@Model.ExhibitionName</a>, @Model.City</text>
+        }
+        else
+        {
+            <text><a asp-action="Index" asp-route-exhibitionId="@Model.ExhibitionId">@Model.ExhibitionName</a>, @Model.City</text>
+        }
+        <div class="small text-muted num">@Model.StartDate.ToString("dd MMM yyyy") – @Model.EndDate.ToString("dd MMM yyyy") <partial name="~/Views/Shared/Exhibitions/_ExhibitionStatus.cshtml" model="Model.ExhibitionStatus" /></div>
+    </dd>
+    <dt>Asking price</dt>
+    <dd class="money">@Model.AskingPrice.ToString("$#,##0.00")</dd>
+    <dt>Created</dt>
+    <dd>
+        @Model.CreatedAt.ToString("dd MMM yyyy HH:mm") by @Model.ProposedByName
+        <span class="small text-muted">(@(Model.ProposedByRole == Role.STUDENT ? "student proposal" : "sent by staff"))</span>
+    </dd>
+    @if (Model.Notes != null)
+    {
+        <dt>Notes</dt>
+        <dd class="pre-line">@Model.Notes</dd>
+    }
+    @if (Model.ReviewedByName != null)
+    {
+        <dt>Reviewed by</dt>
+        <dd>@Model.ReviewedByName</dd>
+    }
+    @if (Model.RejectReason != null)
+    {
+        <dt>Reason for rejecting</dt>
+        <dd class="pre-line">@Model.RejectReason</dd>
+    }
+    @* Sale and payment only exist once the painting is SOLD *@
+    @if (Model.Status == EntryStatus.SOLD)
+    {
+        <dt>Sold</dt>
+        <dd class="money">@Model.SoldPrice?.ToString("$#,##0.00") on @Model.SoldDate?.ToString("dd MMM yyyy")</dd>
+        <dt>Customer</dt>
+        <dd>
+            @Model.CustomerName
+            <div class="small text-muted">@Model.CustomerPhone @Model.CustomerEmail</div>
+        </dd>
+        <dt>Paid to student</dt>
+        <dd>
+            @if (Model.PaidToStudent)
+            {
+                <span class="tag tag-PAID">Paid</span>
+                <span class="num">@Model.PaidAmount?.ToString("$#,##0.00") on @Model.PaidDate?.ToString("dd MMM yyyy")</span>
+            }
+            else
+            {
+                <span class="tag tag-UNPAID">Not paid to student</span>
+            }
+        </dd>
+    }
+</dl>

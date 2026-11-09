@@ -2,7 +2,7 @@
 @*
     Manager – submissions by competition, read only (/manager/submissions, SCR-53; F-M11-05, TC-M11-02):
     filters competition, evaluation, rating, student, date range; grading progress of the chosen competition.
-    Minimal version created by BE (BE2-13); FE2 builds the real design in FE2-10.
+    Created by BE (BE2-13); styled by FE2-10 (page head, filter band, grading progress line, pager).
     Reuses the table partial of the Staff area (its links go to the Manager controllers of the same name).
 *@
 @using InstituteOfFineArts.Web.ViewModels.Staff.Submissions
@@ -17,15 +17,21 @@
         search.CompetitionId, search.Evaluated, search.Rating, search.Student,
         From = search.From?.ToString("yyyy-MM-dd"), To = search.To?.ToString("yyyy-MM-dd"), page,
     };
+    var filtered = search.CompetitionId != null || search.Evaluated != null || search.Rating != null || !string.IsNullOrEmpty(search.Student) || search.From != null || search.To != null;
 }
 
-<h1 class="h3 mb-3">Submissions</h1>
+<div class="page-head">
+    <div>
+        <h1>Submissions</h1>
+        <p class="page-sub">Every painting entered in a competition, with its rating and award. Read only.</p>
+    </div>
+</div>
 
 <partial name="_Alerts" />
 
 @* GET search form: filters only, nothing is changed *@
-<form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
-    <div class="col-md-3">
+<form method="get" asp-action="Index" class="filters" role="search">
+    <div class="filter is-wide">
         <label class="form-label" for="CompetitionId">Competition</label>
         <select class="form-select" id="CompetitionId" name="CompetitionId">
             <option value="">All competitions</option>
@@ -35,7 +41,7 @@
             }
         </select>
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="Evaluated">Evaluation</label>
         <select class="form-select" id="Evaluated" name="Evaluated">
             <option value="">All</option>
@@ -43,7 +49,7 @@
             <option value="false" selected="@(search.Evaluated == false)">Not evaluated</option>
         </select>
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="Rating">Rating</label>
         <select class="form-select" id="Rating" name="Rating">
             <option value="">All</option>
@@ -53,54 +59,71 @@
             }
         </select>
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="Student">Student name or code</label>
         <input class="form-control" id="Student" name="Student" value="@search.Student" />
     </div>
-    <div class="col-md-1">
+    <div class="filter">
         <label class="form-label" for="From">From</label>
         <input class="form-control" type="date" id="From" name="From" value="@search.From?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-1">
+    <div class="filter">
         <label class="form-label" for="To">To</label>
         <input class="form-control" type="date" id="To" name="To" value="@search.To?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-1">
-        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>Search</button>
+        @if (filtered)
+        {
+            <a asp-action="Index" class="btn btn-link">Clear</a>
+        }
     </div>
 </form>
 
 @* Grading progress of the chosen competition (F-M07-09) *@
 @if (progress != null)
 {
-    <div class="alert alert-info d-flex justify-content-between align-items-center" id="evaluation-progress">
+    var percent = progress.Total == 0 ? 0 : (int)Math.Round(100.0 * progress.Evaluated / progress.Total);
+    <div class="alert alert-info flex-wrap justify-content-between align-items-center" id="evaluation-progress">
         <span>
             <a asp-controller="Competitions" asp-action="Details" asp-route-id="@progress.CompetitionId">@progress.CompetitionTitle</a>
-            · <partial name="~/Areas/Staff/Views/Competitions/_Status.cshtml" model="progress.Status" />
+            <partial name="~/Areas/Staff/Views/Competitions/_Status.cshtml" model="progress.Status" />
         </span>
-        <strong>Evaluated @progress.Evaluated / total @progress.Total</strong>
+        <span class="d-flex align-items-center gap-3">
+            <progress class="meter progress-inline" max="100" value="@percent" aria-label="Grading progress">@percent%</progress>
+            <strong class="num">Evaluated @progress.Evaluated / total @progress.Total</strong>
+        </span>
     </div>
 }
 
 @if (Model.TotalCount == 0)
 {
-    <p class="text-muted">No submissions found.</p>
+    <div class="empty">
+        <i class="bi bi-images" aria-hidden="true"></i>
+        <p>No submissions found.</p>
+        @if (filtered)
+        {
+            <a asp-action="Index" class="btn btn-outline-primary">Clear the filters</a>
+        }
+    </div>
 }
 else
 {
-    <partial name="~/Areas/Staff/Views/Submissions/_Table.cshtml" model="Model.Items" />
+    <div class="table-responsive">
+        <partial name="~/Areas/Staff/Views/Submissions/_Table.cshtml" model="Model.Items" />
+    </div>
 
     @* Pager keeps the current filters *@
-    <nav class="d-flex justify-content-between align-items-center">
-        <span class="text-muted small">@Model.TotalCount submission(s) · page @Model.Page of @Model.TotalPages</span>
-        <div>
+    <nav class="pager" aria-label="Pages">
+        <span>@Model.TotalCount submission(s), page @Model.Page of @Model.TotalPages</span>
+        <div class="pager-links">
             @if (Model.HasPrevious)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page - 1))"><i class="bi bi-chevron-left" aria-hidden="true"></i>Previous</a>
             }
             @if (Model.HasNext)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next<i class="bi bi-chevron-right ms-1" aria-hidden="true"></i></a>
             }
         </div>
     </nav>

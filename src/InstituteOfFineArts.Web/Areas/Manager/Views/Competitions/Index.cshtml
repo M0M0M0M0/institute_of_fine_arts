@@ -1,26 +1,32 @@
 @model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Staff.Competitions.CompetitionListItemVm>
 @*
     Manager – competition list & search, read only (/manager/competitions, SCR-52; F-M11-03, TC-M11-02): no create button.
-    Minimal version created by BE (BE2-13); FE2 builds the real design in FE2-10.
+    Created by BE (BE2-13); styled by FE2-10 (page head, filter band, ledger table, pager).
 *@
 @{
     ViewData["Title"] = "Competitions";
     var search = (InstituteOfFineArts.Web.ViewModels.Staff.Competitions.CompetitionSearchVm)ViewBag.Search;
     // Keeps the filters when moving between pages
     object PageRoute(int page) => new { search.Keyword, search.Status, From = search.From?.ToString("yyyy-MM-dd"), To = search.To?.ToString("yyyy-MM-dd"), page };
+    var filtered = !string.IsNullOrEmpty(search.Keyword) || search.Status != null || search.From != null || search.To != null;
 }
 
-<h1 class="h3 mb-3">Competitions</h1>
+<div class="page-head">
+    <div>
+        <h1>Competitions</h1>
+        <p class="page-sub">Every competition with its entries and awards. Read only.</p>
+    </div>
+</div>
 
 <partial name="_Alerts" />
 
 @* GET search form: filters only, nothing is changed *@
-<form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
-    <div class="col-md-4">
+<form method="get" asp-action="Index" class="filters" role="search">
+    <div class="filter is-wide">
         <label class="form-label" for="Keyword">Title or code</label>
         <input class="form-control" id="Keyword" name="Keyword" value="@search.Keyword" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="Status">Status</label>
         <select class="form-select" id="Status" name="Status">
             <option value="">All</option>
@@ -30,56 +36,69 @@
             }
         </select>
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="From">From</label>
         <input class="form-control" type="date" id="From" name="From" value="@search.From?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="To">To</label>
         <input class="form-control" type="date" id="To" name="To" value="@search.To?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-2">
-        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>Search</button>
+        @if (filtered)
+        {
+            <a asp-action="Index" class="btn btn-link">Clear</a>
+        }
     </div>
 </form>
 
 @if (Model.TotalCount == 0)
 {
-    <p class="text-muted">No competitions found.</p>
+    <div class="empty">
+        <i class="bi bi-easel" aria-hidden="true"></i>
+        <p>No competitions found.</p>
+        @if (filtered)
+        {
+            <a asp-action="Index" class="btn btn-outline-primary">Clear the filters</a>
+        }
+    </div>
 }
 else
 {
-    <table class="table table-hover align-middle">
-        <thead>
-            <tr><th>Code</th><th>Title</th><th>Start</th><th>End</th><th>Status</th><th class="text-end">Entries</th><th class="text-end">Awards</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var c in Model.Items)
-            {
-                <tr>
-                    <td>@c.Code</td>
-                    <td><a asp-action="Details" asp-route-id="@c.Id">@c.Title</a></td>
-                    <td>@c.StartDate.ToString("dd MMM yyyy")</td>
-                    <td>@c.EndDate.ToString("dd MMM yyyy")</td>
-                    <td><partial name="~/Areas/Staff/Views/Competitions/_Status.cshtml" model="c.Status" /></td>
-                    <td class="text-end">@c.SubmissionCount</td>
-                    <td class="text-end">@c.AwardCount</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr><th scope="col">Code</th><th scope="col">Title</th><th scope="col" class="text-end">Start</th><th scope="col" class="text-end">End</th><th scope="col">Status</th><th scope="col" class="text-end">Entries</th><th scope="col" class="text-end">Awards</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model.Items)
+                {
+                    <tr>
+                        <td class="text-muted num">@c.Code</td>
+                        <td class="row-title"><a asp-action="Details" asp-route-id="@c.Id">@c.Title</a></td>
+                        <td class="text-end text-nowrap">@c.StartDate.ToString("dd MMM yyyy")</td>
+                        <td class="text-end text-nowrap">@c.EndDate.ToString("dd MMM yyyy")</td>
+                        <td><partial name="~/Areas/Staff/Views/Competitions/_Status.cshtml" model="c.Status" /></td>
+                        <td class="text-end">@c.SubmissionCount</td>
+                        <td class="text-end">@c.AwardCount</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
     @* Pager keeps the current filters *@
-    <nav class="d-flex justify-content-between align-items-center">
-        <span class="text-muted small">@Model.TotalCount competition(s) · page @Model.Page of @Model.TotalPages</span>
-        <div>
+    <nav class="pager" aria-label="Pages">
+        <span>@Model.TotalCount competition(s), page @Model.Page of @Model.TotalPages</span>
+        <div class="pager-links">
             @if (Model.HasPrevious)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page - 1))"><i class="bi bi-chevron-left" aria-hidden="true"></i>Previous</a>
             }
             @if (Model.HasNext)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next<i class="bi bi-chevron-right ms-1" aria-hidden="true"></i></a>
             }
         </div>
     </nav>
