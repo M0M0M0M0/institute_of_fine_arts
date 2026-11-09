@@ -1,7 +1,7 @@
 @model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Staff.Awards.AwardIssuedListItemVm>
 @*
     Staff – issued awards, list & search (/staff/awards, SCR-28; F-M08-04).
-    Minimal version created by BE1 (BE1-11); FE1 builds the real design in FE1-07.
+    Created by BE1 (BE1-11); styled by FE1-07: filters bar and a ledger of the winning paintings.
 *@
 @using InstituteOfFineArts.Web.ViewModels.Staff.Awards
 @using InstituteOfFineArts.Web.ViewModels.Staff.Submissions
@@ -15,17 +15,23 @@
         search.CompetitionId, search.Student, search.Award,
         From = search.From?.ToString("yyyy-MM-dd"), To = search.To?.ToString("yyyy-MM-dd"), page,
     };
+    var filtered = search.CompetitionId != null || !string.IsNullOrEmpty(search.Student) || !string.IsNullOrEmpty(search.Award)
+        || search.From != null || search.To != null;
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Issued awards</h1>
-    <a asp-action="Create" asp-route-competitionId="@search.CompetitionId" class="btn btn-primary">Issue award</a>
+<div class="page-head">
+    <div>
+        <h1>Issued awards</h1>
+        <p class="page-sub">Awards given to BEST entries; open one to edit or revoke it.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-action="Create" asp-route-competitionId="@search.CompetitionId" class="btn btn-primary"><i class="bi bi-trophy" aria-hidden="true"></i>Issue award</a>
+    </div>
 </div>
-
 <partial name="_Alerts" />
 
-<form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
-    <div class="col-md-3">
+<form method="get" asp-action="Index" class="filters" role="search">
+    <div class="filter filter-wide">
         <label class="form-label" for="CompetitionId">Competition</label>
         <select class="form-select" id="CompetitionId" name="CompetitionId">
             <option value="">All competitions</option>
@@ -35,69 +41,83 @@
             }
         </select>
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="Student">Student name or code</label>
         <input class="form-control" id="Student" name="Student" value="@search.Student" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="Award">Award</label>
         <input class="form-control" id="Award" name="Award" value="@search.Award" placeholder="e.g. First Prize" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="From">Issued from</label>
         <input class="form-control" type="date" id="From" name="From" value="@search.From?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="To">Issued to</label>
         <input class="form-control" type="date" id="To" name="To" value="@search.To?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-1">
-        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>Search</button>
+        @if (filtered)
+        {
+            <a asp-action="Index" class="btn btn-link">Clear</a>
+        }
     </div>
 </form>
 
 @if (Model.TotalCount == 0)
 {
-    <p class="text-muted">No issued awards found.</p>
+    <div class="empty">
+        <i class="bi bi-trophy" aria-hidden="true"></i>
+        <p>No issued awards found.</p>
+        <a asp-action="Create" asp-route-competitionId="@search.CompetitionId" class="btn btn-primary">Issue award</a>
+    </div>
 }
 else
 {
-    <table class="table table-hover align-middle">
-        <thead>
-            <tr>
-                <th></th><th>Artwork</th><th>Student</th><th>Competition</th><th>Award</th><th class="text-end">Prize</th>
-                <th>Issued</th><th>Remarks</th><th></th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var a in Model.Items)
-            {
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
                 <tr>
-                    <td><img src="/files/submissions/@a.SubmissionId/thumb" alt="Thumbnail of @a.SubmissionTitle" width="64" height="64" class="rounded" style="object-fit: cover" /></td>
-                    <td><a asp-controller="Submissions" asp-action="Details" asp-route-id="@a.SubmissionId">@a.SubmissionTitle</a></td>
-                    <td><a asp-controller="Students" asp-action="Details" asp-route-id="@a.StudentId">@a.StudentName</a> <span class="text-muted small">@a.StudentCode</span></td>
-                    <td><a asp-controller="Competitions" asp-action="Details" asp-route-id="@a.CompetitionId">@a.CompetitionTitle</a> <span class="text-muted small">@a.CompetitionCode</span></td>
-                    <td>@a.AwardName <span class="text-muted small">(rank @a.Rank)</span></td>
-                    <td class="text-end">@a.PrizeValue.ToString("$#,##0.00")</td>
-                    <td>@a.IssuedDate.ToString("dd MMM yyyy")<div class="text-muted small">by @a.IssuedByName</div></td>
-                    @* Remarks typed by staff: encoded by Razor, line breaks kept *@
-                    <td style="white-space: pre-line">@(a.Remarks ?? "–")</td>
-                    <td><a asp-action="Edit" asp-route-id="@a.Id" class="btn btn-sm btn-link">Edit</a></td>
+                    <th><span class="visually-hidden">Image</span></th><th>Artwork</th><th>Student</th><th>Competition</th><th>Award</th><th class="text-end">Prize</th>
+                    <th>Issued</th><th>Remarks</th><th><span class="visually-hidden">Actions</span></th>
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var a in Model.Items)
+                {
+                    <tr>
+                        <td>
+                            <a asp-controller="Submissions" asp-action="Details" asp-route-id="@a.SubmissionId" class="artwork-frame thumb-frame is-gilt" tabindex="-1" aria-hidden="true">
+                                <img src="/files/submissions/@a.SubmissionId/thumb" alt="Thumbnail of @a.SubmissionTitle" width="56" height="56" class="table-thumb" loading="lazy" />
+                            </a>
+                        </td>
+                        <td class="row-title"><a asp-controller="Submissions" asp-action="Details" asp-route-id="@a.SubmissionId">@a.SubmissionTitle</a></td>
+                        <td><a asp-controller="Students" asp-action="Details" asp-route-id="@a.StudentId">@a.StudentName</a> <span class="text-muted small">@a.StudentCode</span></td>
+                        <td><a asp-controller="Competitions" asp-action="Details" asp-route-id="@a.CompetitionId">@a.CompetitionTitle</a> <span class="text-muted small">@a.CompetitionCode</span></td>
+                        <td><span class="tag tag-award"><i class="bi bi-award-fill" aria-hidden="true"></i>@a.AwardName</span> <span class="text-muted small text-nowrap">(rank @a.Rank)</span></td>
+                        <td class="text-end">@a.PrizeValue.ToString("$#,##0.00")</td>
+                        <td class="num text-nowrap">@a.IssuedDate.ToString("dd MMM yyyy")<div class="text-muted small">by @a.IssuedByName</div></td>
+                        @* Remarks typed by staff: encoded by Razor, line breaks kept *@
+                        <td style="white-space: pre-line">@(a.Remarks ?? "–")</td>
+                        <td class="table-actions"><a asp-action="Edit" asp-route-id="@a.Id" class="btn btn-sm btn-outline-primary">Edit</a></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
-    <nav class="d-flex justify-content-between align-items-center">
-        <span class="text-muted small">@Model.TotalCount award(s) · page @Model.Page of @Model.TotalPages</span>
-        <div>
+    <nav class="pager" aria-label="Pages">
+        <span>@Model.TotalCount award(s), page @Model.Page of @Model.TotalPages</span>
+        <div class="pager-links">
             @if (Model.HasPrevious)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
             }
             @if (Model.HasNext)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
             }
         </div>
     </nav>

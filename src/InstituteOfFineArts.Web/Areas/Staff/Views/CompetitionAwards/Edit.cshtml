@@ -1,24 +1,34 @@
 @model InstituteOfFineArts.Web.ViewModels.Staff.Competitions.CompetitionAwardFormVm
 @*
     Staff – edit an award of a competition (/staff/competitions/{competitionId}/awards/{id}/edit, F-M05-06).
-    Minimal version created by BE1 (BE1-06); FE1 builds the real design in FE1-03.
+    Created by BE1 (BE1-06); styled by FE1-03.
 *@
 @{
     ViewData["Title"] = "Edit award";
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <h1 class="h3 mb-1">Edit award</h1>
-        <p class="text-muted">@Model.CompetitionTitle · @Model.CompetitionCode</p>
-
-        <form asp-action="Edit" asp-route-competitionId="@Model.CompetitionId" asp-route-id="@Model.Id" method="post" novalidate>
-            <partial name="_Form" model="Model" />
-            <button type="submit" class="btn btn-primary">Save changes</button>
-            <a asp-controller="Competitions" asp-action="Details" asp-route-id="@Model.CompetitionId" class="btn btn-link">Cancel</a>
-        </form>
+<div class="page-head">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-controller="Competitions" asp-action="Index">Competitions</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Competitions" asp-action="Details" asp-route-id="@Model.CompetitionId">@Model.CompetitionCode</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Edit award</li>
+            </ol>
+        </nav>
+        <h1>Edit award</h1>
+        <p class="page-sub">@Model.CompetitionTitle, @Model.CompetitionCode</p>
     </div>
 </div>
+<partial name="_Alerts" />
+
+<form asp-action="Edit" asp-route-competitionId="@Model.CompetitionId" asp-route-id="@Model.Id" method="post" novalidate class="form-sheet">
+    <partial name="_Form" model="Model" />
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Save changes</button>
+        <a asp-controller="Competitions" asp-action="Details" asp-route-id="@Model.CompetitionId" class="btn btn-link">Cancel</a>
+    </div>
+</form>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

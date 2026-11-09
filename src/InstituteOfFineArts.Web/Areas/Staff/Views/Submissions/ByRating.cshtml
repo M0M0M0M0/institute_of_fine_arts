@@ -2,7 +2,7 @@
 @*
     Staff – search entries by rating (/staff/submissions/by-rating?rating=BEST&competitionId=, SCR-26; F-M07-06):
     entries of CLOSED or GRADED competitions, used to pick paintings for exhibitions.
-    Minimal version created by BE2 (BE2-07); FE2 builds the real design in FE2-05.
+    Created by BE2 (BE2-07); styled by FE2-05 as a wall of paintings with museum wall labels.
 *@
 @using InstituteOfFineArts.Web.ViewModels.Staff.Submissions
 @{
@@ -13,15 +13,19 @@
     object PageRoute(int page) => new { search.Rating, search.CompetitionId, page };
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Search by rating</h1>
-    <a asp-action="Index" class="btn btn-outline-secondary">All submissions</a>
+<div class="page-head">
+    <div>
+        <h1>Search by rating</h1>
+        <p class="page-sub">Entries of closed or graded competitions with the chosen rating, e.g. to pick paintings for an exhibition.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-action="Index" class="btn btn-outline-primary"><i class="bi bi-list-ul" aria-hidden="true"></i>All submissions</a>
+    </div>
 </div>
+<partial name="_Alerts" />
 
-<p class="text-muted">Entries of closed or graded competitions with the chosen rating, e.g. to pick paintings for an exhibition.</p>
-
-<form method="get" asp-action="ByRating" class="row g-2 align-items-end mb-3">
-    <div class="col-md-3">
+<form method="get" asp-action="ByRating" class="filters" role="search">
+    <div class="filter">
         <label class="form-label" for="Rating">Rating</label>
         <select class="form-select" id="Rating" name="Rating">
             @foreach (var r in Enum.GetValues<Rating>())
@@ -30,7 +34,7 @@
             }
         </select>
     </div>
-    <div class="col-md-5">
+    <div class="filter filter-wide">
         <label class="form-label" for="CompetitionId">Competition</label>
         <select class="form-select" id="CompetitionId" name="CompetitionId">
             <option value="">All closed / graded competitions</option>
@@ -40,29 +44,61 @@
             }
         </select>
     </div>
-    <div class="col-md-2">
-        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>Search</button>
     </div>
 </form>
 
 @if (Model.TotalCount == 0)
 {
-    <p class="text-muted">No entries with rating @search.Rating found.</p>
+    <div class="empty">
+        <i class="bi bi-images" aria-hidden="true"></i>
+        <p>No entries with rating @search.Rating found.</p>
+    </div>
 }
 else
 {
-    <partial name="_Table" model="Model.Items" />
+    <div class="art-grid">
+        @foreach (var s in Model.Items)
+        {
+            var awarded = s.Rating == Rating.BEST || s.AwardName != null;
+            <figure class="artwork @(awarded ? "is-awarded" : "")">
+                <a class="artwork-frame" asp-controller="Submissions" asp-action="Details" asp-route-id="@s.Id">
+                    <img src="/files/submissions/@s.Id/thumb" alt="@s.Title – @s.StudentName" loading="lazy" />
+                </a>
+                <figcaption class="wall-label">
+                    <span class="wl-title"><a asp-controller="Submissions" asp-action="Details" asp-route-id="@s.Id">@s.Title</a></span>
+                    <span class="wl-artist">@s.StudentName <span class="text-muted">@s.StudentCode</span></span>
+                    <span class="wl-meta"><a asp-controller="Competitions" asp-action="Details" asp-route-id="@s.CompetitionId">@s.CompetitionTitle</a>, @s.SubmittedAt.ToString("dd MMM yyyy")</span>
+                    <span class="wl-state">
+                        @if (s.Rating is { } rating)
+                        {
+                            <span class="tag tag-@rating">@rating</span>
+                        }
+                        @if (s.AwardName != null)
+                        {
+                            <span class="tag tag-award"><i class="bi bi-award-fill" aria-hidden="true"></i>@s.AwardName</span>
+                        }
+                        @if (s.IsLate)
+                        {
+                            <span class="tag tag-DISQUALIFIED tag-plain"><i class="bi bi-clock-history" aria-hidden="true"></i>Late entry</span>
+                        }
+                    </span>
+                </figcaption>
+            </figure>
+        }
+    </div>
 
-    <nav class="d-flex justify-content-between align-items-center">
-        <span class="text-muted small">@Model.TotalCount entry(ies) · page @Model.Page of @Model.TotalPages</span>
-        <div>
+    <nav class="pager" aria-label="Pages">
+        <span>@Model.TotalCount entry(ies), page @Model.Page of @Model.TotalPages</span>
+        <div class="pager-links">
             @if (Model.HasPrevious)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("ByRating", PageRoute(Model.Page - 1))">Previous</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("ByRating", PageRoute(Model.Page - 1))">Previous</a>
             }
             @if (Model.HasNext)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("ByRating", PageRoute(Model.Page + 1))">Next</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("ByRating", PageRoute(Model.Page + 1))">Next</a>
             }
         </div>
     </nav>

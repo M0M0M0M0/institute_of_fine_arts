@@ -2,6 +2,7 @@
 @*
     Fields shared by the create and edit forms (SCR-24). When entries exist (BR-10) the title and start date are
     read-only (still posted, so the server can check they did not change).
+    Created by BE1 (BE1-05); styled by FE1-03.
 *@
 @{
     var locked = Model.HasSubmissions;
@@ -11,8 +12,8 @@
 
 @if (locked)
 {
-    <div class="alert alert-warning">
-        Students have already submitted entries. You can only extend the end date and change the description, rules and cover image.
+    <div class="alert alert-warning"><i class="bi bi-lock" aria-hidden="true"></i><div>
+        Students have already submitted entries. You can only extend the end date and change the description, rules and cover image.</div>
     </div>
 }
 
@@ -52,7 +53,7 @@
     <label asp-for="CoverImage" class="form-label"></label>
     @if (Model.HasCover)
     {
-        <div class="mb-2"><img src="/files/competitions/@Model.Id/cover" alt="Current cover" class="img-thumbnail" style="max-height:160px" /></div>
+        <div class="artwork-frame cover-preview mb-2"><img src="/files/competitions/@Model.Id/cover" alt="Current cover" /></div>
     }
     <input asp-for="CoverImage" type="file" accept=".jpg,.jpeg,image/jpeg" class="form-control" />
     <div class="form-text">Optional. JPEG only, up to 5 MB.</div>
