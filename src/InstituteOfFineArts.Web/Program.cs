@@ -3,6 +3,7 @@ using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using InstituteOfFineArts.Web.Data;
 using InstituteOfFineArts.Web.Data.Seed;
+using InstituteOfFineArts.Web.Infrastructure.Configuration;
 using InstituteOfFineArts.Web.Infrastructure.DependencyInjection;
 using InstituteOfFineArts.Web.Infrastructure.FileStorage;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -63,6 +64,11 @@ var maxRequestBytes = builder.Configuration.GetValue<long>("Upload:MaxFileSizeBy
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = maxRequestBytes);
 builder.Services.Configure<IISServerOptions>(options => options.MaxRequestBodySize = maxRequestBytes);
 builder.Services.Configure<FormOptions>(options => options.MultipartBodyLengthLimit = maxRequestBytes);
+
+// Development: connection string to the Docker SQL Server built from the repository's .env (the file docker-compose.yml
+// reads), so a fresh clone runs with "docker compose up -d" + "dotnet run" and no User Secrets.
+// User Secrets / environment variables still override it; without a .env, appsettings.json applies.
+builder.AddDockerEnvConnectionString();
 
 // Database: EF Core + SQL Server; table/column names converted to snake_case (account, password_hash…)
 builder.Services.AddDbContext<AppDbContext>(options =>
