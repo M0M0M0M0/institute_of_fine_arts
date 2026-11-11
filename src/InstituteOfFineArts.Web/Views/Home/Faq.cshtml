@@ -1,0 +1,56 @@
+@{
+    ViewData["Title"] = "Frequently Asked Questions";
+}
+
+<div class="container my-5" style="max-width: 800px;">
+    <div class="text-center mb-5">
+        <h1 class="art-title display-5 mb-3">Frequently Asked Questions</h1>
+        <p class="text-muted">Find answers to common questions about buying original art.</p>
+    </div>
+
+    <div class="accordion accordion-flush" id="faqAccordion">
+        
+        <!-- Question 1 -->
+        <div class="accordion-item border-bottom">
+            <h2 class="accordion-header" id="faq-headingOne">
+                <button class="accordion-button collapsed shadow-none bg-transparent fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq-collapseOne">
+                    What is original art?
+                </button>
+            </h2>
+            <div id="faq-collapseOne" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted small lh-lg">
+                    Original art creates a connection between the artist and the collector. Every painting, sculpture, and fine art piece is hand-crafted. We exclusively offer original artworks and do not sell reproductions or prints. Each piece is signed by the artist and comes with a Certificate of Authenticity.
+                </div>
+            </div>
+        </div>
+
+        <!-- Question 2 -->
+        <div class="accordion-item border-bottom">
+            <h2 class="accordion-header" id="faq-headingTwo">
+                <button class="accordion-button collapsed shadow-none bg-transparent fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq-collapseTwo">
+                    Do I need to frame my original art?
+                </button>
+            </h2>
+            <div id="faq-collapseTwo" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted small lh-lg">
+                    Whether an artwork needs a frame depends on the medium. Oil and acrylic paintings on stretched canvas are often ready to hang. Works on paper, such as watercolor paintings, need framing for protection. Each artwork description lists whether the piece is ready to hang or requires a frame.
+                </div>
+            </div>
+        </div>
+
+        <!-- Question 3 -->
+        <div class="accordion-item border-bottom">
+            <h2 class="accordion-header" id="faq-headingThree">
+                <button class="accordion-button collapsed shadow-none bg-transparent fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#faq-collapseThree">
+                    How much should I spend on my first piece?
+                </button>
+            </h2>
+            <div id="faq-collapseThree" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                <div class="accordion-body text-muted small lh-lg">
+                    The price depends on the size, medium, and the artist's career stage. Small paintings typically range from $300 to $1,500. Large statement pieces generally sell for $1,500 to $5,000. Our curation team works directly with artists to establish fair and consistent pricing.
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
