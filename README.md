@@ -49,11 +49,12 @@ Dùng khi máy **không cài SQL Server**. Chỉ CSDL chạy trong Docker, ứng
    docker compose up -d
    ```
    Kiểm tra: `docker compose ps` thấy `ifa-sqlserver` ở trạng thái **healthy** là được.
-4. Đặt chuỗi kết nối cho máy mình bằng User Secrets (thay `<mật khẩu>` bằng mật khẩu trong `.env`):
+4. Chạy ứng dụng như bình thường (F5 / `dotnet run`). **Không cần User Secrets**: ở môi trường Development, ứng dụng tự đọc `MSSQL_SA_PASSWORD` và `SQL_PORT` trong chính file `.env` này để kết nối tới SQL Server trong Docker, rồi tự tạo CSDL `IFA_DB` và dữ liệu mẫu.
    ```powershell
-   dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost,1433;Database=IFA_DB;User Id=sa;Password=<mật khẩu>;TrustServerCertificate=True;MultipleActiveResultSets=true" --project src/InstituteOfFineArts.Web
+   dotnet run --project src/InstituteOfFineArts.Web
    ```
-5. Chạy ứng dụng như bình thường (F5 / `dotnet run`). Ở môi trường Development, ứng dụng tự tạo CSDL `IFA_DB` và dữ liệu mẫu.
+   - Muốn dùng chuỗi kết nối khác (SQL Server cài trên máy, máy chủ khác…): đặt User Secrets hoặc biến môi trường `ConnectionStrings__DefaultConnection` – hai cách này luôn được ưu tiên hơn `.env`.
+   - Không có file `.env` → ứng dụng dùng chuỗi Windows Authentication trong `appsettings.json` như mục trên.
 
 | Việc | Lệnh |
 |---|---|

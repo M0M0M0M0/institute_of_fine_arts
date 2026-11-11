@@ -4,7 +4,8 @@
 # Use it when the machine has NO SQL Server installed. Steps (details in README.md):
 #   1. Copy .env.example to .env and set the SA password (.env is never committed)
 #   2. docker compose up -d
-#   3. Set the connection string with User Secrets (Server=localhost,1433;User Id=sa;...)
+#   3. dotnet run – in Development the app reads MSSQL_SA_PASSWORD / SQL_PORT from this same .env to connect
+#      (Infrastructure/Configuration/DockerEnvConnectionString.cs); User Secrets are optional and override it
 #
 # The web application still runs normally with dotnet run / F5; only the database runs in Docker.
 # =====================================================================
