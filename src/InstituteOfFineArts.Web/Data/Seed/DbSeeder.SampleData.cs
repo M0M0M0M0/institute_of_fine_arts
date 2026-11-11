@@ -84,12 +84,14 @@ public static partial class DbSeeder
         db.Competitions.AddRange(competitions);
         await db.SaveChangesAsync();
 
-        // Cover images for all but the last competition (so the UI also shows a competition without cover)
+        // Cover images for all but the last competition (so the UI also shows a competition without cover):
+        // database/seed-images/cover-<title slug>.jpg when the QA set provides one (QA-01), otherwise drawn
         var coverThemes = new[] { Theme.Landscape, Theme.Wildlife, Theme.Night, Theme.Autumn, Theme.Abstract, Theme.Festival };
         for (var i = 0; i < coverThemes.Length; i++)
         {
-            competitions[i].CoverImagePath = await WriteImageAsync(files, $"competitions/{competitions[i].Id}/cover-{Guid.NewGuid()}.jpg",
-                SampleArtwork.Create(coverThemes[i], 1000 + i, 1600, 600));
+            var coverBytes = LoadSeedImage(seedImageFolder, $"cover-{Slug(competitions[i].Title)}.jpg")
+                             ?? SampleArtwork.Create(coverThemes[i], 1000 + i, 1600, 600);
+            competitions[i].CoverImagePath = await WriteImageAsync(files, $"competitions/{competitions[i].Id}/cover-{Guid.NewGuid()}.jpg", coverBytes);
         }
         await db.SaveChangesAsync();
 
@@ -395,6 +397,11 @@ public static partial class DbSeeder
         var path = Path.Combine(folder, fileName);
         return File.Exists(path) ? File.ReadAllBytes(path) : null;
     }
+
+    /// <summary>File-name slug of a title: "Lunar New Year 2027" → "lunar-new-year-2027".</summary>
+    /// <param name="title">Competition title</param>
+    internal static string Slug(string title)
+        => System.Text.RegularExpressions.Regex.Replace(title.ToLowerInvariant(), "[^a-z0-9]+", "-").Trim('-');
 
     /// <summary>Writes image bytes below the upload root with File I/O and returns the relative path.</summary>
     private static async Task<string> WriteImageAsync(IFileStorageService files, string relativePath, byte[] bytes)
