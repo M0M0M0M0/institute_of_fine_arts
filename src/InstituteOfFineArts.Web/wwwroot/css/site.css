@@ -858,3 +858,5 @@ progress.meter.progress-inline::-webkit-progress-bar { background: var(--ifa-wal
 }
 /* Text links among page actions sit flush instead of wrapping with button padding */
 .page-actions .btn-link { padding-inline: 0; }
+/* Bodoni Moda's wide W/V/A sidebearings open gaps at display sizes ("W elcome"): tighten the display tracking */
+h1, .h1, .hero-title, .band-title { letter-spacing: -0.02em; }
