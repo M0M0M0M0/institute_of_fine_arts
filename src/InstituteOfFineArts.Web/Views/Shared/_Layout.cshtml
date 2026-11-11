@@ -1,47 +1,204 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - InstituteOfFineArts.Web</title>
-    <script type="importmap"></script>
+    <title>@ViewData["Title"] - InstituteOfFineArts</title>
+    
+    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- Bootstrap Icons (Thêm vào wwwroot/lib hoặc dùng CDN) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/InstituteOfFineArts.Web.styles.css" asp-append-version="true" />
 </head>
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">InstituteOfFineArts.Web</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
+        <!-- Top Promo Banner -->
+        <div class="promo-ticker-bar bg-dark text-white py-2">
+            <div class="ticker-track">
+                <!-- Khối 1: Hiển thị nội dung -->
+                <div class="ticker-content">
+                    <span class="ticker-item">
+                        <i class="bi bi-palette2 me-2"></i><strong>Art Competition:</strong> Unleash your creativity in our upcoming Art Competition!
+                    </span>
+                    <span class="ticker-divider">•</span>
+                    <span class="ticker-item">
+                        <i class="bi bi-stars me-2"></i>There are no limits—choose any theme you love and bring your vision to life.
+                    </span>
+                    <span class="ticker-divider">•</span>
+                    <span class="ticker-item">
+                        <i class="bi bi-calendar-event me-2"></i>The registration deadline is <strong>December 18</strong>.
+                    </span>
+                    <span class="ticker-divider">•</span>
+                    <span class="ticker-item">
+                        <i class="bi bi-arrow-right-circle me-2"></i>Don’t miss this chance to showcase your talent.
+                        <a href="#register" class="text-white text-decoration-underline ms-1 fw-bold">Register now!</a>
+                    </span>
+                    <span class="ticker-divider">•</span>
+                </div>
+
+                <!-- Khối 2: Bản sao để tạo vòng lặp vô tận liền mạch -->
+                <div class="ticker-content" aria-hidden="true">
+                    <span class="ticker-item">
+                        <i class="bi bi-palette2 me-2"></i><strong>Art Competition:</strong> Unleash your creativity in our upcoming Art Competition!
+                    </span>
+                    <span class="ticker-divider">•</span>
+                    <span class="ticker-item">
+                        <i class="bi bi-stars me-2"></i>There are no limits—choose any theme you love and bring your vision to life.
+                    </span>
+                    <span class="ticker-divider">•</span>
+                    <span class="ticker-item">
+                        <i class="bi bi-calendar-event me-2"></i>The registration deadline is <strong>December 18</strong>.
+                    </span>
+                    <span class="ticker-divider">•</span>
+                    <span class="ticker-item">
+                        <i class="bi bi-arrow-right-circle me-2"></i>Don’t miss this chance to showcase your talent.
+                        <a href="#register" class="text-white text-decoration-underline ms-1 fw-bold">Register now!</a>
+                    </span>
+                    <span class="ticker-divider">•</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom py-3">
+            <div class="container-fluid px-4">
+                <!-- Logo -->
+                <a class="navbar-brand fw-bold fs-3 text-uppercase tracking-wide" asp-area="" asp-controller="Home" asp-action="Index">
+                    <img src="~/img/logo.png"
+                         alt="InstituteOfFineArts"
+                         class="navbar-logo"
+                         asp-append-version="true" />
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
+
+                <div class="navbar-collapse collapse d-lg-inline-flex justify-content-between">
+                    <!-- Dropdown Menus (Trái) -->
+                    <ul class="navbar-nav mb-2 mb-lg-0">
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown">Gallery</a>
+                            <ul class="dropdown-menu border-0 shadow-sm">
+                                <li><a class="dropdown-item" href="#">All Artworks</a></li>
+                                <li><a class="dropdown-item" href="#">New This Month</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="#">Commissions</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown">Subject</a>
+                            <ul class="dropdown-menu border-0 shadow-sm">
+                                <li><a class="dropdown-item" href="#">Landscape</a></li>
+                                <li><a class="dropdown-item" href="#">Abstract</a></li>
+                                <li><a class="dropdown-item" href="#">People</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <!-- Search Bar (Giữa) -->
+                    <form class="d-flex mx-auto col-lg-5 col-md-7 my-2 my-lg-0">
+                        <div class="input-group">
+                            <input class="form-control border-end-0 shadow-none rounded-0" type="search" placeholder="Search artwork, artist, or style..." aria-label="Search">
+                            <button class="btn btn-outline-secondary border-start-0 rounded-0 bg-transparent text-dark" type="submit">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Action Icons (Phải) -->
+                    <ul class="navbar-nav flex-row align-items-center gap-3 ms-lg-3 mt-3 mt-lg-0">
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
+                            <a class="nav-link text-dark fs-5" asp-controller="Authentication" asp-action="Login" title="Account">
+                                <i class="bi bi-person"></i>
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+                            <a class="nav-link text-dark fs-5" href="#" title="Cart"><i class="bi bi-bag"></i></a>
                         </li>
                     </ul>
                 </div>
             </div>
         </nav>
     </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+
+    <!-- Main Content Area -->
+        <main role="main">
             @RenderBody()
         </main>
-    </div>
 
-    <footer class="border-top footer text-muted">
+    <!-- Mega Footer -->
+    <footer class="border-top bg-light text-dark pt-5 pb-3 mt-5">
         <div class="container">
-            &copy; 2026 - InstituteOfFineArts.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
+            <div class="row gy-4">
+                <!-- Cột 1: Thông tin & Newsletter -->
+                <div class="col-lg-4 col-md-6">
+                    <a href="/" class="d-inline-block mb-3">
+                        <img src="~/img/IOFA-footer.png" alt="Institute of Fine Arts Logo" class="footer-logo" asp-append-version="true" />
+                    </a>
+                    <p class="small text-muted mb-4">Discover curated original artwork from talented artists around the world. We believe that good art brings people together.</p>
+                    <h6 class="mb-2">Subscribe to our newsletter</h6>
+                    <form class="d-flex">
+                        <input type="email" class="form-control rounded-0 shadow-none" placeholder="Enter your email">
+                        <button class="btn btn-dark rounded-0" type="submit">Subscribe</button>
+                    </form>
+                </div>
+
+                <!-- Cột 2: Customer Service -->
+                <div class="col-lg-2 col-md-6">
+                    <h6 class="text-uppercase fw-bold mb-3">Customer Care</h6>
+                    <ul class="list-unstyled small">
+                        <li class="mb-2">
+                            <a asp-controller="Home" asp-action="Faq" class="text-decoration-none text-muted">FAQ</a>
+                        </li>
+                        <li class="mb-2">
+                            <a asp-controller="Home" asp-action="Returns" class="text-decoration-none text-muted">Returns & Refunds</a>
+                        </li>
+                        <li class="mb-2">
+                            <a asp-controller="Home" asp-action="Shipping" class="text-decoration-none text-muted">Shipping Info</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="#" class="text-decoration-none text-muted">Contact Us</a> <!-- Tạm thời giữ nguyên -->
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Cột 3: Browse Art -->
+                <div class="col-lg-2 col-md-6">
+                    <h6 class="text-uppercase fw-bold mb-3">Browse Art</h6>
+                    <ul class="list-unstyled small">
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Oil Paintings</a></li>
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Watercolors</a></li>
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Abstract</a></li>
+                        <li class="mb-2"><a href="#" class="text-decoration-none text-muted">Photography</a></li>
+                    </ul>
+                </div>
+
+                <!-- Cột 4: For Artists -->
+                <div class="col-lg-4 col-md-6">
+                    <h6 class="text-uppercase fw-bold mb-3">For Artists</h6>
+                    <p class="small text-muted">Exhibit at Institute of Fine Arts. We represent the nation's top emerging and mid-career artists.</p>
+                    <a href="#" class="btn btn-outline-dark rounded-0 btn-sm mb-3">Learn More</a>
+                    
+                    <h6 class="text-uppercase fw-bold mb-2 mt-2">Follow Us</h6>
+                    <div class="d-flex gap-3 fs-5">
+                        <a href="#" class="text-dark"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="text-dark"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="text-dark"><i class="bi bi-pinterest"></i></a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-5">
+                <div class="col-12 text-center border-top pt-3">
+                    <p class="small text-muted mb-0">&copy; 2026 - InstituteOfFineArts.Web - <a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-muted">Privacy Policy</a></p>
+                </div>
+            </div>
         </div>
     </footer>
+
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

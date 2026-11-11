@@ -1,8 +1,72 @@
-﻿@{
+@{
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!-- 1. HERO BANNER CAROUSEL (Tràn viền màn hình) -->
+<div id="heroCarousel" class="carousel slide hero-banner-wrapper carousel-fade" data-bs-ride="carousel">
+    
+    <!-- Lớp phủ Fade mờ dần ở đáy -->
+    <div class="hero-fade-bottom"></div>
+
+    <!-- Khung chữ cố định ở giữa -->
+    <div class="hero-banner-content text-center static-overlay">
+        <div class="text-backdrop p-4">
+            <h1 class="display-4 fw-normal art-title mb-3">Institute Of Fine Arts</h1>
+            <a href="#featured-art" class="btn btn-dark px-4 py-2">Explore Gallery</a>
+        </div>
+    </div>
+
+    <!-- Danh sách ảnh trượt (tự chuyển sau mỗi 3 giây) -->
+    <div class="carousel-inner h-100">
+        <div class="carousel-item active h-100" data-bs-interval="3000">
+            <img src="~/img/banner1.jpg" class="d-block w-100 h-100 hero-banner-img" alt="Artwork 1">
+        </div>
+        <div class="carousel-item h-100" data-bs-interval="3000">
+            <img src="~/img/banner2.jpg" class="d-block w-100 h-100 hero-banner-img" alt="Artwork 2">
+        </div>
+        <div class="carousel-item h-100" data-bs-interval="3000">
+            <img src="~/img/banner3.jpg" class="d-block w-100 h-100 hero-banner-img" alt="Artwork 3">
+        </div>
+        <div class="carousel-item h-100" data-bs-interval="3000">
+            <img src="~/img/banner4.jpg" class="d-block w-100 h-100 hero-banner-img" alt="Artwork 3">
+        </div>
+        <div class="carousel-item h-100" data-bs-interval="3000">
+            <img src="~/img/banner5.jpg" class="d-block w-100 h-100 hero-banner-img" alt="Artwork 3">
+        </div>
+    </div>
+
+    <!-- Nút Next/Prev tối giản -->
+    <button class="carousel-control-prev minimal-control" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+        <i class="bi bi-chevron-left"></i>
+        <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next minimal-control" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+        <i class="bi bi-chevron-right"></i>
+        <span class="visually-hidden">Next</span>
+    </button>
+</div>
+
+<!-- 2. PHẦN NỘI DUNG BÊN DƯỚI (Đặt trong .container để căn chỉnh lề chuẩn) -->
+<div class="container my-5" id="featured-art">
+    <div class="text-center mb-5">
+        <h2 class="art-title">Featured Artworks</h2>
+        <p class="text-muted">Handpicked selection of the week</p>
+    </div>
+
+    <!-- Lưới hiển thị danh sách tranh -->
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="artwork-card">
+                <div class="card-img-wrapper">
+                    <img src="~/images/art1.jpg" alt="Painting">
+                </div>
+                <div class="card-body">
+                    <div class="artist-name">Artist Name</div>
+                    <div class="artwork-title">Sunset Horizon</div>
+                    <div class="artwork-price">$1,250</div>
+                </div>
+            </div>
+        </div>
+        <!-- Các tranh khác lặp lại ở đây... -->
+    </div>
 </div>
