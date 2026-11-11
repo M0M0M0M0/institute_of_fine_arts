@@ -1,105 +1,260 @@
-﻿@inject Microsoft.Extensions.Localization.IStringLocalizer<InstituteOfFineArts.Web.SharedResource> L
+@inject Microsoft.Extensions.Localization.IStringLocalizer<InstituteOfFineArts.Web.SharedResource> L
 @using InstituteOfFineArts.Web.Helpers
 @*
-    Public layout (FE1-01): slim white bar with the wordmark, public links and the account action,
-    the page, and the navy footer. Pages with a full-bleed painting set ViewData["FullBleed"] = true;
-    other pages are placed in the standard page column.
-    Signed-in users also see a link back to their workspace (role dashboard).
+    Public layout (home, competitions, gallery, about, FAQ, login, errors…). Design by FE (branch FE101: promo ticker,
+    logo navbar with search, mega footer, theme in wwwroot/css/public-fe101.css), wired to the backend: real links only,
+    account menu (My workspace / profile / log out POST), notification bell, EN/VI switch, local Bootstrap Icons.
+    Signed-in work happens in _LayoutDashboard (navy rail with the role menu), reached through "My workspace".
 *@
 @{
-    var path = (Context.Request.Path.Value ?? "/").TrimEnd('/').ToLowerInvariant();
-    string? Current(string url) => (url == "/" ? path is "" or "/" : path == url || path.StartsWith(url + "/")) ? "page" : null;
-
-    // Workspace of the signed-in role
+    // Workspace (dashboard) of the signed-in role
     string? workspace = null;
     if (User.IsInRole(RoleNames.Admin)) { workspace = "/admin"; }
     else if (User.IsInRole(RoleNames.Manager)) { workspace = "/manager"; }
     else if (User.IsInRole(RoleNames.Staff)) { workspace = "/staff"; }
     else if (User.IsInRole(RoleNames.Student)) { workspace = "/student"; }
-    var fullBleed = ViewData["FullBleed"] is true;
+    var signedIn = User.Identity?.IsAuthenticated == true;
+    // Pages with their own full-width design (home carousel, competition cover band…) render edge to edge
+    var fullWidth = ViewData["FullWidth"] is true || ViewData["FullBleed"] is true;
 }
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <partial name="_Head" />
-    @await RenderSectionAsync("Styles", required: false)
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Institute of Fine Arts</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="~/img/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="~/img/favicon-16x16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="~/img/apple-touch-icon.png" />
+    <link rel="manifest" href="~/img/site.webmanifest" />
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- Bootstrap Icons, served from wwwroot/lib (no CDN needed) -->
+    <link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.min.css" />
+
+    <!-- Fonts of the design system (used by the public views' components) -->
+    <link rel="stylesheet" href="~/lib/fonts/bodoni-moda.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/lib/fonts/general-sans.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <!-- FE101 theme of the public pages, loaded last so it wins on the public pages only -->
+    <link rel="stylesheet" href="~/css/public-fe101.css" asp-append-version="true" />
 </head>
 <body>
-    <a class="skip-link" href="#content">@L["Skip to content"]</a>
-    <header class="site-header d-print-none" id="site-header">
-        <nav class="site-nav" aria-label="@L["Main menu"]">
-            <a class="wordmark" href="/" aria-label="Institute of Fine Arts – home"><partial name="_Wordmark" model="@("ink")" /></a>
-            <button type="button" class="btn btn-sm btn-outline-primary site-menu-toggle" data-site-menu aria-controls="site-header" aria-expanded="false">
-                <i class="bi bi-list" aria-hidden="true"></i>@L["Menu"]
-            </button>
-            <ul class="site-links">
-                <li><a href="/" aria-current="@Current("/")">@L["Home"]</a></li>
-                <li><a href="/competitions" aria-current="@Current("/competitions")">@L["Competitions"]</a></li>
-                <li><a href="/gallery" aria-current="@Current("/gallery")">@L["Gallery"]</a></li>
-                <li><a href="/about" aria-current="@Current("/about")">@L["About"]</a></li>
-            </ul>
-            <div class="site-actions">
-                <div class="lang-switch"><partial name="_LanguageSwitch" /></div>
-                @if (workspace != null)
-                {
-                    <a class="btn btn-sm btn-outline-primary" href="@workspace"><i class="bi bi-grid" aria-hidden="true"></i>@L["My workspace"]</a>
-                    @* Log out with POST plus the anti-forgery token *@
-                    <form method="post" action="/logout" class="d-inline">
-                        @Html.AntiForgeryToken()
-                        <button type="submit" class="btn btn-sm btn-link">@L["Log out"]</button>
+    @* d-print-none: header and footer are left out when a report is printed (F-M10-08) *@
+    <header class="d-print-none">
+        <!-- Top Promo Banner -->
+        <div class="promo-ticker-bar bg-dark text-white py-2">
+            <div class="ticker-track">
+                <!-- Khối 1: Hiển thị nội dung -->
+                <div class="ticker-content">
+                    <span class="ticker-item">
+                        <i class="bi bi-palette2 me-2"></i><strong>Art Competition:</strong> Unleash your creativity in our art competitions!
+                    </span>
+                    <span class="ticker-divider">•</span>
+                    <span class="ticker-item">
+                        <i class="bi bi-stars me-2"></i>Every student takes part: paint on the computer and submit your JPEG with a poem or a story.
+                    </span>
+                    <span class="ticker-divider">•</span>
+                    <span class="ticker-item">
+                        <i class="bi bi-calendar-event me-2"></i>Entries close at <strong>23:59:59</strong> on the last day of each competition.
+                    </span>
+                    <span class="ticker-divider">•</span>
+                    <span class="ticker-item">
+                        <i class="bi bi-arrow-right-circle me-2"></i>Don’t miss this chance to showcase your talent.
+                        <a href="/competitions" class="text-white text-decoration-underline ms-1 fw-bold">See the competitions</a>
+                    </span>
+                    <span class="ticker-divider">•</span>
+                </div>
+
+                <!-- Khối 2: Bản sao để tạo vòng lặp vô tận liền mạch -->
+                <div class="ticker-content" aria-hidden="true">
+                    <span class="ticker-item">
+                        <i class="bi bi-palette2 me-2"></i><strong>Art Competition:</strong> Unleash your creativity in our art competitions!
+                    </span>
+                    <span class="ticker-divider">•</span>
+                    <span class="ticker-item">
+                        <i class="bi bi-stars me-2"></i>Every student takes part: paint on the computer and submit your JPEG with a poem or a story.
+                    </span>
+                    <span class="ticker-divider">•</span>
+                    <span class="ticker-item">
+                        <i class="bi bi-calendar-event me-2"></i>Entries close at <strong>23:59:59</strong> on the last day of each competition.
+                    </span>
+                    <span class="ticker-divider">•</span>
+                    <span class="ticker-item">
+                        <i class="bi bi-arrow-right-circle me-2"></i>Don’t miss this chance to showcase your talent.
+                        <a href="/competitions" class="text-white text-decoration-underline ms-1 fw-bold" tabindex="-1">See the competitions</a>
+                    </span>
+                    <span class="ticker-divider">•</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom py-3">
+            <div class="container-fluid px-4">
+                <!-- Logo -->
+                <a class="navbar-brand fw-bold fs-3 text-uppercase tracking-wide" asp-area="" asp-controller="Home" asp-action="Index">
+                    <img src="~/img/logo.png"
+                         alt="InstituteOfFineArts"
+                         class="navbar-logo"
+                         asp-append-version="true" />
+                </a>
+
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="navbar-collapse collapse d-lg-inline-flex justify-content-between">
+                    <!-- Menus (Trái) -->
+                    <ul class="navbar-nav mb-2 mb-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" href="/">@L["Home"]</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown">@L["Gallery"]</a>
+                            <ul class="dropdown-menu border-0 shadow-sm">
+                                <li><a class="dropdown-item" href="/gallery">Awarded paintings</a></li>
+                                <li><a class="dropdown-item" href="/competitions">@L["Competitions"]</a></li>
+                            </ul>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" href="/competitions">@L["Competitions"]</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" href="/about">@L["About"]</a>
+                        </li>
+                    </ul>
+
+                    <!-- Search Bar (Giữa): searches the public competitions by title or code -->
+                    <form class="d-flex mx-auto col-lg-5 col-md-7 my-2 my-lg-0" method="get" action="/competitions" role="search">
+                        <div class="input-group">
+                            <input class="form-control border-end-0 shadow-none rounded-0" type="search" name="Keyword" placeholder="Search competitions..." aria-label="Search competitions">
+                            <button class="btn btn-outline-secondary border-start-0 rounded-0 bg-transparent text-dark" type="submit" aria-label="Search">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
                     </form>
-                }
-                else
-                {
-                    <a class="btn btn-sm btn-primary" href="/login">@L["Log in"]</a>
-                }
+
+                    <!-- Action Icons (Phải) -->
+                    <ul class="navbar-nav flex-row align-items-center gap-3 ms-lg-3 mt-3 mt-lg-0">
+                        @if (signedIn)
+                        {
+                            @* Notification bell (M12, F-M12-02): unread count + 5 newest *@
+                            @await Component.InvokeAsync("NotificationBell")
+                            <li class="nav-item dropdown">
+                                <a class="nav-link text-dark fs-5" href="/profile" role="button" data-bs-toggle="dropdown" aria-expanded="false" title="Account">
+                                    <i class="bi bi-person"></i>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm">
+                                    @if (workspace != null)
+                                    {
+                                        <li><a class="dropdown-item" href="@workspace">@L["My workspace"]</a></li>
+                                    }
+                                    <li><a class="dropdown-item" href="/profile">@L["Profile"]</a></li>
+                                    <li><a class="dropdown-item" href="/profile/change-password">@L["Change password"]</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        @* Log out with POST plus the anti-forgery token *@
+                                        <form method="post" action="/logout">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="dropdown-item">@L["Log out"]</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </li>
+                        }
+                        else
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link text-dark fs-5" href="/login" title="@L["Log in"]">
+                                    <i class="bi bi-person"></i><span class="visually-hidden">@L["Log in"]</span>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                    @* English / Vietnamese switch (F-M19-01) *@
+                    <partial name="_LanguageSwitch" />
+                </div>
             </div>
         </nav>
+
     </header>
 
-    <main class="site-main" id="content" tabindex="-1">
-        @if (fullBleed)
+    <!-- Main Content Area -->
+    <main role="main">
+        @if (fullWidth)
         {
             @RenderBody()
         }
         else
         {
+            @* Pages without their own full-width design are placed in the standard page column *@
             <div class="page">
                 @RenderBody()
             </div>
         }
     </main>
 
-    <footer class="site-footer d-print-none">
-        <div class="footer-inner">
-            <div>
-                <a class="wordmark mb-3" href="/" aria-label="Institute of Fine Arts – home"><partial name="_Wordmark" model="@("white")" /></a>
-                <p class="mb-0">@L["Painting and animation courses, student competitions and exhibitions of their best work."]</p>
+    <!-- Mega Footer -->
+    <footer class="border-top bg-light text-dark pt-5 pb-3 mt-5 d-print-none">
+        <div class="container">
+            <div class="row gy-4">
+                <!-- Cột 1: Thông tin -->
+                <div class="col-lg-4 col-md-6">
+                    <a href="/" class="d-inline-block mb-3">
+                        <img src="~/img/IOFA-footer.png" alt="Institute of Fine Arts Logo" class="footer-logo" asp-append-version="true" />
+                    </a>
+                    <p class="small text-muted mb-4">Painting and animation courses, student competitions and exhibitions of their best work.</p>
+                </div>
+                <!-- Cột 2: Customer Service -->
+                <div class="col-lg-2 col-md-6">
+                    <h6 class="text-uppercase fw-bold mb-3">Customer Care</h6>
+                    <ul class="list-unstyled small">
+                        <li class="mb-2">
+                            <a asp-controller="Home" asp-action="Faq" class="text-decoration-none text-muted">FAQ</a>
+                        </li>
+                        <li class="mb-2">
+                            <a asp-controller="Home" asp-action="Returns" class="text-decoration-none text-muted">Returns & Refunds</a>
+                        </li>
+                        <li class="mb-2">
+                            <a asp-controller="Home" asp-action="Shipping" class="text-decoration-none text-muted">Shipping Info</a>
+                        </li>
+                        <li class="mb-2">
+                            <a href="/about" class="text-decoration-none text-muted">Contact Us</a>
+                        </li>
+                        @if (workspace != null)
+                        {
+                            <li class="mb-2"><a href="@workspace" class="text-decoration-none text-muted">@L["My workspace"]</a></li>
+                        }
+                    </ul>
+                </div>
+                <!-- Cột 3: Browse Art -->
+                <div class="col-lg-2 col-md-6">
+                    <h6 class="text-uppercase fw-bold mb-3">Browse Art</h6>
+                    <ul class="list-unstyled small">
+                        <li class="mb-2"><a href="/gallery" class="text-decoration-none text-muted">Awarded paintings</a></li>
+                        <li class="mb-2"><a href="/competitions" class="text-decoration-none text-muted">@L["Competitions"]</a></li>
+                    </ul>
+                </div>
+                <!-- Cột 4: For Artists -->
+                <div class="col-lg-4 col-md-6">
+                    <h6 class="text-uppercase fw-bold mb-3">For Artists</h6>
+                    <p class="small text-muted">The best paintings of our competitions are shown at exhibitions, and the student receives the whole sale price.</p>
+                    <a href="/about" class="btn btn-outline-dark rounded-0 btn-sm mb-3">Learn More</a>
+                    <h6 class="text-uppercase fw-bold mb-2 mt-2">Follow Us</h6>
+                    <div class="d-flex gap-3 fs-5">
+                        <a href="#" class="text-dark" aria-label="Instagram"><i class="bi bi-instagram"></i></a>
+                        <a href="#" class="text-dark" aria-label="Facebook"><i class="bi bi-facebook"></i></a>
+                        <a href="#" class="text-dark" aria-label="Pinterest"><i class="bi bi-pinterest"></i></a>
+                    </div>
+                </div>
             </div>
-            <div>
-                <ul>
-                    <li><a href="/competitions">@L["Competitions"]</a></li>
-                    <li><a href="/gallery">@L["Gallery"]</a></li>
-                    <li><a href="/about">@L["About"]</a></li>
-                </ul>
+            <div class="row mt-5">
+                <div class="col-12 text-center border-top pt-3">
+                    <p class="small text-muted mb-0">&copy; 2026 - Institute of Fine Arts - <a asp-area="" asp-controller="Home" asp-action="Privacy" class="text-muted">@L["Privacy"]</a></p>
+                </div>
             </div>
-            <div>
-                <ul>
-                    @if (workspace != null)
-                    {
-                        <li><a href="@workspace">@L["My workspace"]</a></li>
-                    }
-                    else
-                    {
-                        <li><a href="/login">@L["Log in"]</a></li>
-                    }
-                    <li><a asp-area="" asp-controller="Home" asp-action="Privacy">@L["Privacy"]</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="footer-base">
-            <span>&copy; @DateTimeHelper.Today.Year Institute of Fine Arts</span>
-            <span>@L["Prices in USD"]</span>
         </div>
     </footer>
     <partial name="_Scripts" />

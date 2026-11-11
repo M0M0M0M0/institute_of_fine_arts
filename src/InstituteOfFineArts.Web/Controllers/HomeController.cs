@@ -6,7 +6,7 @@ namespace InstituteOfFineArts.Web.Controllers;
 
 /// <summary>
 /// Public home pages (task BE2-11; F-M02-01..04, 06..08; screens SCR-01, SCR-06), open to guests and every role:
-/// GET / (home) · GET /gallery (awarded paintings) · GET /about (static page) · GET /Home/Privacy.
+/// GET / (home) · GET /gallery (awarded paintings) · GET /about (static page) · GET /Home/Privacy · GET /faq, /returns, /shipping (static pages, FE101).
 /// </summary>
 [AllowAnonymous]
 public class HomeController : Controller
@@ -40,4 +40,19 @@ public class HomeController : Controller
     {
         return View();
     }
+
+    /// <summary>Frequently asked questions (static page, FE101).</summary>
+    [HttpGet("/faq")]
+    public IActionResult Faq()
+        => View();
+
+    /// <summary>Returns and refunds of paintings bought at an exhibition (static page, FE101).</summary>
+    [HttpGet("/returns")]
+    public IActionResult Returns()
+        => View();
+
+    /// <summary>Shipping of paintings bought at an exhibition (static page, FE101).</summary>
+    [HttpGet("/shipping")]
+    public IActionResult Shipping()
+        => View();
 }

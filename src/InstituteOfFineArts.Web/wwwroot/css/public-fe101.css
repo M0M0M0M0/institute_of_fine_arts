@@ -1,0 +1,447 @@
+/* Public pages theme by FE (branch FE101, hoanglong0299): loaded only by Views/Shared/_Layout.cshtml, after site.css.
+   The working screens (_LayoutDashboard) do not load it and keep the design system of site.css. */
+/* ==========================================================================
+   1. ROOT VARIABLES & THEME CONFIGURATION
+   ========================================================================== */
+:root {
+  --art-primary: #111111;
+  --art-secondary: #555555;
+  --art-muted: #888888;
+  --art-border: #e8e8e8;
+  --art-bg-light: #fafafa;
+  --art-font-serif: "Playfair Display", Georgia, "Times New Roman", serif;
+  --art-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ==========================================================================
+   2. BASE & TYPOGRAPHY
+   ========================================================================== */
+html {
+  font-size: 14px;
+  height: 100%;
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+body {
+  font-family: var(--art-font-sans);
+  color: var(--art-primary);
+  background-color: #ffffff;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Đảm bảo nội dung chính giãn nở để đẩy Footer xuống đáy trang */
+main[role="main"] {
+  flex: 1 0 auto;
+}
+
+h1, h2, h3, .art-title {
+  font-family: var(--art-font-serif);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+a {
+  color: var(--art-primary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+  a:hover {
+    color: var(--art-muted);
+  }
+
+/* ==========================================================================
+   3. FORMS & INPUT FOCUS (Ghi đè viền xanh mặc định)
+   ========================================================================== */
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.15rem rgba(17, 17, 17, 0.15) !important;
+  border-color: var(--art-primary) !important;
+}
+
+.form-floating > .form-control-plaintext::placeholder,
+.form-floating > .form-control::placeholder {
+  color: var(--art-muted);
+  text-align: end;
+}
+
+.form-floating > .form-control-plaintext:focus::placeholder,
+.form-floating > .form-control:focus::placeholder {
+  text-align: start;
+}
+
+/* ==========================================================================
+   4. NAVIGATION & HEADER
+   ========================================================================== */
+.navbar-brand {
+  font-family: var(--art-font-serif);
+  letter-spacing: 2px;
+}
+
+.nav-link {
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
+
+/* Tùy chỉnh kích thước Logo Navbar */
+.navbar-logo {
+  height: 80px; /* Bạn có thể tăng giảm từ 32px - 45px tùy tỷ lệ ảnh */
+  width: 120px; /* Tự co giãn theo chiều dài để không bị méo tỉ lệ */
+  object-fit: contain;
+  transition: opacity 0.2s ease;
+}
+
+}
+/* Giao diện phẳng cho Dropdown */
+.dropdown-menu {
+  border: 1px solid var(--art-border);
+  border-radius: 0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+
+.dropdown-item {
+  font-size: 0.88rem;
+  padding: 0.5rem 1.25rem;
+}
+
+  .dropdown-item:hover {
+    background-color: var(--art-bg-light);
+    color: #000;
+  }
+
+/* ==========================================================================
+   5. BUTTONS (Phong cách tối giản)
+   ========================================================================== */
+.btn {
+  border-radius: 0;
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+  padding: 0.6rem 1.4rem;
+  transition: all 0.2s ease-in-out;
+}
+
+.btn-primary, .btn-dark {
+  background-color: var(--art-primary);
+  border-color: var(--art-primary);
+  color: #fff;
+}
+
+  .btn-primary:hover, .btn-dark:hover {
+    background-color: #333333;
+    border-color: #333333;
+    color: #fff;
+  }
+
+.btn-outline-dark {
+  border-color: var(--art-primary);
+  color: var(--art-primary);
+}
+
+  .btn-outline-dark:hover {
+    background-color: var(--art-primary);
+    color: #fff;
+  }
+
+/* ==========================================================================
+   6. ARTWORK CARD (Dành cho danh sách tranh giống UGallery)
+   ========================================================================== */
+.artwork-card {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  transition: transform 0.25s ease;
+}
+
+  .artwork-card .card-img-wrapper {
+    position: relative;
+    overflow: hidden;
+    background-color: #f5f5f5;
+    aspect-ratio: 1 / 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .artwork-card img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    transition: transform 0.4s ease;
+  }
+
+  .artwork-card:hover img {
+    transform: scale(1.03);
+  }
+
+  .artwork-card .card-body {
+    padding: 1rem 0;
+  }
+
+  .artwork-card .artist-name {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    color: var(--art-muted);
+    letter-spacing: 1px;
+    margin-bottom: 0.25rem;
+  }
+
+  .artwork-card .artwork-title {
+    font-family: var(--art-font-serif);
+    font-size: 1.05rem;
+    margin-bottom: 0.25rem;
+    font-style: italic;
+  }
+
+  .artwork-card .artwork-price {
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+/* ==========================================================================
+   7. FOOTER
+   ========================================================================== */
+footer {
+  background-color: var(--art-bg-light);
+  border-top: 1px solid var(--art-border);
+}
+
+  footer h6 {
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+  }
+
+  footer a {
+    color: var(--art-secondary);
+  }
+
+    footer a:hover {
+      color: var(--art-primary);
+      text-decoration: underline;
+    }
+/* Kích thước logo ở Footer */
+.footer-logo {
+  height: 100px; /* Điều chỉnh chiều cao cho phù hợp với thiết kế của bạn */
+  width: auto;
+  object-fit: contain;
+}
+
+/* ==========================================================================
+   CAROUSEL HERO BANNER & TEXT OVERLAY
+   ========================================================================== */
+.hero-banner-wrapper {
+  position: relative;
+  width: 100%;
+  height: 550px;
+  background-color: #f5f5f5;
+}
+
+  .hero-banner-wrapper .carousel-inner,
+  .hero-banner-wrapper .carousel-item {
+    height: 100%;
+  }
+
+.hero-banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Khung chữ đứng im ở giữa */
+.static-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  width: 90%;
+  max-width: 650px;
+  pointer-events: none;
+}
+
+  .static-overlay .btn {
+    pointer-events: auto;
+  }
+
+.text-backdrop {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 2px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+/* Lớp Fade hòa vào màu trắng của trang */
+.hero-fade-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 35%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.7) 60%, #ffffff 100%);
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* Nút điều hướng tối giản */
+.minimal-control {
+  width: 6%;
+  opacity: 0;
+  z-index: 11;
+  transition: opacity 0.3s ease;
+}
+
+.hero-banner-wrapper:hover .minimal-control {
+  opacity: 0.8;
+}
+
+.minimal-control:hover {
+  opacity: 1 !important;
+}
+
+.minimal-control i {
+  font-size: 1.25rem;
+  color: #111;
+  background-color: #ffffff;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
+}
+
+.minimal-control:hover i {
+  transform: scale(1.1);
+}
+/* ==========================================================================
+   PROMO TICKER (Tự chạy chữ như thời sự)
+   ========================================================================== */
+.promo-ticker-bar {
+  overflow: hidden;
+  white-space: nowrap;
+  width: 100%;
+  font-size: 0.82rem;
+  letter-spacing: 0.5px;
+  user-select: none;
+  position: relative;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: tickerSlide 30s linear infinite; /* Điều chỉnh tốc độ tại đây */
+}
+
+/* Tự động tạm dừng chạy khi người dùng rê chuột vào để kịp đọc */
+.promo-ticker-bar:hover .ticker-track {
+  animation-play-state: paused;
+  cursor: default;
+}
+
+.ticker-content {
+  display: flex;
+  align-items: center;
+}
+
+.ticker-item {
+  padding: 0 1.25rem;
+}
+
+.ticker-divider {
+  color: #888888;
+  padding: 0 0.5rem;
+}
+
+/* Keyframes di chuyển từ 0 sang -50% (vừa hết khối 1 thì khối 2 lập tức nối tiếp) */
+@keyframes tickerSlide {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Container bao trọn cột ảnh */
+.auth-image-col {
+  position: relative;
+  overflow: hidden;
+  height: 100vh; /* Giữ ảnh luôn kín chiều dọc màn hình */
+}
+
+/* Ảnh tượng David: Ghim góc nhìn sang bên trái */
+.auth-bg-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: left center; /* Giữ tượng David luôn ở bên trái, nhường chỗ bên phải cho hiệu ứng mờ */
+  display: block;
+}
+
+/* Hiệu ứng Fade loang rộng */
+.auth-fade-right {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 60%; /* Kéo dải mờ chiếm 60% bề ngang cột ảnh */
+  height: 100%;
+  z-index: 2; /* Đảm bảo lớp phủ luôn nổi lên trên ảnh */
+  pointer-events: none;
+  background: linear-gradient( to right, rgba(255, 255, 255, 0) 0%, /* Bắt đầu trong suốt từ phía sau tượng */
+  rgba(255, 255, 255, 0.2) 25%, /* Mờ nhẹ */
+  rgba(255, 255, 255, 0.65) 60%, /* Trắng dần */
+  rgba(255, 255, 255, 0.95) 85%, /* Gần như trắng đục */
+  #ffffff 100% /* Trắng hoàn toàn khi chạm mép form */
+  );
+}
+
+/* Giới hạn độ rộng form cho gọn gàng */
+.auth-form-container {
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+
+/* ==========================================================================
+   REGISTER POPUP STYLING
+   ========================================================================== */
+#registerModal .modal-content {
+  background-color: #ffffff;
+  border: 1px solid var(--art-border);
+}
+
+/* Checklist box */
+.password-checklist {
+  background-color: #fbfbfb !important;
+  border: 1px solid #eeeeee !important;
+  transition: all 0.3s ease;
+}
+
+  .password-checklist li, #rule-match {
+    transition: color 0.2s ease-in-out;
+  }
+
+/* Nút tắt modal (X) */
+#registerModal .btn-close {
+  font-size: 0.85rem;
+  opacity: 0.6;
+}
+
+  #registerModal .btn-close:hover {
+    opacity: 1;
+  }

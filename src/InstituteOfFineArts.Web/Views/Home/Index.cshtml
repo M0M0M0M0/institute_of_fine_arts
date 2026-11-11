@@ -1,232 +1,178 @@
-﻿@model InstituteOfFineArts.Web.ViewModels.Public.HomeVm
+@model InstituteOfFineArts.Web.ViewModels.Public.HomeVm
 @*
-    Public home page (/, SCR-01, F-M02-01..04, 06, US-02, TC-M02-01..04): upcoming competitions, ongoing competitions
-    with days left and number of entries, winners of the most recent GRADED competition, upcoming exhibitions.
+    Public home page (/, SCR-01, F-M02-01..04, 06, US-02, TC-M02-01..04).
+    Design by FE (branch FE101): full-width hero banner carousel + "Featured Artworks" cards;
+    data by BE2-11: latest award winners (as the featured artworks), ongoing / upcoming competitions, upcoming exhibitions.
     Open to guests and every role; no evaluation and no submission text is shown.
-    Created by BE2 (BE2-11); styled by FE2-08: a full-bleed award-winning painting with the Didone title and the
-    ongoing competition, then the open competitions (mist band), the latest winners as labelled works on the wall,
-    upcoming competitions and exhibitions (stone band) and a navy closing band.
 *@
-@using InstituteOfFineArts.Web.Helpers
 @{
     ViewData["Title"] = "Home";
-    ViewData["FullBleed"] = true;
-
-    string DaysLeft(int days) => days == 0 ? "last day" : days == 1 ? "1 day left" : $"{days} days left";
-
-    // The painting of the first viewport: first award winner of the latest GRADED competition,
-    // otherwise the cover of the first ongoing competition, otherwise the navy ground
-    var featured = Model.LatestResults?.Winners.FirstOrDefault();
-    var current = Model.Ongoing.FirstOrDefault();
-    string? heroImage = featured != null ? $"/files/submissions/{featured.SubmissionId}"
-        : current != null ? $"/files/competitions/{current.Id}/cover" : null;
-    var heroAlt = featured != null ? $"{featured.ArtworkTitle} – {featured.StudentName}"
-        : current != null ? $"Cover of {current.Title}" : "";
-    var isStudent = User.IsInRole(RoleNames.Student);
-    var hasAlerts = TempData.Peek("Success") != null || TempData.Peek("Warning") != null || TempData.Peek("Error") != null;
+    ViewData["FullWidth"] = true;
 }
 
-<section class="hero" aria-labelledby="hero-title">
-    @if (heroImage != null)
-    {
-        <div class="hero-art"><img src="@heroImage" alt="@heroAlt" fetchpriority="high" /></div>
-    }
-    <div class="hero-body">
-        <h1 class="hero-title" id="hero-title">Institute of Fine Arts</h1>
-        @if (current != null)
-        {
-            <p class="hero-lede">@current.Title is open for entries, @DaysLeft(current.DaysLeft).</p>
-        }
-        else
-        {
-            <p class="hero-lede">Painting competitions, results and exhibitions of our students.</p>
-        }
-        <div class="hero-actions">
-            @if (current != null)
+<!-- 1. HERO BANNER CAROUSEL (Tràn viền màn hình) -->
+<div id="heroCarousel" class="carousel slide hero-banner-wrapper carousel-fade" data-bs-ride="carousel">
+
+    <!-- Lớp phủ Fade mờ dần ở đáy -->
+    <div class="hero-fade-bottom"></div>
+
+    <!-- Khung chữ cố định ở giữa -->
+    <div class="hero-banner-content text-center static-overlay">
+        <div class="text-backdrop p-4">
+            <h1 class="display-4 fw-normal art-title mb-3">Institute Of Fine Arts</h1>
+            <a href="#featured-art" class="btn btn-dark px-4 py-2">Explore Gallery</a>
+        </div>
+    </div>
+
+    <!-- Danh sách ảnh trượt (tự chuyển sau mỗi 3 giây) -->
+    <div class="carousel-inner h-100">
+        <div class="carousel-item active h-100" data-bs-interval="3000">
+            <img src="~/img/banner1.jpg" class="d-block w-100 h-100 hero-banner-img" alt="Artwork 1">
+        </div>
+        <div class="carousel-item h-100" data-bs-interval="3000">
+            <img src="~/img/banner2.jpg" class="d-block w-100 h-100 hero-banner-img" alt="Artwork 2">
+        </div>
+        <div class="carousel-item h-100" data-bs-interval="3000">
+            <img src="~/img/banner3.jpg" class="d-block w-100 h-100 hero-banner-img" alt="Artwork 3">
+        </div>
+        <div class="carousel-item h-100" data-bs-interval="3000">
+            <img src="~/img/banner4.jpg" class="d-block w-100 h-100 hero-banner-img" alt="Artwork 4">
+        </div>
+        <div class="carousel-item h-100" data-bs-interval="3000">
+            <img src="~/img/banner5.jpg" class="d-block w-100 h-100 hero-banner-img" alt="Artwork 5">
+        </div>
+    </div>
+
+    <!-- Nút Next/Prev tối giản -->
+    <button class="carousel-control-prev minimal-control" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+        <i class="bi bi-chevron-left"></i>
+        <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next minimal-control" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+        <i class="bi bi-chevron-right"></i>
+        <span class="visually-hidden">Next</span>
+    </button>
+</div>
+
+<div class="container my-5">
+    <partial name="_Alerts" />
+
+    <div class="row g-4 mb-5">
+        @* F-M02-02, 03: ongoing competitions with days left and number of entries *@
+        <section class="col-lg-6">
+            <h2 class="h5 art-title">Ongoing competitions</h2>
+            @if (Model.Ongoing.Count == 0)
             {
-                @* Same targets as the competition page; the return address is encoded *@
-                if (isStudent)
-                {
-                    <a href="/student/submissions/new?competitionId=@current.Id" class="btn btn-lg btn-on-ink">Submit an entry</a>
-                }
-                else if (User.Identity?.IsAuthenticated != true)
-                {
-                    <a href="/login?returnUrl=%2Fstudent%2Fcompetitions%2F@(current.Id)" class="btn btn-lg btn-on-ink">Log in to submit</a>
-                }
-                else
-                {
-                    <a href="#ongoing" class="btn btn-lg btn-on-ink">See open competitions</a>
-                }
+                <p class="text-muted">No competition is open for entries right now.</p>
             }
             else
             {
-                <a href="/competitions" class="btn btn-lg btn-on-ink">All competitions</a>
-            }
-            <a href="/gallery" class="btn btn-lg btn-ghost-on-ink">Gallery</a>
-        </div>
-    </div>
-    @if (featured != null)
-    {
-        <p class="hero-credit"><em>@featured.ArtworkTitle</em>, @featured.StudentName, @featured.AwardName</p>
-    }
-</section>
-
-@if (hasAlerts)
-{
-    <div class="page pb-0"><partial name="_Alerts" /></div>
-}
-
-@* F-M02-02, 03: ongoing competitions with days left and number of entries *@
-<section class="band band-mist" id="ongoing" aria-labelledby="ongoing-title">
-    <div class="band-inner">
-        <div class="band-head">
-            <div>
-                <h2 id="ongoing-title">Ongoing competitions</h2>
-                <p>Students of the institute can submit one painting to each competition.</p>
-            </div>
-            <a href="/competitions" class="btn btn-outline-primary">All competitions</a>
-        </div>
-        @if (Model.Ongoing.Count == 0)
-        {
-            <div class="empty"><i class="bi bi-easel" aria-hidden="true"></i><p>No competition is open for entries right now.</p></div>
-        }
-        else
-        {
-            <ul class="calm-list">
-                @foreach (var c in Model.Ongoing)
-                {
-                    <li>
-                        <div>
-                            <h3 class="cl-title"><a href="/competitions/@c.Id">@c.Title</a></h3>
-                            <div class="cl-meta">
-                                <span>@c.StartDate.ToString("dd MMM yyyy") – @c.EndDate.ToString("dd MMM yyyy")</span>
-                                <span class="deadline@(c.DaysLeft <= 3 ? " is-soon" : "")"><i class="bi bi-hourglass-split" aria-hidden="true"></i>@DaysLeft(c.DaysLeft)</span>
-                                <span><span class="submission-count">@c.SubmissionCount</span> entr@(c.SubmissionCount == 1 ? "y" : "ies")</span>
+                <ul class="list-group">
+                    @foreach (var c in Model.Ongoing)
+                    {
+                        <li class="list-group-item">
+                            <a href="/competitions/@c.Id" class="fw-semibold">@c.Title</a>
+                            <div class="small text-muted">
+                                @c.StartDate.ToString("dd MMM yyyy") – @c.EndDate.ToString("dd MMM yyyy") ·
+                                @(c.DaysLeft == 0 ? "last day" : c.DaysLeft == 1 ? "1 day left" : $"{c.DaysLeft} days left") ·
+                                <span class="submission-count">@c.SubmissionCount</span> entr@(c.SubmissionCount == 1 ? "y" : "ies")
                             </div>
-                        </div>
-                        <div class="cl-action"><a href="/competitions/@c.Id" class="btn btn-sm btn-primary" aria-label="View competition @c.Title">View competition</a></div>
-                    </li>
-                }
-            </ul>
-        }
-    </div>
-</section>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
 
-@* F-M02-04: winners of the most recent GRADED competition (never a CLOSED one, US-02 AC4) *@
-<section class="band" aria-labelledby="winners-title">
-    <div class="band-inner">
-        <div class="band-head">
-            <div>
-                <h2 id="winners-title">Latest award winners</h2>
-                @if (Model.LatestResults is { } head)
-                {
-                    <p>
-                        <a href="/competitions/@head.CompetitionId">@head.CompetitionTitle</a>@if (head.PublishedAt is { } published)
-                        {<span>, published @published.ToString("dd MMM yyyy")</span>}
-                    </p>
-                }
-            </div>
-            <a href="/gallery" class="btn btn-outline-primary">Gallery</a>
-        </div>
-        @if (Model.LatestResults is not { } latest)
-        {
-            <div class="empty"><i class="bi bi-award" aria-hidden="true"></i><p>No results have been published yet.</p></div>
-        }
-        else if (latest.Winners.Count == 0)
-        {
-            <div class="empty"><i class="bi bi-award" aria-hidden="true"></i><p>No awards were issued in this competition.</p></div>
-        }
-        else
-        {
-            <div class="art-grid is-large">
-                @foreach (var w in latest.Winners)
-                {
-                    <figure class="artwork is-awarded">
-                        <a class="artwork-frame" href="/competitions/@latest.CompetitionId">
-                            <img src="/files/submissions/@w.SubmissionId@(w.HasThumbnail ? "/thumb" : "")" alt="@w.ArtworkTitle – @w.StudentName" loading="lazy" />
-                        </a>
-                        <figcaption class="wall-label">
-                            <span class="wl-title">@w.ArtworkTitle</span>
-                            <span class="wl-artist">@w.StudentName</span>
-                            <span class="wl-meta">@latest.CompetitionTitle</span>
-                            <span class="wl-state"><span class="tag tag-award"><i class="bi bi-award" aria-hidden="true"></i>@w.AwardName</span></span>
-                        </figcaption>
-                    </figure>
-                }
-            </div>
-        }
-    </div>
-</section>
-
-<section class="band band-stone" aria-label="Coming soon">
-    <div class="band-inner split-2">
         @* F-M02-01: upcoming competitions *@
-        <div>
-            <h2>Upcoming competitions</h2>
+        <section class="col-lg-6">
+            <h2 class="h5 art-title">Upcoming competitions</h2>
             @if (Model.Upcoming.Count == 0)
             {
                 <p class="text-muted">No upcoming competition.</p>
             }
             else
             {
-                <ul class="calm-list">
+                <ul class="list-group">
                     @foreach (var c in Model.Upcoming)
                     {
-                        <li>
-                            <div>
-                                <h3 class="cl-title"><a href="/competitions/@c.Id">@c.Title</a></h3>
-                                <div class="cl-meta"><span><i class="bi bi-calendar3" aria-hidden="true"></i>@c.StartDate.ToString("dd MMM yyyy") – @c.EndDate.ToString("dd MMM yyyy")</span></div>
-                            </div>
+                        <li class="list-group-item">
+                            <a href="/competitions/@c.Id" class="fw-semibold">@c.Title</a>
+                            <div class="small text-muted">@c.StartDate.ToString("dd MMM yyyy") – @c.EndDate.ToString("dd MMM yyyy")</div>
                         </li>
                     }
                 </ul>
             }
-        </div>
+        </section>
+    </div>
 
-        @* F-M02-06: upcoming exhibitions *@
-        <div>
-            <h2>Upcoming exhibitions</h2>
-            @if (Model.UpcomingExhibitions.Count == 0)
+    @* 2. Featured Artworks (FE101 cards) = F-M02-04: winners of the most recent GRADED competition (never a CLOSED one, US-02 AC4) *@
+    <section id="featured-art" class="mb-5">
+        <div class="text-center mb-5">
+            <h2 class="art-title">Featured Artworks</h2>
+            <h3 class="h5 text-muted fw-normal">Latest award winners</h3>
+        </div>
+        @if (Model.LatestResults is not { } latest)
+        {
+            <p class="text-muted text-center">No results have been published yet.</p>
+        }
+        else
+        {
+            <p class="text-center mb-4">
+                <a href="/competitions/@latest.CompetitionId">@latest.CompetitionTitle</a>
+                @if (latest.PublishedAt is { } published)
+                {
+                    <span class="small text-muted">· published @published.ToString("dd MMM yyyy")</span>
+                }
+            </p>
+            @if (latest.Winners.Count == 0)
             {
-                <p class="text-muted">No upcoming exhibition.</p>
+                <p class="text-muted text-center">No awards were issued in this competition.</p>
             }
             else
             {
-                <ul class="calm-list">
-                    @foreach (var e in Model.UpcomingExhibitions)
+                <div class="row g-4">
+                    @foreach (var w in latest.Winners)
                     {
-                        <li>
-                            <div>
-                                <h3 class="cl-title">@e.Name</h3>
-                                <div class="cl-meta">
-                                    <span><i class="bi bi-geo-alt" aria-hidden="true"></i>@e.Venue, @e.City</span>
-                                    <span><i class="bi bi-calendar3" aria-hidden="true"></i>@e.StartDate.ToString("dd MMM yyyy") – @e.EndDate.ToString("dd MMM yyyy")</span>
+                        <div class="col-md-4">
+                            <div class="artwork-card">
+                                <div class="card-img-wrapper">
+                                    @if (w.HasThumbnail)
+                                    {
+                                        <img src="/files/submissions/@w.SubmissionId" alt="@w.ArtworkTitle – @w.StudentName" />
+                                    }
+                                </div>
+                                <div class="card-body">
+                                    <div class="artist-name">@w.StudentName</div>
+                                    <div class="artwork-title small"><span class="badge bg-success">@w.AwardName</span> “@w.ArtworkTitle”</div>
                                 </div>
                             </div>
-                        </li>
+                        </div>
                     }
-                </ul>
+                </div>
             }
-        </div>
-    </div>
-</section>
+        }
+    </section>
 
-<section class="band band-ink" aria-labelledby="close-title">
-    <div class="band-inner text-center">
-        <h2 class="band-title" id="close-title">Every awarded painting hangs in the gallery</h2>
-        <div class="hero-actions justify-content-center">
-            <a href="/gallery" class="btn btn-lg btn-on-ink">Visit the gallery</a>
-            <a href="/competitions" class="btn btn-lg btn-ghost-on-ink">All competitions</a>
-        </div>
-    </div>
-</section>
-
-@section Scripts {
-    <script>
-        // A painting that cannot be loaded leaves the plain navy ground instead of a broken image
-        document.querySelectorAll(".hero-art img").forEach(function (img) {
-            function drop() { img.closest(".hero-art").remove(); }
-            if (img.complete && img.naturalWidth === 0) { drop(); } else { img.addEventListener("error", drop); }
-        });
-    </script>
-}
+    @* F-M02-06: upcoming exhibitions *@
+    <section class="mb-4">
+        <h2 class="h5 art-title">Upcoming exhibitions</h2>
+        @if (Model.UpcomingExhibitions.Count == 0)
+        {
+            <p class="text-muted">No upcoming exhibition.</p>
+        }
+        else
+        {
+            <ul class="list-group">
+                @foreach (var e in Model.UpcomingExhibitions)
+                {
+                    <li class="list-group-item">
+                        <div class="fw-semibold">@e.Name</div>
+                        <div class="small text-muted">
+                            @e.Venue, @e.City · @e.StartDate.ToString("dd MMM yyyy") – @e.EndDate.ToString("dd MMM yyyy")
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+</div>
