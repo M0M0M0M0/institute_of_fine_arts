@@ -30,6 +30,10 @@ database/backups/*
 .claude/
 # Lock file written by the agent-skills CLI (npx skills add) – local tooling, not project code
 skills-lock.json
+# impeccable design notes (local only, user decision 2026-11-09)
+PRODUCT.md
+DESIGN.md
+.impeccable/
 
 # ===== OS / Office junk files =====
 Thumbs.db
