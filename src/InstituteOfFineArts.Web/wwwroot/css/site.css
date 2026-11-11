@@ -1,31 +1,862 @@
-html {
-  font-size: 14px;
+/* ==========================================================================
+   Institute of Fine Arts – design system (FE1-01, FE2-01)
+   One visual world for the public pages and the working screens:
+   a school gallery – white walls, blue-grey and stone bands, deep teal-navy ink,
+   gilt only for awards / BEST, Didone titles (Bodoni Moda) and a calm UI sans (General Sans).
+   Bootstrap 5 stays the component base; its variables are re-pointed to these tokens.
+   ========================================================================== */
+
+/* ---------- 1. Tokens ---------- */
+:root {
+    /* Grounds */
+    --ifa-wall: #ffffff;            /* gallery wall: page ground */
+    --ifa-mist: #eaf0f3;            /* museum blue-grey band */
+    --ifa-stone: #e6e3d9;           /* stone band, mats around paintings */
+    --ifa-ink: #0b2a33;             /* deep teal-navy: primary, rail, footer */
+    --ifa-ink-hover: #16404c;
+    --ifa-ink-soft: #d7e2e6;        /* ink tint for selected rows / active items */
+
+    /* Text */
+    --ifa-text: #2b2924;            /* warm graphite body text (13.6:1 on white) */
+    --ifa-muted: #625d53;           /* secondary text (6.3:1 on white, 5.4:1 on mist) */
+    --ifa-on-ink: #f3f6f7;          /* text on the navy rail / footer */
+    --ifa-on-ink-muted: #a9bec5;    /* secondary text on navy (7.4:1) */
+    --ifa-line: #d6d2c8;            /* hairlines */
+    --ifa-line-strong: #b9b4a8;
+
+    /* Gilt: awards and BEST only */
+    --ifa-gilt: #a8814a;            /* frame gilt, decorative / large text */
+    --ifa-gilt-text: #7a5b2e;       /* gilt for small text (5.9:1 on white) */
+    --ifa-gilt-soft: #f2eadc;
+
+    /* States (sit on top of the world, only where they carry meaning) */
+    --ifa-upcoming: #2c5d8a;
+    --ifa-upcoming-soft: #e3edf6;
+    --ifa-ongoing: #2f6b4f;
+    --ifa-ongoing-soft: #e1efe7;
+    --ifa-closed: #625d53;
+    --ifa-closed-soft: #eeece6;
+    --ifa-danger: #a23b2a;
+    --ifa-danger-soft: #f6e4e0;
+    --ifa-warning: #7d5700;
+    --ifa-warning-soft: #f8edd3;
+
+    /* Type */
+    --ifa-font-display: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+    --ifa-font-ui: "General Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+
+    /* Shape: pills for actions and filters, crisp 3px for fields, 0 for paintings */
+    --ifa-radius-pill: 999px;
+    --ifa-radius-field: 3px;
+    --ifa-shadow: 0 1px 2px rgba(11, 42, 51, .06), 0 8px 24px rgba(11, 42, 51, .08);
+
+    /* Layout */
+    --ifa-rail-width: 15.5rem;
+    --ifa-gutter: clamp(1rem, 2.5vw, 2rem);
+
+    /* Bootstrap re-pointed to the world */
+    --bs-body-font-family: var(--ifa-font-ui);
+    --bs-body-color: var(--ifa-text);
+    --bs-body-bg: var(--ifa-wall);
+    --bs-secondary-color: var(--ifa-muted);
+    --bs-border-color: var(--ifa-line);
+    --bs-link-color: var(--ifa-ink);
+    --bs-link-color-rgb: 11, 42, 51;
+    --bs-link-hover-color: var(--ifa-ink-hover);
+    --bs-link-hover-color-rgb: 22, 64, 76;
+    --bs-primary: var(--ifa-ink);
+    --bs-primary-rgb: 11, 42, 51;
+    --bs-emphasis-color: var(--ifa-text);
+    --bs-focus-ring-color: rgba(11, 42, 51, .35);
 }
 
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
+/* ---------- 2. Base ---------- */
+html { font-size: 100%; }
 body {
-  margin-bottom: 60px;
+    font-family: var(--ifa-font-ui);
+    font-size: 1rem;
+    line-height: 1.55;
+    color: var(--ifa-text);
+    background: var(--ifa-wall);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-variant-numeric: lining-nums;
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
-  color: var(--bs-secondary-color);
-  text-align: end;
+/* Titles speak Didone; sizes step clearly (Elements of Typographic Style scale) */
+h1, h2, h3, .h1, .h2, .h3, .display-title {
+    font-family: var(--ifa-font-display);
+    font-weight: 500;
+    color: var(--ifa-text);
+    letter-spacing: -0.01em;
+    line-height: 1.12;
+    text-wrap: balance;
+    font-kerning: normal;
+    font-optical-sizing: auto;
+}
+h1, .h1 { font-size: clamp(2rem, 1.4rem + 2vw, 2.75rem); margin-bottom: .5rem; }
+h2, .h2 { font-size: clamp(1.5rem, 1.2rem + 1vw, 2rem); margin-top: 2.25rem; margin-bottom: .75rem; }
+h3, .h3 { font-size: 1.375rem; margin-top: 1.75rem; margin-bottom: .5rem; }
+h4, h5, h6, .h4, .h5, .h6 {
+    font-family: var(--ifa-font-ui);
+    font-weight: 600;
+    letter-spacing: 0;
+    color: var(--ifa-text);
+}
+.h5, h5 { font-size: 1.0625rem; }
+p { max-width: 70ch; }
+small, .small { font-size: .875rem; }
+.text-muted, .text-secondary { color: var(--ifa-muted) !important; }
+
+a { color: var(--ifa-ink); text-underline-offset: .2em; text-decoration-thickness: 1px; }
+a:hover { color: var(--ifa-ink-hover); text-decoration-thickness: 2px; }
+
+/* Browser surfaces carry the design too */
+::selection { background: var(--ifa-ink); color: var(--ifa-on-ink); }
+:focus-visible { outline: 2px solid var(--ifa-ink); outline-offset: 2px; }
+.btn:focus-visible, .form-control:focus, .form-select:focus, .form-check-input:focus {
+    box-shadow: 0 0 0 3px rgba(11, 42, 51, .22);
+    border-color: var(--ifa-ink);
+    outline: none;
+}
+html { scrollbar-color: var(--ifa-line-strong) transparent; caret-color: var(--ifa-ink); }
+
+/* Numbers that are compared (money, dates, counts) line up */
+.num, table .num, .money, .table td.text-end { font-variant-numeric: tabular-nums lining-nums; }
+
+/* Skip link for keyboard users */
+.skip-link {
+    position: absolute; left: 1rem; top: -3rem; z-index: 2000;
+    background: var(--ifa-ink); color: var(--ifa-on-ink); padding: .5rem 1rem;
+    border-radius: var(--ifa-radius-pill); text-decoration: none;
+}
+.skip-link:focus { top: 1rem; color: var(--ifa-on-ink); }
+
+/* ---------- 3. Buttons: pills ---------- */
+.btn {
+    --bs-btn-font-family: var(--ifa-font-ui);
+    --bs-btn-font-weight: 500;
+    --bs-btn-padding-x: 1.15rem;
+    --bs-btn-padding-y: .5rem;
+    --bs-btn-border-radius: var(--ifa-radius-pill);
+    letter-spacing: .005em;
+    transition: background-color .15s ease, color .15s ease, border-color .15s ease;
+}
+.btn-sm { --bs-btn-padding-x: .85rem; --bs-btn-padding-y: .3rem; --bs-btn-font-size: .875rem; --bs-btn-border-radius: var(--ifa-radius-pill); }
+.btn-lg { --bs-btn-padding-x: 1.6rem; --bs-btn-padding-y: .7rem; --bs-btn-border-radius: var(--ifa-radius-pill); }
+.btn-primary {
+    --bs-btn-bg: var(--ifa-ink); --bs-btn-border-color: var(--ifa-ink); --bs-btn-color: var(--ifa-on-ink);
+    --bs-btn-hover-bg: var(--ifa-ink-hover); --bs-btn-hover-border-color: var(--ifa-ink-hover); --bs-btn-hover-color: #fff;
+    --bs-btn-active-bg: #071d24; --bs-btn-active-border-color: #071d24;
+    --bs-btn-disabled-bg: var(--ifa-ink); --bs-btn-disabled-border-color: var(--ifa-ink);
+}
+.btn-outline-primary, .btn-outline-secondary, .btn-outline-dark {
+    --bs-btn-color: var(--ifa-ink); --bs-btn-border-color: var(--ifa-ink);
+    --bs-btn-hover-bg: var(--ifa-ink); --bs-btn-hover-border-color: var(--ifa-ink); --bs-btn-hover-color: var(--ifa-on-ink);
+    --bs-btn-active-bg: var(--ifa-ink); --bs-btn-active-border-color: var(--ifa-ink); --bs-btn-active-color: var(--ifa-on-ink);
+}
+.btn-secondary {
+    --bs-btn-bg: var(--ifa-stone); --bs-btn-border-color: var(--ifa-stone); --bs-btn-color: var(--ifa-text);
+    --bs-btn-hover-bg: #d9d5c8; --bs-btn-hover-border-color: #d9d5c8; --bs-btn-hover-color: var(--ifa-text);
+}
+.btn-danger, .btn-outline-danger {
+    --bs-btn-color: var(--ifa-danger); --bs-btn-border-color: var(--ifa-danger); --bs-btn-bg: transparent;
+    --bs-btn-hover-bg: var(--ifa-danger); --bs-btn-hover-border-color: var(--ifa-danger); --bs-btn-hover-color: #fff;
+    --bs-btn-active-bg: #852f21; --bs-btn-active-border-color: #852f21; --bs-btn-active-color: #fff;
+}
+.btn-danger { --bs-btn-bg: var(--ifa-danger); --bs-btn-color: #fff; --bs-btn-hover-bg: #852f21; --bs-btn-hover-border-color: #852f21; }
+.btn-success { --bs-btn-bg: var(--ifa-ongoing); --bs-btn-border-color: var(--ifa-ongoing); --bs-btn-hover-bg: #24543e; --bs-btn-hover-border-color: #24543e; }
+.btn-link { --bs-btn-color: var(--ifa-ink); --bs-btn-hover-color: var(--ifa-ink-hover); text-underline-offset: .2em; }
+.btn .bi, .btn > i { margin-right: .35em; }
+
+/* On the navy ground and over paintings */
+.btn-on-ink {
+    --bs-btn-bg: var(--ifa-wall); --bs-btn-color: var(--ifa-ink); --bs-btn-border-color: var(--ifa-wall);
+    --bs-btn-hover-bg: var(--ifa-mist); --bs-btn-hover-border-color: var(--ifa-mist); --bs-btn-hover-color: var(--ifa-ink);
+}
+.btn-ghost-on-ink {
+    --bs-btn-color: var(--ifa-on-ink); --bs-btn-border-color: rgba(243, 246, 247, .7);
+    --bs-btn-hover-bg: var(--ifa-wall); --bs-btn-hover-color: var(--ifa-ink); --bs-btn-hover-border-color: var(--ifa-wall);
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
-  text-align: start;
+/* Segmented pill group (NYU "Mission | History"): related actions or a filter switch */
+.seg { display: inline-flex; border: 1px solid var(--ifa-ink); border-radius: var(--ifa-radius-pill); overflow: hidden; }
+.seg > a, .seg > button, .seg > label {
+    padding: .4rem 1rem; color: var(--ifa-ink); background: transparent; border: 0;
+    text-decoration: none; font-weight: 500; font-size: .9375rem; line-height: 1.4; cursor: pointer;
 }
+.seg > :is(a, button, label) + :is(a, button, label), .seg > input + label ~ input + label { border-left: 1px solid var(--ifa-ink) !important; }
+.seg > a:hover, .seg > button:hover, .seg > label:hover { background: var(--ifa-ink-soft); }
+.seg > .active, .seg > [aria-current="page"], .seg > input:checked + label { background: var(--ifa-ink); color: var(--ifa-on-ink); }
+.seg > input[type=radio], .seg > input[type=checkbox] { position: absolute; opacity: 0; pointer-events: none; }
+.seg-on-ink { border-color: rgba(243, 246, 247, .8); }
+.seg-on-ink > a, .seg-on-ink > button { color: var(--ifa-on-ink); }
+.seg-on-ink > :is(a, button) + :is(a, button) { border-left-color: rgba(243, 246, 247, .8) !important; }
+.seg-on-ink > a:hover { background: var(--ifa-wall); color: var(--ifa-ink); }
+
+/* ---------- 4. Forms: crisp fields ---------- */
+.form-label { font-weight: 500; font-size: .9375rem; margin-bottom: .3rem; }
+.form-control, .form-select {
+    border-radius: var(--ifa-radius-field);
+    border-color: var(--ifa-line-strong);
+    padding: .55rem .75rem;
+    color: var(--ifa-text);
+    background-color: var(--ifa-wall);
+}
+.form-control::placeholder { color: #6f6a60; opacity: 1; }
+.form-control-sm, .form-select-sm { padding: .35rem .6rem; font-size: .875rem; border-radius: var(--ifa-radius-field); }
+/* Selects keep room for their chevron (the shared padding above would run the text under it) */
+.form-select { padding-right: 2.25rem; }
+.form-select-sm { padding-right: 2rem; }
+.form-text { color: var(--ifa-muted); }
+.form-check-input:checked { background-color: var(--ifa-ink); border-color: var(--ifa-ink); }
+.input-group-text { background: var(--ifa-mist); border-color: var(--ifa-line-strong); color: var(--ifa-muted); }
+.input-group > .form-control, .input-group > .input-group-text { border-radius: var(--ifa-radius-field); }
+.field-validation-error, .invalid-feedback, .text-danger { color: var(--ifa-danger) !important; }
+.input-validation-error { border-color: var(--ifa-danger) !important; }
+.validation-summary-errors ul { margin: 0; padding-left: 1.1rem; }
+textarea.form-control { line-height: 1.55; }
+
+/* A form laid out as a calm sheet: label column on wide screens */
+.form-sheet { max-width: 46rem; }
+.form-sheet .form-actions { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; margin-top: 1.75rem; padding-top: 1.25rem; border-top: 1px solid var(--ifa-line); }
+
+/* ---------- 5. Filters bar (mist band above a list) ---------- */
+.filters {
+    background: var(--ifa-mist);
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    display: flex; flex-wrap: wrap; gap: .75rem 1rem; align-items: flex-end;
+}
+.filters .form-label { font-size: .8125rem; color: var(--ifa-muted); margin-bottom: .2rem; }
+.filters .filter { display: flex; flex-direction: column; min-width: 10rem; flex: 1 1 10rem; max-width: 16rem; }
+.filters .filter-actions { display: flex; gap: .5rem; margin-left: auto; }
+
+/* ---------- 6. Tables: the ledger ---------- */
+.table {
+    --bs-table-color: var(--ifa-text);
+    --bs-table-border-color: var(--ifa-line);
+    --bs-table-hover-bg: rgba(234, 240, 243, .6);
+    --bs-table-striped-bg: rgba(234, 240, 243, .45);
+    margin-bottom: 1rem;
+}
+.table > thead th {
+    font-weight: 600; font-size: .8125rem; color: var(--ifa-muted);
+    border-bottom: 1px solid var(--ifa-text); white-space: nowrap; padding-top: .5rem; padding-bottom: .5rem;
+}
+.table > tbody td { vertical-align: middle; padding-top: .7rem; padding-bottom: .7rem; }
+.table td.text-end, .table th.text-end { font-variant-numeric: tabular-nums lining-nums; }
+.table .row-title { font-weight: 500; }
+.table-thumb { width: 56px; height: 56px; object-fit: cover; display: block; border: 1px solid var(--ifa-line); background: var(--ifa-stone); }
+.table-responsive { margin-bottom: 1rem; }
+.table-actions { white-space: nowrap; text-align: right; }
+.table-actions .btn { --bs-btn-padding-y: .2rem; --bs-btn-padding-x: .6rem; }
+
+/* ---------- 7. Tags: status, rating, award ---------- */
+.tag, .badge {
+    display: inline-flex; align-items: center; gap: .3em;
+    font-family: var(--ifa-font-ui); font-weight: 500; font-size: .8125rem; line-height: 1.2;
+    padding: .2rem .6rem; border-radius: var(--ifa-radius-pill);
+    background: var(--ifa-closed-soft); color: var(--ifa-closed);
+    white-space: nowrap; letter-spacing: 0;
+}
+.tag::before { content: ""; width: .45em; height: .45em; border-radius: 50%; background: currentColor; flex: none; }
+.tag-plain::before { display: none; }
+/* Competition status */
+.tag-UPCOMING { background: var(--ifa-upcoming-soft); color: var(--ifa-upcoming); }
+.tag-ONGOING { background: var(--ifa-ongoing-soft); color: var(--ifa-ongoing); }
+.tag-CLOSED { background: var(--ifa-closed-soft); color: var(--ifa-closed); }
+.tag-GRADED { background: var(--ifa-ink); color: var(--ifa-on-ink); }
+/* Exhibition status */
+.tag-FINISHED { background: var(--ifa-closed-soft); color: var(--ifa-closed); }
+/* Ratings: BEST in gilt, the rest on a calm ladder */
+.tag-BEST { background: var(--ifa-gilt-soft); color: var(--ifa-gilt-text); }
+.tag-BETTER { background: var(--ifa-ink-soft); color: var(--ifa-ink); }
+.tag-GOOD { background: var(--ifa-mist); color: #2f5563; }
+.tag-MODERATE, .tag-NORMAL { background: var(--ifa-closed-soft); color: var(--ifa-closed); }
+.tag-DISQUALIFIED, .tag-REJECTED { background: var(--ifa-danger-soft); color: var(--ifa-danger); }
+.tag-NOT_GRADED, .tag-PENDING { background: var(--ifa-warning-soft); color: var(--ifa-warning); }
+/* Exhibition entries */
+.tag-ACCEPTED { background: var(--ifa-upcoming-soft); color: var(--ifa-upcoming); }
+.tag-SOLD { background: var(--ifa-ongoing-soft); color: var(--ifa-ongoing); }
+.tag-UNSOLD { background: var(--ifa-closed-soft); color: var(--ifa-closed); }
+.tag-PAID { background: var(--ifa-ongoing-soft); color: var(--ifa-ongoing); }
+.tag-UNPAID { background: var(--ifa-warning-soft); color: var(--ifa-warning); }
+/* Award */
+.tag-award { background: var(--ifa-gilt-text); color: #fff; }
+.tag-award::before { display: none; }
+/* Account */
+.tag-ACTIVE { background: var(--ifa-ongoing-soft); color: var(--ifa-ongoing); }
+.tag-INACTIVE, .tag-LOCKED { background: var(--ifa-danger-soft); color: var(--ifa-danger); }
+/* Bootstrap badge colour helpers keep working but in the world's palette */
+.badge.bg-success { background: var(--ifa-ongoing-soft) !important; color: var(--ifa-ongoing) !important; }
+.badge.bg-info, .badge.bg-primary { background: var(--ifa-upcoming-soft) !important; color: var(--ifa-upcoming) !important; }
+.badge.bg-secondary, .badge.bg-light { background: var(--ifa-closed-soft) !important; color: var(--ifa-closed) !important; }
+.badge.bg-danger { background: var(--ifa-danger) !important; color: #fff !important; }
+.badge.bg-warning { background: var(--ifa-warning-soft) !important; color: var(--ifa-warning) !important; }
+.badge.bg-dark { background: var(--ifa-ink) !important; color: var(--ifa-on-ink) !important; }
+
+/* ---------- 8. Alerts: tinted notes, no side stripe ---------- */
+.alert {
+    border: 0; border-radius: 0; padding: .85rem 1.1rem;
+    display: flex; gap: .65rem; align-items: flex-start;
+    background: var(--ifa-mist); color: var(--ifa-text);
+}
+.alert > .bi { font-size: 1.1rem; line-height: 1.35; flex: none; }
+.alert-success { background: var(--ifa-ongoing-soft); color: #1f4a36; }
+.alert-warning { background: var(--ifa-warning-soft); color: #5c4000; }
+.alert-danger { background: var(--ifa-danger-soft); color: #7a2a1d; }
+.alert-info { background: var(--ifa-mist); color: var(--ifa-ink); }
+
+/* ---------- 9. The artwork and its museum wall label (signature) ---------- */
+/* <figure class="artwork">
+       <a class="artwork-frame" href="..."><img src="/files/submissions/1/thumb" alt="Title – Student" /></a>
+       <figcaption class="wall-label">
+           <span class="wl-title">Title</span>
+           <span class="wl-artist">Student name</span>
+           <span class="wl-meta">Competition, 2026</span>
+           <span class="wl-state"><span class="tag tag-BEST">BEST</span></span>
+       </figcaption>
+   </figure> */
+.artwork { margin: 0; display: flex; flex-direction: column; }
+.artwork-frame {
+    display: block; position: relative; aspect-ratio: 4 / 3; overflow: hidden;
+    background: var(--ifa-stone);
+    outline: 1px solid rgba(43, 41, 36, .12); outline-offset: -1px;
+}
+.artwork-frame img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .6s cubic-bezier(.16, 1, .3, 1); }
+a.artwork-frame:hover img { transform: scale(1.025); }
+.artwork-frame.is-portrait { aspect-ratio: 3 / 4; }
+.artwork-frame.is-contain img { object-fit: contain; background: var(--ifa-stone); }
+.artwork-frame .artwork-missing {
+    position: absolute; inset: 0; display: grid; place-items: center; color: var(--ifa-muted); font-size: .875rem; text-align: center; padding: 1rem;
+}
+/* Gilt inner frame for awarded / BEST works */
+.artwork.is-awarded .artwork-frame { outline: 3px solid var(--ifa-gilt); outline-offset: -3px; }
+
+.wall-label {
+    display: grid; gap: .1rem; padding-top: .75rem; max-width: 34ch;
+    font-size: .875rem; color: var(--ifa-muted); line-height: 1.45;
+}
+.wall-label .wl-title {
+    font-family: var(--ifa-font-display); font-style: italic; font-size: 1.125rem; line-height: 1.25;
+    color: var(--ifa-text); font-weight: 500;
+}
+.wall-label .wl-title a { color: inherit; text-decoration: none; }
+.wall-label .wl-title a:hover { text-decoration: underline; }
+.wall-label .wl-artist { color: var(--ifa-text); font-weight: 500; }
+.wall-label .wl-state { margin-top: .4rem; display: flex; flex-wrap: wrap; gap: .35rem; align-items: center; }
+.wall-label .wl-note { margin-top: .35rem; color: var(--ifa-text); }
+
+/* A wall of paintings */
+.art-grid {
+    display: grid; gap: 2.25rem 1.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 14.5rem), 1fr));
+    margin-bottom: 2rem;
+}
+.art-grid.is-large { grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); }
+
+/* One painting at full size with its long label beside it (details / grading) */
+.artwork-stage { display: grid; gap: 2rem; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); align-items: start; }
+.artwork-stage .artwork-frame { aspect-ratio: auto; background: var(--ifa-stone); padding: clamp(.75rem, 2vw, 1.5rem); outline: 0; }
+.artwork-stage .artwork-frame img { height: auto; max-height: 72vh; object-fit: contain; }
+@media (max-width: 991.98px) { .artwork-stage { grid-template-columns: 1fr; } }
+
+/* Poem / quote / story under a painting */
+.artwork-text {
+    font-family: var(--ifa-font-display); font-style: italic; font-size: 1.125rem; line-height: 1.6;
+    white-space: pre-line; color: var(--ifa-text); max-width: 60ch;
+}
+
+/* ---------- 10. Ledger strip (key figures without the card kit) ---------- */
+.ledger { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); border-top: 1px solid var(--ifa-text); border-bottom: 1px solid var(--ifa-line); margin-bottom: 2rem; }
+.ledger > div { padding: 1rem 1.25rem 1.1rem 0; }
+.ledger > div + div { padding-left: 1.25rem; border-left: 1px solid var(--ifa-line); }
+.ledger dt, .ledger .ledger-label { font-weight: 500; font-size: .875rem; color: var(--ifa-muted); }
+.ledger dd, .ledger .ledger-value { margin: .15rem 0 0; font-family: var(--ifa-font-display); font-size: 2rem; line-height: 1.1; font-variant-numeric: lining-nums tabular-nums; color: var(--ifa-text); }
+.ledger .ledger-value a { color: inherit; text-decoration: none; }
+.ledger .ledger-value a:hover { text-decoration: underline; }
+.ledger .ledger-sub { font-size: .8125rem; color: var(--ifa-muted); }
+
+/* Key/value details */
+.details { display: grid; grid-template-columns: minmax(9rem, max-content) 1fr; gap: .55rem 1.5rem; margin: 0 0 1.5rem; }
+.details dt { font-weight: 500; color: var(--ifa-muted); font-size: .9375rem; }
+.details dd { margin: 0; }
+@media (max-width: 575.98px) { .details { grid-template-columns: 1fr; gap: .15rem; } .details dd { margin-bottom: .6rem; } }
+
+/* Section inside a working page */
+.section { margin-top: 2.5rem; }
+.section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .75rem; border-bottom: 1px solid var(--ifa-line); padding-bottom: .5rem; margin-bottom: 1.25rem; }
+.section-head h2, .section-head h3 { margin: 0; }
+
+/* Empty state: an invitation to act */
+.empty { padding: 2.5rem 1.5rem; text-align: center; background: var(--ifa-mist); }
+.empty .bi { font-size: 2rem; color: var(--ifa-ink); display: block; margin-bottom: .5rem; }
+.empty p { margin: 0 auto .75rem; color: var(--ifa-muted); }
+
+/* Countdown / deadline line */
+.deadline { display: inline-flex; align-items: center; gap: .4rem; font-weight: 500; color: var(--ifa-ink); font-variant-numeric: tabular-nums; }
+.deadline.is-soon { color: var(--ifa-warning); }
+.deadline.is-over { color: var(--ifa-danger); }
+
+/* Progress (grading) */
+.progress { height: .45rem; border-radius: var(--ifa-radius-pill); background: var(--ifa-stone); }
+.progress-bar { background: var(--ifa-ink); }
+
+/* Pager */
+.pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; margin-top: 1.5rem; color: var(--ifa-muted); font-size: .9375rem; }
+.pager .pager-links { display: flex; gap: .5rem; }
+
+/* ---------- 11. Public shell ---------- */
+.site-header {
+    position: sticky; top: 0; z-index: 1020;
+    background: rgba(255, 255, 255, .96);
+    border-bottom: 1px solid var(--ifa-line);
+}
+.site-header .site-nav { display: flex; align-items: center; gap: 1.5rem; min-height: 4.25rem; padding: 0 var(--ifa-gutter); }
+.site-header .site-links { display: flex; gap: 1.5rem; margin: 0 0 0 auto; padding: 0; list-style: none; }
+.site-header .site-links a { color: var(--ifa-text); text-decoration: none; font-weight: 500; padding: .35rem 0; border-bottom: 1px solid transparent; }
+.site-header .site-links a:hover, .site-header .site-links a[aria-current="page"] { border-bottom-color: var(--ifa-ink); color: var(--ifa-ink); }
+.site-header .site-actions { display: flex; align-items: center; gap: .75rem; }
+.site-menu-toggle { display: none; }
+@media (max-width: 767.98px) {
+    .site-header .site-nav { flex-wrap: wrap; gap: .5rem 1rem; padding-top: .6rem; padding-bottom: .6rem; }
+    .site-menu-toggle { display: inline-flex; margin-left: auto; }
+    .site-header .site-links, .site-header .site-actions { display: none; width: 100%; }
+    .site-header.is-open .site-links { display: flex; flex-direction: column; gap: .25rem; margin: 0; padding: .5rem 0; }
+    .site-header.is-open .site-actions { display: flex; flex-wrap: wrap; padding-bottom: .75rem; }
+}
+
+/* Wordmark */
+.wordmark { display: inline-flex; align-items: center; color: var(--ifa-text); text-decoration: none; line-height: 1; }
+.wordmark img, .wordmark svg { height: 2.35rem; width: auto; display: block; }
+.wordmark:hover { color: var(--ifa-ink); }
+
+.site-main { min-height: 60vh; }
+.page { padding: clamp(1.5rem, 4vw, 3rem) var(--ifa-gutter) 3rem; max-width: 80rem; margin: 0 auto; }
+.page-narrow { max-width: 46rem; }
+
+/* Full-bleed painting band with a Didone title (NYU) */
+.hero {
+    position: relative; isolation: isolate; color: #fff;
+    min-height: min(82vh, 46rem); display: grid; align-items: end;
+    background: var(--ifa-ink); overflow: hidden;
+}
+.hero-art { position: absolute; inset: 0; z-index: -2; }
+.hero-art img { width: 100%; height: 100%; object-fit: cover; animation: hero-in 1.6s cubic-bezier(.16, 1, .3, 1) both; }
+/* Scrim only where the text sits, for legibility */
+.hero::after { content: ""; position: absolute; inset: 0; z-index: -1; background: linear-gradient(to top, rgba(7, 26, 32, .82) 0%, rgba(7, 26, 32, .45) 38%, rgba(7, 26, 32, 0) 68%); }
+.hero-body { padding: clamp(2rem, 6vw, 4.5rem) var(--ifa-gutter); max-width: 80rem; width: 100%; margin: 0 auto; }
+.hero-title {
+    font-family: var(--ifa-font-display); font-weight: 500; color: #fff;
+    font-size: clamp(2.75rem, 1.6rem + 5vw, 6rem); line-height: .98; letter-spacing: -0.02em; margin: 0 0 1.25rem; max-width: 14ch;
+    text-shadow: 0 1px 24px rgba(0, 0, 0, .25);
+}
+.hero-lede { font-family: var(--ifa-font-display); font-style: italic; font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem); line-height: 1.3; margin: 0 0 1.5rem; max-width: 34ch; color: #fff; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; align-items: center; color: rgba(255, 255, 255, .9); }
+.hero-credit { position: absolute; right: var(--ifa-gutter); bottom: 1rem; font-size: .8125rem; color: rgba(255, 255, 255, .85); max-width: 40ch; text-align: right; }
+.hero-credit em { font-family: var(--ifa-font-display); font-size: .95rem; }
+@keyframes hero-in { from { transform: scale(1.05); opacity: .4; } to { transform: scale(1); opacity: 1; } }
+
+/* Bands */
+.band { padding: clamp(2.5rem, 6vw, 5rem) var(--ifa-gutter); }
+.band > .band-inner { max-width: 80rem; margin: 0 auto; }
+.band-mist { background: var(--ifa-mist); }
+.band-stone { background: var(--ifa-stone); }
+.band-ink { background: var(--ifa-ink); color: var(--ifa-on-ink); }
+.band-ink h2, .band-ink h3, .band-ink a { color: var(--ifa-on-ink); }
+.band-ink .text-muted { color: var(--ifa-on-ink-muted) !important; }
+.band-title { font-size: clamp(2rem, 1.4rem + 2.4vw, 3.5rem); margin: 0 0 1.75rem; text-align: center; }
+.band-title.is-left { text-align: left; }
+
+/* Footer */
+.site-footer { background: var(--ifa-ink); color: var(--ifa-on-ink-muted); padding: 3rem var(--ifa-gutter) 2rem; font-size: .9375rem; }
+.site-footer .footer-inner { max-width: 80rem; margin: 0 auto; display: grid; gap: 2rem; grid-template-columns: 2fr 1fr 1fr; }
+.site-footer a { color: var(--ifa-on-ink); text-decoration: none; }
+.site-footer a:hover { text-decoration: underline; }
+.site-footer .wordmark { color: var(--ifa-on-ink); }
+.site-footer ul { list-style: none; padding: 0; margin: 0; display: grid; gap: .4rem; }
+.site-footer .footer-base { max-width: 80rem; margin: 2.5rem auto 0; padding-top: 1.25rem; border-top: 1px solid rgba(169, 190, 197, .3); display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1rem; }
+@media (max-width: 767.98px) { .site-footer .footer-inner { grid-template-columns: 1fr; } }
+
+/* ---------- 12. Working shell: navy rail + white work area ---------- */
+.app { display: grid; grid-template-columns: var(--ifa-rail-width) minmax(0, 1fr); min-height: 100vh; }
+/* The rail's column stays navy for the whole page height, also below the sticky rail on long pages */
+@media (min-width: 992px) { .app { background: linear-gradient(to right, var(--ifa-ink) var(--ifa-rail-width), var(--ifa-wall) var(--ifa-rail-width)); } }
+.rail {
+    background: var(--ifa-ink); color: var(--ifa-on-ink);
+    position: sticky; top: 0; height: 100vh; overflow-y: auto;
+    display: flex; flex-direction: column; padding: 1.25rem .85rem 1rem;
+    scrollbar-color: rgba(169, 190, 197, .4) transparent;
+}
+.rail .wordmark { color: var(--ifa-on-ink); padding: .25rem .6rem 1.25rem; }
+.rail-role { font-size: .8125rem; color: var(--ifa-on-ink-muted); padding: 0 .6rem .75rem; }
+.rail-nav { list-style: none; margin: 0; padding: 0; display: grid; gap: .1rem; }
+.rail-nav a {
+    display: flex; align-items: center; gap: .7rem; padding: .55rem .7rem; border-radius: var(--ifa-radius-pill);
+    color: var(--ifa-on-ink); text-decoration: none; font-weight: 500; font-size: .9375rem;
+}
+.rail-nav a .bi { font-size: 1.05rem; color: var(--ifa-on-ink-muted); width: 1.1rem; text-align: center; }
+.rail-nav a:hover { background: rgba(243, 246, 247, .08); }
+.rail-nav a[aria-current="page"] { background: var(--ifa-wall); color: var(--ifa-ink); }
+.rail-nav a[aria-current="page"] .bi { color: var(--ifa-ink); }
+.rail-group { margin-top: 1rem; padding: 0 .7rem .35rem; font-size: .8125rem; color: var(--ifa-on-ink-muted); }
+.rail-foot { margin-top: auto; padding: 1rem .6rem 0; border-top: 1px solid rgba(169, 190, 197, .25); font-size: .875rem; color: var(--ifa-on-ink-muted); }
+.rail-foot a { color: var(--ifa-on-ink); }
+
+.app-main { display: flex; flex-direction: column; min-width: 0; }
+/* The backdrop only exists for the off-canvas rail on small screens; it must never take a grid cell */
+.rail-backdrop { display: none; }
+.app-top {
+    display: flex; align-items: center; justify-content: flex-end; gap: .75rem 1rem; flex-wrap: wrap;
+    padding: .75rem var(--ifa-gutter); border-bottom: 1px solid var(--ifa-line); background: var(--ifa-wall);
+    position: sticky; top: 0; z-index: 1010;
+}
+.app-top .app-user { display: flex; align-items: center; gap: .5rem; color: var(--ifa-text); font-weight: 500; text-decoration: none; }
+.app-top .app-user .avatar {
+    width: 2rem; height: 2rem; border-radius: 50%; display: grid; place-items: center;
+    background: var(--ifa-stone); color: var(--ifa-ink); font-family: var(--ifa-font-ui); font-weight: 600; font-size: .8125rem; letter-spacing: .02em;
+}
+.app-menu-toggle { display: none; margin-right: auto; }
+.app-content { padding: clamp(1.25rem, 3vw, 2.25rem) var(--ifa-gutter) 3rem; width: 100%; max-width: 92rem; }
+
+/* Page head: Didone title + actions */
+.page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem 1.5rem; margin-bottom: 1.75rem; }
+.page-head h1 { margin: 0; }
+.page-head .page-sub { margin: .35rem 0 0; color: var(--ifa-muted); }
+.page-head .page-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.breadcrumb { --bs-breadcrumb-divider-color: var(--ifa-muted); font-size: .875rem; margin-bottom: .5rem; }
+.breadcrumb a { color: var(--ifa-muted); text-decoration: none; }
+.breadcrumb a:hover { color: var(--ifa-ink); text-decoration: underline; }
+
+@media (max-width: 991.98px) {
+    .app { grid-template-columns: 1fr; }
+    .rail { position: fixed; inset: 0 auto 0 0; width: min(18rem, 85vw); z-index: 1050; transform: translateX(-100%); transition: transform .25s cubic-bezier(.16, 1, .3, 1); box-shadow: var(--ifa-shadow); }
+    .app.is-rail-open .rail { transform: none; }
+    .app-menu-toggle { display: inline-flex; }
+    .rail-backdrop { position: fixed; inset: 0; background: rgba(7, 26, 32, .45); z-index: 1040; display: none; }
+    .app.is-rail-open .rail-backdrop { display: block; }
+}
+
+/* Dropdowns (bell, user) in the world's palette */
+.dropdown-menu { border-radius: 4px; border-color: var(--ifa-line); box-shadow: var(--ifa-shadow); padding: .4rem; }
+.dropdown-item { border-radius: 3px; padding: .5rem .65rem; }
+.dropdown-item:active { background: var(--ifa-ink); }
+.bell-count { background: var(--ifa-danger); color: #fff; font-size: .75rem; min-width: 1.25rem; height: 1.25rem; padding: 0 .35rem; border-radius: var(--ifa-radius-pill); display: inline-grid; place-items: center; font-variant-numeric: tabular-nums; }
+
+/* Language switch */
+.lang-switch .seg > button { padding: .2rem .65rem; font-size: .8125rem; }
+
+/* SweetAlert2 in the world */
+.swal2-popup { font-family: var(--ifa-font-ui) !important; border-radius: 6px !important; color: var(--ifa-text) !important; }
+.swal2-title { font-family: var(--ifa-font-display) !important; font-weight: 500 !important; color: var(--ifa-text) !important; }
+.swal2-actions .btn { margin: 0 .3rem; }
+
+/* ---------- 13. Motion & print ---------- */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}
+
+@media print {
+    .rail, .app-top, .site-header, .site-footer, .filters, .page-actions, .pager, .btn, .d-print-none { display: none !important; }
+    .app { display: block; }
+    .app-content, .page { padding: 0; max-width: none; }
+    body { font-size: 10.5pt; color: #000; background: #fff; }
+    .table { font-size: 9.5pt; }
+    .table > thead th { color: #000; }
+    a { color: #000; text-decoration: none; }
+    .tag { border: 1px solid #999; background: none !important; color: #000 !important; }
+    h1 { font-size: 20pt; }
+}
+
+/* ---------- Agent T (FE1-03, FE1-06, FE1-07, FE2-04, FE2-05): staff competitions, grading, awards ---------- */
+/* Staff home: quick links as a hairline list, not a card grid */
+.quick-links { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 22rem), 1fr)); column-gap: 2rem; }
+.quick-links a { display: grid; grid-template-columns: 1.5rem 1fr; column-gap: .75rem; padding: .85rem 0; border-bottom: 1px solid var(--ifa-line); text-decoration: none; color: var(--ifa-text); }
+.quick-links .bi { grid-row: span 2; font-size: 1.15rem; color: var(--ifa-ink); line-height: 1.4; }
+.quick-links .ql-title { font-weight: 600; color: var(--ifa-ink); }
+.quick-links .ql-text { font-size: .9375rem; color: var(--ifa-muted); }
+.quick-links a:hover .ql-title { text-decoration: underline; }
+/* Visually hidden header text (absolute) must stay inside the scrolling table, or the page scrolls sideways on phones */
+.table-responsive { position: relative; }
+/* A missing cover / painting on a single-painting page keeps a visible mat */
+.artwork-stage .artwork-frame:has(.artwork-missing) { min-height: 16rem; }
+/* Wider filter column for competition selects; full-width filters on phones */
+@media (max-width: 575.98px) { .filters .filter { max-width: none; } }
+.filters .filter-wide { flex: 2 1 16rem; max-width: 26rem; }
+/* Grading progress: label line + bar */
+.grading-progress { display: grid; gap: .45rem; max-width: 34rem; }
+.grading-strip { max-width: none; background: var(--ifa-mist); padding: .9rem 1.25rem; margin-bottom: 1.5rem; }
+.grading-strip .progress { background: var(--ifa-wall); }
+.cover-preview { max-width: 16rem; }
+/* Issued winners in the awards ledger: gilt mark, Didone title */
+.winners { list-style: none; margin: 0 0 .35rem; padding: 0; display: grid; gap: .35rem; }
+.winners li { display: flex; gap: .4rem; align-items: baseline; }
+.winners .bi { color: var(--ifa-gilt); }
+.winners .wl-title { font-family: var(--ifa-font-display); font-style: italic; font-size: 1.0625rem; color: var(--ifa-gilt-text); }
+.publish-sheet { background: var(--ifa-mist); padding: 1.25rem 1.5rem 1.5rem; }
+/* 56px thumbnail inside a frame so the image fallback of site.js still works */
+.thumb-frame { width: 56px; height: 56px; aspect-ratio: auto; }
+.thumb-frame .table-thumb { border: 0; }
+.thumb-frame .artwork-missing { font-size: .625rem; line-height: 1.1; padding: .2rem; }
+.thumb-frame.is-gilt { outline: 2px solid var(--ifa-gilt); outline-offset: -2px; }
+/* A longer wall label beside or under a single painting */
+.wall-label-long { max-width: none; padding-top: 0; }
+.wall-label-long .wl-title { font-size: 1.5rem; }
+.artwork-stage > .artwork .wall-label-long { padding-top: 1rem; }
+/* Study history: painting with its label on the left, comments on the right */
+.history-list { list-style: none; margin: 0; padding: 0; }
+.history-list > li { display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); gap: 1.5rem 2rem; padding: 1.75rem 0; border-top: 1px solid var(--ifa-line); }
+@media (max-width: 767.98px) { .history-list > li { grid-template-columns: 1fr; } }
+.award-line { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+/* Grading: rating as a pill radio group; BEST in gilt, DISQUALIFIED in danger */
+.grading-panel { position: sticky; top: 5rem; }
+@media (max-width: 991.98px) { .grading-panel { position: static; } }
+.grading-panel fieldset legend { float: none; font-size: .9375rem; }
+.rating-pills { display: flex; flex-wrap: wrap; gap: .45rem; }
+.rating-pills input { position: absolute; opacity: 0; pointer-events: none; }
+.rating-pills label { padding: .45rem 1rem; border: 1px solid var(--ifa-ink); border-radius: var(--ifa-radius-pill); color: var(--ifa-ink); font-weight: 500; cursor: pointer; line-height: 1.3; }
+.rating-pills label:hover { background: var(--ifa-ink-soft); }
+.rating-pills input:checked + label { background: var(--ifa-ink); color: var(--ifa-on-ink); }
+.rating-pills input:focus-visible + label { outline: 2px solid var(--ifa-ink); outline-offset: 2px; }
+.rating-pills .rating-BEST { border-color: var(--ifa-gilt); color: var(--ifa-gilt-text); }
+.rating-pills .rating-BEST:hover { background: var(--ifa-gilt-soft); }
+.rating-pills input:checked + .rating-BEST { background: var(--ifa-gilt-text); border-color: var(--ifa-gilt); color: #fff; box-shadow: inset 0 0 0 2px var(--ifa-gilt); }
+.rating-pills .rating-DISQUALIFIED { border-color: var(--ifa-danger); color: var(--ifa-danger); }
+.rating-pills input:checked + .rating-DISQUALIFIED { background: var(--ifa-danger); color: #fff; }
+.late-warning { font-size: 1.0625rem; padding: 1.1rem 1.25rem; }
+
+/* ---------- Agent P (FE2-08, FE1-02, QA-03, QA-05, FE1-OPT): public home lists, sign-in sheet, error, read pages ---------- */
+/* Calm list of competitions / exhibitions / notifications: hairline rows, title left, facts and action right */
+.calm-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ifa-line-strong); }
+.calm-list > li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .5rem 1.5rem; align-items: center; padding: 1.1rem 0; border-bottom: 1px solid var(--ifa-line-strong); }
+.calm-list .cl-title { font-family: var(--ifa-font-display); font-size: 1.375rem; line-height: 1.2; color: var(--ifa-text); margin: 0; }
+.calm-list .cl-title a { color: inherit; text-decoration: none; }
+.calm-list .cl-title a:hover { text-decoration: underline; }
+.calm-list .cl-meta { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; margin-top: .3rem; color: var(--ifa-muted); font-size: .9375rem; }
+.calm-list .cl-meta .bi { margin-right: .3rem; }
+.calm-list .cl-action { display: flex; gap: .5rem; align-items: center; }
+.band-mist .calm-list, .band-stone .calm-list { border-top-color: var(--ifa-text); }
+@media (max-width: 575.98px) { .calm-list > li { grid-template-columns: 1fr; } }
+/* Notifications: unread rows sit on mist with a bold title */
+.calm-list > li.is-unread { background: var(--ifa-mist); padding-left: 1rem; padding-right: 1rem; }
+.calm-list > li.is-unread .cl-head { font-weight: 600; }
+.calm-list .cl-body { margin-top: .2rem; white-space: pre-line; max-width: 70ch; }
+
+/* Home: two calm lists side by side on the stone band; section heads on bands */
+.split-2 { display: grid; gap: 2.5rem 4rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr)); }
+.split-2 h2 { margin-top: 0; }
+.band-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem 1.5rem; margin-bottom: 1.5rem; }
+.band-head h2 { margin: 0; font-size: clamp(2rem, 1.4rem + 2vw, 3rem); }
+.band-head p { margin: .35rem 0 0; color: var(--ifa-muted); }
+.hero-actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+.band-ink a.btn-on-ink, .band-ink a.btn-on-ink:hover { color: var(--ifa-ink); }
+/* Competition page: the cover as a shorter painted band, title one step below the home title */
+.hero.is-short { min-height: min(56vh, 30rem); }
+.hero-title.is-page { font-size: clamp(2.25rem, 1.5rem + 3vw, 4rem); max-width: 20ch; }
+.breadcrumb.on-ink a, .breadcrumb.on-ink .active { color: rgba(255, 255, 255, .88); }
+.breadcrumb.on-ink { --bs-breadcrumb-divider-color: rgba(255, 255, 255, .7); }
+.table .prize { color: var(--ifa-gilt-text); font-weight: 600; }
+@media (max-width: 575.98px) { .hero-credit { position: static; text-align: left; padding: 0 var(--ifa-gutter) 1rem; max-width: none; } }
+
+/* Sign-in / password sheets: one calm white sheet centred on the mist band */
+.auth-band { min-height: 70vh; display: grid; place-items: start center; }
+.auth-sheet { width: min(100%, 27rem); background: var(--ifa-wall); padding: clamp(1.5rem, 4vw, 2.5rem); box-shadow: var(--ifa-shadow); }
+.auth-sheet .wordmark { margin-bottom: 1.5rem; }
+.auth-sheet h1 { font-size: 2rem; }
+.auth-sheet .auth-foot { margin: 1.25rem 0 0; padding-top: 1rem; border-top: 1px solid var(--ifa-line); text-align: center; }
+
+/* Error page: the status number is the page's subject */
+.error-page { text-align: center; padding: clamp(2rem, 8vw, 5rem) 0; }
+.error-page .error-code { font-family: var(--ifa-font-display); font-size: clamp(5rem, 3rem + 10vw, 9rem); line-height: 1; color: var(--ifa-ink); margin: 0 0 .5rem; }
+.error-page p { margin-left: auto; margin-right: auto; }
+.error-page code { color: var(--ifa-muted); }
+
+/* Read mode (About, Privacy): comfortable measure */
+.read { max-width: 40rem; }
+.read p, .read li { font-size: 1.0625rem; line-height: 1.65; }
+
+/* ---------- Agent S (FE1-04, FE1-05, FE1-08, FE2-06, FE2-07): student area ---------- */
+/* Deadline inside a wall label: same voice, label size */
+.wall-label .deadline { font-size: .875rem; }
+.wall-label .wl-actions { margin-top: .5rem; display: flex; flex-wrap: wrap; gap: .4rem; }
+/* Segmented pills built by upload-preview.js from a <select data-seg-pills>; keyboard focus on the pill */
+.seg-pills { display: flex; width: fit-content; max-width: 100%; flex-wrap: wrap; }
+/* Painting page: keep a visible stage while the image loads or is missing */
+.artwork-stage .artwork-frame { min-height: 14rem; }
+.seg > input:focus-visible + label { outline: 2px solid var(--ifa-ink); outline-offset: -4px; }
+/* Live preview of the chosen JPEG (upload-preview.js) and the current image on the edit form */
+.upload-preview { margin-top: .9rem; display: grid; grid-template-columns: minmax(0, 15rem) minmax(0, 1fr); gap: 1rem 1.25rem; align-items: start; }
+.upload-preview .wall-label { padding-top: 0; }
+.upload-preview .wl-note { color: var(--ifa-warning); }
+@media (max-width: 575.98px) { .upload-preview { grid-template-columns: 1fr; } }
+/* Next steps on the student dashboard: a quiet list of rows, not a card grid */
+.next-steps { list-style: none; padding: 0; margin: 0 0 2rem; border-top: 1px solid var(--ifa-text); }
+.next-steps > li { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr) auto; gap: .25rem 1rem; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--ifa-line); }
+.next-steps > li > .bi { font-size: 1.35rem; color: var(--ifa-ink); }
+.next-steps .step-title { font-family: var(--ifa-font-display); font-size: 1.25rem; line-height: 1.25; }
+.next-steps .step-title a { color: var(--ifa-text); text-decoration: none; }
+.next-steps .step-title a:hover { text-decoration: underline; }
+.next-steps p { margin: .15rem 0 0; color: var(--ifa-muted); font-size: .9375rem; }
+@media (max-width: 575.98px) { .next-steps > li { grid-template-columns: 2rem minmax(0, 1fr); } .next-steps > li > .step-action { grid-column: 2; } }
+/* My results ledger: each entry is a <tbody class="card mb-3"> (kept for the e2e scripts), drawn as table rows */
+.result-ledger > tbody.card { display: table-row-group; border: 0; border-radius: 0; background: none; margin: 0 !important; }
+.result-ledger > tbody > tr.result-comments > td { padding-top: 0; color: var(--ifa-text); }
+.result-ledger > tbody > tr:not(:last-child) > td { border-bottom-width: 0; }
+.result-ledger .details { margin: 0; font-size: .9375rem; }
+.result-ledger .details dd { white-space: pre-line; max-width: 70ch; }
+/* Phones: each entry stacks (painting, title, competition, rating, comments) instead of scrolling sideways */
+@media (max-width: 575.98px) {
+    .result-ledger > thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .result-ledger, .result-ledger > tbody.card, .result-ledger tr, .result-ledger td { display: block; }
+    .result-ledger > tbody.card { border-bottom: 1px solid var(--ifa-line); padding: .75rem 0; }
+    .result-ledger > tbody > tr > td { border: 0; padding: .2rem 0; }
+    .result-ledger > tbody > tr > td:empty { display: none; }
+}
+/* Staff comments folded under a wall label (Best works) */
+.wall-label details { margin-top: .5rem; color: var(--ifa-text); }
+.wall-label details summary { cursor: pointer; color: var(--ifa-ink); font-weight: 500; }
+.wall-label details dl { margin: .5rem 0 0; }
+.wall-label details dt { font-weight: 500; color: var(--ifa-muted); margin-top: .35rem; }
+.wall-label details dd { margin: 0; white-space: pre-line; }
+/* Evaluation block on a painting's page */
+.evaluation { background: var(--ifa-mist); padding: 1.25rem 1.5rem; }
+.evaluation .details { margin-bottom: 0; }
+.evaluation .details dd { white-space: pre-line; }
+
+/* ---------- E. Admin, people lists, reports (FE2-02, FE2-03, FE2-09, QA-07) ---------- */
+/* Breakdown under a ledger figure (admin dashboard) */
+.ledger .ledger-list { list-style: none; margin: .5rem 0 0; padding: 0; display: grid; gap: .1rem; font-size: .8125rem; color: var(--ifa-muted); }
+.ledger .ledger-list strong { color: var(--ifa-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.quick-actions { display: flex; flex-wrap: wrap; gap: .5rem; margin: 0 0 2.5rem; padding: 0; list-style: none; }
+/* Group heading inside a details page (Login, Personal, Job...) */
+.details-head { font-family: var(--ifa-font-ui); font-size: 1rem; font-weight: 600; margin: 0 0 .75rem; padding-bottom: .4rem; border-bottom: 1px solid var(--ifa-line); }
+/* Reset password + lock / delete row */
+.account-actions { display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: flex-end; justify-content: space-between; }
+.account-actions .reset-form { display: flex; gap: .5rem; align-items: flex-end; flex: 1 1 18rem; max-width: 30rem; }
+.account-actions .reset-form > div { flex: 1; }
+.account-actions .state-forms { display: flex; flex-wrap: wrap; gap: .5rem; }
+/* Long messages in a tag (CSV import errors) */
+.tag-wrap { white-space: normal; align-items: baseline; }
+.error-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .25rem; justify-items: start; }
+/* /reports: a calm list, not a card grid */
+.report-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--ifa-text); max-width: 52rem; }
+.report-list li { border-bottom: 1px solid var(--ifa-line); }
+.report-list a { display: grid; grid-template-columns: 5rem 1fr; gap: .1rem 1rem; padding: 1rem .5rem; color: var(--ifa-text); text-decoration: none; }
+.report-list a:hover { background: var(--ifa-mist); }
+.report-list .report-code { color: var(--ifa-muted); font-size: .875rem; padding-top: .3rem; font-variant-numeric: tabular-nums; }
+.report-list .report-title { font-family: var(--ifa-font-display); font-size: 1.25rem; line-height: 1.3; }
+.report-list .report-desc { grid-column: 2; color: var(--ifa-muted); font-size: .9375rem; }
+/* Filter summary of a report: on screen and on paper */
+.criteria { display: flex; flex-wrap: wrap; gap: .2rem 1.75rem; margin: 0 0 1rem; font-size: .9375rem; }
+.criteria > div { display: flex; gap: .4rem; }
+.criteria dt { font-weight: 500; color: var(--ifa-muted); }
+.criteria dd { margin: 0; }
+.report-stamp { margin: .2rem 0 0; font-size: .8125rem; color: var(--ifa-muted); }
+/* Totals: a rule on top, semibold */
+.table > tfoot td, .table > tfoot th { border-top: 1px solid var(--ifa-text); border-bottom: 0; font-weight: 600; }
+.table-totals { width: auto; min-width: 18rem; border-top: 1px solid var(--ifa-text); }
+.table-totals th { font-weight: 500; color: var(--ifa-muted); padding-right: 2.5rem; }
+.table-totals td { font-weight: 600; }
+.table-totals tr:first-child > * { color: var(--ifa-text); font-weight: 600; }
+/* Phones: two filters per row so a long filters bar does not fill the screen */
+@media (max-width: 575.98px) {
+    .filters .filter { flex: 1 1 calc(50% - .5rem); min-width: 0; max-width: none; }
+    .filters .filter-actions { margin-left: 0; }
+}
+/* Reports print on A4 landscape: title, filter summary, table */
+@page report { size: A4 landscape; margin: 12mm; }
+@media print {
+    .report-page { page: report; }
+    .report-page .breadcrumb { display: none; }
+    .report-page .page-head { margin-bottom: .4rem; }
+    .report-page h1 { font-size: 16pt; }
+    .report-page h2 { font-size: 12pt; margin-top: 1rem; }
+    .criteria { font-size: 9pt; margin-bottom: .5rem; }
+    .table-responsive { overflow: visible !important; }
+    .report-page .table { font-size: 8.5pt; }
+    .report-page .table > :not(caption) > * > * { padding: .2rem .35rem; }
+    .report-page thead { display: table-header-group; }
+    .report-page tr, .table-totals, .report-page tfoot { break-inside: avoid; }
+}
+
+/* ---------- Agent X (FE2-07, FE1-08/09, FE2-10): entry state ladder, action sheets, charts ---------- */
+/* Where an exhibition entry stands: PENDING -> ACCEPTED -> SOLD -> PAID, a small vertical list.
+   <ol class="state-ladder"><li class="is-done">Pending</li><li class="is-current" aria-current="step">Accepted</li><li>Sold</li>...</ol>
+   .is-off marks the side exits (REJECTED, UNSOLD); .is-skipped the steps that can no longer happen. */
+.state-ladder { list-style: none; margin: 0 0 1.75rem; padding: 0; }
+.state-ladder li { position: relative; display: flex; align-items: baseline; gap: .7rem; padding: .3rem 0; color: var(--ifa-muted); }
+.state-ladder li::before {
+    content: ""; flex: none; width: .7rem; height: .7rem; border-radius: 50%; position: relative; top: .05rem;
+    border: 1px solid var(--ifa-line-strong); background: var(--ifa-wall); z-index: 1;
+}
+.state-ladder li + li::after { content: ""; position: absolute; left: calc(.35rem - .5px); top: -.55rem; height: 1.1rem; width: 1px; background: var(--ifa-line-strong); }
+.state-ladder .is-done { color: var(--ifa-text); }
+.state-ladder .is-done::before { background: var(--ifa-ink); border-color: var(--ifa-ink); }
+.state-ladder .is-current { color: var(--ifa-ink); font-weight: 600; }
+.state-ladder .is-current::before { background: var(--ifa-ink); border-color: var(--ifa-ink); outline: 3px solid var(--ifa-ink-soft); }
+.state-ladder .is-off { color: var(--ifa-danger); font-weight: 600; }
+.state-ladder .is-off::before { background: var(--ifa-danger); border-color: var(--ifa-danger); }
+.state-ladder .is-skipped { text-decoration: line-through; text-decoration-color: var(--ifa-line-strong); }
+.state-ladder .ladder-note { font-weight: 400; font-size: .875rem; color: var(--ifa-muted); }
+
+/* One state-changing form beside the painting: a hairline above, its own small heading */
+.entry-action { border-top: 1px solid var(--ifa-line); padding-top: 1.1rem; margin-top: 1.5rem; }
+.entry-action h2 { font-size: 1.375rem; margin: 0 0 .85rem; }
+.entry-action .form-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; margin-top: .85rem; }
+
+/* A missing painting on the stage keeps a frame of real size (site.js writes "Image not available" into it) */
+.artwork-stage .artwork-frame:has(.artwork-missing) { min-height: 16rem; }
+
+/* Text typed by staff that keeps its line breaks (instead of an inline white-space style) */
+.pre-line { white-space: pre-line; }
+
+/* .ledger.is-dense: many figures in one strip; two columns on phones instead of one long stack */
+@media (max-width: 575.98px) {
+    .ledger.is-dense { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ledger.is-dense > div + div { border-left: 0; padding-left: 0; }
+    .ledger.is-dense > div:nth-child(even) { border-left: 1px solid var(--ifa-line); padding-left: 1rem; }
+    .ledger.is-dense > div:nth-child(n+3) { border-top: 1px solid var(--ifa-line); }
+}
+
+/* Breakdown lines under a ledger figure (<dd class="ledger-sub">), in the UI face */
+.ledger dd.ledger-sub { font-family: var(--ifa-font-ui); font-size: .8125rem; line-height: 1.45; margin: .1rem 0 0; color: var(--ifa-muted); }
+.ledger dd:not(.ledger-sub) + dd.ledger-sub { margin-top: .5rem; }
+.ledger dd.ledger-sub strong { color: var(--ifa-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+/* Native <progress> drawn like the Bootstrap .progress bar (value set by the server, no inline width) */
+progress.meter { display: block; width: 100%; max-width: 20rem; height: .45rem; border: 0; border-radius: var(--ifa-radius-pill); background: var(--ifa-stone); overflow: hidden; appearance: none; }
+progress.meter::-webkit-progress-bar { background: var(--ifa-stone); border-radius: var(--ifa-radius-pill); }
+progress.meter::-webkit-progress-value { background: var(--ifa-ink); border-radius: var(--ifa-radius-pill); }
+progress.meter::-moz-progress-bar { background: var(--ifa-ink); border-radius: var(--ifa-radius-pill); }
+progress.meter.progress-inline { width: 8rem; background: var(--ifa-wall); }
+progress.meter.progress-inline::-webkit-progress-bar { background: var(--ifa-wall); }
+
+/* A filter whose options are long (exhibition or competition names) */
+.filters .filter.is-wide { flex-basis: 16rem; max-width: 24rem; }
+
+/* Totals row of a ledger table */
+.table > tfoot td { font-weight: 600; border-top: 1px solid var(--ifa-text); border-bottom: 0; }
+
+/* Dashboard charts (charts.js): a caption, a fixed-height canvas, a visually hidden data table */
+.chart-grid { display: grid; gap: 2.5rem 2rem; grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); }
+.chart-figure { margin: 0; min-width: 0; }
+.chart-figure figcaption { margin-bottom: .75rem; }
+.chart-figure figcaption h3 { margin: 0 0 .2rem; }
+.chart-figure figcaption p { margin: 0; color: var(--ifa-muted); font-size: .9375rem; }
+.chart-figure.is-wide { grid-column: 1 / -1; }
+.chart-box { position: relative; height: 18rem; }
+.chart-status { color: var(--ifa-muted); font-size: .9375rem; }
+
+/* ---------- Finish review fixes (integration) ---------- */
+/* Paintings are hung whole: no crop in grids, the stone mat shows around the work (principle: the artwork leads) */
+.art-grid .artwork-frame img { object-fit: contain; padding: .5rem; }
+.hero-title, .band-title, .wall-label .wl-title { font-kerning: normal; font-optical-sizing: auto; }
+/* A painting named in a table row reads as a painting name, like its wall label */
+.table td a[href*="/submissions/"]:not(.btn), .table td a[href*="/exhibition-entries/"]:not(.btn) {
+    font-family: var(--ifa-font-display); font-style: italic; font-size: 1.0625rem;
+}
+/* Text links among page actions sit flush instead of wrapping with button padding */
+.page-actions .btn-link { padding-inline: 0; }
+/* Bodoni Moda's wide W/V/A sidebearings open gaps at display sizes ("W elcome"): tighten the display tracking */
+h1, .h1, .hero-title, .band-title { letter-spacing: -0.02em; }

@@ -1,0 +1,15 @@
+@*
+    Shared <head> content of both layouts (FE1-01): fonts, Bootstrap, Bootstrap Icons, the design system and the favicon.
+    Every file is served from wwwroot/lib, so the site works without internet access.
+*@
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0b2a33" />
+<title>@(ViewData["Title"] is string t && t.Length > 0 ? $"{t} – Institute of Fine Arts" : "Institute of Fine Arts")</title>
+<link rel="icon" href="~/img/favicon.svg" type="image/svg+xml" />
+<link rel="preload" href="~/lib/fonts/general-sans/GeneralSans-Variable.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="stylesheet" href="~/lib/fonts/bodoni-moda.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/lib/fonts/general-sans.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+<link rel="stylesheet" href="~/lib/bootstrap-icons/bootstrap-icons.min.css" />
+<link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />

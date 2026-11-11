@@ -2,49 +2,63 @@
 @*
     Public gallery (/gallery, SCR-06, F-M02-07): thumbnails of the awarded paintings of GRADED competitions, paged.
     Open to guests and every role; only image, title, student, award and competition (no texts, no evaluations).
-    Minimal version created by BE2 (BE2-11); FE2 builds the real design in FE2-08.
+    Created by BE2 (BE2-11); styled by FE2-08: a wall of large awarded works, each with its museum wall label.
 *@
 @{
     ViewData["Title"] = "Gallery";
 }
 
-<h1 class="h3 mb-3">Gallery of awarded paintings</h1>
+<div class="page-head">
+    <div>
+        <h1>Gallery of awarded paintings</h1>
+        <p class="page-sub">Paintings that received an award in the institute's competitions.</p>
+    </div>
+</div>
 
 @if (Model.TotalCount == 0)
 {
-    <p class="text-muted">No awarded paintings yet.</p>
+    <div class="empty">
+        <i class="bi bi-image" aria-hidden="true"></i>
+        <p>No awarded paintings yet.</p>
+        <a href="/competitions" class="btn btn-primary">See the competitions</a>
+    </div>
 }
 else
 {
-    <div class="row g-3 mb-3">
+    <div class="art-grid is-large">
         @foreach (var g in Model.Items)
         {
-            <div class="col-6 col-md-4 col-lg-3">
-                <div class="card h-100">
+            <figure class="artwork is-awarded">
+                <a class="artwork-frame" href="/competitions/@g.CompetitionId">
                     @if (g.HasThumbnail)
                     {
-                        <img src="/files/submissions/@g.SubmissionId/thumb" alt="@g.ArtworkTitle" class="card-img-top" />
+                        <img src="/files/submissions/@g.SubmissionId/thumb" alt="@g.ArtworkTitle – @g.StudentName" loading="lazy" />
                     }
-                    <div class="card-body p-2">
-                        <div class="fw-semibold">“@g.ArtworkTitle”</div>
-                        <div class="small">@g.StudentName · <span class="badge bg-success">@g.AwardName</span></div>
-                        <div class="small"><a href="/competitions/@g.CompetitionId">@g.CompetitionTitle</a></div>
-                    </div>
-                </div>
-            </div>
+                    else
+                    {
+                        <span class="artwork-missing">Image not available</span>
+                    }
+                </a>
+                <figcaption class="wall-label">
+                    <span class="wl-title">@g.ArtworkTitle</span>
+                    <span class="wl-artist">@g.StudentName</span>
+                    <span class="wl-meta"><a href="/competitions/@g.CompetitionId">@g.CompetitionTitle</a></span>
+                    <span class="wl-state"><span class="tag tag-award"><i class="bi bi-award" aria-hidden="true"></i>@g.AwardName</span></span>
+                </figcaption>
+            </figure>
         }
     </div>
 
-    <nav class="d-flex justify-content-between align-items-center">
-        <span class="text-muted small">@Model.TotalCount painting@(Model.TotalCount == 1 ? "" : "s") · page @Model.Page of @Model.TotalPages</span>
-        <div>
+    <nav class="pager" aria-label="Gallery pages">
+        <span>@Model.TotalCount painting@(Model.TotalCount == 1 ? "" : "s"), page @Model.Page of @Model.TotalPages</span>
+        <div class="pager-links">
             @if (Model.HasPrevious)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="/gallery?page=@(Model.Page - 1)">Previous</a>
+                <a class="btn btn-sm btn-outline-primary" href="/gallery?page=@(Model.Page - 1)"><i class="bi bi-arrow-left" aria-hidden="true"></i>Previous</a>
             }
             @if (Model.HasNext)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="/gallery?page=@(Model.Page + 1)">Next</a>
+                <a class="btn btn-sm btn-outline-primary" href="/gallery?page=@(Model.Page + 1)">Next<i class="bi bi-arrow-right ms-1 me-0" aria-hidden="true"></i></a>
             }
         </div>
     </nav>

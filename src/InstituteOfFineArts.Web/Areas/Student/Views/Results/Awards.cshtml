@@ -2,7 +2,7 @@
 @*
     Student – awards issued (/student/awards, SCR-47, F-M06-09, F-M08-04 pub, US-11 AC4, TC-M08-05): awards of
     GRADED competitions; search by competition, student name, award and issued date; paged.
-    Minimal version created by BE2 (BE2-08); FE2 builds the real design in FE2-06.
+    Created by BE2 (BE2-08); styled by FE2-06: gilt-framed winning paintings with wall labels (award, rank, prize, date).
 *@
 @{
     ViewData["Title"] = "Awards";
@@ -12,15 +12,24 @@
     object PageRoute(int page) => new { search.CompetitionId, search.StudentName, search.Award, From = search.From?.ToString("yyyy-MM-dd"), To = search.To?.ToString("yyyy-MM-dd"), page };
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Awards</h1>
-    <a href="/student/results" class="btn btn-outline-secondary">My Results</a>
+<div class="page-head">
+    <div>
+        <h1>Awards</h1>
+        <p class="page-sub">Every award given in competitions with published results.</p>
+    </div>
+    <div class="page-actions">
+        <div class="seg" role="group" aria-label="Results">
+            <a href="/student/results">My Results</a>
+            <a href="/student/best">Best Works</a>
+            <a href="/student/awards" aria-current="page">Awards</a>
+        </div>
+    </div>
 </div>
 
 <partial name="_Alerts" />
 
-<form method="get" asp-action="Awards" class="row g-2 align-items-end mb-3">
-    <div class="col-md-3">
+<form method="get" asp-action="Awards" class="filters">
+    <div class="filter">
         <label class="form-label" for="CompetitionId">Competition</label>
         <select class="form-select" id="CompetitionId" name="CompetitionId">
             <option value="">All</option>
@@ -30,77 +39,85 @@
             }
         </select>
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="StudentName">Student</label>
         <input class="form-control" id="StudentName" name="StudentName" value="@search.StudentName" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="Award">Award</label>
         <input class="form-control" id="Award" name="Award" value="@search.Award" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="From">Issued from</label>
         <input class="form-control" type="date" id="From" name="From" value="@search.From?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="To">Issued to</label>
         <input class="form-control" type="date" id="To" name="To" value="@search.To?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-1">
-        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>Search</button>
+        <a href="/student/awards" class="btn btn-link">Clear</a>
     </div>
 </form>
 
 @if (Model.TotalCount == 0)
 {
-    <p class="text-muted">No results found.</p>
+    <div class="empty">
+        <i class="bi bi-trophy" aria-hidden="true"></i>
+        <p>No results found.</p>
+        <a href="/student/awards" class="btn btn-outline-primary">Clear the search</a>
+    </div>
 }
 else
 {
-    <table class="table table-hover align-middle">
-        <thead>
-            <tr><th></th><th>Competition</th><th>Award</th><th>Rank</th><th class="text-end">Prize</th><th>Student</th><th>Artwork</th><th>Issued</th><th>Remarks</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var a in Model.Items)
-            {
-                <tr>
-                    <td style="width:90px">
-                        @if (a.HasThumbnail)
-                        {
-                            @* Public image: awarded entry of a GRADED competition (BR-20, SubmissionImagePolicy) *@
-                            <img src="/files/submissions/@a.SubmissionId/thumb" alt="@a.ArtworkTitle" class="img-thumbnail" style="max-height:60px" />
-                        }
-                    </td>
-                    <td>@a.CompetitionTitle</td>
-                    <td>@a.AwardName</td>
-                    <td>@a.Rank</td>
-                    <td class="text-end">
-                        @a.PrizeValue.ToString("$#,##0.00")
-                        @if (a.PrizeDescription != null)
-                        {
-                            <div class="small text-muted">@a.PrizeDescription</div>
-                        }
-                    </td>
-                    <td>@a.StudentName</td>
-                    <td>@a.ArtworkTitle</td>
-                    <td>@a.IssuedDate.ToString("dd MMM yyyy")</td>
-                    <td class="small" style="white-space: pre-line">@(a.Remarks ?? "–")</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="art-grid">
+        @foreach (var a in Model.Items)
+        {
+            <figure class="artwork is-awarded">
+                <div class="artwork-frame">
+                    @if (a.HasThumbnail)
+                    {
+                        @* Public image: awarded entry of a GRADED competition (BR-20, SubmissionImagePolicy) *@
+                        <img src="/files/submissions/@a.SubmissionId/thumb" alt="@a.ArtworkTitle – @a.StudentName" loading="lazy" />
+                    }
+                    else
+                    {
+                        <span class="artwork-missing">Image not available</span>
+                    }
+                </div>
+                <figcaption class="wall-label">
+                    <span class="wl-title">@a.ArtworkTitle</span>
+                    <span class="wl-artist">@a.StudentName</span>
+                    <span class="wl-meta">@a.CompetitionTitle</span>
+                    <span class="wl-state">
+                        <span class="tag tag-award"><i class="bi bi-trophy" aria-hidden="true"></i>@a.AwardName</span>
+                        <span class="small">Rank @a.Rank</span>
+                    </span>
+                    <span class="wl-meta num">@a.PrizeValue.ToString("$#,##0.00"), issued @a.IssuedDate.ToString("dd MMM yyyy")</span>
+                    @if (a.PrizeDescription != null)
+                    {
+                        <span class="wl-meta">@a.PrizeDescription</span>
+                    }
+                    @if (a.Remarks != null)
+                    {
+                        <span class="wl-note" style="white-space: pre-line">@a.Remarks</span>
+                    }
+                </figcaption>
+            </figure>
+        }
+    </div>
 
-    <nav class="d-flex justify-content-between align-items-center">
-        <span class="text-muted small">@Model.TotalCount award@(Model.TotalCount == 1 ? "" : "s") · page @Model.Page of @Model.TotalPages</span>
-        <div>
+    <nav class="pager" aria-label="Pages">
+        <span>@Model.TotalCount award@(Model.TotalCount == 1 ? "" : "s"), page @Model.Page of @Model.TotalPages</span>
+        <div class="pager-links">
             @if (Model.HasPrevious)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Awards", PageRoute(Model.Page - 1))">Previous</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Awards", PageRoute(Model.Page - 1))"><i class="bi bi-chevron-left" aria-hidden="true"></i>Previous</a>
             }
             @if (Model.HasNext)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Awards", PageRoute(Model.Page + 1))">Next</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Awards", PageRoute(Model.Page + 1))">Next<i class="bi bi-chevron-right ms-1 me-0" aria-hidden="true"></i></a>
             }
         </div>
     </nav>

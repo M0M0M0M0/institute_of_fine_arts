@@ -1,32 +1,43 @@
 @model InstituteOfFineArts.Web.ViewModels.Admin.Students.StudentImportPreviewVm
 @*
     Admin – import students from CSV, step 1 result + step 2 button (POST /admin/students/import, F-M04-08).
-    Minimal version created by BE (BE2-OPT 4); FE2 builds the real design in FE2-OPT.
     Passwords from the file are never shown; the file goes to step 2 only inside the encrypted token.
+    Created by BE2-OPT 4; styled by FE2-OPT (preview ledger, per-line errors as danger tags, neutral confirmation).
 *@
 @{
     ViewData["Title"] = "Import students – check";
 }
 
-<h1 class="h3 mb-3">Import students – check</h1>
-<p>
-    File <strong>@Model.FileName</strong>: <span class="text-success">@Model.ValidCount valid</span>,
-    <span class="text-danger">@Model.InvalidCount with errors</span> (rows with errors are skipped).
-</p>
+<div class="page-head">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/admin/students">Students</a></li>
+                <li class="breadcrumb-item"><a href="/admin/students/import">Import</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Check</li>
+            </ol>
+        </nav>
+        <h1>Import students – check</h1>
+        <p class="page-sub">
+            File <strong>@Model.FileName</strong>: <span class="tag tag-ACTIVE">@Model.ValidCount valid</span>,
+            <span class="tag tag-REJECTED">@Model.InvalidCount with errors</span> (rows with errors are skipped).
+        </p>
+    </div>
+</div>
 
 <div class="table-responsive">
-    <table class="table table-sm table-bordered align-middle">
-        <thead class="table-light">
+    <table class="table table-sm">
+        <thead>
             <tr>
-                <th>Line</th><th>Student code</th><th>Full name</th><th>Username</th><th>Email</th><th>Course</th><th>Class</th><th>Result</th>
+                <th class="text-end">Line</th><th>Student code</th><th>Full name</th><th>Username</th><th>Email</th><th>Course</th><th>Class</th><th>Result</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var row in Model.Rows)
             {
-                @* Rows with errors are highlighted and list every problem *@
-                <tr class="@(row.IsValid ? "" : "table-danger")">
-                    <td>@row.Line</td>
+                @* Rows with errors list every problem as a danger tag *@
+                <tr>
+                    <td class="text-end">@row.Line</td>
                     <td>@(string.IsNullOrEmpty(row.StudentCode) ? "(generated)" : row.StudentCode)</td>
                     <td>@row.FullName</td>
                     <td>@row.Username</td>
@@ -36,14 +47,14 @@
                     <td>
                         @if (row.IsValid)
                         {
-                            <span class="badge bg-success">OK</span>
+                            <span class="tag tag-ACTIVE">OK</span>
                         }
                         else
                         {
-                            <ul class="mb-0 ps-3 text-danger">
+                            <ul class="error-list">
                                 @foreach (var error in row.Errors)
                                 {
-                                    <li>@error</li>
+                                    <li class="tag tag-REJECTED tag-wrap">@error</li>
                                 }
                             </ul>
                         }
@@ -54,17 +65,21 @@
     </table>
 </div>
 
-@if (Model.Token != null)
-{
-    @* Step 2 posts only the encrypted token; the server checks every row again before saving *@
-    <form method="post" action="/admin/students/import/confirm" class="d-inline">
-        @Html.AntiForgeryToken()
-        <input type="hidden" name="token" value="@Model.Token" />
-        <button type="submit" class="btn btn-primary">Import @Model.ValidCount valid @(Model.ValidCount == 1 ? "row" : "rows")</button>
-    </form>
-}
-else
-{
-    <div class="alert alert-warning">No row can be imported. Correct the file and upload it again.</div>
-}
-<a href="/admin/students/import" class="btn btn-link">Upload another file</a>
+<div class="form-actions d-flex flex-wrap gap-2 align-items-center mt-4">
+    @if (Model.Token != null)
+    {
+        @* Step 2 posts only the encrypted token; the server checks every row again before saving *@
+        <form method="post" action="/admin/students/import/confirm" class="d-inline"
+              data-confirm="@Model.ValidCount @(Model.ValidCount == 1 ? "student account" : "student accounts") will be created. Rows with errors are skipped."
+              data-confirm-title="Import students?" data-confirm-ok="Import" data-confirm-tone="neutral">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="token" value="@Model.Token" />
+            <button type="submit" class="btn btn-primary"><i class="bi bi-person-plus" aria-hidden="true"></i>Import @Model.ValidCount valid @(Model.ValidCount == 1 ? "row" : "rows")</button>
+        </form>
+    }
+    else
+    {
+        <div class="alert alert-warning w-100"><i class="bi bi-exclamation-triangle" aria-hidden="true"></i><div>No row can be imported. Correct the file and upload it again.</div></div>
+    }
+    <a href="/admin/students/import" class="btn btn-link">Upload another file</a>
+</div>

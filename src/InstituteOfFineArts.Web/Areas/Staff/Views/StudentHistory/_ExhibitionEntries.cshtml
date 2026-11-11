@@ -1,24 +1,26 @@
 @model List<InstituteOfFineArts.Web.ViewModels.Staff.Submissions.ExhibitionEntryInfoVm>
 @*
     Staff – exhibition entries of one painting, shared by the submission details and the student history.
-    Minimal version created by BE2 (BE2-07); FE2 builds the real design in FE2-05.
+    Created by BE2 (BE2-07); styled by FE2-05 (ledger table, status tags).
 *@
 
-<table class="table table-sm">
-    <thead>
-        <tr><th>Exhibition</th><th>City</th><th>Dates</th><th class="text-end">Asking price</th><th>Status</th><th class="text-end">Sold for</th></tr>
-    </thead>
-    <tbody>
-        @foreach (var x in Model)
-        {
-            <tr>
-                <td>@x.ExhibitionName</td>
-                <td>@x.City</td>
-                <td>@x.StartDate.ToString("dd MMM yyyy") – @x.EndDate.ToString("dd MMM yyyy")</td>
-                <td class="text-end">@x.AskingPrice.ToString("$#,##0.00")</td>
-                <td><span class="badge bg-secondary">@x.Status</span></td>
-                <td class="text-end">@(x.SoldPrice?.ToString("$#,##0.00") ?? "–")</td>
-            </tr>
-        }
-    </tbody>
-</table>
+<div class="table-responsive">
+    <table class="table table-sm">
+        <thead>
+            <tr><th>Exhibition</th><th>City</th><th>Dates</th><th class="text-end">Asking price</th><th>Status</th><th class="text-end">Sold for</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var x in Model)
+            {
+                <tr>
+                    <td class="row-title">@x.ExhibitionName</td>
+                    <td>@x.City</td>
+                    <td class="num text-nowrap">@x.StartDate.ToString("dd MMM yyyy") – @x.EndDate.ToString("dd MMM yyyy")</td>
+                    <td class="text-end">@x.AskingPrice.ToString("$#,##0.00")</td>
+                    <td><span class="tag tag-@x.Status">@x.Status</span></td>
+                    <td class="text-end">@(x.SoldPrice?.ToString("$#,##0.00") ?? "–")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

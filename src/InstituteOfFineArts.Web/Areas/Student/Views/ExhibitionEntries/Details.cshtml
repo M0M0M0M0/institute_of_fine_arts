@@ -2,61 +2,72 @@
 @*
     Student – details of an own exhibition entry (/student/exhibition-entries/{id}, SCR-49, F-M09-10, US-13 AC5):
     painting, exhibition, asking price, status, reject reason, sale and payment; change price / withdraw while PENDING (BR-46).
-    Minimal version created by BE1 (BE1-12); FE1 builds the real design in FE1-08.
+    Created by BE1 (BE1-12); styled by FE1-08: the painting on the stage, its label and ledgers on the right.
 *@
 @{
     ViewData["Title"] = Model.Title;
 }
 
-<partial name="_Alerts" />
-
-<div class="d-flex justify-content-between align-items-start mb-3">
+<div class="page-head">
     <div>
-        <h1 class="h3 mb-1">@Model.Title</h1>
-        <div class="text-muted">@Model.ExhibitionName · <partial name="_Status" model="Model.Status" /></div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">My artworks on show</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+            </ol>
+        </nav>
+        <h1><em>@Model.Title</em></h1>
+        <p class="page-sub d-flex flex-wrap align-items-center gap-2"><span>@Model.ExhibitionName</span> <partial name="_Status" model="Model.Status" /></p>
     </div>
     @* Change price / withdraw only while PENDING; the server checks this again (BR-46) *@
     @if (Model.CanChange)
     {
-        <div class="d-flex gap-2">
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Change price</a>
-            <form asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Withdraw this proposal?');">
-                <button type="submit" class="btn btn-outline-danger">Withdraw</button>
+        <div class="page-actions">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary"><i class="bi bi-currency-dollar" aria-hidden="true"></i>Change price</a>
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="m-0"
+                  data-confirm="Withdraw this proposal?" data-confirm-ok="Withdraw" data-confirm-title="Withdraw proposal">
+                <button type="submit" class="btn btn-outline-danger"><i class="bi bi-x-lg" aria-hidden="true"></i>Withdraw</button>
             </form>
         </div>
     }
 </div>
 
-<div class="row">
-    <div class="col-lg-5 mb-3">
-        <img src="/files/submissions/@Model.SubmissionId/thumb" alt="@Model.Title" class="img-fluid rounded border" />
-        <div class="small mt-1">
-            <a href="/student/submissions/@Model.SubmissionId">@Model.CompetitionTitle</a>
+<partial name="_Alerts" />
+
+<div class="artwork-stage">
+    <figure class="artwork m-0">
+        <div class="artwork-frame">
+            <img src="/files/submissions/@Model.SubmissionId" alt="@Model.Title – @User.GetFullName()" />
+        </div>
+        <figcaption class="wall-label">
+            <span class="wl-title">@Model.Title</span>
+            <span class="wl-meta"><a href="/student/submissions/@Model.SubmissionId">@Model.CompetitionTitle</a></span>
             @if (Model.Rating is { } rating)
             {
-                <span>· @rating</span>
+                <span class="wl-state"><span class="tag tag-@rating">@rating</span></span>
             }
-        </div>
-    </div>
-    <div class="col-lg-7">
-        <h2 class="h5">Exhibition</h2>
-        <dl class="row">
-            <dt class="col-sm-4">Name</dt>
-            <dd class="col-sm-8">@Model.ExhibitionName</dd>
-            <dt class="col-sm-4">Venue</dt>
-            <dd class="col-sm-8">@Model.Venue, @Model.City</dd>
-            <dt class="col-sm-4">Dates</dt>
-            <dd class="col-sm-8">@Model.StartDate.ToString("dd MMM yyyy") – @Model.EndDate.ToString("dd MMM yyyy") (@Model.ExhibitionStatus)</dd>
+        </figcaption>
+    </figure>
+
+    <div>
+        <h2 class="h3 mt-0">Exhibition</h2>
+        <dl class="details">
+            <dt>Name</dt>
+            <dd><a href="/student/exhibitions/@Model.ExhibitionId">@Model.ExhibitionName</a></dd>
+            <dt>Venue</dt>
+            <dd>@Model.Venue, @Model.City</dd>
+            <dt>Dates</dt>
+            <dd class="num">@Model.StartDate.ToString("dd MMM yyyy") – @Model.EndDate.ToString("dd MMM yyyy") (@Model.ExhibitionStatus)</dd>
         </dl>
 
-        <h2 class="h5">Entry</h2>
-        <dl class="row">
-            <dt class="col-sm-4">Asking price</dt>
-            <dd class="col-sm-8">@Model.AskingPrice.ToString("$#,##0.00")</dd>
-            <dt class="col-sm-4">Status</dt>
-            <dd class="col-sm-8"><partial name="_Status" model="Model.Status" /></dd>
-            <dt class="col-sm-4">Sent</dt>
-            <dd class="col-sm-8">
+        <h2 class="h3">Entry</h2>
+        <dl class="details">
+            <dt>Asking price</dt>
+            <dd class="num">@Model.AskingPrice.ToString("$#,##0.00")</dd>
+            <dt>Status</dt>
+            <dd><partial name="_Status" model="Model.Status" /></dd>
+            <dt>Sent</dt>
+            <dd>
                 @Model.CreatedAt.ToString("dd MMM yyyy HH:mm")
                 @if (Model.CreatedByStaff)
                 {
@@ -65,31 +76,31 @@
             </dd>
             @if (Model.RejectReason != null)
             {
-                <dt class="col-sm-4">Reason for rejection</dt>
-                <dd class="col-sm-8" style="white-space: pre-line">@Model.RejectReason</dd>
+                <dt>Reason for rejection</dt>
+                <dd style="white-space: pre-line">@Model.RejectReason</dd>
             }
         </dl>
 
-        <h2 class="h5">Sale and payment</h2>
-        <dl class="row">
-            <dt class="col-sm-4">Sold?</dt>
-            <dd class="col-sm-8">@(Model.Status == EntryStatus.SOLD ? "Sold" : "Not sold")</dd>
+        <h2 class="h3">Sale and payment</h2>
+        <dl class="details">
+            <dt>Sold?</dt>
+            <dd>@(Model.Status == EntryStatus.SOLD ? "Sold" : "Not sold")</dd>
             @if (Model.Status == EntryStatus.SOLD)
             {
-                <dt class="col-sm-4">Customer paid</dt>
-                <dd class="col-sm-8">@Model.SoldPrice?.ToString("$#,##0.00")</dd>
-                <dt class="col-sm-4">Sale date</dt>
-                <dd class="col-sm-8">@Model.SoldDate?.ToString("dd MMM yyyy")</dd>
-                <dt class="col-sm-4">Paid to me</dt>
-                <dd class="col-sm-8">
+                <dt>Customer paid</dt>
+                <dd class="num">@Model.SoldPrice?.ToString("$#,##0.00")</dd>
+                <dt>Sale date</dt>
+                <dd>@Model.SoldDate?.ToString("dd MMM yyyy")</dd>
+                <dt>Paid to me</dt>
+                <dd class="d-flex flex-wrap align-items-center gap-2">
                     @if (Model.PaidToStudent)
                     {
-                        <span class="badge bg-success">Paid</span>
-                        <span>@Model.PaidAmount?.ToString("$#,##0.00") on @Model.PaidDate?.ToString("dd MMM yyyy")</span>
+                        <span class="tag tag-PAID">Paid</span>
+                        <span class="num">@Model.PaidAmount?.ToString("$#,##0.00") on @Model.PaidDate?.ToString("dd MMM yyyy")</span>
                     }
                     else
                     {
-                        <span class="badge bg-warning text-dark">Not paid yet</span>
+                        <span class="tag tag-UNPAID">Not paid yet</span>
                     }
                 </dd>
             }
@@ -97,4 +108,4 @@
     </div>
 </div>
 
-<a asp-action="Index" class="btn btn-link px-0">Back to my exhibition entries</a>
+<a asp-action="Index" class="btn btn-link px-0 mt-3"><i class="bi bi-arrow-left" aria-hidden="true"></i>Back to my exhibition entries</a>

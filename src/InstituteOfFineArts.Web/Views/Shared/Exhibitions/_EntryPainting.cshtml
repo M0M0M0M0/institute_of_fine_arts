@@ -1,0 +1,26 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.ExhibitionEntries.EntryDetailsVm
+@*
+    Left side of the exhibition entry page (staff SCR-30/31, manager SCR-55): the painting at full size with its wall label
+    (title, student, competition, rating, link to the submission of the current area).
+    Created by FE1-08 / FE2-10 from the markup of BE1-12 and BE2-13.
+*@
+@{
+    var area = ViewContext.RouteData.Values["area"]?.ToString()?.ToLowerInvariant() ?? "staff";
+}
+<figure class="artwork@(Model.Rating == InstituteOfFineArts.Web.Models.Enums.Rating.BEST ? " is-awarded" : "")">
+    <div class="artwork-frame">
+        <img src="/files/submissions/@Model.SubmissionId" alt="@Model.Title – @Model.StudentName" />
+    </div>
+    <figcaption class="wall-label">
+        <span class="wl-title">@Model.Title</span>
+        <span class="wl-artist">@Model.StudentName <span class="text-muted">(@Model.StudentCode)</span></span>
+        <span class="wl-meta">@Model.CompetitionTitle</span>
+        <span class="wl-state">
+            @if (Model.Rating is { } rating)
+            {
+                <span class="tag tag-@rating">@rating</span>
+            }
+            <a href="/@area/submissions/@Model.SubmissionId">Submission details</a>
+        </span>
+    </figcaption>
+</figure>

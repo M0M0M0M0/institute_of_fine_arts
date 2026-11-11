@@ -2,7 +2,7 @@
 @*
     RPT-01 – Submissions of one competition in a date range by rating (/reports/rpt-01; F-M10-01, the example of the
     assignment; TC-M10-01..04). Columns and totals of the BA doc §7. Read only; Print button.
-    Minimal version created by BE2-12; FE builds the real design in FE2-09.
+    Created by BE2-12; styled by FE2-09 / QA-07 (page head with pills, filters bar, filter summary, ledger, totals, A4 landscape print).
 *@
 @{
     ViewData["Title"] = "RPT-01 Submissions by rating";
@@ -15,10 +15,11 @@
         .Append((Value: Rpt01FilterVm.NotGraded, Text: "Not graded")).ToList();
 }
 
+<div class="report-page">
 <partial name="_ReportHeader" model="report" />
 
-<form method="get" action="/reports/rpt-01" class="row g-2 align-items-end mb-3 d-print-none" id="report-filters">
-    <div class="col-md-3">
+<form method="get" action="/reports/rpt-01" class="filters d-print-none" id="report-filters">
+    <div class="filter">
         <label class="form-label" for="CompetitionId">Competition *</label>
         <select class="form-select" id="CompetitionId" name="CompetitionId">
             <option value="">– Choose –</option>
@@ -28,25 +29,25 @@
             }
         </select>
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="From">Submitted from</label>
         <input class="form-control" type="date" id="From" name="From" value="@filter.From?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="To">Submitted to</label>
         <input class="form-control" type="date" id="To" name="To" value="@filter.To?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="Ratings">Ratings</label>
-        <select class="form-select" id="Ratings" name="Ratings" multiple size="4">
+        <select class="form-select" id="Ratings" name="Ratings" multiple size="4" aria-describedby="ratings-help">
             @foreach (var choice in ratingChoices)
             {
                 <option value="@choice.Value" selected="@filter.Ratings.Contains(choice.Value)">@choice.Text</option>
             }
         </select>
-        <div class="form-text">None selected = all.</div>
+        <div class="form-text" id="ratings-help">None selected = all.</div>
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="ClassName">Class</label>
         <select class="form-select" id="ClassName" name="ClassName">
             <option value="">All classes</option>
@@ -56,8 +57,9 @@
             }
         </select>
     </div>
-    <div class="col-md-1">
-        <button type="submit" class="btn btn-outline-primary w-100">View</button>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-funnel" aria-hidden="true"></i>View</button>
+        <a href="/reports/rpt-01" class="btn btn-link">Clear</a>
     </div>
 </form>
 
@@ -66,16 +68,19 @@
 @if (result != null)
 {
     @* Filters as text, so the printed report says what it contains *@
-    <p class="mb-2" id="report-criteria">
-        <strong>@result.CompetitionCode – @result.CompetitionTitle</strong>
-        · Submitted from @(filter.From?.ToString("dd MMM yyyy") ?? "the start") to @(filter.To?.ToString("dd MMM yyyy") ?? "now")
-        · Ratings: @(filter.Ratings.Count == 0 ? "all" : string.Join(", ", ratingChoices.Where(c => filter.Ratings.Contains(c.Value)).Select(c => c.Text)))
-        · Class: @(string.IsNullOrWhiteSpace(filter.ClassName) ? "all" : filter.ClassName)
-    </p>
+    <dl class="criteria" id="report-criteria">
+        <div><dt>Competition</dt><dd><strong>@result.CompetitionCode – @result.CompetitionTitle</strong></dd></div>
+        <div><dt>Submitted</dt><dd>from @(filter.From?.ToString("dd MMM yyyy") ?? "the start") to @(filter.To?.ToString("dd MMM yyyy") ?? "now")</dd></div>
+        <div><dt>Ratings</dt><dd>@(filter.Ratings.Count == 0 ? "all" : string.Join(", ", ratingChoices.Where(c => filter.Ratings.Contains(c.Value)).Select(c => c.Text)))</dd></div>
+        <div><dt>Class</dt><dd>@(string.IsNullOrWhiteSpace(filter.ClassName) ? "all" : filter.ClassName)</dd></div>
+    </dl>
 
     if (result.TotalCount == 0)
     {
-        <p class="text-muted" id="no-data">No data</p>
+        <div class="empty" id="no-data">
+            <i class="bi bi-inbox" aria-hidden="true"></i>
+            <p>No data</p>
+        </div>
     }
     else
     {
@@ -84,19 +89,19 @@
             <partial name="_Truncated" model="result.TotalCount" />
         }
         <div class="table-responsive">
-            <table class="table table-sm table-striped align-middle" id="report-table">
+            <table class="table table-sm table-hover" id="report-table">
                 <thead>
                     <tr>
-                        <th>No.</th>
+                        <th class="text-end">No.</th>
                         <th>Student code</th>
                         <th>Full name</th>
                         <th>Class</th>
                         <th>Painting title</th>
-                        <th>Submitted</th>
-                        <th>Last modified</th>
+                        <th class="text-end">Submitted</th>
+                        <th class="text-end">Last modified</th>
                         <th>Rating</th>
                         <th>Evaluated by</th>
-                        <th>Evaluated on</th>
+                        <th class="text-end">Evaluated on</th>
                         <th>Award</th>
                     </tr>
                 </thead>
@@ -104,16 +109,16 @@
                     @foreach (var row in result.Rows)
                     {
                         <tr data-submission-id="@row.SubmissionId">
-                            <td>@row.No</td>
+                            <td class="text-end">@row.No</td>
                             <td>@row.StudentCode</td>
                             <td>@row.StudentName</td>
                             <td>@row.ClassName</td>
                             <td><a href="@(detailsBase + row.SubmissionId)">@row.Title</a></td>
-                            <td>@row.SubmittedAt.ToString("dd MMM yyyy HH:mm")</td>
-                            <td>@row.UpdatedAt?.ToString("dd MMM yyyy HH:mm")</td>
-                            <td>@(row.Rating?.ToString() ?? "Not graded")</td>
+                            <td class="text-end text-nowrap">@row.SubmittedAt.ToString("dd MMM yyyy HH:mm")</td>
+                            <td class="text-end text-nowrap">@row.UpdatedAt?.ToString("dd MMM yyyy HH:mm")</td>
+                            <td><span class="tag tag-@(row.Rating?.ToString() ?? Rpt01FilterVm.NotGraded)">@(row.Rating?.ToString() ?? "Not graded")</span></td>
                             <td>@row.EvaluatorName</td>
-                            <td>@row.EvaluatedAt?.ToString("dd MMM yyyy")</td>
+                            <td class="text-end text-nowrap">@row.EvaluatedAt?.ToString("dd MMM yyyy")</td>
                             <td>@(row.AwardName == null ? "No" : "Yes – " + row.AwardName)</td>
                         </tr>
                     }
@@ -123,7 +128,8 @@
     }
 
     @* Totals of §7: total number of entries and the number per rating *@
-    <table class="table table-sm table-bordered w-auto" id="report-totals">
+    <h2 class="visually-hidden">Totals</h2>
+    <table class="table table-sm table-totals" id="report-totals">
         <tbody>
             <tr><th>Total submissions</th><td class="text-end" data-total="ALL">@result.TotalCount</td></tr>
             @foreach (var r in Enum.GetValues<Rating>())
@@ -136,5 +142,9 @@
 }
 else if (ViewData.ModelState.IsValid)
 {
-    <p class="text-muted">Choose a competition and click View.</p>
+    <div class="empty">
+        <i class="bi bi-funnel" aria-hidden="true"></i>
+        <p>Choose a competition and click View.</p>
+    </div>
 }
+</div>

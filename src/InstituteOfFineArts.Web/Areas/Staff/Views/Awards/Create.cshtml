@@ -2,55 +2,65 @@
 @*
     Staff – issue an award (/staff/awards/new?competitionId=, SCR-28, F-M08-01, UC-06): choose a CLOSED / GRADED
     competition first (GET form), then one of its awards, an eligible entry, the date and remarks (POST form).
-    Minimal version created by BE1 (BE1-11); FE1 builds the real design in FE1-07.
+    Created by BE1 (BE1-11); styled by FE1-07.
 *@
 @{
     ViewData["Title"] = "Issue award";
 }
 
-<div class="row justify-content-center">
-    <div class="col-lg-8">
-        <h1 class="h3 mb-3">Issue award</h1>
-
-        <partial name="_Alerts" />
-
-        @* Step 1: competition (only CLOSED or GRADED ones accept awards, BR-32) *@
-        <form method="get" asp-action="Create" class="row g-2 align-items-end mb-4">
-            <div class="col">
-                <label class="form-label" for="competitionId">Competition</label>
-                <select class="form-select" id="competitionId" name="competitionId">
-                    <option value="">– Select a closed or graded competition –</option>
-                    @foreach (var c in Model.Competitions)
-                    {
-                        <option value="@c.Id" selected="@(Model.CompetitionId == c.Id)">@c.Code – @c.Title</option>
-                    }
-                </select>
-            </div>
-            <div class="col-auto">
-                <button type="submit" class="btn btn-outline-primary">Choose</button>
-            </div>
-        </form>
-
-        @* Step 2: award, entry, date, remarks of the chosen competition *@
-        @if (Model.CompetitionStatus is { } status)
-        {
-            <p class="text-muted">
-                @Model.CompetitionTitle · @Model.CompetitionCode ·
-                <partial name="~/Areas/Staff/Views/Competitions/_Status.cshtml" model="status" />
-            </p>
-            <form asp-action="Create" method="post" novalidate>
-                <partial name="_Form" model="Model" />
-                <button type="submit" class="btn btn-primary">Issue award</button>
-                <a asp-controller="Competitions" asp-action="Details" asp-route-id="@Model.CompetitionId" class="btn btn-link">Cancel</a>
-            </form>
-        }
-        else
-        {
-            <div asp-validation-summary="All" class="text-danger mb-2"></div>
-            <a asp-action="Index" class="btn btn-link px-0">Back to issued awards</a>
-        }
+<div class="page-head">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">Issued awards</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Issue</li>
+            </ol>
+        </nav>
+        <h1>Issue award</h1>
+        <p class="page-sub">Choose a closed or graded competition, then the award and its BEST entry.</p>
     </div>
 </div>
+<partial name="_Alerts" />
+
+@* Step 1: competition (only CLOSED or GRADED ones accept awards, BR-32) *@
+<form method="get" asp-action="Create" class="filters">
+    <div class="filter filter-wide">
+        <label class="form-label" for="competitionId">Competition</label>
+        <select class="form-select" id="competitionId" name="competitionId">
+            <option value="">– Select a closed or graded competition –</option>
+            @foreach (var c in Model.Competitions)
+            {
+                <option value="@c.Id" selected="@(Model.CompetitionId == c.Id)">@c.Code – @c.Title</option>
+            }
+        </select>
+    </div>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-outline-primary">Choose</button>
+    </div>
+</form>
+
+@* Step 2: award, entry, date, remarks of the chosen competition *@
+@if (Model.CompetitionStatus is { } status)
+{
+    <section aria-labelledby="award-form-title">
+        <div class="section-head">
+            <h2 id="award-form-title">@Model.CompetitionTitle</h2>
+            <span class="d-flex align-items-center gap-2 text-muted">@Model.CompetitionCode <partial name="~/Areas/Staff/Views/Competitions/_Status.cshtml" model="status" /></span>
+        </div>
+        <form asp-action="Create" method="post" novalidate class="form-sheet">
+            <partial name="_Form" model="Model" />
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-trophy" aria-hidden="true"></i>Issue award</button>
+                <a asp-controller="Competitions" asp-action="Details" asp-route-id="@Model.CompetitionId" class="btn btn-link">Cancel</a>
+            </div>
+        </form>
+    </section>
+}
+else
+{
+    <div asp-validation-summary="All" class="text-danger mb-2"></div>
+    <a asp-action="Index" class="btn btn-link px-0">Back to issued awards</a>
+}
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

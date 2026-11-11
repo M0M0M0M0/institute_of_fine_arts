@@ -1,8 +1,8 @@
 @model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Admin.Students.StudentListItemVm>
 @*
-    Minimal version created by BE (BE2-03); FE2 builds the real design in FE2-03.
-    Student table with pager, shared by /admin/students and /staff/students (links go to the current controller).
+    Student table with pager, shared by /admin/students, /staff/students and /manager/students (links go to the current controller).
     The filters are read from ViewBag.Search so the pager keeps them.
+    Created by BE2-03; styled by FE2-03 (ledger table, ACTIVE / INACTIVE tags, empty state, pager).
 *@
 @{
     var search = (InstituteOfFineArts.Web.ViewModels.Admin.Students.StudentSearchVm)ViewBag.Search;
@@ -15,42 +15,48 @@
 
 @if (Model.TotalCount == 0)
 {
-    <p class="text-muted">No results found.</p>
+    <div class="empty">
+        <i class="bi bi-people" aria-hidden="true"></i>
+        <p>No results found.</p>
+        <a asp-action="Index" class="btn btn-outline-primary btn-sm">Clear filters</a>
+    </div>
 }
 else
 {
-    <table class="table table-hover align-middle">
-        <thead>
-            <tr><th>Code</th><th>Name</th><th>Username</th><th>Course</th><th>Class</th><th>Enrolled</th><th>Study status</th><th>Account</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var s in Model.Items)
-            {
-                <tr>
-                    <td>@s.StudentCode</td>
-                    <td><a asp-action="Details" asp-route-id="@s.Id">@s.FullName</a><div class="small text-muted">@s.Email</div></td>
-                    <td>@s.Username</td>
-                    <td>@s.CourseName</td>
-                    <td>@s.ClassName</td>
-                    <td>@s.EnrollmentDate.ToString("dd MMM yyyy")</td>
-                    <td>@s.EnrollmentStatus</td>
-                    <td>@if (s.Active) { <span class="badge bg-success">Active</span> } else { <span class="badge bg-secondary">Locked</span> }</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr><th>Code</th><th>Name</th><th>Username</th><th>Course</th><th>Class</th><th class="text-end">Enrolled</th><th>Study status</th><th>Account</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var s in Model.Items)
+                {
+                    <tr>
+                        <td>@s.StudentCode</td>
+                        <td><a class="row-title" asp-action="Details" asp-route-id="@s.Id">@s.FullName</a><div class="small text-muted">@s.Email</div></td>
+                        <td>@s.Username</td>
+                        <td>@s.CourseName</td>
+                        <td>@s.ClassName</td>
+                        <td class="text-end text-nowrap">@s.EnrollmentDate.ToString("dd MMM yyyy")</td>
+                        <td><span class="tag tag-plain">@s.EnrollmentStatus</span></td>
+                        <td>@if (s.Active) { <span class="tag tag-ACTIVE">Active</span> } else { <span class="tag tag-INACTIVE">Locked</span> }</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
     @* Pager keeps the current filters *@
-    <nav class="d-flex justify-content-between align-items-center">
-        <span class="text-muted small">@Model.TotalCount student(s) · page @Model.Page of @Model.TotalPages</span>
-        <div>
+    <nav class="pager" aria-label="Pages">
+        <span>@Model.TotalCount student(s). Page @Model.Page of @Model.TotalPages</span>
+        <div class="pager-links">
             @if (Model.HasPrevious)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page - 1))"><i class="bi bi-chevron-left" aria-hidden="true"></i>Previous</a>
             }
             @if (Model.HasNext)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next<i class="bi bi-chevron-right ms-1 me-0" aria-hidden="true"></i></a>
             }
         </div>
     </nav>

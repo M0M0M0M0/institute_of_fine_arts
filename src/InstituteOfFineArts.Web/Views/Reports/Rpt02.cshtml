@@ -2,7 +2,7 @@
 @*
     RPT-02 – Participation & ratings per competition (/reports/rpt-02; F-M10-02; BR-12). One row per competition with
     the count per rating, the totals row, and the list of active students who have not submitted to a chosen competition.
-    Minimal version created by BE2-12; FE builds the real design in FE2-09.
+    Created by BE2-12; styled by FE2-09 / QA-07 (page head with pills, filters bar, filter summary, ledger, totals row, A4 landscape print).
 *@
 @{
     ViewData["Title"] = "RPT-02 Participation & ratings";
@@ -18,18 +18,19 @@
     })! + "#not-submitted";
 }
 
+<div class="report-page">
 <partial name="_ReportHeader" model="report" />
 
-<form method="get" action="/reports/rpt-02" class="row g-2 align-items-end mb-3 d-print-none" id="report-filters">
-    <div class="col-md-2">
+<form method="get" action="/reports/rpt-02" class="filters d-print-none" id="report-filters">
+    <div class="filter">
         <label class="form-label" for="From">Period from</label>
         <input class="form-control" type="date" id="From" name="From" value="@filter.From?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="To">Period to</label>
         <input class="form-control" type="date" id="To" name="To" value="@filter.To?.ToString("yyyy-MM-dd")" />
     </div>
-    <div class="col-md-2">
+    <div class="filter">
         <label class="form-label" for="Status">Status</label>
         <select class="form-select" id="Status" name="Status">
             <option value="">All</option>
@@ -39,7 +40,7 @@
             }
         </select>
     </div>
-    <div class="col-md-4">
+    <div class="filter">
         <label class="form-label" for="NotSubmittedCompetitionId">Students who have not submitted to</label>
         <select class="form-select" id="NotSubmittedCompetitionId" name="NotSubmittedCompetitionId">
             <option value="">– None –</option>
@@ -49,8 +50,9 @@
             }
         </select>
     </div>
-    <div class="col-md-2">
-        <button type="submit" class="btn btn-outline-primary w-100">View</button>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-funnel" aria-hidden="true"></i>View</button>
+        <a href="/reports/rpt-02" class="btn btn-link">Clear</a>
     </div>
 </form>
 
@@ -58,15 +60,18 @@
 
 @if (result != null)
 {
-    <p class="mb-2" id="report-criteria">
-        Period @(filter.From?.ToString("dd MMM yyyy") ?? "any") to @(filter.To?.ToString("dd MMM yyyy") ?? "any")
-        · Status: @(filter.Status?.ToString() ?? "all")
-        · Active students today: <strong id="active-students">@result.ActiveStudents</strong>
-    </p>
+    <dl class="criteria" id="report-criteria">
+        <div><dt>Period</dt><dd>@(filter.From?.ToString("dd MMM yyyy") ?? "any") to @(filter.To?.ToString("dd MMM yyyy") ?? "any")</dd></div>
+        <div><dt>Status</dt><dd>@(filter.Status?.ToString() ?? "all")</dd></div>
+        <div><dt>Active students today</dt><dd><strong id="active-students">@result.ActiveStudents</strong></dd></div>
+    </dl>
 
     if (result.TotalCount == 0)
     {
-        <p class="text-muted" id="no-data">No data</p>
+        <div class="empty" id="no-data">
+            <i class="bi bi-inbox" aria-hidden="true"></i>
+            <p>No data</p>
+        </div>
     }
     else
     {
@@ -75,7 +80,7 @@
             <partial name="_Truncated" model="result.TotalCount" />
         }
         <div class="table-responsive">
-            <table class="table table-sm table-striped align-middle" id="report-table">
+            <table class="table table-sm table-hover" id="report-table">
                 <thead>
                     <tr>
                         <th>Competition</th>
@@ -113,7 +118,7 @@
                 </tbody>
                 <tfoot>
                     @* Totals row of §7 *@
-                    <tr class="fw-bold" id="report-totals">
+                    <tr id="report-totals">
                         <td>Total (@result.TotalCount competitions)</td>
                         <td></td>
                         <td></td>
@@ -136,32 +141,42 @@
     @* BR-12: active students who have not submitted to the chosen competition *@
     if (result.NotSubmitted is { } missing)
     {
-        <h2 class="h5 mt-4" id="not-submitted">Students who have not submitted – @missing.Code – @missing.Title</h2>
-        if (missing.Students.Count == 0)
-        {
-            <p class="text-muted" id="not-submitted-none">Every active student has submitted.</p>
-        }
-        else
-        {
-            <table class="table table-sm table-striped" id="not-submitted-table">
-                <thead>
-                    <tr><th>No.</th><th>Student code</th><th>Full name</th><th>Class</th><th>Course</th><th>Email</th></tr>
-                </thead>
-                <tbody>
-                    @foreach (var s in missing.Students)
-                    {
-                        <tr data-student-id="@s.StudentId">
-                            <td>@s.No</td>
-                            <td>@s.StudentCode</td>
-                            <td>@s.FullName</td>
-                            <td>@s.ClassName</td>
-                            <td>@s.CourseName</td>
-                            <td>@s.Email</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-            <p class="small">Total: <strong id="not-submitted-count">@missing.Students.Count</strong> student(s)</p>
-        }
+        <section class="section">
+            <div class="section-head">
+                <h2 id="not-submitted">Students who have not submitted – @missing.Code – @missing.Title</h2>
+            </div>
+            @if (missing.Students.Count == 0)
+            {
+                <div class="empty" id="not-submitted-none">
+                    <i class="bi bi-check2-all" aria-hidden="true"></i>
+                    <p>Every active student has submitted.</p>
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover" id="not-submitted-table">
+                        <thead>
+                            <tr><th class="text-end">No.</th><th>Student code</th><th>Full name</th><th>Class</th><th>Course</th><th>Email</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in missing.Students)
+                            {
+                                <tr data-student-id="@s.StudentId">
+                                    <td class="text-end">@s.No</td>
+                                    <td>@s.StudentCode</td>
+                                    <td>@s.FullName</td>
+                                    <td>@s.ClassName</td>
+                                    <td>@s.CourseName</td>
+                                    <td>@s.Email</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <p class="small">Total: <strong id="not-submitted-count">@missing.Students.Count</strong> student(s)</p>
+            }
+        </section>
     }
 }
+</div>

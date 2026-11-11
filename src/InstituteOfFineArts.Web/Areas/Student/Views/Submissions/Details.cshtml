@@ -1,101 +1,122 @@
 @model InstituteOfFineArts.Web.ViewModels.Student.Submissions.MySubmissionDetailsVm
 @*
-    Student – details of an own entry (/student/submissions/{id}, SCR-45, F-M06-06, F-M06-07): image + download, texts,
-    competition, deadline (data-deadline for the countdown script), Edit/Delete while ongoing, evaluation once GRADED (BR-24).
-    Minimal version created by BE1 (BE1-08); FE1 builds the real design and the countdown in FE1-05.
+    Student – details of an own entry (/student/submissions/{id}, SCR-45, F-M06-06, F-M06-07): the painting large on
+    the stage, its label (competition, dates, deadline countdown via data-deadline), Edit/Delete while ongoing,
+    the poem / quotation / story, and the evaluation once GRADED (BR-24).
+    Created by BE1 (BE1-08); styled by FE1-05.
 *@
 @{
     ViewData["Title"] = Model.Title;
 }
 
-<partial name="_Alerts" />
-
-<div class="d-flex justify-content-between align-items-start mb-3">
+<div class="page-head">
     <div>
-        <h1 class="h3 mb-1">@Model.Title</h1>
-        <div class="text-muted">
-            <a href="/student/competitions/@Model.CompetitionId">@Model.CompetitionTitle</a> (@Model.CompetitionCode) ·
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">My entries</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.Title</li>
+            </ol>
+        </nav>
+        <h1><em>@Model.Title</em></h1>
+        <p class="page-sub d-flex flex-wrap align-items-center gap-2">
+            <a href="/student/competitions/@Model.CompetitionId">@Model.CompetitionTitle</a> <span>(@Model.CompetitionCode)</span>
             <partial name="~/Areas/Student/Views/Competitions/_Status.cshtml" model="Model.CompetitionStatus" />
-        </div>
+        </p>
     </div>
     @* Edit / Delete only while the competition is ongoing; the server checks this again (BR-13) *@
     @if (Model.CanEdit)
     {
-        <div class="d-flex gap-2">
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Edit</a>
-            <form asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Delete this entry and its image?');">
-                <button type="submit" class="btn btn-outline-danger">Delete</button>
+        <div class="page-actions">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary"><i class="bi bi-pencil" aria-hidden="true"></i>Edit</a>
+            <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="m-0"
+                  data-confirm="Delete this entry and its image?" data-confirm-ok="Delete" data-confirm-title="Delete entry">
+                <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash" aria-hidden="true"></i>Delete</button>
             </form>
         </div>
     }
 </div>
 
-<div class="row">
-    <div class="col-lg-6 mb-3">
-        <img src="/files/submissions/@Model.Id" alt="@Model.Title" class="img-fluid rounded border" />
-        <div class="small mt-1">
-            <a href="/files/submissions/@Model.Id?download=true">Download original</a>
-            · @Model.OriginalFileName (@((Model.FileSize / 1024.0).ToString("#,##0")) KB)
+<partial name="_Alerts" />
+
+<div class="artwork-stage">
+    <figure class="artwork m-0">
+        <div class="artwork-frame">
+            <img src="/files/submissions/@Model.Id" alt="@Model.Title – @User.GetFullName()" />
         </div>
-    </div>
-    <div class="col-lg-6">
-        <dl class="row">
-            <dt class="col-sm-4">Submitted</dt>
-            <dd class="col-sm-8">@Model.SubmittedAt.ToString("dd MMM yyyy HH:mm")</dd>
+        <figcaption class="small mt-2 text-muted">
+            <a href="/files/submissions/@Model.Id?download=true"><i class="bi bi-download me-1" aria-hidden="true"></i>Download original</a>
+            <span class="ms-2">@Model.OriginalFileName (@((Model.FileSize / 1024.0).ToString("#,##0")) KB)</span>
+        </figcaption>
+    </figure>
+
+    <div>
+        <dl class="details">
+            <dt>Submitted</dt>
+            <dd>@Model.SubmittedAt.ToString("dd MMM yyyy HH:mm")</dd>
             @if (Model.UpdatedAt is { } updated)
             {
-                <dt class="col-sm-4">Last changed</dt>
-                <dd class="col-sm-8">@updated.ToString("dd MMM yyyy HH:mm")</dd>
+                <dt>Last changed</dt>
+                <dd>@updated.ToString("dd MMM yyyy HH:mm")</dd>
             }
-            <dt class="col-sm-4">Deadline</dt>
-            <dd class="col-sm-8">
+            <dt>Deadline</dt>
+            <dd>
                 @Model.EndDate.ToString("dd MMM yyyy"), 23:59:59
                 @if (Model.CanEdit)
                 {
-                    @* Countdown target for FE (ISO 8601, institute local time) *@
-                    <div class="small text-muted" id="deadline-countdown" data-deadline="@Model.DeadlineIso">You can edit or delete this entry until the deadline.</div>
+                    @* Countdown target (ISO 8601, institute local time), filled by countdown.js *@
+                    <div class="deadline" id="deadline-countdown" data-deadline="@Model.DeadlineIso"><i class="bi bi-hourglass-split" aria-hidden="true"></i><span data-countdown-text></span></div>
+                    <div class="small text-muted">You can edit or delete this entry until the deadline.</div>
                 }
             </dd>
-            <dt class="col-sm-4">Text type</dt>
-            <dd class="col-sm-8">@Model.TextType</dd>
+            <dt>Text type</dt>
+            <dd>@Model.TextType</dd>
         </dl>
 
-        @* white-space: pre-line keeps the line breaks; Razor still encodes the text (no HTML/XSS) *@
-        <h2 class="h5">Poem / quotation / story</h2>
-        <p style="white-space: pre-line">@Model.TextContent</p>
+        @* .artwork-text keeps the line breaks (pre-line); Razor still encodes the text (no HTML/XSS) *@
+        <h2 class="h3">Poem / quotation / story</h2>
+        <p class="artwork-text">@Model.TextContent</p>
 
-        <h2 class="h5">Description</h2>
+        <h2 class="h3">Description</h2>
         <p style="white-space: pre-line">@Model.Description</p>
     </div>
 </div>
 
-<h2 class="h5 mt-3">Evaluation</h2>
-@if (Model.Evaluation is { } e)
-{
-    <div class="card mb-3">
-        <div class="card-body">
-            <p class="mb-2"><strong>Rating:</strong> @e.Rating <span class="text-muted small">(@e.EvaluatedAt.ToString("dd MMM yyyy"))</span></p>
-            <p class="mb-1"><strong>Strengths</strong></p>
-            <p style="white-space: pre-line">@(e.PositivePoints ?? "–")</p>
-            <p class="mb-1"><strong>Weaknesses</strong></p>
-            <p style="white-space: pre-line">@(e.NegativePoints ?? "–")</p>
-            <p class="mb-1"><strong>Areas of improvement</strong></p>
-            <p class="mb-0" style="white-space: pre-line">@(e.ImprovementAreas ?? "–")</p>
+<section class="section" aria-labelledby="evaluation-title">
+    <div class="section-head"><h2 id="evaluation-title">Evaluation</h2></div>
+    @if (Model.Evaluation is { } e)
+    {
+        <div class="evaluation">
+            <p class="d-flex flex-wrap align-items-center gap-2">
+                <span class="tag tag-@e.Rating"><strong>Rating:</strong> @e.Rating</span>
+                <span class="text-muted small">@e.EvaluatedAt.ToString("dd MMM yyyy")</span>
+            </p>
+            <dl class="details">
+                <dt>Strengths</dt>
+                <dd>@(e.PositivePoints ?? "–")</dd>
+                <dt>Weaknesses</dt>
+                <dd>@(e.NegativePoints ?? "–")</dd>
+                <dt>Areas of improvement</dt>
+                <dd>@(e.ImprovementAreas ?? "–")</dd>
+            </dl>
         </div>
-    </div>
-}
-else if (Model.CompetitionStatus == CompetitionStatus.GRADED)
-{
-    <p class="text-muted">Results are published, but this entry has no evaluation.</p>
-}
-else if (Model.CompetitionStatus == CompetitionStatus.CLOSED)
-{
-    @* Closed, waiting for staff to publish (US-10 AC2): same text as the My Results page *@
-    <p class="text-muted">@InstituteOfFineArts.Web.Services.Implementations.StudentResultService.AwaitingResultsMessage</p>
-}
-else
-{
-    <p class="text-muted">Results have not been published yet.</p>
-}
+    }
+    else if (Model.CompetitionStatus == CompetitionStatus.GRADED)
+    {
+        <p class="text-muted">Results are published, but this entry has no evaluation.</p>
+    }
+    else if (Model.CompetitionStatus == CompetitionStatus.CLOSED)
+    {
+        @* Closed, waiting for staff to publish (US-10 AC2): same text as the My Results page *@
+        <p><span class="tag tag-PENDING">@InstituteOfFineArts.Web.Services.Implementations.StudentResultService.AwaitingResultsMessage</span></p>
+    }
+    else
+    {
+        <p class="text-muted">Results have not been published yet.</p>
+    }
+</section>
 
-<a asp-action="Index" class="btn btn-link px-0">Back to my entries</a>
+<a asp-action="Index" class="btn btn-link px-0"><i class="bi bi-arrow-left" aria-hidden="true"></i>Back to my entries</a>
+
+@section Scripts {
+    <script src="~/js/countdown.js" asp-append-version="true"></script>
+}

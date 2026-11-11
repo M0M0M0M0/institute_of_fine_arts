@@ -39,3 +39,6 @@ DESIGN.md
 Thumbs.db
 .DS_Store
 ~$*
+
+# QA upload test pictures (~60 MB): kept on each tester's machine, not in Git
+database/test-upload/

@@ -1,7 +1,7 @@
 @model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Staff.Customers.CustomerListItemVm>
 @*
     Staff – customer list & search (/staff/customers, SCR-32).
-    Minimal version created by BE2-10; FE2 builds the real design in FE2-07.
+    Created by BE2-10; styled by FE2-07 (page head, filter band, ledger table, pager).
 *@
 @{
     ViewData["Title"] = "Customers";
@@ -10,55 +10,71 @@
     object PageRoute(int page) => new { search.Keyword, page };
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Customers</h1>
-    <a asp-action="Create" class="btn btn-primary">New customer</a>
+<div class="page-head">
+    <div>
+        <h1>Customers</h1>
+        <p class="page-sub">The people who buy the students' paintings at exhibitions.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-person-plus" aria-hidden="true"></i>New customer</a>
+    </div>
 </div>
 
 <partial name="_Alerts" />
 
-<form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
-    <div class="col-md-6">
+<form method="get" asp-action="Index" class="filters" role="search">
+    <div class="filter is-wide">
         <label class="form-label" for="Keyword">Name, phone or email</label>
         <input class="form-control" id="Keyword" name="Keyword" value="@search.Keyword" />
     </div>
-    <div class="col-md-2">
-        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>Search</button>
+        @if (!string.IsNullOrEmpty(search.Keyword))
+        {
+            <a asp-action="Index" class="btn btn-link">Clear</a>
+        }
     </div>
 </form>
+
 @if (Model.TotalCount == 0)
 {
-    <p class="text-muted">No customers found.</p>
+    <div class="empty">
+        <i class="bi bi-person-vcard" aria-hidden="true"></i>
+        <p>No customers found.</p>
+        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-person-plus" aria-hidden="true"></i>New customer</a>
+    </div>
 }
 else
 {
-    <table class="table table-hover align-middle">
-        <thead>
-            <tr><th>Full name</th><th>Phone</th><th>Email</th><th class="text-end">Purchases</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var c in Model.Items)
-            {
-                <tr>
-                    <td><a asp-action="Details" asp-route-id="@c.Id">@c.FullName</a></td>
-                    <td>@(c.Phone ?? "–")</td>
-                    <td>@(c.Email ?? "–")</td>
-                    <td class="text-end">@c.PurchaseCount</td>
-                </tr>
-            }
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr><th scope="col">Full name</th><th scope="col">Phone</th><th scope="col">Email</th><th scope="col" class="text-end">Purchases</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model.Items)
+                {
+                    <tr>
+                        <td class="row-title"><a asp-action="Details" asp-route-id="@c.Id">@c.FullName</a></td>
+                        <td class="num">@(c.Phone ?? "–")</td>
+                        <td>@(c.Email ?? "–")</td>
+                        <td class="text-end">@c.PurchaseCount</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 
-    <nav class="d-flex justify-content-between align-items-center">
-        <span class="text-muted small">@Model.TotalCount customer(s) · page @Model.Page of @Model.TotalPages</span>
-        <div>
+    <nav class="pager" aria-label="Pages">
+        <span>@Model.TotalCount customer(s), page @Model.Page of @Model.TotalPages</span>
+        <div class="pager-links">
             @if (Model.HasPrevious)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page - 1))"><i class="bi bi-chevron-left" aria-hidden="true"></i>Previous</a>
             }
             @if (Model.HasNext)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next<i class="bi bi-chevron-right ms-1" aria-hidden="true"></i></a>
             }
         </div>
     </nav>

@@ -2,29 +2,37 @@
 @*
     Student – my results (/student/results, F-M06-07, US-10 AC2/AC3): every own entry with rating, strengths,
     weaknesses, areas of improvement and award once the competition is GRADED; "Awaiting results" before (BR-24).
-    Minimal version created by BE2 (BE2-08); FE2 builds the real design in FE2-06.
+    Created by BE2 (BE2-08); styled by FE2-06 as a ledger: one <tbody class="card mb-3"> per entry (the class is kept
+    because the e2e script splits the page on it), the staff comments in a full-width second row.
 *@
 @using InstituteOfFineArts.Web.Services.Implementations
 @{
     ViewData["Title"] = "My Results";
     var search = (InstituteOfFineArts.Web.ViewModels.Student.Results.MyResultSearchVm)ViewBag.Search;
     var competitions = (List<InstituteOfFineArts.Web.ViewModels.Student.Submissions.MyCompetitionOptionVm>)ViewBag.Competitions;
+    var me = User.GetFullName();
     // Keeps the filters when moving between pages
     object PageRoute(int page) => new { search.CompetitionId, search.Rating, page };
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">My Results</h1>
+<div class="page-head">
     <div>
-        <a href="/student/best" class="btn btn-outline-secondary">Best Works</a>
-        <a href="/student/awards" class="btn btn-outline-secondary">Awards</a>
+        <h1>My Results</h1>
+        <p class="page-sub">Ratings, awards and the staff comments on your entries, once the results are published.</p>
+    </div>
+    <div class="page-actions">
+        <div class="seg" role="group" aria-label="Results">
+            <a href="/student/results" aria-current="page">My Results</a>
+            <a href="/student/best">Best Works</a>
+            <a href="/student/awards">Awards</a>
+        </div>
     </div>
 </div>
 
 <partial name="_Alerts" />
 
-<form method="get" asp-action="Index" class="row g-2 align-items-end mb-3">
-    <div class="col-md-5">
+<form method="get" asp-action="Index" class="filters">
+    <div class="filter">
         <label class="form-label" for="CompetitionId">Competition</label>
         <select class="form-select" id="CompetitionId" name="CompetitionId">
             <option value="">All</option>
@@ -34,7 +42,7 @@
             }
         </select>
     </div>
-    <div class="col-md-3">
+    <div class="filter">
         <label class="form-label" for="Rating">Rating</label>
         <select class="form-select" id="Rating" name="Rating">
             <option value="">All</option>
@@ -44,78 +52,101 @@
             }
         </select>
     </div>
-    <div class="col-md-2">
-        <button type="submit" class="btn btn-outline-primary w-100">Search</button>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>Search</button>
+        <a href="/student/results" class="btn btn-link">Clear</a>
     </div>
 </form>
 
 @if (Model.TotalCount == 0)
 {
-    <p class="text-muted">No results found.</p>
+    <div class="empty">
+        <i class="bi bi-clipboard-check" aria-hidden="true"></i>
+        <p>No results found.</p>
+        <a href="/student/submissions" class="btn btn-outline-primary">View my entries</a>
+    </div>
 }
 else
 {
-    @foreach (var s in Model.Items)
-    {
-        <div class="card mb-3">
-            <div class="card-body d-flex gap-3">
-                <div style="width:110px" class="flex-shrink-0">
-                    @if (s.HasThumbnail)
-                    {
-                        <img src="/files/submissions/@s.Id/thumb" alt="@s.Title" class="img-thumbnail" style="max-height:100px" />
-                    }
-                </div>
-                <div class="flex-grow-1">
-                    <div class="d-flex justify-content-between flex-wrap">
-                        <h2 class="h6 mb-1"><a href="/student/submissions/@s.Id">@s.Title</a></h2>
-                        <partial name="~/Areas/Student/Views/Competitions/_Status.cshtml" model="s.CompetitionStatus" />
-                    </div>
-                    <div class="text-muted small mb-2">
-                        @s.CompetitionTitle · submitted @s.SubmittedAt.ToString("dd MMM yyyy HH:mm")
-                    </div>
-
-                    @* BR-24: the evaluation is only shown once the results are published *@
-                    @if (!s.IsPublished)
-                    {
-                        <p class="mb-0"><span class="badge bg-warning text-dark">@StudentResultService.AwaitingResultsMessage</span></p>
-                    }
-                    else if (s.Rating is null)
-                    {
-                        <p class="mb-0 text-muted">Results are published, but this entry has no evaluation.</p>
-                    }
-                    else
-                    {
-                        <p class="mb-2">
-                            <strong>Rating:</strong> @s.Rating
-                            @if (s.AwardName != null)
+    <div class="table-responsive">
+        <table class="table result-ledger">
+            <thead>
+                <tr><th><span class="visually-hidden">Image</span></th><th>Entry</th><th>Competition</th><th>Rating</th><th>Award</th></tr>
+            </thead>
+            @foreach (var s in Model.Items)
+            {
+                <tbody class="card mb-3">
+                    <tr>
+                        <td>
+                            @if (s.HasThumbnail)
                             {
-                                <span class="badge bg-success ms-2">@s.AwardName (rank @s.AwardRank, @s.PrizeValue?.ToString("$#,##0.00"))</span>
+                                <img src="/files/submissions/@s.Id/thumb" alt="@s.Title – @me" class="table-thumb" loading="lazy" />
                             }
-                        </p>
-                        <dl class="row mb-0 small">
-                            <dt class="col-sm-3">Strengths</dt>
-                            <dd class="col-sm-9" style="white-space: pre-line">@(s.PositivePoints ?? "–")</dd>
-                            <dt class="col-sm-3">Weaknesses</dt>
-                            <dd class="col-sm-9" style="white-space: pre-line">@(s.NegativePoints ?? "–")</dd>
-                            <dt class="col-sm-3">Areas of improvement</dt>
-                            <dd class="col-sm-9 mb-0" style="white-space: pre-line">@(s.ImprovementAreas ?? "–")</dd>
-                        </dl>
+                        </td>
+                        <td>
+                            <a class="row-title" href="/student/submissions/@s.Id">@s.Title</a>
+                            <div class="small text-muted">Submitted @s.SubmittedAt.ToString("dd MMM yyyy HH:mm")</div>
+                        </td>
+                        <td>
+                            @s.CompetitionTitle
+                            <div class="mt-1"><partial name="~/Areas/Student/Views/Competitions/_Status.cshtml" model="s.CompetitionStatus" /></div>
+                        </td>
+                        @* BR-24: the evaluation is only shown once the results are published *@
+                        @if (!s.IsPublished)
+                        {
+                            <td colspan="2"><span class="tag tag-PENDING">@StudentResultService.AwaitingResultsMessage</span></td>
+                        }
+                        else if (s.Rating is null)
+                        {
+                            <td colspan="2" class="text-muted">Results are published, but this entry has no evaluation.</td>
+                        }
+                        else
+                        {
+                            <td><span class="tag tag-@s.Rating"><strong class="visually-hidden">Rating:</strong> @s.Rating</span></td>
+                            <td>
+                                @if (s.AwardName != null)
+                                {
+                                    <span class="tag tag-award"><i class="bi bi-trophy" aria-hidden="true"></i>@s.AwardName</span>
+                                    <div class="small text-muted">Rank @s.AwardRank, @s.PrizeValue?.ToString("$#,##0.00")</div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">–</span>
+                                }
+                            </td>
+                        }
+                    </tr>
+                    @if (s.IsPublished && s.Rating is not null)
+                    {
+                        <tr class="result-comments">
+                            <td></td>
+                            <td colspan="4">
+                                <dl class="details">
+                                    <dt>Strengths</dt>
+                                    <dd>@(s.PositivePoints ?? "–")</dd>
+                                    <dt>Weaknesses</dt>
+                                    <dd>@(s.NegativePoints ?? "–")</dd>
+                                    <dt>Areas of improvement</dt>
+                                    <dd>@(s.ImprovementAreas ?? "–")</dd>
+                                </dl>
+                            </td>
+                        </tr>
                     }
-                </div>
-            </div>
-        </div>
-    }
+                </tbody>
+            }
+        </table>
+    </div>
 
-    <nav class="d-flex justify-content-between align-items-center">
-        <span class="text-muted small">@Model.TotalCount entr@(Model.TotalCount == 1 ? "y" : "ies") · page @Model.Page of @Model.TotalPages</span>
-        <div>
+    <nav class="pager" aria-label="Pages">
+        <span>@Model.TotalCount entr@(Model.TotalCount == 1 ? "y" : "ies"), page @Model.Page of @Model.TotalPages</span>
+        <div class="pager-links">
             @if (Model.HasPrevious)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page - 1))">Previous</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page - 1))"><i class="bi bi-chevron-left" aria-hidden="true"></i>Previous</a>
             }
             @if (Model.HasNext)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", PageRoute(Model.Page + 1))">Next<i class="bi bi-chevron-right ms-1 me-0" aria-hidden="true"></i></a>
             }
         </div>
     </nav>

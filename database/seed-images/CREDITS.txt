@@ -1,3 +1,39 @@
-# Nguồn ảnh mẫu – BẮT BUỘC ghi đủ cho mọi ảnh (chỉ dùng ảnh tự vẽ hoặc giấy phép free: Unsplash, Pexels, Public Domain)
-# fileName | nguồn | tác giả | link | giấy phép
-# Ảnh còn thiếu sẽ được DbSeeder tự vẽ (SampleArtwork.cs, SkiaSharp) – ảnh do chương trình tạo, không có bản quyền bên thứ ba.
+# Sample images of the seed data (task QA-01). Only pictures with a free licence are used.
+# Every file below is a resized copy (long side <= 1600 px, JPEG, <= 1 MB) of a Pixabay original;
+# covers are 1600x600 crops. DbSeeder.SampleData.cs loads them by file name; a missing file is drawn
+# by SampleArtwork.cs (SkiaSharp, program-generated, no third-party rights).
+# seed file | original file | source | author | link | licence
+
+river-of-my-childhood.jpg | 12019-john-brett.jpg | Pixabay | 12019 | https://pixabay.com/vi/illustrations/john-brett-b%E1%BB%A9c-v%E1%BA%BD-d%E1%BA%A7u-tr%C3%AAn-v%E1%BA%A3i-89649/ | Pixabay Content License
+golden-rice-fields.jpg | vinsky2002-sky.jpg | Pixabay | vinsky2002 | https://pixabay.com/vi/illustrations/b%E1%BA%A7u-tr%E1%BB%9Di-m%E1%BB%9F-kho%E1%BA%A3ng-tr%E1%BB%91ng-ngo%C3%A0i-tr%E1%BB%9Di-5119622/ | Pixabay Content License
+morning-mist.jpg | 12019-painting.jpg | Pixabay | 12019 | https://pixabay.com/vi/illustrations/b%E1%BB%A9c-v%E1%BA%BD-ngh%E1%BB%87-thu%E1%BA%ADt-81180/ | Pixabay Content License
+old-market-street.jpg | vinsky2002-east-budleigh.jpg | Pixabay | vinsky2002 | https://pixabay.com/vi/illustrations/%C4%91%C3%B4ng-budleigh-devon-uk-c%E1%BB%95-%C4%91i%E1%BB%83n-c%C5%A9-4288376/ | Pixabay Content License
+fishing-village.jpg | davidcmiller-beach.jpg | Pixabay | davidcmiller | https://pixabay.com/vi/illustrations/b%E1%BB%9D-bi%E1%BB%83n-thuy%E1%BB%81n-b%E1%BB%A9c-v%E1%BA%BD-thi%C3%AAn-%C4%91%C6%B0%E1%BB%9Dng-1110498/ | Pixabay Content License
+banyan-tree.jpg | nika_akin-tree.jpg | Pixabay | nika_akin | https://pixabay.com/vi/illustrations/c%C3%A2y-m%C3%B9a-%C4%91%C3%B4ng-m%E1%BB%99t-b%E1%BB%A9c-v%E1%BA%BD-v%E1%BA%BD-4460149/ | Pixabay Content License
+rainy-season.jpg | artsybee-landscape.jpg | Pixabay | artsybee | https://pixabay.com/vi/illustrations/c%E1%BA%A3nh-quan-%C3%A1nh-s%C3%A1ng-ban-ng%C3%A0y-4401581/ | Pixabay Content License
+sunset-bridge.jpg | layers-watercolour.jpg | Pixabay | layers | https://pixabay.com/vi/illustrations/b%E1%BB%A9c-tranh-s%C6%A1n-d%E1%BA%A7u-s%C6%A1n-b%E1%BB%A9c-v%E1%BA%BD-5280703/ | Pixabay Content License
+fox-in-the-snow.jpg | mart_pictures-bird.jpg | Pixabay | mart_pictures | https://pixabay.com/vi/illustrations/chim-bi%E1%BB%83n-b%E1%BB%A9c-v%E1%BA%BD-ngh%E1%BB%87-thu%E1%BA%ADt-3342446/ | Pixabay Content License
+old-elephant.jpg | tilixia-summer-tuna.jpg | Pixabay | tilixia-summer | https://pixabay.com/vi/illustrations/c%C3%A1-ng%E1%BB%AB-c%C3%A1-h%E1%BA%A3i-s%E1%BA%A3n-bi%E1%BB%83n-th%C3%BA-v%E1%BA%ADt-7285848/ | Pixabay Content License
+kingfisher.jpg | starglade-bird.jpg | Pixabay | starglade | https://pixabay.com/vi/illustrations/chim-th%C3%BA-v%E1%BA%ADt-hoang-d%C3%A3-4074643/ | Pixabay Content License
+langur-family.jpg | peterkraayvanger-waterfall.jpg | Pixabay | peterkraayvanger | https://pixabay.com/vi/illustrations/th%C3%A1c-n%C6%B0%E1%BB%9Bc-thi%C3%AAn-nhi%C3%AAn-c%E1%BA%A3nh-quan-4729347/ | Pixabay Content License
+owl-at-midnight.jpg | vinsky2002-blue-birds-and-blossom.jpg | Pixabay | vinsky2002 | https://pixabay.com/vi/illustrations/chim-xanh-v%C3%A0-hoa-hoang-d%C3%A3-chim-4301366/ | Pixabay Content License
+butterflies.jpg | nika_akin-insect.jpg | Pixabay | nika_akin | https://pixabay.com/vi/illustrations/c%C3%B4n-tr%C3%B9ng-b%C6%B0%E1%BB%9Bm-%C4%91%C3%AAm-m%C3%A0u-n%C6%B0%E1%BB%9Bc-4500348/ | Pixabay Content License
+night-market.jpg | cheesehand-sam-gold.jpg | Pixabay | cheesehand-sam | https://pixabay.com/vi/illustrations/v%C3%A0ng-kho-b%C3%A1u-c%C6%B0%E1%BB%9Bp-bi%E1%BB%83n-%C4%91%E1%BB%93ng-xu-7980065/ | Pixabay Content License
+bridge-lights.jpg | darksouls1-castle.jpg | Pixabay | darksouls1 | https://pixabay.com/vi/illustrations/l%C3%A2u-%C4%91%C3%A0i-th%E1%BB%9Di-trung-c%E1%BB%95-con-s%C3%B4ng-7347375/ | Pixabay Content License
+last-bus-home.jpg | avocetgeo-house.jpg | Pixabay | avocetgeo | https://pixabay.com/vi/illustrations/c%C4%83n-nh%C3%A0-t%C3%B2a-nh%C3%A0-%C4%91%E1%BB%93i-c%C3%A2y-r%C3%A0o-ch%E1%BA%AFn-7532959/ | Pixabay Content License
+rooftop-view.jpg | ksushlapush-background2.jpg | Pixabay | ksushlapush | https://pixabay.com/vi/illustrations/lai-l%E1%BB%8Bch-k%E1%BA%BFt-c%E1%BA%A5u-6556413/ | Pixabay Content License
+street-food-corner.jpg | soponyono-village.png | Pixabay | soponyono | https://pixabay.com/vi/vectors/l%C3%A0ng-b%E1%BA%A3n-trang-ch%E1%BB%A7-n%C3%B4ng-th%C3%B4n-9720411/ | Pixabay Content License
+falling-maple-leaves.jpg | vinsky2002-autumn.jpg | Pixabay | vinsky2002 | https://pixabay.com/vi/illustrations/m%C3%B9a-thu-c%E1%BA%A7u-c%C5%A9-c%E1%BB%95-%C4%91i%E1%BB%83n-ngo%C3%A0i-tr%E1%BB%9Di-4897237/ | Pixabay Content License
+harvest-moon.jpg | ksushlapush-background1.jpg | Pixabay | ksushlapush | https://pixabay.com/vi/illustrations/lai-l%E1%BB%8Bch-k%E1%BA%BFt-c%E1%BA%A5u-6556409/ | Pixabay Content License
+grandmas-persimmons.jpg | marisi26-cactus.jpg | Pixabay | marisi26 | https://pixabay.com/vi/illustrations/c%C3%A2y-x%C6%B0%C6%A1ng-r%E1%BB%93ng-nh%E1%BB%AFng-b%C3%B4ng-hoa-hoa-4007032/ | Pixabay Content License
+golden-path.jpg | vinsky2002-one-autumn-afternoon.jpg | Pixabay | vinsky2002 | https://pixabay.com/vi/illustrations/m%E1%BB%99t-bu%E1%BB%95i-chi%E1%BB%81u-m%C3%B9a-thu-m%C3%B9a-thu-4313573/ | Pixabay Content License
+hanoi-in-autumn.jpg | mart_pictures-art.jpg | Pixabay | mart_pictures | https://pixabay.com/vi/illustrations/ngh%E1%BB%87-thu%E1%BA%ADt-b%E1%BB%A9c-tranh-nh%E1%BB%AFng-b%C3%B4ng-hoa-3125816/ | Pixabay Content License
+autumn-rain.jpg | vinsky2002-old-winter-windmill.jpg | Pixabay | vinsky2002 | https://pixabay.com/vi/illustrations/gi%C3%A0-m%C3%B9a-%C4%91%C3%B4ng-c%E1%BB%91i-xay-gi%C3%B3-c%C5%A9-c%E1%BB%95-%C4%91i%E1%BB%83n-4313572/ | Pixabay Content License
+quick-sketch-cafe.jpg | nika_akin-black-and-white.jpg | Pixabay | nika_akin | https://pixabay.com/vi/illustrations/%C4%91en-v%C3%A0-tr%E1%BA%AFng-b%C3%B3-l%E1%BA%A1i-c%E1%BB%A7a-4674690/ | Pixabay Content License
+quick-sketch-park.jpg | janejago-hellebore.jpg | Pixabay | janejago | https://pixabay.com/vi/illustrations/hellebore-gi%C3%A1ng-sinh-v%E1%BA%BD-b%E1%BB%A9c-v%E1%BA%BD-7637542/ | Pixabay Content License
+cover-hometown-landscapes.jpg | 12019-john-brett.jpg | Pixabay | 12019 | https://pixabay.com/vi/illustrations/john-brett-b%E1%BB%A9c-v%E1%BA%BD-d%E1%BA%A7u-tr%C3%AAn-v%E1%BA%A3i-89649/ | Pixabay Content License
+cover-wildlife.jpg | vinsky2002-blue-birds-and-blossom.jpg | Pixabay | vinsky2002 | https://pixabay.com/vi/illustrations/chim-xanh-v%C3%A0-hoa-hoang-d%C3%A3-chim-4301366/ | Pixabay Content License
+cover-city-at-night.jpg | darksouls1-castle.jpg | Pixabay | darksouls1 | https://pixabay.com/vi/illustrations/l%C3%A2u-%C4%91%C3%A0i-th%E1%BB%9Di-trung-c%E1%BB%95-con-s%C3%B4ng-7347375/ | Pixabay Content License
+cover-colors-of-autumn.jpg | vinsky2002-autumn.jpg | Pixabay | vinsky2002 | https://pixabay.com/vi/illustrations/m%C3%B9a-thu-c%E1%BA%A7u-c%C5%A9-c%E1%BB%95-%C4%91i%E1%BB%83n-ngo%C3%A0i-tr%E1%BB%9Di-4897237/ | Pixabay Content License
+cover-deadline-today.jpg | nika_akin-black-and-white.jpg | Pixabay | nika_akin | https://pixabay.com/vi/illustrations/%C4%91en-v%C3%A0-tr%E1%BA%AFng-b%C3%B3-l%E1%BA%A1i-c%E1%BB%A7a-4674690/ | Pixabay Content License
+cover-lunar-new-year-2027.jpg | vronischmidt-poppy.jpg | Pixabay | vronischmidt | https://pixabay.com/vi/illustrations/c%C3%A2y-thu%E1%BB%91c-phi%E1%BB%87n-m%C3%A0u-n%C6%B0%E1%BB%9Bc-hoa-3502870/ | Pixabay Content License

@@ -2,20 +2,26 @@
 @*
     My notifications (/notifications, F-M12-02) – every signed-in role: newest first, 10 per page.
     "Open" marks the notification as read and follows its link; "Mark all as read" marks every unread one.
-    Minimal version created by BE1-OPT 3 + BE2-OPT 5; FE builds the real design in FE1-OPT.
+    Created by BE1-OPT 3 + BE2-OPT 5; styled by FE1-OPT: page head, a calm list (unread rows on mist, bold title).
+    The "New" badge keeps its classes (the e2e script looks for them right after data-notification-id).
 *@
 @{
     ViewData["Title"] = "Notifications";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h1 class="h3 mb-0">Notifications</h1>
+<div class="page-head">
+    <div>
+        <h1>Notifications</h1>
+        <p class="page-sub">Newest first.</p>
+    </div>
     @if (Model.Items.Any(n => !n.IsRead))
     {
-        <form method="post" action="/notifications/read-all">
-            @Html.AntiForgeryToken()
-            <button type="submit" class="btn btn-outline-secondary">Mark all as read</button>
-        </form>
+        <div class="page-actions">
+            <form method="post" action="/notifications/read-all">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-primary"><i class="bi bi-check2-all" aria-hidden="true"></i>Mark all as read</button>
+            </form>
+        </div>
     }
 </div>
 
@@ -23,47 +29,42 @@
 
 @if (Model.TotalCount == 0)
 {
-    <p class="text-muted">You have no notifications.</p>
+    <div class="empty"><i class="bi bi-bell" aria-hidden="true"></i><p>You have no notifications.</p></div>
 }
 else
 {
-    <ul class="list-group mb-3">
+    <ul class="calm-list">
         @foreach (var n in Model.Items)
         {
-            <li class="list-group-item d-flex justify-content-between align-items-start @(n.IsRead ? "" : "list-group-item-primary")" data-notification-id="@n.Id">
-                <div class="me-3">
-                    <div class="@(n.IsRead ? "" : "fw-semibold")">
-                        @n.Title
-                        @if (!n.IsRead)
-                        {
-                            <span class="badge bg-primary ms-1">New</span>
-                        }
-                    </div>
-                    <div style="white-space: pre-line">@n.Message</div>
+            <li class="@(n.IsRead ? "" : "is-unread")" data-notification-id="@n.Id">
+                <div>
+                    <div class="cl-head">@n.Title @if (!n.IsRead)
+                        {<span class="badge bg-primary ms-1">New</span>}</div>
+                    <div class="cl-body">@n.Message</div>
                     <small class="text-muted">@n.CreatedAt.ToString("dd MMM yyyy HH:mm")</small>
                 </div>
                 @* Opening marks the notification as read (POST with the anti-forgery token) *@
                 @if (n.Link != null || !n.IsRead)
                 {
-                    <form method="post" action="/notifications/@n.Id/read">
+                    <form method="post" action="/notifications/@n.Id/read" class="cl-action">
                         @Html.AntiForgeryToken()
-                        <button type="submit" class="btn btn-sm btn-outline-primary">@(n.Link != null ? "Open" : "Mark as read")</button>
+                        <button type="submit" class="btn btn-sm @(n.Link != null ? "btn-primary" : "btn-outline-primary")">@(n.Link != null ? "Open" : "Mark as read")</button>
                     </form>
                 }
             </li>
         }
     </ul>
 
-    <nav class="d-flex justify-content-between align-items-center">
-        <span class="text-muted small">@Model.TotalCount notification@(Model.TotalCount == 1 ? "" : "s") · page @Model.Page of @Model.TotalPages</span>
-        <div>
+    <nav class="pager" aria-label="Notification pages">
+        <span>@Model.TotalCount notification@(Model.TotalCount == 1 ? "" : "s"), page @Model.Page of @Model.TotalPages</span>
+        <div class="pager-links">
             @if (Model.HasPrevious)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", new { page = Model.Page - 1 })">Previous</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", new { page = Model.Page - 1 })"><i class="bi bi-arrow-left" aria-hidden="true"></i>Previous</a>
             }
             @if (Model.HasNext)
             {
-                <a class="btn btn-sm btn-outline-secondary" href="@Url.Action("Index", new { page = Model.Page + 1 })">Next</a>
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Index", new { page = Model.Page + 1 })">Next<i class="bi bi-arrow-right ms-1 me-0" aria-hidden="true"></i></a>
             }
         </div>
     </nav>

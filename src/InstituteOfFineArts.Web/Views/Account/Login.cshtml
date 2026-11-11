@@ -2,15 +2,17 @@
 @inject Microsoft.Extensions.Localization.IStringLocalizer<InstituteOfFineArts.Web.SharedResource> L
 @*
     Login page (/login) – used by every role.
-    Minimal version created by BE1 so the feature works; FE1 builds the real design in task FE1-02.
+    Created by BE1; styled by FE1-02: one calm white sheet with the wordmark on the mist band.
 *@
 @{
     ViewData["Title"] = L["Log in"].Value;
+    ViewData["FullBleed"] = true;
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-5 col-lg-4">
-        <h1 class="h3 mb-3">@L["Log in"]</h1>
+<section class="band band-mist auth-band">
+    <div class="auth-sheet">
+        <a class="wordmark" href="/" aria-label="Institute of Fine Arts – home"><partial name="_Wordmark" model="@("ink")" /></a>
+        <h1>@L["Log in"]</h1>
         @* Success message after a password reset (F-M16-01) *@
         <partial name="_Alerts" />
 
@@ -32,20 +34,20 @@
                 <span asp-validation-for="Password" class="text-danger"></span>
             </div>
 
-            <div class="form-check mb-3">
+            <div class="form-check mb-4">
                 <input asp-for="RememberMe" class="form-check-input" />
                 <label asp-for="RememberMe" class="form-check-label"></label>
             </div>
 
-            <button type="submit" class="btn btn-primary w-100">@L["Log in"]</button>
+            <button type="submit" class="btn btn-primary btn-lg w-100">@L["Log in"]</button>
         </form>
 
         @* Forgot password link (F-M16-01) *@
-        <p class="mt-3 text-center">
+        <p class="auth-foot">
             <a asp-controller="PasswordReset" asp-action="ForgotPassword">@L["Forgot password?"]</a>
         </p>
     </div>
-</div>
+</section>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

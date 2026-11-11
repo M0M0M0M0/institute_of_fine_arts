@@ -1,14 +1,19 @@
 @model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Admin.Students.StudentListItemVm>
 @*
     Manager – student list & search, read only (/manager/students, SCR-51; F-M11-02, TC-M11-01): no create / edit / delete buttons.
-    Minimal version created by BE (BE2-13); FE2 builds the real design in FE2-10.
     Reuses the search form and table partials of the Admin area (links go to the current controller).
+    Created by BE2-13; styled by FE2-03 (page head, filters bar, ledger table).
 *@
 @{
     ViewData["Title"] = "Students";
 }
 
-<h1 class="h3 mb-3">Students</h1>
+<div class="page-head">
+    <div>
+        <h1>Students</h1>
+        <p class="page-sub">Students of the institute with course, class and study status, read only.</p>
+    </div>
+</div>
 
 <partial name="_Alerts" />
 <partial name="~/Areas/Admin/Views/Students/_SearchForm.cshtml" model="(InstituteOfFineArts.Web.ViewModels.Admin.Students.StudentSearchVm)ViewBag.Search" />

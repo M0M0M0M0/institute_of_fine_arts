@@ -3,118 +3,123 @@
 @using InstituteOfFineArts.Web.Models.Enums
 @*
     Admin – dashboard (/admin): accounts, students, competitions, submissions, exhibitions and recent logins.
-    Minimal version created by BE (BE2-04); FE2 builds the real design in FE2-02.
+    Created by BE2-04; styled by FE2-02 (one ledger strip of figures, quick actions, recent logins ledger).
 *@
 @{
     ViewData["Title"] = "Administrator";
 }
 
-<partial name="_Alerts" />
-
-<h1 class="h3">Welcome, @User.GetFullName()</h1>
-
-<p><a href="/admin/staff">Staff</a> · <a href="/admin/students">Students</a> · <a href="/profile">My profile</a> · <a href="/profile/change-password">Change password</a></p>
-
-@* Summary cards: one per area, each with its breakdown *@
-<div class="row g-3 mb-4">
-    <div class="col-md-6 col-xl-3">
-        <div class="card h-100" id="card-staff">
-            <div class="card-body">
-                <h2 class="h6 text-uppercase text-muted">Staff accounts</h2>
-                <div class="display-6" data-stat="staff-total">@Model.StaffTotal</div>
-                <ul class="list-unstyled small mb-0">
-                    <li>Staff: <strong data-stat="staff-STAFF">@Model.StaffByRole[Role.STAFF]</strong></li>
-                    <li>Manager: <strong data-stat="staff-MANAGER">@Model.StaffByRole[Role.MANAGER]</strong></li>
-                    <li>Admin: <strong data-stat="staff-ADMIN">@Model.StaffByRole[Role.ADMIN]</strong></li>
-                    <li>Active: <strong data-stat="staff-active">@Model.StaffActive</strong> · Locked: <strong data-stat="staff-locked">@Model.StaffLocked</strong></li>
-                </ul>
-            </div>
-        </div>
+<div class="page-head">
+    <div>
+        <h1>Welcome, @User.GetFullName()</h1>
+        <p class="page-sub">Accounts, competitions and exhibitions of the institute at a glance.</p>
     </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card h-100" id="card-students">
-            <div class="card-body">
-                <h2 class="h6 text-uppercase text-muted">Students</h2>
-                <div class="display-6" data-stat="students-total">@Model.StudentsTotal</div>
-                <ul class="list-unstyled small mb-0">
-                    <li>Active: <strong data-stat="students-active">@Model.StudentsActive</strong> · Locked: <strong data-stat="students-locked">@Model.StudentsLocked</strong></li>
-                    @foreach (var (status, count) in Model.StudentsByEnrollment)
-                    {
-                        <li>@status: <strong data-stat="enrollment-@status">@count</strong></li>
-                    }
-                </ul>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card h-100" id="card-competitions">
-            <div class="card-body">
-                <h2 class="h6 text-uppercase text-muted">Competitions</h2>
-                <div class="display-6" data-stat="competitions-total">@Model.CompetitionsByStatus.Values.Sum()</div>
-                <ul class="list-unstyled small mb-0">
-                    @foreach (var (status, count) in Model.CompetitionsByStatus)
-                    {
-                        <li>@status: <strong data-stat="competition-@status">@count</strong></li>
-                    }
-                </ul>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card h-100" id="card-submissions">
-            <div class="card-body">
-                <h2 class="h6 text-uppercase text-muted">Submissions</h2>
-                <div class="display-6" data-stat="submissions-total">@Model.TotalSubmissions</div>
-                <ul class="list-unstyled small mb-0">
-                    <li>Waiting for evaluation (closed competitions): <strong data-stat="submissions-awaiting">@Model.SubmissionsAwaitingEvaluation</strong></li>
-                </ul>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6 col-xl-3">
-        <div class="card h-100" id="card-exhibitions">
-            <div class="card-body">
-                <h2 class="h6 text-uppercase text-muted">Exhibitions</h2>
-                <div class="display-6" data-stat="exhibitions-total">@Model.ExhibitionsByStatus.Values.Sum()</div>
-                <ul class="list-unstyled small mb-0">
-                    @foreach (var (status, count) in Model.ExhibitionsByStatus)
-                    {
-                        <li>@status: <strong data-stat="exhibition-@status">@count</strong></li>
-                    }
-                </ul>
-            </div>
-        </div>
+    <div class="page-actions">
+        <a href="/admin/staff/new" class="btn btn-primary"><i class="bi bi-person-plus" aria-hidden="true"></i>New staff member</a>
     </div>
 </div>
 
-@* Most recent logins of any role *@
-<h2 class="h5">Recent logins</h2>
-@if (Model.RecentLogins.Count == 0)
-{
-    <p class="text-muted">Nobody has logged in yet.</p>
-}
-else
-{
-    <table class="table table-sm" id="recent-logins">
-        <thead>
-            <tr><th>Username</th><th>Name</th><th>Role</th><th>Time</th></tr>
-        </thead>
-        <tbody>
-            @foreach (var login in Model.RecentLogins)
-            {
-                <tr>
-                    <td>@login.Username</td>
-                    <td>@login.FullName</td>
-                    <td>@login.Role</td>
-                    <td>@login.LastLoginAt.ToString("dd MMM yyyy HH:mm")</td>
-                </tr>
-            }
-        </tbody>
-    </table>
-}
+<partial name="_Alerts" />
 
-@* Log out with POST plus the anti-forgery token *@
-<form method="post" action="/logout">
-    @Html.AntiForgeryToken()
-    <button type="submit" class="btn btn-outline-secondary">Log out</button>
-</form>
+@* Key figures: one ledger strip, each figure with its breakdown *@
+<dl class="ledger">
+    <div id="card-staff">
+        <dt>Staff accounts</dt>
+        <dd data-stat="staff-total">@Model.StaffTotal</dd>
+        <ul class="ledger-list">
+            <li>Staff: <strong data-stat="staff-STAFF">@Model.StaffByRole[Role.STAFF]</strong></li>
+            <li>Manager: <strong data-stat="staff-MANAGER">@Model.StaffByRole[Role.MANAGER]</strong></li>
+            <li>Admin: <strong data-stat="staff-ADMIN">@Model.StaffByRole[Role.ADMIN]</strong></li>
+            <li>Active: <strong data-stat="staff-active">@Model.StaffActive</strong>, locked: <strong data-stat="staff-locked">@Model.StaffLocked</strong></li>
+        </ul>
+    </div>
+    <div id="card-students">
+        <dt>Students</dt>
+        <dd data-stat="students-total">@Model.StudentsTotal</dd>
+        <ul class="ledger-list">
+            <li>Active: <strong data-stat="students-active">@Model.StudentsActive</strong>, locked: <strong data-stat="students-locked">@Model.StudentsLocked</strong></li>
+            @foreach (var (status, count) in Model.StudentsByEnrollment)
+            {
+                <li>@status: <strong data-stat="enrollment-@status">@count</strong></li>
+            }
+        </ul>
+    </div>
+    <div id="card-competitions">
+        <dt>Competitions</dt>
+        <dd data-stat="competitions-total">@Model.CompetitionsByStatus.Values.Sum()</dd>
+        <ul class="ledger-list">
+            @foreach (var (status, count) in Model.CompetitionsByStatus)
+            {
+                <li>@status: <strong data-stat="competition-@status">@count</strong></li>
+            }
+        </ul>
+    </div>
+    <div id="card-submissions">
+        <dt>Submissions</dt>
+        <dd data-stat="submissions-total">@Model.TotalSubmissions</dd>
+        <ul class="ledger-list">
+            <li>Waiting for evaluation (closed competitions): <strong data-stat="submissions-awaiting">@Model.SubmissionsAwaitingEvaluation</strong></li>
+        </ul>
+    </div>
+    <div id="card-exhibitions">
+        <dt>Exhibitions</dt>
+        <dd data-stat="exhibitions-total">@Model.ExhibitionsByStatus.Values.Sum()</dd>
+        <ul class="ledger-list">
+            @foreach (var (status, count) in Model.ExhibitionsByStatus)
+            {
+                <li>@status: <strong data-stat="exhibition-@status">@count</strong></li>
+            }
+        </ul>
+    </div>
+</dl>
+
+@* Quick actions: only what the rail does not already offer, as a hairline list (same pattern as the staff home) *@
+<section class="section" aria-labelledby="actions-title">
+    <div class="section-head"><h2 id="actions-title">Quick actions</h2></div>
+    <ul class="quick-links">
+        <li><a href="/admin/students/import"><i class="bi bi-filetype-csv" aria-hidden="true"></i><span class="ql-title">Import students</span><span class="ql-text">Create many student accounts from a CSV file.</span></a></li>
+        <li><a href="/profile"><i class="bi bi-person" aria-hidden="true"></i><span class="ql-title">My profile</span><span class="ql-text">Your account details.</span></a></li>
+        <li><a href="/profile/change-password"><i class="bi bi-key" aria-hidden="true"></i><span class="ql-title">Change password</span><span class="ql-text">Set a new password for this account.</span></a></li>
+    </ul>
+    @* Log out with POST plus the anti-forgery token *@
+    <form method="post" action="/logout" class="mt-3">
+        @Html.AntiForgeryToken()
+        <button type="submit" class="btn btn-outline-primary"><i class="bi bi-box-arrow-right" aria-hidden="true"></i>Log out</button>
+    </form>
+</section>
+
+@* Most recent logins of any role *@
+<section class="section">
+    <div class="section-head">
+        <h2>Recent logins</h2>
+        <a href="/admin/audit-log?Activity=LOGIN" class="btn btn-sm btn-link">Audit log</a>
+    </div>
+    @if (Model.RecentLogins.Count == 0)
+    {
+        <div class="empty">
+            <i class="bi bi-clock-history" aria-hidden="true"></i>
+            <p>Nobody has logged in yet.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table" id="recent-logins">
+                <thead>
+                    <tr><th>Username</th><th>Name</th><th>Role</th><th>Time</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var login in Model.RecentLogins)
+                    {
+                        <tr>
+                            <td>@login.Username</td>
+                            <td>@login.FullName</td>
+                            <td>@login.Role</td>
+                            <td>@login.LastLoginAt.ToString("dd MMM yyyy HH:mm")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

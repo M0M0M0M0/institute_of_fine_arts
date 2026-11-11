@@ -3,22 +3,22 @@
     Create / edit form of an exhibition, shared by the Staff and Manager areas (SCR-29, SCR-56).
     Posts to the current action (new or {id}/edit) of the current area. Dates are read-only for a finished exhibition
     with artworks (still posted, so the server can check they did not change).
-    Minimal version created by BE2-09; FE2 builds the real design in FE2-07.
+    Created by BE2-09; styled by FE2-07 (form sheet, hint notes, pill actions).
 *@
 @{
     var isEdit = Model.Id > 0;
 }
 
-<form asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@(isEdit ? Model.Id.ToString() : null)" method="post" novalidate>
+<form asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@(isEdit ? Model.Id.ToString() : null)" method="post" novalidate class="form-sheet">
     <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
 
     @if (Model.DatesLocked)
     {
-        <div class="alert alert-warning">This exhibition has finished and has artworks, so its dates can no longer be changed.</div>
+        <div class="alert alert-warning"><i class="bi bi-lock" aria-hidden="true"></i><div>This exhibition has finished and has artworks, so its dates can no longer be changed.</div></div>
     }
     else if (Model.HasEntries)
     {
-        <div class="alert alert-info">Artworks have already been sent to this exhibition. The period must still include every sale date.</div>
+        <div class="alert alert-info"><i class="bi bi-info-circle" aria-hidden="true"></i><div>Artworks have already been sent to this exhibition. The period must still include every sale date.</div></div>
     }
 
     <div class="mb-3">
@@ -35,8 +35,8 @@
         </div>
         <div class="col-md-4 mb-3">
             <label asp-for="City" class="form-label"></label>
-            <input asp-for="City" class="form-control" />
-            <div class="form-text">Domestic exhibitions only.</div>
+            <input asp-for="City" class="form-control" aria-describedby="City-hint" />
+            <div class="form-text" id="City-hint">Domestic exhibitions only.</div>
             <span asp-validation-for="City" class="text-danger"></span>
         </div>
     </div>
@@ -48,12 +48,12 @@
     </div>
 
     <div class="row">
-        <div class="col-md-6 mb-3">
+        <div class="col-sm-6 mb-3">
             <label asp-for="StartDate" class="form-label"></label>
             <input asp-for="StartDate" type="date" class="form-control" readonly="@Model.DatesLocked" />
             <span asp-validation-for="StartDate" class="text-danger"></span>
         </div>
-        <div class="col-md-6 mb-3">
+        <div class="col-sm-6 mb-3">
             <label asp-for="EndDate" class="form-label"></label>
             <input asp-for="EndDate" type="date" class="form-control" readonly="@Model.DatesLocked" />
             <span asp-validation-for="EndDate" class="text-danger"></span>
@@ -62,17 +62,19 @@
 
     <div class="mb-3">
         <label asp-for="Description" class="form-label"></label>
-        <textarea asp-for="Description" class="form-control" rows="4"></textarea>
+        <textarea asp-for="Description" class="form-control" rows="5"></textarea>
         <span asp-validation-for="Description" class="text-danger"></span>
     </div>
 
-    <button type="submit" class="btn btn-primary">@(isEdit ? "Save changes" : "Create exhibition")</button>
-    @if (isEdit)
-    {
-        <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link">Cancel</a>
-    }
-    else
-    {
-        <a asp-action="Index" class="btn btn-link">Cancel</a>
-    }
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">@(isEdit ? "Save changes" : "Create exhibition")</button>
+        @if (isEdit)
+        {
+            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-link">Cancel</a>
+        }
+        else
+        {
+            <a asp-action="Index" class="btn btn-link">Cancel</a>
+        }
+    </div>
 </form>
