@@ -56,12 +56,13 @@
 <div class="artwork-stage grading-stage">
     @* Entry summary (F-M07-02); the full details stay on the submission page *@
     <figure class="artwork m-0">
-        <div class="artwork-frame"><img src="/files/submissions/@Model.SubmissionId" alt="@Model.Title – @Model.StudentName" /></div>
+        <div class="artwork-frame" data-zoom data-zoom-download="/files/submissions/@Model.SubmissionId?download=true"><img src="/files/submissions/@Model.SubmissionId" alt="@Model.Title – @Model.StudentName" /></div>
         <figcaption class="wall-label wall-label-long">
             <span class="wl-title">@Model.Title</span>
             <span class="wl-artist">@Model.StudentName (@Model.StudentCode)</span>
             <span class="wl-meta">@Model.CompetitionTitle</span>
             <span class="wl-meta num">Submitted at @Model.SubmittedAt.ToString("dd MMM yyyy HH:mm")</span>
+            <span class="wl-meta"><a href="/files/submissions/@Model.SubmissionId?download=true"><i class="bi bi-download me-1" aria-hidden="true"></i>Download original</a></span>
             @if (Model.IsLate)
             {
                 <span class="wl-state"><span class="tag tag-DISQUALIFIED tag-plain"><i class="bi bi-clock-history" aria-hidden="true"></i>Late</span></span>
