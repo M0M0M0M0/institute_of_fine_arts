@@ -8,6 +8,7 @@ namespace InstituteOfFineArts.Web.Data.Seed;
 /// <list type="bullet">
 /// <item><c>DbSeeder.Accounts.cs</c> – sample accounts (task BE1-01)</item>
 /// <item><c>DbSeeder.SampleData.cs</c> – competitions, submissions, grading, awards, exhibitions (task BE2-01)</item>
+/// <item><c>DbSeeder.Archive.cs</c> – two years of past competitions with ~1,500 real paintings (downloaded separately)</item>
 /// </list>
 /// </summary>
 public static partial class DbSeeder
@@ -35,6 +36,18 @@ public static partial class DbSeeder
         if (!await db.Competitions.AnyAsync())
         {
             await SeedSampleDataAsync(db, scope.ServiceProvider);
+        }
+
+        // Step 3: archive of past competitions with real paintings (once, only when its pictures were downloaded).
+        // A failure is logged and rolled back; the app still starts with the main sample data.
+        try
+        {
+            await SeedArchiveAsync(db, scope.ServiceProvider);
+        }
+        catch (Exception ex)
+        {
+            scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DbSeeder.Archive")
+                .LogError(ex, "Archive sample data could not be seeded");
         }
     }
 }

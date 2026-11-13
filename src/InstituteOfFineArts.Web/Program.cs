@@ -73,7 +73,10 @@ builder.AddDockerEnvConnectionString();
 // Database: EF Core + SQL Server; table/column names converted to snake_case (account, password_hash…)
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
-           .UseSnakeCaseNamingConvention());
+           .UseSnakeCaseNamingConvention()
+           // MARS is on, so EF cannot use savepoints inside a transaction; the code that opens a transaction
+           // rolls the whole transaction back on failure, so the warning (one line per SaveChanges) is only noise
+           .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.SqlServerEventId.SavepointsDisabledBecauseOfMARS)));
 
 // Business services: every XxxService class in Services/Implementations is registered automatically
 // → adding a new service does NOT require editing this file
