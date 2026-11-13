@@ -1,0 +1,109 @@
+@{
+    ViewData["Title"] = "Open Art Competitions";
+}
+
+<!-- KHỐI HERO GIỚI THIỆU -->
+<div class="gallery-hero bg-cream py-5 mb-5 text-center">
+    <div class="container" style="max-width: 850px;">
+        <h1 class="art-title display-5 mb-4">Open Art Competitions</h1>
+        <p class="text-muted lh-lg mb-0" style="font-size: 0.95rem;">
+            Join our ongoing creative challenges. Institute of Fine Arts hosts regular commissions and competitions to discover emerging talents, celebrate diverse perspectives, and connect artists with global collectors. Submit your original masterpieces to win exclusive exhibitions and cash prizes.
+        </p>
+    </div>
+</div>
+
+<div class="container px-lg-5 mb-5 pb-5">
+    
+    <!-- CUỘC THI 1: Cultural Heritage (Ảnh trái, Chữ phải) -->
+    <div class="row align-items-center mb-5 pb-4 competition-row">
+        <div class="col-lg-6 mb-4 mb-lg-0">
+            <div class="competition-img-wrapper">
+                <!-- Bạn nhớ thay src bằng đường dẫn ảnh thật sau này -->
+                <img src="~/images/comp-heritage.jpg" alt="Cultural Heritage" class="img-fluid w-100 shadow-sm" style="height: 400px; object-fit: cover; background-color: #eee;">
+            </div>
+        </div>
+        <div class="col-lg-5 offset-lg-1">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="badge bg-success fw-normal px-2 py-1" style="letter-spacing: 1px; font-size: 0.7rem;">OPEN</span>
+                <span class="text-muted small"><i class="bi bi-clock me-1"></i> Deadline: Nov 30, 2026</span>
+            </div>
+            <h2 class="art-title fs-2 mb-3">Cultural Heritage</h2>
+            <p class="text-muted lh-lg mb-4">
+                Explore the depth of history, traditions, and ancestral stories. We are looking for artworks that capture the essence of cultural roots, indigenous practices, and the architectural or spiritual monuments that define our past and shape our future.
+            </p>
+            <a asp-controller="Gallery" asp-action="CommissionDetail" asp-route-id="cultural-heritage" class="btn btn-outline-dark rounded-0 px-4 py-2 fw-bold" style="letter-spacing: 0.5px;">View Details & Submit</a>
+        </div>
+    </div>
+
+    <!-- CUỘC THI 2: My Dream (Chữ trái, Ảnh phải) -->
+    <div class="row align-items-center mb-5 pb-4 competition-row flex-lg-row-reverse">
+        <div class="col-lg-6 mb-4 mb-lg-0">
+            <div class="competition-img-wrapper">
+                <img src="~/images/comp-dream.jpg" alt="My Dream" class="img-fluid w-100 shadow-sm" style="height: 400px; object-fit: cover; background-color: #eee;">
+            </div>
+        </div>
+        <div class="col-lg-5 me-auto">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="badge bg-success fw-normal px-2 py-1" style="letter-spacing: 1px; font-size: 0.7rem;">OPEN</span>
+                <span class="text-muted small"><i class="bi bi-clock me-1"></i> Deadline: Dec 15, 2026</span>
+            </div>
+            <h2 class="art-title fs-2 mb-3">My Dream</h2>
+            <p class="text-muted lh-lg mb-4">
+                Dive into the subconscious mind. Show us the surreal, the hopeful, and the impossible. This competition invites artists to translate their deepest aspirations, vivid nightmares, and ethereal visions onto the canvas.
+            </p>
+            <a asp-controller="Gallery" asp-action="CommissionDetail" asp-route-id="my-dream" class="btn btn-outline-dark rounded-0 px-4 py-2 fw-bold" style="letter-spacing: 0.5px;">View Details & Submit</a>
+        </div>
+    </div>
+
+    <!-- CUỘC THI 3: Still Life & Objects (Ảnh trái, Chữ phải) -->
+    <div class="row align-items-center mb-5 pb-4 competition-row">
+        <div class="col-lg-6 mb-4 mb-lg-0">
+            <div class="competition-img-wrapper">
+                <img src="~/images/comp-still-life.jpg" alt="Still Life & Objects" class="img-fluid w-100 shadow-sm" style="height: 400px; object-fit: cover; background-color: #eee;">
+            </div>
+        </div>
+        <div class="col-lg-5 offset-lg-1">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="badge bg-secondary fw-normal px-2 py-1" style="letter-spacing: 1px; font-size: 0.7rem;">UPCOMING</span>
+                <span class="text-muted small"><i class="bi bi-calendar me-1"></i> Starts: Jan 01, 2027</span>
+            </div>
+            <h2 class="art-title fs-2 mb-3">Still Life & Objects</h2>
+            <p class="text-muted lh-lg mb-4">
+                Find beauty in the mundane. A celebration of form, light, and texture through everyday items. Whether classical arrangements of fruit and flora or contemporary takes on modern objects, show us your mastery of observation.
+            </p>
+            <a href="#" class="btn btn-outline-dark rounded-0 px-4 py-2 fw-bold disabled" style="letter-spacing: 0.5px;">Submissions Open Soon</a>
+        </div>
+    </div>
+
+    <!-- CUỘC THI 4: Nature & Environment (Chữ trái, Ảnh phải) -->
+    <div class="row align-items-center mb-5 pb-4 competition-row flex-lg-row-reverse">
+        <div class="col-lg-6 mb-4 mb-lg-0">
+            <div class="competition-img-wrapper">
+                <img src="~/images/comp-nature.jpg" alt="Nature & Environment" class="img-fluid w-100 shadow-sm" style="height: 400px; object-fit: cover; background-color: #eee;">
+            </div>
+        </div>
+        <div class="col-lg-5 me-auto">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                <span class="badge bg-dark fw-normal px-2 py-1" style="letter-spacing: 1px; font-size: 0.7rem;">VOTING PHASE</span>
+                <span class="text-muted small"><i class="bi bi-check2-circle me-1"></i> Submissions Closed</span>
+            </div>
+            <h2 class="art-title fs-2 mb-3">Nature & Environment</h2>
+            <p class="text-muted lh-lg mb-4">
+                A tribute to Mother Earth. From breathtaking landscapes to pressing environmental issues, this collection highlights the fragile and fierce beauty of our natural world. Browse the finalists and vote for your favorite piece.
+            </p>
+            <a asp-controller="Gallery" asp-action="CommissionsArt" class="btn btn-dark rounded-0 px-4 py-2 fw-bold" style="letter-spacing: 0.5px;">
+    View Gallery & Vote
+</a>
+        </div>
+    </div>
+
+</div>
+
+<!-- KHỐI KÊU GỌI HÀNH ĐỘNG (CTA) DÀNH CHO HỌA SĨ -->
+<div class="bg-light py-5 border-top">
+    <div class="container text-center py-4" style="max-width: 600px;">
+        <h3 class="art-title mb-3">Want to participate?</h3>
+        <p class="text-muted mb-4">Create an artist account today to submit your artworks, track your competition status, and join our global creative community.</p>
+        <a asp-controller="Authentication" asp-action="Register" class="btn btn-dark rounded-0 px-5 py-3 fw-bold" style="letter-spacing: 1px;">BECOME AN ARTIST</a>
+    </div>
+</div>

@@ -1,0 +1,115 @@
+@{
+    ViewData["Title"] = "Animal and Wildlife Paintings for Sale";
+}
+
+<!-- KHỐI GIỚI THIỆU (Màu kem) -->
+<div class="gallery-hero bg-cream py-5 mb-5 text-center">
+    <div class="container" style="max-width: 850px;">
+        <h1 class="art-title display-5 mb-4">Animal and Wildlife</h1>
+        <p class="text-muted lh-lg mb-0" style="font-size: 0.95rem;">
+            Venture into the animal kingdom where wild horses race across the landscape, cows exchange knowing glances with the viewer, and dogs and cats happily accompany their human friends. This curated selection offers a vivid and playful look into the secret lives of animals. Browse one-of-a-kind animal oil paintings for sale. <a href="#" class="text-dark text-decoration-none border-bottom border-dark pb-1 ms-1">Read more</a>
+        </p>
+    </div>
+</div>
+
+<div class="container-fluid px-lg-5 mb-5">
+    <!-- Breadcrumb & Sort -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-transparent p-0 m-0 small">
+                <li class="breadcrumb-item"><a href="/" class="text-muted text-decoration-none">Homepage</a></li>
+                <li class="breadcrumb-item"><a href="/Gallery" class="text-muted text-decoration-none">All Artworks</a></li>
+                <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Animals</li>
+            </ol>
+        </nav>
+        
+        <div class="d-flex align-items-center gap-4">
+            <span class="fw-bold fs-5 art-title">791 ARTWORKS</span>
+            <div class="dropdown">
+                <a class="text-dark text-decoration-none dropdown-toggle small" href="#" role="button" data-bs-toggle="dropdown">
+                    Newest Arrivals
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end border-0 shadow-sm rounded-0">
+                    <li><a class="dropdown-item small" href="#">Price: Low to High</a></li>
+                    <li><a class="dropdown-item small" href="#">Price: High to Low</a></li>
+                    <li><a class="dropdown-item small" href="#">Staff Favorites</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="row gx-5">
+        <!-- BỘ LỌC BÊN TRÁI (Filters) -->
+        <div class="col-lg-2 d-none d-lg-block">
+            <div class="accordion accordion-flush art-filters" id="filterAccordion">
+                
+                <!-- Filter: Orientation -->
+                <div class="accordion-item bg-transparent border-bottom">
+                    <h2 class="accordion-header">
+                        <button class="accordion-button collapsed bg-transparent shadow-none px-0 text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#filter-orientation">
+                            + Orientation
+                        </button>
+                    </h2>
+                    <div id="filter-orientation" class="accordion-collapse collapse" data-bs-parent="#filterAccordion">
+                        <div class="accordion-body px-0 py-2 small">
+                            <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="ori1"><label class="form-check-label" for="ori1">Portrait</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="ori2"><label class="form-check-label" for="ori2">Landscape</label></div>
+                            <div class="form-check mb-2"><input class="form-check-input" type="checkbox" id="ori3"><label class="form-check-label" for="ori3">Square</label></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lặp lại tương tự cho Height, Width, Color, Price, Style, Subject... (Viết tĩnh để xem Layout) -->
+                @foreach (var filter in new[] { "Height", "Width", "Color", "Price", "Style", "Subject" })
+                {
+                    <div class="accordion-item bg-transparent border-bottom">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed bg-transparent shadow-none px-0 text-muted" type="button" data-bs-toggle="collapse" data-bs-target="#filter-@filter.ToLower()">
+                                + @filter
+                            </button>
+                        </h2>
+                        <div id="filter-@filter.ToLower()" class="accordion-collapse collapse" data-bs-parent="#filterAccordion">
+                            <div class="accordion-body px-0 py-2 small text-muted">Options here...</div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- DANH SÁCH TÁC PHẨM (Grid 3 cột) -->
+        <div class="col-lg-10">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4 mb-5">
+                
+                <!-- Khung tranh lặp lại 10 lần (Code tĩnh) -->
+                @for (int i = 0; i < 9; i++)
+                {
+                    <div class="col">
+                        <div class="artwork-card text-center">
+                            <!-- Bọc ảnh bằng thẻ a để click vào xem chi tiết -->
+                            <a href="#" class="d-block card-img-wrapper mb-3 text-decoration-none">
+                                <img src="~/images/art1.jpg" alt="Artwork" class="img-fluid">
+                            </a>
+                            <div class="card-body p-0">
+                                <div class="badge bg-light text-dark border mb-2 fw-normal" style="font-size: 0.7rem; letter-spacing: 1px;">NEW</div>
+                                <div class="artist-name text-muted small mb-1">Sara Rodighiero</div>
+                                <div class="artwork-title art-title fs-5 mb-1 text-dark">A Star Tonight</div>
+                                <div class="artwork-price fw-bold text-dark">$900</div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+            </div>
+
+            <!-- Nút Tải thêm -->
+            <div class="text-center mt-5">
+                <button class="btn btn-dark rounded-0 px-5 py-3 fw-bold" style="letter-spacing: 0.5px;">Show next 60 of 791 pieces</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Nút Back to top (Tùy chọn) -->
+<button class="btn btn-dark rounded-circle position-fixed bottom-0 end-0 m-4 shadow back-to-top-btn" style="width: 50px; height: 50px; display: none;">
+    <i class="bi bi-arrow-up"></i>
+</button>

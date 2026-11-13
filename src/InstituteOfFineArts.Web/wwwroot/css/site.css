@@ -443,3 +443,257 @@ footer {
   #registerModal .btn-close:hover {
     opacity: 1;
   }
+
+/* ==========================================================================
+   CONTACT US PAGE
+   ========================================================================== */
+.contact-map-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 450px;
+  background-color: var(--art-bg-light);
+  border-color: var(--art-border) !important;
+}
+
+  .contact-map-wrapper iframe {
+    display: block;
+  }
+
+/* ==========================================================================
+   MEGA MENU: KHẮC PHỤC LỖI HỤT CHUỘT & TỐI ƯU HIỆU ỨNG HOVER
+   ========================================================================== */
+@media (min-width: 992px) {
+  .navbar {
+    position: relative;
+  }
+
+  /* 1. Trạng thái ẩn: Thêm độ trễ 0.15s khi đóng để không bị mất đột ngột */
+  .dropdown-mega-menu {
+    display: block;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(10px);
+    /* 0.15s ở cuối là độ trễ (delay) giữ menu mở thêm 1 chút khi chuột lỡ trượt ra ngoài */
+    transition: opacity 0.25s ease 0.15s, transform 0.25s ease 0.15s, visibility 0.25s 0.15s;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    width: 100vw;
+    margin-top: 0 !important; /* Xóa khoảng hở mặc định của Bootstrap */
+    border-radius: 0;
+    background-color: #ffffff;
+    border-top: 1px solid var(--art-border, #e8e8e8) !important;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.08) !important;
+    pointer-events: none;
+  }
+
+    /* 2. CẦU NỐI TÀNG HÌNH: Phủ kín khoảng đệm giữa Navbar và Menu */
+    .dropdown-mega-menu::before {
+      content: "";
+      position: absolute;
+      top: -30px; /* Vươn ngược lên trên 30px để hứng con trỏ chuột */
+      left: 0;
+      width: 100%;
+      height: 30px;
+      background: transparent;
+      pointer-events: auto;
+    }
+
+    /* 3. Trạng thái hiển thị khi Hover: Mở ngay lập tức không trễ (delay 0s) */
+    .navbar .nav-item.dropdown-mega:hover > .dropdown-mega-menu,
+    .dropdown-mega-menu:hover {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      pointer-events: auto;
+      transition-delay: 0s; /* Khi rê chuột vào thì mở ra ngay lập tức */
+    }
+}
+
+/* ==========================================================================
+   GALLERY LISTING PAGE
+   ========================================================================== */
+.bg-cream {
+  background-color: #faf9f6; /* Màu kem nhạt như hình */
+  border-bottom: 1px solid #f0eee9;
+}
+
+/* Tùy chỉnh Accordion cho bộ lọc bên trái (Đổi icon mũi tên thành dấu cộng) */
+.art-filters .accordion-button::after {
+  display: none; /* Ẩn mũi tên mặc định */
+}
+
+.art-filters .accordion-button {
+  font-size: 0.9rem;
+  letter-spacing: 0.5px;
+}
+
+  .art-filters .accordion-button:not(.collapsed) {
+    color: #000;
+    font-weight: bold;
+  }
+
+/* Thẻ tác phẩm (Giữ tỷ lệ ảnh vuông hoặc theo ảnh gốc) */
+.artwork-card {
+  transition: opacity 0.3s ease;
+}
+
+  .artwork-card:hover {
+    opacity: 0.85;
+  }
+
+  .artwork-card img {
+    width: 100%;
+    height: 380px; /* Cố định chiều cao hoặc dùng object-fit */
+    object-fit: cover;
+    background-color: #f8f9fa;
+  }
+
+/* Nút Back to top căn giữa chuẩn */
+.back-to-top-btn {
+  width: 48px;
+  height: 48px;
+  padding: 0 !important; /* Ghi đè padding của .btn để icon không bị đẩy lệch */
+  display: none;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  z-index: 1000;
+  opacity: 0.85;
+  transition: opacity 0.3s, transform 0.2s;
+}
+
+  .back-to-top-btn:hover {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+/* Khung tìm kiếm liền mạch */
+.art-search-box {
+  border: 1px solid #d4d4d4;
+  background-color: #ffffff;
+  transition: border-color 0.2s ease;
+}
+
+  /* Khi click vào ô tìm kiếm, cả khung ngoài đổi sang viền đen đồng bộ */
+  .art-search-box:focus-within {
+    border-color: var(--art-primary, #111111);
+  }
+
+  /* Chống nút search bị đổi màu nền khi hover */
+  .art-search-box .btn:hover {
+    background-color: transparent;
+    opacity: 0.7;
+  }
+
+/* ==========================================================================
+   COMMISSIONS / COMPETITIONS PAGE
+   ========================================================================== */
+.competition-img-wrapper {
+  overflow: hidden;
+  position: relative;
+  display: block;
+}
+
+  .competition-img-wrapper img {
+    transition: transform 0.6s ease;
+  }
+
+.competition-row:hover .competition-img-wrapper img {
+  transform: scale(1.05); /* Phóng to nhẹ ảnh khi hover vào cả hàng */
+}
+
+/* Khoảng cách giữa các hàng trên mobile */
+@media (max-width: 991px) {
+  .competition-row {
+    border-bottom: 1px solid var(--art-border);
+    padding-bottom: 3rem !important;
+    margin-bottom: 3rem !important;
+  }
+
+    .competition-row:last-child {
+      border-bottom: none;
+    }
+}
+
+/* ==========================================================================
+   COMMISSION DETAIL SLIDING TRANSITION
+   ========================================================================== */
+.sliding-viewport {
+  position: relative;
+  overflow: hidden; /* Cắt phần nội dung bị đẩy ra ngoài khung bên trái/phải */
+  width: 100%;
+}
+
+.slide-pane {
+  width: 100%;
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.45s ease;
+}
+
+/* Trạng thái Pane 1 (Thể lệ cuộc thi) */
+#detailPane {
+  position: relative;
+  transform: translateX(0);
+  opacity: 1;
+}
+
+  #detailPane.is-hidden-left {
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform: translateX(-100%); /* Đẩy toàn bộ sang bên trái */
+    opacity: 0;
+    pointer-events: none;
+  }
+
+/* Trạng thái Pane 2 (Form nộp bài) */
+#submitFormPane {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateX(100%); /* Chờ sẵn ở bên phải */
+  opacity: 0;
+  pointer-events: none;
+}
+
+  #submitFormPane.is-active {
+    position: relative;
+    transform: translateX(0); /* Trượt vào thế chỗ Pane 1 */
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+/* Tinh chỉnh ô focus trong form nộp bài */
+#competitionSubmitForm .form-control:focus {
+  border-color: var(--art-primary, #111111);
+}
+
+/* ==========================================================================
+   VOTING SYSTEM STYLES
+   ========================================================================== */
+.btn-vote {
+  transition: all 0.2s ease;
+  background-color: #ffffff;
+  color: #666666;
+}
+
+  .btn-vote:hover {
+    border-color: #dc3545 !important; /* Đỏ Bootstrap */
+    color: #dc3545;
+  }
+
+  /* Trạng thái đã Vote */
+  .btn-vote.voted {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-color: #dc3545 !important;
+    color: #dc3545;
+  }
+
+.btn-vote-detail {
+  transition: all 0.2s ease;
+}
+
+  .btn-vote-detail.voted {
+    background-color: #dc3545;
+    color: #ffffff;
+  }

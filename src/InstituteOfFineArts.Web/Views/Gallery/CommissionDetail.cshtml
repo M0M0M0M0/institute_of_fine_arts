@@ -1,0 +1,347 @@
+@{
+    ViewData["Title"] = ViewData["CompetitionName"] + " - Competition Details";
+}
+
+<!-- BANNER HÌNH ẢNH CUỘC THI -->
+<div class="w-100 mb-5" style="height: 380px; overflow: hidden; background-color: #f8f9fa;">
+    <img src="~/images/comp-heritage-banner.jpg" alt="Competition Banner" class="w-100 h-100" style="object-fit: cover; filter: brightness(0.85);" />
+</div>
+
+<div class="container px-lg-5 mb-5 pb-5" id="competitionWorkspace">
+    
+    <!-- BREADCRUMB -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb bg-transparent p-0 m-0 small">
+            <li class="breadcrumb-item"><a href="/" class="text-muted text-decoration-none">Homepage</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Gallery" asp-action="Commissions" class="text-muted text-decoration-none">Commissions</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">@ViewData["CompetitionName"]</li>
+        </ol>
+    </nav>
+
+    <div class="row gx-lg-5 align-items-start">
+        
+        <!-- CỘT TRÁI: KHUNG TRƯỢT CHỨA THỂ LỆ & FORM NỘP BÀI -->
+        <div class="col-lg-8 mb-5 mb-lg-0">
+            <div class="sliding-viewport">
+                
+                <!-- PANE 1: NỘI DUNG CHI TIẾT CUỘC THI (Mặc định hiển thị) -->
+                <div id="detailPane" class="slide-pane">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                        <span class="badge bg-success fw-normal px-2 py-1" style="letter-spacing: 1px; font-size: 0.75rem;">OPEN FOR SUBMISSIONS</span>
+                    </div>
+                    
+                    <h1 class="art-title display-4 mb-4">@ViewData["CompetitionName"]</h1>
+                    
+                    <!-- 1. Description -->
+                    <h4 class="art-title mb-3 mt-5">1. Overview & Theme</h4>
+                    <p class="text-muted lh-lg">
+                        Explore the depth of history, traditions, and ancestral stories. We are looking for artworks that capture the essence of cultural roots, indigenous practices, and the architectural or spiritual monuments that define our past and shape our future. Show us your unique perspective on what "Heritage" means in the modern era.
+                    </p>
+
+                    <!-- 2. Eligibility -->
+                    <h4 class="art-title mb-3 mt-5">2. Eligibility</h4>
+                    <div class="p-3 bg-light border-start border-4 border-dark mb-4">
+                        <p class="mb-0 text-dark fw-medium">
+                            <i class="bi bi-person-badge me-2"></i> This competition is strictly open to <strong>currently enrolled students</strong> of the Institute of Fine Arts.
+                        </p>
+                    </div>
+
+                    <!-- 3. Artwork Requirements -->
+                    <h4 class="art-title mb-3 mt-5">3. Artwork Requirements</h4>
+                    <ul class="list-unstyled text-muted lh-lg">
+                        <li class="mb-3">
+                            <strong class="text-dark"><i class="bi bi-aspect-ratio me-2"></i> Size / Dimensions:</strong><br />
+                            Minimum size: 40x40 cm (16x16 inches). Maximum size: 100x120 cm (40x47 inches).
+                        </li>
+                        <li class="mb-3">
+                            <strong class="text-dark"><i class="bi bi-palette me-2"></i> Accepted Mediums:</strong><br />
+                            Oil paints, Acrylic, Watercolor, or Mixed Media. (Digital art is not accepted for this specific commission).
+                        </li>
+                        <li class="mb-3">
+                            <strong class="text-dark"><i class="bi bi-layers me-2"></i> Material / Surface:</strong><br />
+                            Must be executed on Stretched Canvas, Premium Fine Art Paper (minimum 300gsm), or treated Wood Panel.
+                        </li>
+                    </ul>
+
+                    <!-- 4. Prizes -->
+                    <h4 class="art-title mb-3 mt-5">4. Prizes & Recognition</h4>
+                    <div class="row g-4 text-center mt-2">
+                        <div class="col-md-4">
+                            <div class="border p-4 h-100 bg-cream">
+                                <i class="bi bi-trophy-fill fs-1 text-warning mb-2 d-block"></i>
+                                <h5 class="fw-bold mb-1">1st Place</h5>
+                                <h3 class="art-title text-dark mb-2">$500</h3>
+                                <span class="small text-muted">Featured in main gallery</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border p-4 h-100">
+                                <i class="bi bi-award-fill fs-1 text-secondary mb-2 d-block"></i>
+                                <h5 class="fw-bold mb-1">2nd Place</h5>
+                                <h3 class="art-title text-dark mb-2">$300</h3>
+                                <span class="small text-muted">Exhibition space</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="border p-4 h-100" style="background-color: #fdfdfd;">
+                                <i class="bi bi-award fs-1 mb-2 d-block" style="color: #cd7f32;"></i>
+                                <h5 class="fw-bold mb-1">3rd Place</h5>
+                                <h3 class="art-title text-dark mb-2">$100</h3>
+                                <span class="small text-muted">Certificate of Merit</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANE 2: FORM NỘP BÀI (Trượt từ phải vào thay thế Pane 1) -->
+                <div id="submitFormPane" class="slide-pane">
+                    <div class="mb-4">
+                        <button type="button" id="btnBackToDetails" class="btn btn-link text-dark text-decoration-none p-0 small fw-bold">
+                            <i class="bi bi-arrow-left me-1"></i> Back to Competition Details
+                        </button>
+                    </div>
+
+                    <div class="border p-4 p-md-5 bg-white">
+                        <h2 class="art-title fs-2 mb-2">Artwork Submission</h2>
+                        <p class="text-muted small mb-4">
+                            Submitting entry for <strong>@ViewData["CompetitionName"]</strong>. Please ensure all specifications meet the competition guidelines.
+                        </p>
+
+                        <form id="competitionSubmitForm" asp-controller="Gallery" asp-action="SubmitEntry" method="post" enctype="multipart/form-data">
+                            
+                            <!-- Họ và tên -->
+                            <div class="mb-3">
+                                <label for="artistFullName" class="form-label small fw-bold text-uppercase text-muted">Full Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control rounded-0 shadow-none py-2" id="artistFullName" name="FullName" placeholder="Enter your full name" required>
+                            </div>
+
+                            <!-- Tên tác phẩm -->
+                            <div class="mb-3">
+                                <label for="artworkTitle" class="form-label small fw-bold text-uppercase text-muted">Artwork Title <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control rounded-0 shadow-none py-2" id="artworkTitle" name="ArtworkTitle" placeholder="e.g. Echoes of the Old Quarter" required>
+                            </div>
+
+                            <!-- Mô tả ngắn về tác phẩm -->
+                            <div class="mb-3">
+                                <label for="artworkDescription" class="form-label small fw-bold text-uppercase text-muted">Short Description <span class="text-danger">*</span></label>
+                                <textarea class="form-control rounded-0 shadow-none" id="artworkDescription" name="Description" rows="3" placeholder="Briefly describe the inspiration, story, and concept behind your artwork..." required></textarea>
+                            </div>
+
+                            <!-- Chất liệu & Kích cỡ -->
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label for="artworkMedium" class="form-label small fw-bold text-uppercase text-muted">Medium & Material <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control rounded-0 shadow-none py-2" id="artworkMedium" name="Medium" placeholder="e.g. Oil on Stretched Canvas" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="artworkDimensions" class="form-label small fw-bold text-uppercase text-muted">Dimensions / Size <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control rounded-0 shadow-none py-2" id="artworkDimensions" name="Dimensions" placeholder="e.g. 60 x 80 cm" required>
+                                </div>
+                            </div>
+
+                            <!-- Upload Artwork -->
+                            <div class="mb-4">
+                                <label for="artworkFile" class="form-label small fw-bold text-uppercase text-muted">Upload Artwork <span class="text-danger">*</span></label>
+                                <div class="upload-dropzone border p-4 text-center bg-light">
+                                    <input type="file" class="form-control rounded-0 shadow-none mb-2" id="artworkFile" name="ArtworkImage" accept="image/jpeg,image/png,image/webp" required>
+                                    <div class="small text-muted">Accepted formats: JPG, PNG, WEBP. Maximum file size: 10MB.</div>
+                                    
+                                    <!-- Khung xem trước ảnh sau khi chọn file -->
+                                    <div id="imagePreviewBox" class="mt-3 d-none">
+                                        <img id="imagePreview" src="#" alt="Artwork Preview" class="img-fluid border shadow-sm" style="max-height: 240px; object-fit: contain;" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Nút xác nhận nộp bài -->
+                            <div class="d-flex gap-3 pt-2">
+                                <button type="submit" class="btn btn-dark rounded-0 px-5 py-3 fw-bold flex-grow-1" style="letter-spacing: 1px;">
+                                    CONFIRM & SUBMIT ENTRY
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- CỘT PHẢI: STICKY SIDEBAR GIỮ NGUYÊN -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm p-4 sticky-top" style="top: 100px; background-color: #faf9f6;">
+                <h5 class="fw-bold border-bottom pb-3 mb-4">Submission Summary</h5>
+                
+                <ul class="list-unstyled mb-4 small lh-lg">
+                    <li class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Deadline:</span>
+                        <span class="fw-bold text-danger">Nov 30, 2026</span>
+                    </li>
+                    <li class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Entry Fee:</span>
+                        <span class="fw-bold">Free</span>
+                    </li>
+                    <li class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Allowed Entries:</span>
+                        <span class="fw-bold">1 per student</span>
+                    </li>
+                </ul>
+
+                <!-- Nút kích hoạt hiệu ứng trượt -->
+                <button type="button" id="btnToggleSubmit" class="btn btn-dark w-100 py-3 rounded-0 fw-bold mb-3" style="letter-spacing: 1px;">
+                    SUBMIT ARTWORK
+                </button>
+                
+                <p class="text-muted small text-center mb-0" style="font-size: 0.75rem;">
+                    By submitting, you agree to the <a href="#" class="text-dark">Terms & Conditions</a>.
+                </p>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const detailPane = document.getElementById("detailPane");
+            const submitFormPane = document.getElementById("submitFormPane");
+            const btnToggleSubmit = document.getElementById("btnToggleSubmit");
+            const btnBackToDetails = document.getElementById("btnBackToDetails");
+            const workspace = document.getElementById("competitionWorkspace");
+            const submitForm = document.getElementById("competitionSubmitForm");
+            const artworkFile = document.getElementById("artworkFile");
+            const imagePreviewBox = document.getElementById("imagePreviewBox");
+            const imagePreview = document.getElementById("imagePreview");
+
+            let isFormOpen = false;
+            let isSubmitting = false;
+
+            const CONFIRM_LEAVE_MSG = "Are you sure you want to go back? All entered information will be lost.";
+
+            // 1. Kiểm tra xem Form đã có dữ liệu nhập dở hay chọn ảnh chưa
+            function isFormDirty() {
+                const fullName = document.getElementById("artistFullName").value.trim();
+                const title = document.getElementById("artworkTitle").value.trim();
+                const desc = document.getElementById("artworkDescription").value.trim();
+                const medium = document.getElementById("artworkMedium").value.trim();
+                const dimensions = document.getElementById("artworkDimensions").value.trim();
+                const hasFile = artworkFile.files.length > 0;
+
+                return fullName !== "" || title !== "" || desc !== "" || medium !== "" || dimensions !== "" || hasFile;
+            }
+
+            // 2. Xóa trắng dữ liệu và ẩn ảnh xem trước khi người dùng xác nhận rời đi
+            function resetSubmissionForm() {
+                submitForm.reset();
+                imagePreview.src = "#";
+                imagePreviewBox.classList.add("d-none");
+            }
+
+            // 3. Hiển thị Form nộp bài
+            function showSubmitForm(pushHistory = true, shouldScroll = true) {
+                detailPane.classList.add("is-hidden-left");
+                submitFormPane.classList.add("is-active");
+                btnToggleSubmit.textContent = "VIEW COMPETITION DETAILS";
+                btnToggleSubmit.classList.replace("btn-dark", "btn-outline-dark");
+                isFormOpen = true;
+
+                if (pushHistory && window.location.hash !== "#submit") {
+                    history.pushState({ pane: "submit" }, "", "#submit");
+                }
+
+                if (shouldScroll) {
+                    workspace.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+            }
+
+            // 4. Quay lại xem Thể lệ cuộc thi
+            function showDetails(shouldScroll = true) {
+                detailPane.classList.remove("is-hidden-left");
+                submitFormPane.classList.remove("is-active");
+                btnToggleSubmit.textContent = "SUBMIT ARTWORK";
+                btnToggleSubmit.classList.replace("btn-outline-dark", "btn-dark");
+                isFormOpen = false;
+
+                if (shouldScroll) {
+                    workspace.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+            }
+
+            // 5. Xử lý khi bấm nút Back trên giao diện web
+            function goBackToDetails() {
+                if (isFormDirty()) {
+                    if (!confirm(CONFIRM_LEAVE_MSG)) {
+                        return; // Chọn Cancel -> ở lại form, giữ nguyên dữ liệu
+                    }
+                    resetSubmissionForm();
+                }
+
+                if (window.location.hash === "#submit") {
+                    history.back(); // Kích hoạt popstate -> isFormDirty() lúc này là false nên trượt về luôn
+                } else {
+                    showDetails(true);
+                }
+            }
+
+            // Sự kiện click các nút trên giao diện
+            btnToggleSubmit.addEventListener("click", function () {
+                if (!isFormOpen) {
+                    showSubmitForm(true, true);
+                } else {
+                    goBackToDetails();
+                }
+            });
+
+            btnBackToDetails.addEventListener("click", goBackToDetails);
+
+            // 6. Xử lý khi bấm nút Back / Forward của trình duyệt
+            window.addEventListener("popstate", function () {
+                if (window.location.hash === "#submit") {
+                    showSubmitForm(false, true);
+                } else {
+                    if (isFormOpen && isFormDirty()) {
+                        if (!confirm(CONFIRM_LEAVE_MSG)) {
+                            // Chọn Cancel -> Đẩy lại #submit vào lịch sử để không bị mất trạng thái Form
+                            history.pushState({ pane: "submit" }, "", "#submit");
+                            return;
+                        }
+                        resetSubmissionForm();
+                    }
+                    showDetails(true);
+                }
+            });
+
+            // 7. Bảo vệ thêm nếu người dùng lỡ bấm F5 hoặc đóng tab khi đang nhập dở
+            submitForm.addEventListener("submit", function () {
+                isSubmitting = true;
+            });
+
+            window.addEventListener("beforeunload", function (e) {
+                if (isFormOpen && isFormDirty() && !isSubmitting) {
+                    e.preventDefault();
+                    e.returnValue = "";
+                }
+            });
+
+            // Giữ trạng thái Form nếu F5 khi đang ở #submit
+            if (window.location.hash === "#submit") {
+                showSubmitForm(false, false);
+            }
+
+            // Xem trước ảnh tác phẩm khi chọn file
+            artworkFile.addEventListener("change", function (e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (event) {
+                        imagePreview.src = event.target.result;
+                        imagePreviewBox.classList.remove("d-none");
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    imagePreviewBox.classList.add("d-none");
+                }
+            });
+        });
+    </script>
+}

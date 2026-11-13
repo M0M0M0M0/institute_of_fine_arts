@@ -1,0 +1,63 @@
+@{
+    ViewData["Title"] = "Whispers of the Forest - Artwork Detail";
+}
+
+<div class="container px-lg-5 my-5 pb-5">
+    
+    <!-- Nút quay lại -->
+    <div class="mb-4">
+        <a asp-controller="Gallery" asp-action="CommissionArt" class="text-dark text-decoration-none small fw-bold">
+            <i class="bi bi-arrow-left me-1"></i> Back to Voting Gallery
+        </a>
+    </div>
+
+    <div class="row gx-lg-5 align-items-center">
+        
+        <!-- CỘT TRÁI: ẢNH LỚN -->
+        <div class="col-lg-7 mb-5 mb-lg-0 text-center">
+            <img src="~/images/comp-nature-1.jpg" alt="Whispers of the Forest" class="img-fluid shadow-sm border" style="max-height: 80vh; object-fit: contain; background-color: #faf9f6;" />
+        </div>
+
+        <!-- CỘT PHẢI: THÔNG TIN CHI TIẾT -->
+        <div class="col-lg-5">
+            <span class="badge bg-dark fw-normal px-2 py-1 mb-3" style="letter-spacing: 1px; font-size: 0.7rem;">COMPETITION ENTRY</span>
+            
+            <h1 class="art-title display-5 mb-2">Whispers of the Forest</h1>
+            <p class="text-muted fs-5 mb-4">by <span class="text-dark fw-bold">Linh Nguyen</span></p>
+
+            <div class="d-flex align-items-center gap-4 mb-4 pb-4 border-bottom">
+                <div class="text-center">
+                    <span class="d-block small text-muted text-uppercase fw-bold mb-1">Current Votes</span>
+                    <span class="art-title fs-3 text-danger" id="detailVoteCount">342</span>
+                </div>
+                <!-- Nút Vote to -->
+                <button class="btn btn-outline-danger btn-vote-detail d-flex align-items-center gap-2 rounded-pill px-4 py-2 fw-bold" data-voted="false">
+                    <i class="bi bi-heart fs-5"></i> Vote for this piece
+                </button>
+            </div>
+
+            <!-- Thuộc tính tranh -->
+            <ul class="list-unstyled mb-4 small lh-lg">
+                <li class="d-flex mb-2">
+                    <span class="text-muted" style="width: 100px;">Medium:</span>
+                    <span class="fw-medium text-dark">Oil on Stretched Canvas</span>
+                </li>
+                <li class="d-flex mb-2">
+                    <span class="text-muted" style="width: 100px;">Dimensions:</span>
+                    <span class="fw-medium text-dark">80 x 100 cm</span>
+                </li>
+                <li class="d-flex mb-2">
+                    <span class="text-muted" style="width: 100px;">Competition:</span>
+                    <span class="fw-medium text-dark">Nature & Environment</span>
+                </li>
+            </ul>
+
+            <!-- Mô tả tranh -->
+            <h6 class="fw-bold mb-2">About the Artwork</h6>
+            <p class="text-muted small lh-lg">
+                "Whispers of the Forest" is an exploration of the hidden life within ancient woods. By utilizing layered oil techniques, the painting seeks to capture the dappled light piercing through the canopy. The surreal elements integrated into the root systems represent the untold stories of nature that modern society often ignores.
+            </p>
+        </div>
+
+    </div>
+</div>

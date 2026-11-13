@@ -1,0 +1,91 @@
+@{
+    ViewData["Title"] = "Voting - Nature & Environment";
+}
+
+<!-- KHỐI HERO GIỚI THIỆU -->
+<div class="gallery-hero bg-cream py-5 mb-5 text-center border-bottom">
+    <div class="container" style="max-width: 800px;">
+        <span class="badge bg-dark fw-normal px-2 py-1 mb-3" style="letter-spacing: 1px; font-size: 0.75rem;">PUBLIC VOTING</span>
+        <h1 class="art-title display-5 mb-3">Nature & Environment</h1>
+        <p class="text-muted lh-lg mb-0">
+            Browse the incredible submissions from our talented student artists. Click the heart icon to vote for your favorite pieces. The artwork with the most votes will win the Community Choice Award. Voting ends on Dec 31, 2026.
+        </p>
+    </div>
+</div>
+
+<div class="container px-lg-5 mb-5 pb-5">
+    
+    <!-- BREADCRUMB & THỐNG KÊ -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-transparent p-0 m-0 small">
+                <li class="breadcrumb-item"><a href="/" class="text-muted text-decoration-none">Homepage</a></li>
+                <li class="breadcrumb-item"><a asp-controller="Gallery" asp-action="Commissions" class="text-muted text-decoration-none">Commissions</a></li>
+                <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">Voting Gallery</li>
+            </ol>
+        </nav>
+        <span class="small text-muted fw-bold">124 SUBMISSIONS</span>
+    </div>
+
+    <!-- LƯỚI BÀI DỰ THI (3 Cột) -->
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-5">
+        
+        <!-- BÀI THI MẪU 1 -->
+        <div class="col">
+            <div class="artwork-card submission-card text-center">
+                <a asp-controller="Gallery" asp-action="CommissionArtDetail" asp-route-id="1" class="d-block card-img-wrapper mb-3 text-decoration-none">
+                    <img src="~/images/comp-nature-1.jpg" alt="Whispers of the Forest" class="img-fluid bg-light" style="width: 100%; height: 350px; object-fit: cover;">
+                </a>
+                <div class="card-body p-0 d-flex flex-column align-items-center">
+                    <div class="artist-name text-muted small mb-1 text-uppercase" style="letter-spacing: 1px;">Linh Nguyen</div>
+                    <div class="artwork-title art-title fs-5 mb-3 text-dark">Whispers of the Forest</div>
+                    
+                    <!-- Nút Vote (Tim) -->
+                    <button class="btn btn-vote d-flex align-items-center gap-2 rounded-pill px-3 py-1 border" data-votes="342">
+                        <i class="bi bi-heart vote-icon"></i>
+                        <span class="vote-count fw-bold small">342</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BÀI THI MẪU 2 -->
+        <div class="col">
+            <div class="artwork-card submission-card text-center">
+                <a asp-controller="Gallery" asp-action="CommissionArtDetail" asp-route-id="2" class="d-block card-img-wrapper mb-3 text-decoration-none">
+                    <img src="~/images/comp-nature-2.jpg" alt="Ocean's Tears" class="img-fluid bg-light" style="width: 100%; height: 350px; object-fit: cover;">
+                </a>
+                <div class="card-body p-0 d-flex flex-column align-items-center">
+                    <div class="artist-name text-muted small mb-1 text-uppercase" style="letter-spacing: 1px;">David Tran</div>
+                    <div class="artwork-title art-title fs-5 mb-3 text-dark">Ocean's Tears</div>
+                    
+                    <!-- Nút Vote (Tim) -->
+                    <button class="btn btn-vote d-flex align-items-center gap-2 rounded-pill px-3 py-1 border" data-votes="89">
+                        <i class="bi bi-heart vote-icon"></i>
+                        <span class="vote-count fw-bold small">89</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- BÀI THI MẪU 3 -->
+        <div class="col">
+            <div class="artwork-card submission-card text-center">
+                <a asp-controller="Gallery" asp-action="CommissionArtDetail" asp-route-id="3" class="d-block card-img-wrapper mb-3 text-decoration-none">
+                    <img src="~/images/comp-nature-3.jpg" alt="Urban Concrete" class="img-fluid bg-light" style="width: 100%; height: 350px; object-fit: cover;">
+                </a>
+                <div class="card-body p-0 d-flex flex-column align-items-center">
+                    <div class="artist-name text-muted small mb-1 text-uppercase" style="letter-spacing: 1px;">Hoang Mai</div>
+                    <div class="artwork-title art-title fs-5 mb-3 text-dark">Urban Concrete</div>
+                    
+                    <!-- Nút Vote (Đã Vote sẵn làm mẫu) -->
+                    <button class="btn btn-vote voted d-flex align-items-center gap-2 rounded-pill px-3 py-1 border border-danger text-danger bg-danger bg-opacity-10" data-votes="512">
+                        <i class="bi bi-heart-fill vote-icon"></i>
+                        <span class="vote-count fw-bold small">512</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
