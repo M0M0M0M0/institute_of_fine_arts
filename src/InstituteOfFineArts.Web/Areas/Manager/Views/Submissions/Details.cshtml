@@ -35,7 +35,7 @@
 <div class="artwork-stage">
     @* SubmissionImagePolicy gives MANAGER view + download of every image *@
     <figure class="artwork@(awarded ? " is-awarded" : "")">
-        <div class="artwork-frame">
+        <div class="artwork-frame" data-zoom data-zoom-download="/files/submissions/@Model.Id?download=true">
             <img src="/files/submissions/@Model.Id" alt="@Model.Title – @Model.StudentName" />
         </div>
         <figcaption class="wall-label">

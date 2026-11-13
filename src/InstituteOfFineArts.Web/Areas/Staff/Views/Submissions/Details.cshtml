@@ -36,7 +36,7 @@
 
 <div class="artwork-stage">
     <figure class="artwork @(awarded ? "is-awarded" : "") m-0">
-        <div class="artwork-frame"><img src="/files/submissions/@Model.Id" alt="@Model.Title – @Model.StudentName" /></div>
+        <div class="artwork-frame" data-zoom data-zoom-download="/files/submissions/@Model.Id?download=true"><img src="/files/submissions/@Model.Id" alt="@Model.Title – @Model.StudentName" /></div>
         <figcaption class="mt-2 d-flex flex-wrap align-items-center gap-2">
             <a href="/files/submissions/@Model.Id?download=true" class="btn btn-sm btn-outline-primary"><i class="bi bi-download" aria-hidden="true"></i>Download original</a>
             <span class="text-muted small">@Model.OriginalFileName, @((Model.FileSize / 1024.0).ToString("#,##0")) KB</span>
