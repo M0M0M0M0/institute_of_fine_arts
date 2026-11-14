@@ -222,6 +222,8 @@ class _BodyState extends ConsumerState<_Body> {
             _SlotCard(
               slot: slot,
               published: d.isPublished,
+              canMarkDelivered: d.canMarkDelivered,
+              canAdjustEvaluation: d.canAdjustEvaluation,
               busy: _busy,
               canAdd: canAdd && slot.remaining > 0,
               onAdd: () => _issue(slot),
@@ -300,6 +302,8 @@ class _SlotCard extends StatelessWidget {
   const _SlotCard({
     required this.slot,
     required this.published,
+    required this.canMarkDelivered,
+    required this.canAdjustEvaluation,
     required this.busy,
     required this.canAdd,
     required this.onAdd,
@@ -312,6 +316,8 @@ class _SlotCard extends StatelessWidget {
 
   final AwardSlot slot;
   final bool published;
+  final bool canMarkDelivered;
+  final bool canAdjustEvaluation;
   final bool busy;
   final bool canAdd;
   final VoidCallback onAdd;
@@ -343,6 +349,8 @@ class _SlotCard extends StatelessWidget {
               _IssuedTile(
                 award: a,
                 published: published,
+                canMarkDelivered: canMarkDelivered,
+                canAdjustEvaluation: canAdjustEvaluation,
                 busy: busy,
                 onEdit: () => onEdit(a),
                 onDelete: () => onDelete(a),
@@ -371,6 +379,8 @@ class _IssuedTile extends StatelessWidget {
   const _IssuedTile({
     required this.award,
     required this.published,
+    required this.canMarkDelivered,
+    required this.canAdjustEvaluation,
     required this.busy,
     required this.onEdit,
     required this.onDelete,
@@ -381,6 +391,8 @@ class _IssuedTile extends StatelessWidget {
 
   final IssuedAward award;
   final bool published;
+  final bool canMarkDelivered;
+  final bool canAdjustEvaluation;
   final bool busy;
   final VoidCallback onEdit;
   final VoidCallback onDelete;
@@ -402,8 +414,9 @@ class _IssuedTile extends StatelessWidget {
         PopupMenuItem(value: 'delete', child: Text('Xóa')),
       ],
       if (a.isActive && published) ...[
-        PopupMenuItem(value: 'delivery', child: Text(a.isDelivered ? 'Bỏ đánh dấu đã phát thưởng' : 'Đánh dấu đã phát thưởng')),
-        const PopupMenuItem(value: 'adjust', child: Text('Điều chỉnh đánh giá')),
+        if (canMarkDelivered)
+          PopupMenuItem(value: 'delivery', child: Text(a.isDelivered ? 'Bỏ đánh dấu đã phát thưởng' : 'Đánh dấu đã phát thưởng')),
+        if (canAdjustEvaluation) const PopupMenuItem(value: 'adjust', child: Text('Điều chỉnh đánh giá')),
         const PopupMenuItem(value: 'revoke', child: Text('Thu hồi giải')),
       ],
     ];

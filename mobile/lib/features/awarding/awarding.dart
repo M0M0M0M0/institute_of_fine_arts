@@ -161,6 +161,8 @@ class AwardingDetail {
     required this.publishedAt,
     required this.adjustedAt,
     required this.awards,
+    this.canMarkDelivered = true,
+    this.canAdjustEvaluation = true,
   });
 
   final int id;
@@ -176,6 +178,11 @@ class AwardingDetail {
   final int emptySlots;
   final bool canAward;
   final bool canPublish;
+
+  /// Hệ thống có hỗ trợ đánh dấu đã phát thưởng / điều chỉnh đánh giá sau công bố không.
+  /// API cũ không gửi hai trường này → mặc định true (giữ nguyên hành vi trước đây).
+  final bool canMarkDelivered;
+  final bool canAdjustEvaluation;
 
   /// Lý do chưa công bố được (vd "Còn 2 bài chưa chấm"); null khi được phép.
   final String? publishBlockReason;
@@ -199,6 +206,8 @@ class AwardingDetail {
         publishedAt: _dateOrNull(json['publishedAt']),
         adjustedAt: _dateOrNull(json['adjustedAt']),
         awards: (json['awards'] as List).map((e) => AwardSlot.fromJson(e as Map<String, dynamic>)).toList(),
+        canMarkDelivered: json['canMarkDelivered'] as bool? ?? true,
+        canAdjustEvaluation: json['canAdjustEvaluation'] as bool? ?? true,
       );
 }
 

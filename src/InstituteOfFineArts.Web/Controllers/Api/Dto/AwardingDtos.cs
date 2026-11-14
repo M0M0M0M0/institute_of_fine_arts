@@ -28,7 +28,9 @@ public sealed record AwardSlotDto(
 public sealed record AwardingDetailDto(
     long Id, string Title, CompetitionStatus Status, int SubmissionCount, int EvaluatedCount, int PendingEvaluations,
     int EmptySlots, bool CanAward, bool CanPublish, string? PublishBlockReason, bool IsPublished, DateTime? PublishedAt,
-    DateTime? AdjustedAt, List<AwardSlotDto> Awards);
+    DateTime? AdjustedAt, List<AwardSlotDto> Awards,
+    // Not supported by this system (no column / rule): the app hides "mark as delivered" and "adjust evaluation"
+    bool CanMarkDelivered = false, bool CanAdjustEvaluation = false);
 
 /// <summary>Entry that may receive an award (mobile AwardCandidate).</summary>
 public sealed record AwardCandidateDto(long SubmissionId, string Title, string StudentName, string StudentCode, Rating Rating);
