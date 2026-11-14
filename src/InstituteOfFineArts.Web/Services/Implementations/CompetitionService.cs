@@ -32,6 +32,10 @@ public class CompetitionService : ICompetitionService
     /// <summary>Message when the end date is moved earlier after entries exist.</summary>
     public const string EndOnlyExtendMessage = "Entries already exist, so the end date can only be extended.";
 
+    /// <summary>Message when the end date is extended after grading has started (BA-01: the entry could otherwise be
+    /// replaced after it was evaluated, so the evaluation would describe another picture).</summary>
+    public const string ExtendAfterGradingMessage = "Grading has already started, so the end date can no longer be extended.";
+
     /// <summary>Message when the title changes after entries exist.</summary>
     public const string TitleLockedMessage = "The title cannot be changed after students have submitted entries.";
 
@@ -273,6 +277,12 @@ public class CompetitionService : ICompetitionService
             if (end < c.EndDate)
             {
                 throw new BusinessException(EndOnlyExtendMessage, nameof(CompetitionFormVm.EndDate));
+            }
+            // BA-01: extending reopens the competition (ONGOING) and lets students replace their pictures, so it is only
+            // allowed before the first evaluation; afterwards an evaluation could describe a picture that was replaced
+            if (end > c.EndDate && await _db.Evaluations.AnyAsync(e => e.Submission.CompetitionId == id))
+            {
+                throw new BusinessException(ExtendAfterGradingMessage, nameof(CompetitionFormVm.EndDate));
             }
         }
         if (end != c.EndDate && end < DateTimeHelper.Today)

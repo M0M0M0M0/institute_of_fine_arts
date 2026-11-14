@@ -42,6 +42,13 @@ public class EvaluationFormVm : IValidatableObject
     [Display(Name = "Improvement areas")]
     public string? ImprovementAreas { get; set; }
 
+    /// <summary>
+    /// Version of the evaluation when the page was opened (BA-07): its last change time, or empty when there was no
+    /// evaluation yet. Sent back in a hidden field, so a save is refused when another staff member changed the evaluation
+    /// in the meantime instead of silently overwriting it. Null = not checked (callers that check it themselves).
+    /// </summary>
+    public string? Version { get; set; }
+
     /// <summary>BR-23: DISQUALIFIED needs a reason, every other rating needs positive points.</summary>
     /// <param name="validationContext">Validation context (not used)</param>
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
