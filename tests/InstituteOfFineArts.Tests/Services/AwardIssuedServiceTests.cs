@@ -430,6 +430,22 @@ public class AwardIssuedServiceTests
         Assert.Contains((await service.GetForCreateAsync(d.Competition.Id)).Awards, a => a.Id == d.First.Id);
     }
 
+    /// <summary>BR-33 / BA-07: the reason of a revoked award is kept in the activity log, not only in the log file.</summary>
+    [Fact]
+    public async Task Revoke_ReasonInActivityLog()
+    {
+        var d = Seed(CompetitionStatus.GRADED);
+        using var db = d.Db;
+        var issued = Issue(db, d.First, d.Entries["best1"]);
+        var audit = new Mock<IAuditLogService>();
+        var service = new AwardIssuedService(db, NullLogger<AwardIssuedService>.Instance, _notifications.Object, audit.Object);
+
+        await service.RevokeAsync(issued.Id, "Entry found to be copied", _staffId);
+
+        audit.Verify(a => a.LogAsync("AwardRevoked", "AwardIssued", issued.Id,
+            It.Is<string>(s => s.Contains("Reason: Entry found to be copied"))), Times.Once);
+    }
+
     /// <summary>Unknown issued award → NotFoundException for edit, save and revoke.</summary>
     [Fact]
     public async Task Unknown_NotFound()
