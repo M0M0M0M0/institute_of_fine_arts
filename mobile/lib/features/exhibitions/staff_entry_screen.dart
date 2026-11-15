@@ -164,21 +164,21 @@ class _BodyState extends ConsumerState<_Body> {
         InfoRow('Dates', dateRange(e.exhibitionStartDate, e.exhibitionEndDate)),
         InfoRow('Exhibition status', e.exhibitionStatus.label),
         const SectionHeader('Price', padding: sectionPad),
-        InfoRow('Asking price', formatVnd(e.askingPrice)),
+        InfoRow('Asking price', formatMoney(e.askingPrice)),
         if (e.priceSourceNote != null) InfoRow('Price source', e.priceSourceNote!),
         if (e.statusReason != null) NoticeCard(text: e.statusReason!, error: e.status == EntryStatus.rejected || e.status == EntryStatus.withdrawn),
         if (e.status == EntryStatus.sold) ...[
           const SectionHeader('Sale', padding: sectionPad),
-          InfoRow('Sold price', formatVnd(e.soldPrice ?? 0)),
+          InfoRow('Sold price', formatMoney(e.soldPrice ?? 0)),
           if (e.soldDate != null) InfoRow('Sold on', formatDate(e.soldDate!)),
           InfoRow('Buyer', e.customerName ?? '—'),
           if (e.consentDate != null)
             InfoRow('Student consent',
                 '${formatDate(e.consentDate!)} – ${e.consentMethod ?? ''}${e.consentNote != null ? '\n${e.consentNote}' : ''}'),
           const SectionHeader('Payout to the student', padding: sectionPad),
-          InfoRow('Amount due', formatVnd(e.soldPrice ?? 0)),
+          InfoRow('Amount due', formatMoney(e.soldPrice ?? 0)),
           if (e.paidToStudent) ...[
-            InfoRow('Paid', formatVnd(e.paidAmount ?? 0)),
+            InfoRow('Paid', formatMoney(e.paidAmount ?? 0)),
             if (e.paidDate != null) InfoRow('Paid on', formatDate(e.paidDate!)),
             InfoRow('Method', e.paymentMethod ?? ''),
             if (e.paymentReference != null) InfoRow('Reference', e.paymentReference!),
@@ -331,7 +331,7 @@ class _SaleDialogState extends ConsumerState<_SaleDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Asking price: ${formatVnd(e.askingPrice)}'),
+              Text('Asking price: ${formatMoney(e.askingPrice)}'),
               const SizedBox(height: 8),
               MoneyField(controller: _price, label: 'Sold price *'),
               const SizedBox(height: 12),
@@ -537,7 +537,7 @@ class _PayDialogState extends State<_PayDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Due to the student: ${formatVnd(widget.entry.soldPrice ?? 0)} (paid in full, once)'),
+              Text('Due to the student: ${formatMoney(widget.entry.soldPrice ?? 0)} (paid in full, once)'),
               const SizedBox(height: 8),
               MoneyField(controller: _amount, label: 'Amount paid *'),
               const SizedBox(height: 12),

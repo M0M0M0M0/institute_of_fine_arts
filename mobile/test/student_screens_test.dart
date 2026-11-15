@@ -134,7 +134,7 @@ void main() {
       expect(find.text('Submit'), findsOneWidget);
       expect(find.text('Still editable'), findsOneWidget);
       expect(find.text('Sunset'), findsOneWidget);
-      expect(find.text('Closes 20/12/2026'), findsOneWidget);
+      expect(find.text('Closes 20 Dec 2026'), findsOneWidget);
       await tester.scrollUntilVisible(find.text('New results'), 200, scrollable: find.byType(Scrollable).first);
       expect(find.text('Best'), findsOneWidget);
       await tester.scrollUntilVisible(find.text('2 proposals waiting for review'), 200, scrollable: find.byType(Scrollable).first);
@@ -285,7 +285,7 @@ void main() {
             )),
       ]);
       expect(find.text('JPEG only, up to 5 MB'), findsOneWidget);
-      expect(find.text('Deadline: 20/12/2026 23:59'), findsOneWidget);
+      expect(find.text('Deadline: 20 Dec 2026 23:59'), findsOneWidget);
       await tester.scrollUntilVisible(find.widgetWithText(ChoiceChip, 'Story'), 200, scrollable: find.byType(Scrollable).first);
       await tester.tap(find.widgetWithText(ChoiceChip, 'Story'));
       await tester.pumpAndSettle();
@@ -356,8 +356,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Harbor'), findsOneWidget);
       expect(find.text('Sold · paid'), findsOneWidget);
-      expect(find.text('Asking price 2.000.000 ₫'), findsOneWidget);
-      expect(find.text('Sold for 2.500.000 ₫'), findsOneWidget);
+      expect(find.text('Asking price \$2,000,000'), findsOneWidget);
+      expect(find.text('Sold for \$2,500,000'), findsOneWidget);
     });
   });
 

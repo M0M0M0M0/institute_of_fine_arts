@@ -263,7 +263,7 @@ class _PrizeCard extends StatelessWidget {
                 children: [
                   Text(award.name, style: text.titleMedium),
                   Text(
-                    '${formatVnd(award.prizeValue)}  ·  ${award.quantity} ${award.quantity == 1 ? 'award' : 'awards'}',
+                    '${formatMoney(award.prizeValue)}  ·  ${award.quantity} ${award.quantity == 1 ? 'award' : 'awards'}',
                     style: text.bodyMedium!.copyWith(color: AppColors.brassText, fontWeight: FontWeight.w600),
                   ),
                   if ((award.description ?? '').isNotEmpty)

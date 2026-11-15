@@ -363,7 +363,7 @@ class _SlotCard extends StatelessWidget {
                   child: Text('${slot.rank}', style: text.labelMedium!.copyWith(color: Colors.white)),
                 ),
                 const SizedBox(width: AppSpacing.sm),
-                Expanded(child: Text('${slot.name} · ${formatVnd(slot.prizeValue)}', style: text.titleMedium)),
+                Expanded(child: Text('${slot.name} · ${formatMoney(slot.prizeValue)}', style: text.titleMedium)),
               ],
             ),
             const SizedBox(height: AppSpacing.xs),

@@ -298,7 +298,7 @@ void main() {
 
     testWidgets('upcoming: disabled "Opens on"', (tester) async {
       await _pump(tester, const CompetitionDetailScreen(id: 7), overrides: detailOverrides(CompetitionStatus.upcoming));
-      final button = find.widgetWithText(FilledButton, 'Opens on 01/12/2026');
+      final button = find.widgetWithText(FilledButton, 'Opens on 01 Dec 2026');
       expect(button, findsOneWidget);
       expect(tester.widget<FilledButton>(button).onPressed, isNull);
     });

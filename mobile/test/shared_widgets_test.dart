@@ -153,7 +153,7 @@ void main() {
       expect(find.text('Open'), findsOneWidget);
       expect(find.text('4 days left'), findsOneWidget);
       expect(find.text('12 entries'), findsOneWidget);
-      expect(find.textContaining('01/12/2026'), findsOneWidget);
+      expect(find.textContaining('01 Dec 2026'), findsOneWidget);
       await tester.tap(find.text('Spring Colours'));
       expect(tapped, isTrue);
     });

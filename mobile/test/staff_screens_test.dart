@@ -374,7 +374,7 @@ void main() {
       expect(find.text('All 5 entries are graded'), findsOneWidget);
       expect(find.textContaining('2 award slots still empty'), findsOneWidget);
       expect(find.text('Publish results'), findsOneWidget);
-      expect(find.text('First Prize · 2.000.000 ₫'), findsOneWidget);
+      expect(find.text('First Prize · \$2,000,000'), findsOneWidget);
       expect(find.text('Still Sea'), findsOneWidget);
 
       await tester.tap(find.byTooltip('Award actions'));

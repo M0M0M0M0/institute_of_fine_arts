@@ -3,9 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   group('parseMoney', () {
-    test('bỏ dấu phân cách, chỉ lấy chữ số', () {
-      expect(parseMoney('2.000.000'), 2000000);
-      expect(parseMoney(' 1500000 ₫'), 1500000);
+    test('reads US dollars: separators and the \$ sign are ignored, cents kept', () {
+      expect(parseMoney('2,000'), 2000);
+      expect(parseMoney(' \$1,500.50'), 1500.5);
     });
 
     test('rỗng hoặc 0 → null (giá phải > 0, BR-41)', () {

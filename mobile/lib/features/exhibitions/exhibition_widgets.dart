@@ -142,18 +142,19 @@ class _MoneyFieldState extends State<MoneyField> {
     return TextField(
       controller: widget.controller,
       enabled: widget.enabled,
-      keyboardType: TextInputType.number,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+      // US dollars with up to two decimals (A-19)
+      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))],
       decoration: InputDecoration(
         labelText: widget.label,
-        helperText: value == null ? null : formatVnd(value),
-        suffixText: '₫',
+        helperText: value == null ? null : formatMoney(value),
+        prefixText: '\$ ',
       ),
     );
   }
 }
 
-/// Ô chọn ngày bằng hộp thoại lịch; hiển thị dd/MM/yyyy (NFR-17).
+/// Date field with a calendar dialog; shows dd MMM yyyy like the website.
 class DateField extends StatelessWidget {
   const DateField({
     super.key,

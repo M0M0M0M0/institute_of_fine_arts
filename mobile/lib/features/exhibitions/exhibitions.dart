@@ -48,12 +48,12 @@ String entryStatusText(EntryStatus status, bool paid) =>
 
 // ---------------- Hàm thuần ----------------
 
-/// Đọc số tiền người dùng gõ: bỏ mọi ký tự không phải số ("2.000.000" → 2000000); rỗng/0 → null.
+/// Reads an amount typed by the user in US dollars.
 double? parseMoney(String text) {
-  final digits = text.replaceAll(RegExp(r'[^0-9]'), '');
-  if (digits.isEmpty) return null;
-  final value = double.parse(digits);
-  return value > 0 ? value : null;
+  // Keep digits and the decimal point ("\$1,250.50" → 1250.5); empty or 0 → null
+  final cleaned = text.replaceAll(RegExp(r'[^0-9.]'), '');
+  final value = double.tryParse(cleaned);
+  return value != null && value > 0 ? value : null;
 }
 
 /// Ngày dạng yyyy-MM-dd để gửi lên API (DateOnly).

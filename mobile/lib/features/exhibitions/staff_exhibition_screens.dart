@@ -300,8 +300,8 @@ class EntryListCard extends StatelessWidget {
                     Text('${e.studentName} (${e.studentCode})', style: text.bodyMedium),
                     if (showExhibition) Text(e.exhibitionName, style: text.bodySmall),
                     Text(
-                      'Asking ${formatVnd(e.askingPrice)}'
-                      '${e.soldPrice != null ? ' · sold ${formatVnd(e.soldPrice!)}' : ''}',
+                      'Asking ${formatMoney(e.askingPrice)}'
+                      '${e.soldPrice != null ? ' · sold ${formatMoney(e.soldPrice!)}' : ''}',
                       style: text.bodySmall,
                     ),
                     const SizedBox(height: AppSpacing.xs),

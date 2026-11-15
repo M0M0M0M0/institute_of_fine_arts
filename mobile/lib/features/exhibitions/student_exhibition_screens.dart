@@ -171,8 +171,8 @@ class _EntryRow extends StatelessWidget {
                   const SizedBox(height: AppSpacing.xs),
                   StatusChip.entry(e.status, paid: e.paidToStudent),
                   const SizedBox(height: AppSpacing.xs),
-                  Text('Asking price ${formatVnd(e.askingPrice)}', style: text.bodySmall),
-                  if (e.soldPrice != null) Text('Sold for ${formatVnd(e.soldPrice!)}', style: text.bodySmall),
+                  Text('Asking price ${formatMoney(e.askingPrice)}', style: text.bodySmall),
+                  if (e.soldPrice != null) Text('Sold for ${formatMoney(e.soldPrice!)}', style: text.bodySmall),
                 ],
               ),
             ),
@@ -490,14 +490,14 @@ class _EntryBodyState extends ConsumerState<_EntryBody> {
         InfoRow('Venue', '${e.venue}, ${e.city}'),
         InfoRow('Dates', dateRange(e.exhibitionStartDate, e.exhibitionEndDate)),
         const Divider(height: 24),
-        InfoRow('Asking price', formatVnd(e.askingPrice)),
+        InfoRow('Asking price', formatMoney(e.askingPrice)),
         if (e.status == EntryStatus.sold) ...[
-          InfoRow('Sold for', formatVnd(e.soldPrice ?? 0)),
+          InfoRow('Sold for', formatMoney(e.soldPrice ?? 0)),
           if (e.soldDate != null) InfoRow('Sold on', formatDate(e.soldDate!)),
           InfoRow(
             'Payment',
             e.paidToStudent
-                ? 'Received ${formatVnd(e.paidAmount ?? 0)}${e.paidDate != null ? ' on ${formatDate(e.paidDate!)}' : ''}'
+                ? 'Received ${formatMoney(e.paidAmount ?? 0)}${e.paidDate != null ? ' on ${formatDate(e.paidDate!)}' : ''}'
                 : 'Not received yet',
           ),
         ],

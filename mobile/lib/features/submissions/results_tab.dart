@@ -38,7 +38,7 @@ class AwardResultsList extends ConsumerWidget {
                       foregroundColor: AppColors.brassText,
                       child: Text('${a.rank}'),
                     ),
-                    title: Text('${a.awardName} • ${formatVnd(a.prizeValue)}'),
+                    title: Text('${a.awardName} • ${formatMoney(a.prizeValue)}'),
                     subtitle: Text('${a.studentName} – ${a.paintingTitle}'),
                   ),
               ],
