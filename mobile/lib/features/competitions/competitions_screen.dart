@@ -19,10 +19,11 @@ extension on CompetitionSection {
         CompetitionSection.results => 'Results',
       };
 
-  CompetitionStatus get status => switch (this) {
-        CompetitionSection.open => CompetitionStatus.ongoing,
-        CompetitionSection.upcoming => CompetitionStatus.upcoming,
-        CompetitionSection.results => CompetitionStatus.graded,
+  /// Results also lists CLOSED competitions (deadline passed, judges at work) so none disappears from the tab.
+  bool includes(CompetitionStatus status) => switch (this) {
+        CompetitionSection.open => status == CompetitionStatus.ongoing,
+        CompetitionSection.upcoming => status == CompetitionStatus.upcoming,
+        CompetitionSection.results => status == CompetitionStatus.closed || status == CompetitionStatus.graded,
       };
 
   String get emptyTitle => switch (this) {
@@ -52,7 +53,7 @@ class _CompetitionsBodyState extends ConsumerState<CompetitionsBody> {
   CompetitionSection _section = CompetitionSection.open;
 
   List<CompetitionSummary> _filter(List<CompetitionSummary> all) {
-    final list = all.where((c) => c.status == _section.status).toList();
+    final list = all.where((c) => _section.includes(c.status)).toList();
     switch (_section) {
       case CompetitionSection.open:
         list.sort((a, b) => a.endDate.compareTo(b.endDate));

@@ -240,7 +240,7 @@ void main() {
       await tester.tap(find.text('Results'));
       await tester.pumpAndSettle();
       expect(find.text('Done One'), findsOneWidget);
-      expect(find.text('Closed One'), findsNothing);
+      expect(find.text('Closed One'), findsOneWidget); // closed (judging) also listed under Results
 
       await tester.tap(find.text('Done One'));
       await tester.pumpAndSettle();
