@@ -4,7 +4,7 @@
 @*
     Public layout (home, competitions, gallery, about, FAQ, login, errors…). Design by FE (branch FE101: promo ticker,
     logo navbar with search, mega footer, theme in wwwroot/css/public-fe101.css), wired to the backend: real links only,
-    account menu (My workspace / profile / log out POST), notification bell, EN/VI switch, local Bootstrap Icons.
+    account menu (My workspace / profile / log out POST), notification bell, local Bootstrap Icons. English only.
     FE101 mega menu "Gallery" (subject / style / medium → GalleryController with real paintings), Contact page, back-to-top.
     Signed-in work happens in _LayoutDashboard (navy rail with the role menu), reached through "My workspace".
 *@
@@ -199,8 +199,6 @@
                             </li>
                         }
                     </ul>
-                    @* English / Vietnamese switch (F-M19-01) *@
-                    <partial name="_LanguageSwitch" />
                 </div>
             </div>
         </nav>

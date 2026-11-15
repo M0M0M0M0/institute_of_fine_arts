@@ -31,7 +31,7 @@ public class AccountController : Controller
     /// <summary>Records log in / log out in the audit log (F-M17-01).</summary>
     private readonly IAuditLogService _audit;
 
-    /// <summary>Translates the login messages when the Vietnamese UI is chosen (F-M19-01); English stays unchanged.</summary>
+    /// <summary>UI texts of the login messages (English, Resources/SharedResource.resx).</summary>
     private readonly IStringLocalizer<SharedResource> _localizer;
 
     /// <summary>Receives the authentication service, the audit log and the text localizer through Dependency Injection.</summary>
