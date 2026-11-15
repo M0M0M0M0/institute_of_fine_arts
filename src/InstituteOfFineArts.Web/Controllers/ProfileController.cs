@@ -26,7 +26,7 @@ public class ProfileController : Controller
     /// <summary>Profile service.</summary>
     private readonly IProfileService _profileService;
 
-    /// <summary>Translates the password messages when the Vietnamese UI is chosen (F-M19-01); English stays unchanged.</summary>
+    /// <summary>UI texts of the password messages (English, Resources/SharedResource.resx).</summary>
     private readonly IStringLocalizer<SharedResource> _localizer;
 
     /// <summary>Receives the profile service and the text localizer through Dependency Injection.</summary>
