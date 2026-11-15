@@ -2,27 +2,46 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../features/account/account_screen.dart';
+import '../features/account/unsupported_role_screen.dart';
 import '../features/auth/auth.dart';
 import '../features/awarding/adjust_evaluation_screen.dart';
 import '../features/awarding/awarding.dart';
+import '../features/awarding/awarding_competitions_screen.dart';
 import '../features/awarding/awarding_detail_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/competitions/competition_detail_screen.dart';
+import '../features/gallery/gallery_screen.dart';
+import '../features/guest/guest_shell.dart';
 import '../features/exhibitions/exhibitions.dart';
 import '../features/exhibitions/staff_entry_screen.dart';
 import '../features/exhibitions/staff_exhibition_screens.dart';
 import '../features/exhibitions/student_exhibition_screens.dart';
 import '../features/grading/grading.dart';
+import '../features/grading/grading_competitions_screen.dart';
 import '../features/grading/grading_detail_screen.dart';
 import '../features/grading/grading_list_screen.dart';
 import '../features/home/home_screen.dart';
+import '../features/staff/dashboard.dart';
+import '../features/staff/staff_home_screen.dart';
 import '../features/staff/staff_shell.dart';
+import '../features/student/dashboard.dart';
+import '../features/student/student_home_screen.dart';
 import '../features/student/student_shell.dart';
 import '../features/submissions/submission_detail_screen.dart';
 import '../features/submissions/submission_form_screen.dart';
+import '../features/submissions/my_submissions_screen.dart';
+import '../features/submissions/results_tab.dart';
 import '../features/submissions/submissions.dart';
+import '../shared/auth_image.dart';
+import '../shared/tab_scaffold.dart';
 
-/// Điều hướng toàn app. Trang /student và /staff chỉ vào được đúng vai trò (US-01 AC4, AC5).
+/// App navigation. `/student/**` and `/staff/**` are only open to the matching role (US-01 AC4, AC5).
+///
+/// Tab structure (one `StatefulShellRoute` per role; detail screens are top-level routes, full screen):
+/// - guest:   `/` Home, `/competitions`, `/gallery`, "Sign in" (opens `/login`)
+/// - student: `/student` Home, `/student/competitions`, `/student/entries`, `/student/exhibitions`, `/student/account`
+/// - staff:   `/staff` Home, `/staff/grading`, `/staff/awarding`, `/staff/exhibitions`, `/staff/account`
 final routerProvider = Provider<GoRouter>((ref) {
   // Mỗi khi trạng thái đăng nhập đổi, báo go_router chạy lại redirect
   final refresh = ValueNotifier<int>(0);
@@ -33,6 +52,9 @@ final routerProvider = Provider<GoRouter>((ref) {
       resetGradingData(ref);
       resetExhibitionData(ref);
       resetAwardingData(ref);
+      resetAuthImages(ref);
+      ref.invalidate(studentDashboardProvider);
+      ref.invalidate(staffDashboardProvider);
     }
     refresh.value++;
   });
@@ -53,27 +75,77 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       if (user == null) return needsLogin ? '/login' : null;
 
+      // Old links `/student?tab=N` (tabs before the redesign) map to the new tab paths
+      if (location == '/student' && state.uri.queryParameters.containsKey('tab')) {
+        return switch (state.uri.queryParameters['tab']) {
+          '0' => '/student/competitions',
+          '1' || '2' => '/student/entries',
+          '3' => '/student/exhibitions',
+          _ => '/student',
+        };
+      }
+
       final home = homePathFor(user.role);
-      if (location == '/login') return home;
+      // Signed-in users start on their role's home, not on the guest home
+      if (location == '/login' || location == '/') return home;
       if (location.startsWith('/student') && user.role != Role.student) return home;
       if (location.startsWith('/staff') && user.role != Role.staff) return home;
       if (location == '/unsupported' && home != '/unsupported') return home;
       return null;
     },
     routes: [
-      GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
+      // Guest shell: Home, Competitions, Gallery (+ "Sign in" button that opens /login)
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, shell) => GuestShell(navigationShell: shell),
+        branches: [
+          StatefulShellBranch(routes: [GoRoute(path: '/', builder: (context, state) => const HomeScreen())]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/competitions',
+              // PLACEHOLDER list until the guest phase-2 screen (M-G2) exists
+              builder: (context, state) => const TabScaffold(title: 'Competitions', body: CompetitionFeed()),
+            ),
+          ]),
+          StatefulShellBranch(routes: [GoRoute(path: '/gallery', builder: (context, state) => const GalleryScreen())]),
+        ],
+      ),
       GoRoute(
         path: '/competitions/:id',
         builder: (context, state) => CompetitionDetailScreen(id: int.parse(state.pathParameters['id']!)),
       ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-      // Khung học viên; `?tab=` chọn tab mở sẵn. Key theo URL để đổi tab khi điều hướng lại bằng go()
+      // Student shell: Home, Competitions, My entries, Exhibitions, Account
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, shell) => StudentShell(navigationShell: shell),
+        branches: [
+          StatefulShellBranch(
+              routes: [GoRoute(path: '/student', builder: (context, state) => const StudentHomeScreen())]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/student/competitions',
+              builder: (context, state) => const TabScaffold(title: 'Competitions', body: CompetitionFeed()),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/student/entries',
+              builder: (context, state) => const TabScaffold(title: 'My entries', body: MySubmissionsTab()),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/student/exhibitions',
+              builder: (context, state) => const TabScaffold(title: 'Exhibitions', body: StudentExhibitionsTab()),
+            ),
+          ]),
+          StatefulShellBranch(
+              routes: [GoRoute(path: '/student/account', builder: (context, state) => const AccountScreen())]),
+        ],
+      ),
+      // The old "Results & awards" tab, kept reachable until the entries screen absorbs it
       GoRoute(
-        path: '/student',
-        builder: (context, state) => StudentShell(
-          key: ValueKey(state.uri.toString()),
-          initialTab: int.tryParse(state.uri.queryParameters['tab'] ?? '') ?? 0,
-        ),
+        path: '/student/results',
+        builder: (context, state) => const TabScaffold(title: 'Results & awards', body: ResultsTab()),
       ),
       // Nộp bài mới cho một cuộc thi (phải đặt trước ':id' để "new" không bị hiểu là id)
       GoRoute(
@@ -91,7 +163,33 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/student/submissions/:id/edit',
         builder: (context, state) => SubmissionFormScreen(submissionId: int.parse(state.pathParameters['id']!)),
       ),
-      GoRoute(path: '/staff', builder: (context, state) => const StaffShell()),
+      // Staff shell: Home, Grading, Awards, Exhibitions, Account
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, shell) => StaffShell(navigationShell: shell),
+        branches: [
+          StatefulShellBranch(routes: [GoRoute(path: '/staff', builder: (context, state) => const StaffHomeScreen())]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/staff/grading',
+              builder: (context, state) => const TabScaffold(title: 'Grading', body: GradingCompetitionsTab()),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/staff/awarding',
+              builder: (context, state) => const TabScaffold(title: 'Awards', body: AwardingCompetitionsTab()),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/staff/exhibitions',
+              builder: (context, state) => const TabScaffold(title: 'Exhibitions', body: StaffExhibitionsTab()),
+            ),
+          ]),
+          StatefulShellBranch(
+              routes: [GoRoute(path: '/staff/account', builder: (context, state) => const AccountScreen())]),
+        ],
+      ),
       // Chấm bài: danh sách bài của cuộc thi và màn chấm một bài (UC-05, SCR-26, SCR-27)
       GoRoute(
         path: '/staff/competitions/:id/submissions',

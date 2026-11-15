@@ -26,8 +26,10 @@ class AwardingCompetition {
     required this.totalSlots,
     required this.issuedSlots,
     required this.adjustedAt,
+    this.hasCover = false,
   });
 
+  final bool hasCover;
   final int id;
   final String title;
   final DateTime endDate;
@@ -50,6 +52,7 @@ class AwardingCompetition {
         totalSlots: json['totalSlots'] as int,
         issuedSlots: json['issuedSlots'] as int,
         adjustedAt: _dateOrNull(json['adjustedAt']),
+        hasCover: (json['hasCover'] as bool?) ?? false,
       );
 }
 
@@ -70,8 +73,11 @@ class IssuedAward {
     required this.isDelivered,
     required this.deliveredAt,
     required this.rowVersion,
+    this.hasThumbnail = true,
   });
 
+  /// Whether a thumbnail exists; defaults to true when the API does not say (a submission always has an image).
+  final bool hasThumbnail;
   final int id;
   final int submissionId;
   final String submissionTitle;
@@ -104,6 +110,7 @@ class IssuedAward {
         isDelivered: json['isDelivered'] as bool,
         deliveredAt: _dateOrNull(json['deliveredAt']),
         rowVersion: json['rowVersion'] as String,
+        hasThumbnail: (json['hasThumbnail'] as bool?) ?? true,
       );
 }
 
@@ -219,8 +226,11 @@ class AwardCandidate {
     required this.studentName,
     required this.studentCode,
     required this.rating,
+    this.hasThumbnail = true,
   });
 
+  /// Whether a thumbnail exists; defaults to true when the API does not say (a submission always has an image).
+  final bool hasThumbnail;
   final int submissionId;
   final String title;
   final String studentName;
@@ -233,6 +243,7 @@ class AwardCandidate {
         studentName: json['studentName'] as String,
         studentCode: json['studentCode'] as String,
         rating: ratingFromJson(json['rating'] as String),
+        hasThumbnail: (json['hasThumbnail'] as bool?) ?? true,
       );
 }
 

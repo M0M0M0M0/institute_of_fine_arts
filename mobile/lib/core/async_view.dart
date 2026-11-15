@@ -45,7 +45,7 @@ class ErrorView extends StatelessWidget {
             const SizedBox(height: 12),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: 12),
-            FilledButton.tonal(onPressed: onRetry, child: const Text('Thử lại')),
+            OutlinedButton(onPressed: onRetry, child: const Text('Try again')),
           ],
         ),
       ),
@@ -53,7 +53,7 @@ class ErrorView extends StatelessWidget {
   }
 }
 
-/// Màn hình tạm cho chức năng sẽ làm ở các bước sau.
+/// Placeholder block for features that come later.
 class ComingSoon extends StatelessWidget {
   const ComingSoon({super.key, required this.title, required this.note});
 

@@ -19,6 +19,10 @@ class AppUser {
     required this.username,
     required this.fullName,
     required this.role,
+    this.email,
+    this.code,
+    this.className,
+    this.position,
   });
 
   final int accountId;
@@ -26,11 +30,30 @@ class AppUser {
   final String fullName;
   final Role role;
 
+  /// Optional profile fields from `GET /api/auth/me` (null when the API does not send them).
+  final String? email;
+
+  /// Student code or staff code.
+  final String? code;
+
+  /// Class name (students).
+  final String? className;
+
+  /// Position / job title (staff).
+  final String? position;
+
+  /// Given name for greetings ("Good morning, Linh"): last word of the full name (Vietnamese name order).
+  String get firstName => fullName.trim().split(RegExp(r'\s+')).last;
+
   factory AppUser.fromJson(Map<String, dynamic> json) => AppUser(
         accountId: json['accountId'] as int,
         username: json['username'] as String,
         fullName: json['fullName'] as String,
         role: roleFromJson(json['role'] as String),
+        email: json['email'] as String?,
+        code: json['code'] as String?,
+        className: json['className'] as String?,
+        position: json['position'] as String?,
       );
 }
 

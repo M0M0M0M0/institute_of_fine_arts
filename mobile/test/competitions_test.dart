@@ -1,7 +1,7 @@
 import 'package:fine_arts_mobile/features/competitions/competitions.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-// Kiểm thử parse JSON cuộc thi và nhãn đếm ngược "Bắt đầu sau X ngày".
+// Kiểm thử parse JSON cuộc thi và countdown label "Starts in X days".
 Map<String, dynamic> _json({String status = 'Upcoming', Object? daysUntilStart = 5, bool withField = true}) => {
       'id': 1,
       'title': 'Vẽ mùa xuân',
@@ -18,13 +18,13 @@ void main() {
   test('parse daysUntilStart từ JSON', () {
     final c = CompetitionSummary.fromJson(_json());
     expect(c.daysUntilStart, 5);
-    expect(c.startCountdownLabel, 'Bắt đầu sau 5 ngày');
+    expect(c.startCountdownLabel, 'Starts in 5 days');
   });
 
   test('thiếu daysUntilStart thì mặc định 0', () {
     final c = CompetitionSummary.fromJson(_json(withField: false));
     expect(c.daysUntilStart, 0);
-    expect(c.startCountdownLabel, 'Bắt đầu hôm nay');
+    expect(c.startCountdownLabel, 'Starts today');
   });
 
   test('daysUntilStart null cũng mặc định 0', () {

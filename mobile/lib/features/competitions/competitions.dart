@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../app/tokens.dart';
 import '../../core/api_client.dart';
 
 // ---------------- Model (khớp DTO của API) ----------------
@@ -13,17 +14,18 @@ CompetitionStatus statusFromJson(String value) =>
 
 extension CompetitionStatusView on CompetitionStatus {
   String get label => switch (this) {
-        CompetitionStatus.upcoming => 'Sắp diễn ra',
-        CompetitionStatus.ongoing => 'Đang diễn ra',
-        CompetitionStatus.closed => 'Đang chấm',
-        CompetitionStatus.graded => 'Đã công bố',
+        CompetitionStatus.upcoming => 'Upcoming',
+        CompetitionStatus.ongoing => 'Open',
+        CompetitionStatus.closed => 'Closed',
+        CompetitionStatus.graded => 'Results published',
       };
 
-  Color color(ColorScheme scheme) => switch (this) {
-        CompetitionStatus.upcoming => scheme.tertiary,
-        CompetitionStatus.ongoing => scheme.primary,
-        CompetitionStatus.closed => scheme.secondary,
-        CompetitionStatus.graded => scheme.outline,
+  /// Status colour of the web palette (the scheme argument is kept for old callers).
+  Color color([ColorScheme? scheme]) => switch (this) {
+        CompetitionStatus.upcoming => AppColors.statusUpcoming,
+        CompetitionStatus.ongoing => AppColors.statusOngoing,
+        CompetitionStatus.closed => AppColors.statusClosed,
+        CompetitionStatus.graded => AppColors.statusPublished,
       };
 }
 
@@ -39,6 +41,7 @@ class CompetitionSummary {
     required this.daysLeft,
     this.daysUntilStart = 0,
     required this.submissionCount,
+    this.hasCover = false,
   });
 
   final int id;
@@ -53,11 +56,24 @@ class CompetitionSummary {
   final int daysUntilStart;
   final int submissionCount;
 
+  /// True when the competition has a cover image (`/files/competitions/{id}/cover`); false when the API does not say.
+  final bool hasCover;
+
   /// Nhãn đếm ngược cho cuộc thi sắp diễn ra; null nếu không phải UPCOMING.
   /// UPCOMING tính theo ngày nên thường >= 1; nếu 0 (lệch múi giờ/dữ liệu) thì hiện "hôm nay".
   String? get startCountdownLabel {
     if (status != CompetitionStatus.upcoming) return null;
-    return daysUntilStart <= 0 ? 'Bắt đầu hôm nay' : 'Bắt đầu sau $daysUntilStart ngày';
+    return daysUntilStart <= 0
+        ? 'Starts today'
+        : 'Starts in $daysUntilStart ${daysUntilStart == 1 ? 'day' : 'days'}';
+  }
+
+  /// Short countdown text for cards: "5 days left" (open), "Starts in 3 days" (upcoming); null otherwise.
+  String? get countdownLabel {
+    if (status == CompetitionStatus.upcoming) return startCountdownLabel;
+    if (status != CompetitionStatus.ongoing) return null;
+    if (daysLeft <= 0) return 'Last day';
+    return daysLeft == 1 ? '1 day left' : '$daysLeft days left';
   }
 
   factory CompetitionSummary.fromJson(Map<String, dynamic> json) => CompetitionSummary(
@@ -71,6 +87,7 @@ class CompetitionSummary {
         // Trường mới: thiếu thì coi như 0 để app không vỡ khi gặp API cũ
         daysUntilStart: (json['daysUntilStart'] as int?) ?? 0,
         submissionCount: json['submissionCount'] as int,
+        hasCover: (json['hasCover'] as bool?) ?? false,
       );
 }
 
@@ -128,7 +145,18 @@ class CompetitionDetail {
 
 /// Học viên đạt giải hiển thị trên trang chủ.
 class Winner {
-  const Winner({required this.studentName, required this.awardName, required this.rank, required this.paintingTitle});
+  const Winner({
+    required this.studentName,
+    required this.awardName,
+    required this.rank,
+    required this.paintingTitle,
+    this.submissionId,
+    this.hasThumbnail = false,
+  });
+
+  /// Id of the winning submission (public image at `/files/submissions/{id}/thumb`); null when the API does not say.
+  final int? submissionId;
+  final bool hasThumbnail;
 
   final String studentName;
   final String awardName;
@@ -140,6 +168,8 @@ class Winner {
         awardName: json['awardName'] as String,
         rank: json['rank'] as int,
         paintingTitle: json['paintingTitle'] as String,
+        submissionId: json['submissionId'] as int?,
+        hasThumbnail: (json['hasThumbnail'] as bool?) ?? false,
       );
 }
 
