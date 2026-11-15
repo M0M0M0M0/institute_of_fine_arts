@@ -2,7 +2,7 @@
 @using InstituteOfFineArts.Web.Infrastructure.Security
 @*
     Layout of the working screens (FE1-01 + FE2-01): navy rail with the wordmark and the role menu,
-    a top bar (language, notifications, account) and the white work area.
+    a top bar (notifications, account) and the white work area.
     Used by every area (_ViewStart) and by /profile, /notifications and /reports.
 *@
 @{
@@ -34,7 +34,6 @@
                 <button type="button" class="btn btn-sm btn-outline-primary app-menu-toggle" data-rail-toggle aria-controls="rail" aria-expanded="false">
                     <i class="bi bi-list" aria-hidden="true"></i>@L["Menu"]
                 </button>
-                <div class="lang-switch"><partial name="_LanguageSwitch" /></div>
                 @if (User.Identity?.IsAuthenticated == true)
                 {
                     <ul class="list-unstyled d-flex align-items-center m-0">

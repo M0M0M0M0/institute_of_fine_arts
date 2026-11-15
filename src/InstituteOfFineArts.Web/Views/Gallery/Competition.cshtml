@@ -1,0 +1,203 @@
+@model InstituteOfFineArts.Web.ViewModels.Public.PublicCompetitionDetailsVm
+@using InstituteOfFineArts.Web.Helpers
+@using InstituteOfFineArts.Web.Models.Enums
+@*
+    One competition (/gallery/competitions/{id}, FE101 competition detail design, real data): cover banner, overview,
+    eligibility, rules, prizes, winners once published, and a sticky summary. Entering goes through the real student
+    submit page (/student/submissions/new), which checks the deadline, one entry per student, JPEG ≤ 5 MB and the text.
+*@
+@{
+    ViewData["Title"] = Model.Title + " - Competition Details";
+    var submitUrl = $"/student/submissions/new?competitionId={Model.Id}";
+    var isStudent = User.IsInRole(RoleNames.Student);
+    var signedIn = User.Identity?.IsAuthenticated == true;
+}
+
+<!-- BANNER HÌNH ẢNH CUỘC THI -->
+@if (Model.HasCover)
+{
+    <div class="w-100 mb-5" style="height: 380px; overflow: hidden; background-color: #f8f9fa;">
+        <img src="/files/competitions/@Model.Id/cover" alt="@Model.Title" class="w-100 h-100" style="object-fit: cover; filter: brightness(0.85);" />
+    </div>
+}
+
+<div class="container px-lg-5 mb-5 pb-5 @(Model.HasCover ? "" : "mt-5")">
+    <!-- BREADCRUMB -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb bg-transparent p-0 m-0 small">
+            <li class="breadcrumb-item"><a href="/" class="text-muted text-decoration-none">Homepage</a></li>
+            <li class="breadcrumb-item"><a href="/gallery/competitions" class="text-muted text-decoration-none">Competitions</a></li>
+            <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">@Model.Title</li>
+        </ol>
+    </nav>
+
+    <div class="row gx-lg-5 align-items-start">
+        <!-- CỘT TRÁI: THỂ LỆ CUỘC THI -->
+        <div class="col-lg-8 mb-5 mb-lg-0">
+            <div class="d-flex align-items-center gap-2 mb-3">
+                @switch (Model.Status)
+                {
+                    case CompetitionStatus.ONGOING:
+                        <span class="badge bg-success fw-normal px-2 py-1" style="letter-spacing: 1px; font-size: 0.75rem;">OPEN FOR SUBMISSIONS</span>
+                        break;
+                    case CompetitionStatus.UPCOMING:
+                        <span class="badge bg-secondary fw-normal px-2 py-1" style="letter-spacing: 1px; font-size: 0.75rem;">UPCOMING</span>
+                        break;
+                    case CompetitionStatus.CLOSED:
+                        <span class="badge bg-warning text-dark fw-normal px-2 py-1" style="letter-spacing: 1px; font-size: 0.75rem;">CLOSED – JUDGING</span>
+                        break;
+                    default:
+                        <span class="badge bg-dark fw-normal px-2 py-1" style="letter-spacing: 1px; font-size: 0.75rem;">RESULTS PUBLISHED</span>
+                        break;
+                }
+                <span class="small text-muted">@Model.Code</span>
+            </div>
+
+            <h1 class="art-title display-4 mb-4">@Model.Title</h1>
+
+            <!-- 1. Description -->
+            <h2 class="art-title h4 mb-3 mt-5">1. Overview &amp; Theme</h2>
+            <p class="text-muted lh-lg" style="white-space: pre-line;">@(Model.Description ?? "The organisers have not written an overview yet.")</p>
+
+            <!-- 2. Eligibility -->
+            <h2 class="art-title h4 mb-3 mt-5">2. Eligibility</h2>
+            <div class="p-3 bg-light border-start border-4 border-dark mb-4">
+                <p class="mb-0 text-dark fw-medium">
+                    <i class="bi bi-person-badge me-2" aria-hidden="true"></i> This competition is open to <strong>currently enrolled students</strong> of the Institute of Fine Arts – one painting per student.
+                </p>
+            </div>
+
+            <!-- 3. Rules / requirements -->
+            <h2 class="art-title h4 mb-3 mt-5">3. Rules &amp; Requirements</h2>
+            <ul class="list-unstyled text-muted lh-lg">
+                @if (!string.IsNullOrWhiteSpace(Model.Rules))
+                {
+                    <li class="mb-3" style="white-space: pre-line;">@Model.Rules</li>
+                }
+                <li class="mb-3">
+                    <strong class="text-dark"><i class="bi bi-file-earmark-image me-2" aria-hidden="true"></i> File:</strong><br />
+                    One JPEG image of the painting, up to 5 MB.
+                </li>
+                <li class="mb-3">
+                    <strong class="text-dark"><i class="bi bi-quote me-2" aria-hidden="true"></i> Accompanying text:</strong><br />
+                    A short poem, quotation or story that goes with the painting.
+                </li>
+                <li class="mb-3">
+                    <strong class="text-dark"><i class="bi bi-calendar-check me-2" aria-hidden="true"></i> Dates:</strong><br />
+                    From @Model.StartDate.ToString("MMM d, yyyy") to @Model.EndDate.ToString("MMM d, yyyy") (23:59). You can edit or replace your entry until the deadline.
+                </li>
+            </ul>
+
+            <!-- 4. Prizes -->
+            <h2 class="art-title h4 mb-3 mt-5">4. Prizes &amp; Recognition</h2>
+            @if (Model.Awards.Count == 0)
+            {
+                <p class="text-muted">The prizes will be announced soon.</p>
+            }
+            else
+            {
+                <div class="row g-4 text-center mt-2">
+                    @foreach (var a in Model.Awards)
+                    {
+                        var (icon, colour) = a.Rank switch
+                        {
+                            1 => ("bi-trophy-fill", "text-warning"),
+                            2 => ("bi-award-fill", "text-secondary"),
+                            3 => ("bi-award", ""),
+                            _ => ("bi-patch-check", "text-muted"),
+                        };
+                        <div class="col-md-4">
+                            <div class="border p-4 h-100 @(a.Rank == 1 ? "bg-cream" : "")">
+                                <i class="bi @icon fs-1 @colour mb-2 d-block" style="@(a.Rank == 3 ? "color: #cd7f32;" : "")" aria-hidden="true"></i>
+                                <h3 class="h5 fw-bold mb-1">@a.Name</h3>
+                                <p class="art-title text-dark mb-2 fs-3">$@a.PrizeValue.ToString("#,##0")</p>
+                                <span class="small text-muted">@(a.Quantity > 1 ? $"{a.Quantity} prizes · " : "")@(a.Description ?? "Certificate")</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (Model.Status == CompetitionStatus.GRADED && Model.Winners.Count > 0)
+            {
+                <!-- 5. Winners -->
+                <h2 class="art-title h4 mb-3 mt-5">5. Winners</h2>
+                @if (!string.IsNullOrWhiteSpace(Model.ResultRemarks))
+                {
+                    <p class="text-muted lh-lg">@Model.ResultRemarks</p>
+                }
+                <div class="row row-cols-2 row-cols-md-3 g-4">
+                    @foreach (var w in Model.Winners)
+                    {
+                        <div class="col">
+                            <a href="/gallery/artworks/@w.SubmissionId" class="artwork-card d-block text-center text-decoration-none">
+                                @if (w.HasThumbnail)
+                                {
+                                    <img src="/files/submissions/@w.SubmissionId/thumb" alt="@w.ArtworkTitle – @w.StudentName" class="img-fluid mb-2" style="height: 220px;" loading="lazy">
+                                }
+                                <span class="badge bg-light text-dark border mb-1 fw-normal text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">@w.AwardName</span>
+                                <span class="d-block art-title text-dark">@w.ArtworkTitle</span>
+                                <span class="d-block small text-muted">@w.StudentName</span>
+                            </a>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- CỘT PHẢI: STICKY SIDEBAR -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm p-4 sticky-top" style="top: 100px; background-color: #faf9f6;">
+                <h2 class="h5 fw-bold border-bottom pb-3 mb-4">Submission Summary</h2>
+                <ul class="list-unstyled mb-4 small lh-lg">
+                    <li class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Opens:</span>
+                        <span class="fw-bold">@Model.StartDate.ToString("MMM d, yyyy")</span>
+                    </li>
+                    <li class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Deadline:</span>
+                        <span class="fw-bold @(Model.Status == CompetitionStatus.ONGOING ? "text-danger" : "")">@Model.EndDate.ToString("MMM d, yyyy")</span>
+                    </li>
+                    <li class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Entry Fee:</span>
+                        <span class="fw-bold">Free</span>
+                    </li>
+                    <li class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Allowed Entries:</span>
+                        <span class="fw-bold">1 per student</span>
+                    </li>
+                    <li class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Entries so far:</span>
+                        <span class="fw-bold">@Model.SubmissionCount</span>
+                    </li>
+                </ul>
+
+                @if (Model.Status == CompetitionStatus.GRADED)
+                {
+                    <a href="/gallery/competitions/@Model.Id/artworks" class="btn btn-dark w-100 py-3 rounded-0 fw-bold mb-3" style="letter-spacing: 1px;">VIEW ARTWORKS</a>
+                }
+                else if (Model.Status != CompetitionStatus.ONGOING)
+                {
+                    <button type="button" class="btn btn-outline-dark w-100 py-3 rounded-0 fw-bold mb-3" disabled>
+                        @(Model.Status == CompetitionStatus.UPCOMING ? $"OPENS {Model.StartDate:MMM d}".ToUpperInvariant() : "SUBMISSIONS CLOSED")
+                    </button>
+                }
+                else if (isStudent)
+                {
+                    <a href="@submitUrl" class="btn btn-dark w-100 py-3 rounded-0 fw-bold mb-3" style="letter-spacing: 1px;">SUBMIT ARTWORK</a>
+                }
+                else if (!signedIn)
+                {
+                    <a href="/login?returnUrl=@Uri.EscapeDataString(submitUrl)" class="btn btn-dark w-100 py-3 rounded-0 fw-bold mb-3" style="letter-spacing: 1px;">LOG IN TO SUBMIT</a>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-outline-dark w-100 py-3 rounded-0 fw-bold mb-3" disabled>ONLY STUDENTS CAN SUBMIT</button>
+                }
+                <p class="text-muted small text-center mb-0" style="font-size: 0.75rem;">
+                    By submitting, you agree to the competition rules above.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

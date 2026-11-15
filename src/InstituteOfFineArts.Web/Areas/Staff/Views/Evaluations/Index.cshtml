@@ -92,6 +92,8 @@
             @* Create the first time, edit afterwards (BR-22); BR-23 is checked again on the server *@
             <form asp-action="Index" asp-route-submissionId="@Model.SubmissionId" method="post" novalidate class="form-sheet">
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+                @* BA-07: version of the evaluation this page shows; saving is refused if someone changed it meanwhile *@
+                <input type="hidden" asp-for="Form.Version" />
 
                 <fieldset class="mb-4">
                     <legend class="form-label">@Html.DisplayNameFor(m => m.Form.Rating)</legend>

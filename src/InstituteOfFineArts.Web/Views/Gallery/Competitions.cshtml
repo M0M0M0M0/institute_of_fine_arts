@@ -1,0 +1,84 @@
+@model InstituteOfFineArts.Web.ViewModels.Public.CompetitionShowcaseListVm
+@using InstituteOfFineArts.Web.Models.Enums
+@*
+    "Open Art Competitions" (/gallery/competitions, FE101 Commissions design, real data): ongoing and upcoming
+    competitions in alternating image / text rows, then the latest published results with a link to their paintings.
+*@
+@{
+    ViewData["Title"] = "Open Art Competitions";
+    var index = 0;
+}
+
+<!-- KHỐI HERO GIỚI THIỆU -->
+<div class="gallery-hero bg-cream py-5 mb-5 text-center">
+    <div class="container" style="max-width: 850px;">
+        <h1 class="art-title display-5 mb-4">Open Art Competitions</h1>
+        <p class="text-muted lh-lg mb-0" style="font-size: 0.95rem;">
+            The Institute of Fine Arts runs regular competitions to discover and celebrate its students' talent. Every enrolled
+            student can enter one painting per competition; the best works are awarded and shown at our exhibitions.
+        </p>
+    </div>
+</div>
+
+<div class="container px-lg-5 mb-5 pb-5">
+    @if (Model.Open.Count == 0)
+    {
+        <p class="text-center text-muted mb-5">No competition is open right now. New competitions are announced here – see the latest results below.</p>
+    }
+
+    @foreach (var c in Model.Open.Concat(Model.Results))
+    {
+        var reverse = index++ % 2 == 1;
+        var graded = c.Status == CompetitionStatus.GRADED;
+        if (graded && c == Model.Results.First())
+        {
+            <h2 class="art-title text-center fs-2 mb-5 mt-4">Recent Results</h2>
+        }
+        <div class="row align-items-center mb-5 pb-4 competition-row @(reverse ? "flex-lg-row-reverse" : "")">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <a class="competition-img-wrapper" href="/gallery/competitions/@c.Id">
+                    @if (c.HasCover)
+                    {
+                        <img src="/files/competitions/@c.Id/cover" alt="@c.Title" class="img-fluid w-100 shadow-sm" style="height: 400px; object-fit: cover; background-color: #eee;" loading="lazy">
+                    }
+                    else
+                    {
+                        <span class="d-flex align-items-center justify-content-center w-100 shadow-sm text-muted art-title fs-3" style="height: 400px; background-color: #f1efe9;">@c.Title</span>
+                    }
+                </a>
+            </div>
+            <div class="col-lg-5 @(reverse ? "" : "offset-lg-1")">
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    @switch (c.Status)
+                    {
+                        case CompetitionStatus.ONGOING:
+                            <span class="badge bg-success fw-normal px-2 py-1" style="letter-spacing: 1px; font-size: 0.7rem;">OPEN</span>
+                            <span class="text-muted small"><i class="bi bi-clock me-1" aria-hidden="true"></i> Deadline: @c.EndDate.ToString("MMM d, yyyy")</span>
+                            break;
+                        case CompetitionStatus.UPCOMING:
+                            <span class="badge bg-secondary fw-normal px-2 py-1" style="letter-spacing: 1px; font-size: 0.7rem;">UPCOMING</span>
+                            <span class="text-muted small"><i class="bi bi-calendar me-1" aria-hidden="true"></i> Opens: @c.StartDate.ToString("MMM d, yyyy")</span>
+                            break;
+                        default:
+                            <span class="badge bg-dark fw-normal px-2 py-1" style="letter-spacing: 1px; font-size: 0.7rem;">RESULTS</span>
+                            <span class="text-muted small">@c.SubmissionCount entries · ended @c.EndDate.ToString("MMM d, yyyy")</span>
+                            break;
+                    }
+                </div>
+                <h2 class="art-title fs-2 mb-3">@c.Title</h2>
+                @if (!string.IsNullOrWhiteSpace(c.Description))
+                {
+                    <p class="text-muted lh-lg mb-4">@c.Description</p>
+                }
+                @if (graded)
+                {
+                    <a href="/gallery/competitions/@c.Id/artworks" class="btn btn-outline-dark rounded-0 px-4 py-2 fw-bold" style="letter-spacing: 0.5px;">View Artworks</a>
+                }
+                else
+                {
+                    <a href="/gallery/competitions/@c.Id" class="btn btn-outline-dark rounded-0 px-4 py-2 fw-bold" style="letter-spacing: 0.5px;">View Details &amp; Submit</a>
+                }
+            </div>
+        </div>
+    }
+</div>

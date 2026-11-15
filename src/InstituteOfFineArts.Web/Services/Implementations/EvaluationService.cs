@@ -43,6 +43,9 @@ public class EvaluationService : IEvaluationService
     /// <summary>Message when another staff member created the evaluation at the same moment.</summary>
     public const string ConcurrentCreateMessage = "Another staff member has just evaluated this entry. Please review the evaluation and save again.";
 
+    /// <summary>Message when the evaluation was changed by someone else after the page was opened (BA-07).</summary>
+    public const string ChangedMeanwhileMessage = "Another staff member changed this evaluation while you were editing it. Reload the page to see the latest version, then save again.";
+
     /// <summary>Database access.</summary>
     private readonly AppDbContext _db;
 
@@ -71,7 +74,7 @@ public class EvaluationService : IEvaluationService
                 Evaluation = s.Evaluation == null ? null : new
                 {
                     s.Evaluation.Rating, s.Evaluation.PositivePoints, s.Evaluation.NegativePoints, s.Evaluation.ImprovementAreas,
-                    s.Evaluation.EvaluatedAt,
+                    s.Evaluation.EvaluatedAt, s.Evaluation.CreatedAt, s.Evaluation.UpdatedAt,
                     EvaluatedByName = s.Evaluation.EvaluatedByStaff.Account.FullName,
                 },
                 HasAward = s.AwardIssued != null,
@@ -129,6 +132,8 @@ public class EvaluationService : IEvaluationService
                 NegativePoints = $"Submitted after the submission deadline ({data.Competition.EndDate:dd MMM yyyy}, 23:59:59).",
             };
         }
+        // BA-07: the version the staff member is editing, checked again when saving
+        page.Form.Version = data.Evaluation == null ? string.Empty : Version(data.Evaluation.CreatedAt, data.Evaluation.UpdatedAt);
         return page;
     }
 
@@ -157,8 +162,15 @@ public class EvaluationService : IEvaluationService
             throw new BusinessException(LateOnlyDisqualifiedMessage, nameof(EvaluationFormVm.Rating));
         }
 
-        // BR-22: one evaluation per submission – create it the first time, overwrite it afterwards
+        // BA-07: refuse to overwrite an evaluation that changed (or appeared) after the page was opened
         var evaluation = submission.Evaluation;
+        if (form.Version != null
+            && form.Version != (evaluation == null ? string.Empty : Version(evaluation.CreatedAt, evaluation.UpdatedAt)))
+        {
+            throw new BusinessException(evaluation != null && form.Version == string.Empty ? ConcurrentCreateMessage : ChangedMeanwhileMessage);
+        }
+
+        // BR-22: one evaluation per submission – create it the first time, overwrite it afterwards
         var created = evaluation == null;
         if (evaluation == null)
         {
@@ -185,6 +197,13 @@ public class EvaluationService : IEvaluationService
         _logger.LogInformation("Submission {SubmissionId} {Action} as {Rating} by staff {StaffId}",
             submission.Id, created ? "evaluated" : "re-evaluated", rating, staffProfileId);
         return created;
+    }
+
+    /// <summary>Version token of an evaluation: its last change time in whole seconds (the column keeps no fractions).</summary>
+    internal static string Version(DateTime createdAt, DateTime? updatedAt)
+    {
+        var ticks = (updatedAt ?? createdAt).Ticks;
+        return (ticks - ticks % TimeSpan.TicksPerSecond).ToString();
     }
 
     /// <inheritdoc />

@@ -63,12 +63,17 @@ public class AwardIssuedService : IAwardIssuedService
     private readonly INotificationService _notifications;
 
     /// <summary>Receives the required services through Dependency Injection.</summary>
-    public AwardIssuedService(AppDbContext db, ILogger<AwardIssuedService> logger, INotificationService notifications)
+    public AwardIssuedService(AppDbContext db, ILogger<AwardIssuedService> logger, INotificationService notifications,
+        IAuditLogService? audit = null)
     {
         _db = db;
         _logger = logger;
         _notifications = notifications;
+        _audit = audit;
     }
+
+    /// <summary>Activity log: keeps the reason of a revoked award (BR-33, BA-07); optional so existing callers still work.</summary>
+    private readonly IAuditLogService? _audit;
 
     /// <inheritdoc />
     public async Task<PagedResult<AwardIssuedListItemVm>> SearchAsync(AwardIssuedSearchVm search, int pageSize = 10)
@@ -232,6 +237,13 @@ public class AwardIssuedService : IAwardIssuedService
         };
         _db.AwardsIssued.Add(issued);
         await SaveAsync();
+        if (await OverIssuedAsync(award))
+        {
+            // Another staff member took the last slot at the same moment (BA-07): undo this one
+            _db.AwardsIssued.Remove(issued);
+            await _db.SaveChangesAsync();
+            throw new BusinessException(NoSlotsMessage, nameof(AwardIssuedFormVm.CompetitionAwardId));
+        }
         _logger.LogInformation("Award {AwardName} of competition {Code} issued to submission {SubmissionId} by staff {StaffId}",
             award.AwardName, competition.Code, submission.Id, staffProfileId);
 
@@ -252,15 +264,31 @@ public class AwardIssuedService : IAwardIssuedService
         var competition = issued.CompetitionAward.Competition;
         var (award, submission, date, remarks) = await ValidateAsync(competition, form, exceptIssuedId: id);
 
+        var before = (issued.CompetitionAwardId, issued.SubmissionId, issued.IssuedDate, issued.Remarks);
         issued.CompetitionAwardId = award.Id;
         issued.SubmissionId = submission.Id;
         issued.IssuedDate = date;
         issued.Remarks = remarks;
         await SaveAsync();
+        if (before.CompetitionAwardId != award.Id && await OverIssuedAsync(award))
+        {
+            // Another staff member took the last slot of the new award at the same moment (BA-07): put it back
+            (issued.CompetitionAwardId, issued.SubmissionId, issued.IssuedDate, issued.Remarks) = before;
+            await _db.SaveChangesAsync();
+            throw new BusinessException(NoSlotsMessage, nameof(AwardIssuedFormVm.CompetitionAwardId));
+        }
         _logger.LogInformation("Issued award {IssuedId} of competition {Code} updated: award {AwardName}, submission {SubmissionId}",
             id, competition.Code, award.AwardName, submission.Id);
         return competition.Id;
     }
+
+    /// <summary>
+    /// True when more awards of this kind are issued than its quantity. The slot check in ValidateAsync runs before
+    /// saving, so two staff members giving the last slot at the same moment could both pass it; checking again after
+    /// saving catches that case (in the rare event both requests see the overflow, both are undone and can be retried).
+    /// </summary>
+    private async Task<bool> OverIssuedAsync(CompetitionAward award)
+        => await _db.AwardsIssued.CountAsync(i => i.CompetitionAwardId == award.Id) > award.Quantity;
 
     /// <inheritdoc />
     public async Task<long> RevokeAsync(long id, string? reason, long staffProfileId)
@@ -286,6 +314,12 @@ public class AwardIssuedService : IAwardIssuedService
         _logger.LogInformation(
             "Award {AwardName} of competition {Code} (issued award {IssuedId}, submission {SubmissionId}) revoked by staff {StaffId}. Reason: {Reason}",
             issued.CompetitionAward.AwardName, issued.CompetitionAward.Competition.Code, id, issued.SubmissionId, staffProfileId, cleanReason);
+        // BR-33: the reason must be kept somewhere staff/admin can read it later → activity log (Admin > Activity log)
+        if (_audit != null)
+        {
+            await _audit.LogAsync("AwardRevoked", "AwardIssued", id,
+                $"{issued.CompetitionAward.AwardName}, competition {issued.CompetitionAward.Competition.Code}, submission {issued.SubmissionId}. Reason: {cleanReason}");
+        }
         return issued.CompetitionAward.CompetitionId;
     }
 

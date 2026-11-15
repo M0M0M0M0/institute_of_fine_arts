@@ -325,7 +325,7 @@ Ký hiệu: **C** = Create, **R** = Read/xem, **U** = Update, **D** = Delete, **
 | BR-07 | Trạng thái cuộc thi được **tính tự động** (không nhập tay), trừ GRADED: **UPCOMING** khi now < startDate (00:00); **ONGOING** khi startDate ≤ now ≤ hạn nộp; **CLOSED** khi now > hạn nộp và chưa công bố; **GRADED** khi staff bấm "Publish results" (`resultPublished = true`). |
 | BR-08 | Chỉ công bố kết quả (→ GRADED) khi cuộc thi đã CLOSED và **100% bài nộp đã có Evaluation**. Sau GRADED, kết quả (xếp loại, nhận xét, giải) hiển thị cho học viên và trang chủ. |
 | BR-09 | Mỗi cuộc thi phải có ≥ 1 CompetitionAward trước khi chuyển sang ONGOING (hệ thống cảnh báo khi lưu nếu chưa có). Mỗi CompetitionAward có `rank` (1 = cao nhất), `prizeValue` ≥ 0 (USD), `quantity` ≥ 1. |
-| BR-10 | Khi cuộc thi đã có Submission: không được sửa `startDate`; được **gia hạn** `endDate` (chỉ kéo dài, không rút ngắn); được sửa mô tả/thể lệ. Khi đã GRADED: chỉ xem. |
+| BR-10 | Khi cuộc thi đã có Submission: không được sửa `startDate`; được **gia hạn** `endDate` (chỉ kéo dài, không rút ngắn) **chỉ khi chưa có bài nào được chấm** – gia hạn đưa cuộc thi về ONGOING và cho học viên thay ảnh, nên sau khi đã có Evaluation thì không gia hạn nữa (tránh nhận xét gắn với tranh đã bị thay); được sửa mô tả/thể lệ. Khi đã GRADED: chỉ xem. |
 | BR-11 | Chỉ xóa cuộc thi khi **chưa có Submission nào** (xóa kèm CompetitionAward). |
 | BR-12 | "Mọi học viên phải tham gia": hệ thống không bắt buộc kỹ thuật, nhưng báo cáo RPT-02 liệt kê học viên **chưa nộp bài** để nhắc nhở. Học viên không nộp = không có kết quả (coi như bị loại, không tạo Evaluation). |
 
@@ -347,7 +347,7 @@ Ký hiệu: **C** = Create, **R** = Read/xem, **U** = Update, **D** = Delete, **
 | Mã | Quy tắc |
 |---|---|
 | BR-21 | Chỉ chấm được khi cuộc thi **CLOSED** (sau hạn nộp – đúng đề bài "sau hạn nộp mới đánh giá"). Sửa/xóa Evaluation được khi cuộc thi chưa GRADED. |
-| BR-22 | Mỗi Submission có **tối đa 1 Evaluation** (1 staff chấm, lưu `evaluatedBy`, `evaluatedAt`; staff khác sửa thì ghi đè người chấm cuối). Bất kỳ STAFF nào cũng được chấm (giả định A-07). |
+| BR-22 | Mỗi Submission có **tối đa 1 Evaluation** (1 staff chấm, lưu `evaluatedBy`, `evaluatedAt`; staff khác sửa thì cập nhật người chấm cuối, mọi lần lưu đều có trong nhật ký hoạt động). **Xung đột:** nếu Evaluation đã bị người khác tạo/sửa sau khi trang được mở, lần lưu bị từ chối và yêu cầu tải lại (không ghi đè âm thầm). Bất kỳ STAFF nào cũng được chấm (giả định A-07). |
 | BR-23 | Xếp loại (`rating`) ∈ {BEST, BETTER, GOOD, MODERATE, NORMAL, DISQUALIFIED} – bắt buộc. Với DISQUALIFIED bắt buộc nhập lý do (vào `negativePoints`). Với rating khác: `positivePoints` bắt buộc, `negativePoints`, `improvementAreas` khuyến nghị nhập. |
 | BR-24 | Học viên chỉ thấy Evaluation của mình **sau khi cuộc thi GRADED**. |
 
@@ -356,9 +356,9 @@ Ký hiệu: **C** = Create, **R** = Read/xem, **U** = Update, **D** = Delete, **
 | Mã | Quy tắc |
 |---|---|
 | BR-30 | Chỉ trao giải cho Submission **đã được chấm với rating = BEST** của đúng cuộc thi đó. Bài DISQUALIFIED tuyệt đối không được trao giải. |
-| BR-31 | Số AwardIssued của mỗi CompetitionAward ≤ `quantity`. Mỗi học viên nhận **tối đa 1 giải / 1 cuộc thi** (hệ quả của BR-15: unique `submissionId` trong AwardIssued). |
-| BR-32 | Trao giải khi cuộc thi CLOSED (sau khi chấm) hoặc GRADED. Giải chỉ hiển thị công khai khi cuộc thi GRADED. |
-| BR-33 | Thu hồi giải (xóa AwardIssued) được phép, bắt buộc ghi lý do trong ghi chú (log). Giá trị giải lấy từ `CompetitionAward.prizeValue` (Financial). |
+| BR-31 | Số AwardIssued của mỗi CompetitionAward ≤ `quantity`. Mỗi học viên nhận **tối đa 1 giải / 1 cuộc thi** (hệ quả của BR-15: unique `submissionId` trong AwardIssued). Hai Staff cùng trao suất cuối: số lượng được kiểm tra lại sau khi lưu, lần trao vượt `quantity` bị hủy và báo hết suất. |
+| BR-32 | Trao giải khi cuộc thi CLOSED (sau khi chấm) hoặc GRADED. Giải chỉ hiển thị công khai khi cuộc thi GRADED. **Sau công bố (GRADED):** Evaluation bị khóa (chỉ xem); giải vẫn được trao bổ sung, sửa hoặc thu hồi để sửa sai – mỗi thao tác được ghi nhật ký, thu hồi bắt buộc có lý do (BR-33). |
+| BR-33 | Thu hồi giải (xóa AwardIssued) được phép ở CLOSED và GRADED, bắt buộc có lý do; lý do được lưu trong nhật ký hoạt động (`audit_log`, action `AwardRevoked`) và file log. Giá trị giải lấy từ `CompetitionAward.prizeValue` (Financial). |
 
 ### 4.6 Triển lãm & bán tranh (Exhibition, ExhibitionEntry, Customer)
 
@@ -367,9 +367,9 @@ Ký hiệu: **C** = Create, **R** = Read/xem, **U** = Update, **D** = Delete, **
 | BR-40 | Chỉ Submission **đã chấm với rating BEST hoặc BETTER** (cuộc thi đã GRADED) mới được gửi triển lãm. |
 | BR-41 | Giá bán đề xuất (`askingPrice`) **do học viên quyết định** (> 0 USD). Staff có thể tạo entry trực tiếp nhưng giá phải là giá học viên đã báo (nhập kèm ghi chú nguồn). |
 | BR-42 | Chỉ gửi tranh tới triển lãm **UPCOMING** (chưa bắt đầu). Exhibition: `startDate` ≤ `endDate`; trạng thái tính tự động UPCOMING / ONGOING / FINISHED. Chỉ xóa triển lãm khi chưa có ExhibitionEntry. |
-| BR-43 | Một Submission chỉ có **1 entry đang hiệu lực** (PENDING/ACCEPTED) tại một thời điểm; tranh đã **SOLD** không được gửi triển lãm nào nữa. Tranh UNSOLD/REJECTED được gửi lại triển lãm khác. |
+| BR-43 | Một Submission chỉ có **1 entry đang hiệu lực** (PENDING/ACCEPTED) tại một thời điểm; tranh đã **SOLD** không được gửi triển lãm nào nữa. Tranh UNSOLD/REJECTED được gửi lại triển lãm khác. **Vòng đời:** khi triển lãm kết thúc, job trạng thái chuyển ACCEPTED chưa bán → UNSOLD; entry PENDING giữ nguyên (chưa được duyệt nên không coi là đã trưng bày, Staff vẫn từ chối được). Được ghi nhận bán muộn cho entry UNSOLD nếu tranh chưa gửi/bán ở triển lãm khác. Bán và trả tiền **không hủy được** trong ứng dụng (sửa sai qua quản trị CSDL, có nhật ký). Hệ thống không có trạng thái hủy triển lãm; chỉ xóa được triển lãm chưa có entry. |
 | BR-44 | Đánh dấu SOLD bắt buộc: `soldPrice` > 0, `soldDate` (trong khoảng ngày triển lãm), Customer. `soldPrice` mặc định = `askingPrice`, có thể khác (ghi lại giá thực tế khách trả). |
-| BR-45 | **Toàn bộ tiền bán tranh trả cho học viên** (không trích hoa hồng – giả định A-10). Khi trả: `paidToStudent = true`, `paidAmount` (mặc định = `soldPrice`), `paidDate` ≥ `soldDate`. Chỉ ghi nhận trả tiền khi entry SOLD. |
+| BR-45 | **Toàn bộ tiền bán tranh trả cho học viên** (không trích hoa hồng – giả định A-10). **Trả đủ một lần:** khi trả, `paidAmount` **phải bằng** `soldPrice` (không cho trả thiếu), `paidToStudent = true`, `paidDate` ≥ `soldDate`. Chỉ ghi nhận trả tiền khi entry SOLD; đã trả thì không ghi nhận lại (chống bấm lặp). |
 | BR-46 | Học viên sửa giá/rút đề xuất chỉ khi entry còn PENDING. Sau ACCEPTED, mọi thay đổi do STAFF. |
 | BR-47 | Tiền tệ **USD**, kiểu `DECIMAL(18,2)` (2 chữ số thập phân), không âm; hiển thị dạng `$1,250.00`. |
 
@@ -380,7 +380,8 @@ Ký hiệu: **C** = Create, **R** = Read/xem, **U** = Update, **D** = Delete, **
 ```
             now >= startDate           now > endDate 23:59:59        Staff "Publish results"
 UPCOMING ─────────────────► ONGOING ─────────────────────► CLOSED ────────────────────────► GRADED
- (sửa/xóa tự do)           (HV nộp/sửa/xóa bài)          (Staff chấm, trao giải)       (công khai kết quả, chỉ xem)
+ (sửa/xóa tự do)           (HV nộp/sửa/xóa bài)          (Staff chấm, trao giải)       (công khai kết quả; đánh giá khóa,
+                                                                                         giải chỉ sửa/thu hồi có nhật ký)
 ```
 
 **b) Submission** (trạng thái hiển thị, suy ra từ dữ liệu)
@@ -437,7 +438,7 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 |---|---|
 | Actor | STUDENT |
 | Tiền điều kiện | Đăng nhập STUDENT; cuộc thi ONGOING; học viên chưa có bài trong cuộc thi này (BR-15) |
-| Luồng chính | 1. HV mở chi tiết cuộc thi ONGOING → "Submit". 2. Nhập tiêu đề, mô tả, chọn loại phần chữ và nhập thơ/trích dẫn/câu chuyện. 3. Chọn file JPEG. 4. Gửi. 5. Server kiểm tra: thời hạn (BR-13), định dạng (BR-16), dung lượng (BR-17), dữ liệu bắt buộc (BR-19). 6. Ghi file bằng `Files.copy` vào `uploads/submissions/{competitionId}/{guid}.jpg` (BR-18). 7. Lưu Submission (`submittedAt = now`). 8. Thông báo thành công, chuyển tới "My Submissions". |
+| Luồng chính | 1. HV mở chi tiết cuộc thi ONGOING → "Submit". 2. Nhập tiêu đề, mô tả, chọn loại phần chữ và nhập thơ/trích dẫn/câu chuyện. 3. Chọn file JPEG. 4. Gửi. 5. Server kiểm tra: thời hạn (BR-13), định dạng (BR-16), dung lượng (BR-17), dữ liệu bắt buộc (BR-19). 6. Ghi file bằng File I/O của .NET (`IFormFile.CopyToAsync` vào `FileStream`) tới `uploads/submissions/{competitionId}/{guid}.jpg` (BR-18); nếu lưu DB lỗi thì xóa file vừa ghi. 7. Lưu Submission (`submittedAt = now`). 8. Thông báo thành công, chuyển tới "My Submissions". |
 | Luồng phụ / ngoại lệ | 5a. Quá hạn → từ chối "The submission deadline has passed" (BR-14). 5b. Không phải JPEG / > 5 MB → báo lỗi, không lưu. 5c. Đã có bài trong cuộc thi → chuyển sang màn hình sửa bài. 6a. Lỗi ghi file (IOException) → rollback, không tạo Submission, thông báo lỗi chung. 7a. Lỗi DB sau khi ghi file → xóa file vừa ghi. |
 | Hậu điều kiện | Submission + file ảnh tồn tại; tổng bài nộp trên trang chủ tăng 1. |
 
@@ -447,7 +448,7 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 |---|---|
 | Actor | STUDENT |
 | Tiền điều kiện | Bài thuộc học viên; cuộc thi ONGOING |
-| Luồng chính | 1. HV vào "My Submissions" → chọn bài → "Edit". 2. Sửa nội dung và/hoặc chọn ảnh mới. 3. Lưu → kiểm tra BR-13, BR-16..19. 4. Nếu có ảnh mới: ghi file mới, cập nhật đường dẫn, xóa file cũ. 5. Cập nhật `updatedAt`. |
+| Luồng chính | 1. HV vào "My Submissions" → chọn bài → "Edit". 2. Sửa nội dung và/hoặc chọn ảnh mới. 3. Lưu → kiểm tra BR-13, BR-16..19. 4. Nếu có ảnh mới: ghi file mới, cập nhật đường dẫn. 5. Cập nhật `updatedAt` và lưu DB. 6. **Chỉ sau khi lưu DB thành công** mới xóa file cũ; nếu lưu lỗi thì xóa file mới, bài vẫn trỏ tới ảnh cũ còn nguyên (nhất quán file–DB). |
 | Luồng phụ / ngoại lệ | Xóa: 1a. HV bấm "Delete" → xác nhận → xóa Submission + file. 3a. Quá hạn → nút Sửa/Xóa bị ẩn; nếu gọi trực tiếp URL → 403/thông báo quá hạn. 3b. Bài không thuộc HV → 403. |
 | Hậu điều kiện | Bài cập nhật/bị xóa; file cũ không còn trên đĩa. |
 
@@ -621,13 +622,13 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 
 | Mã | Nhóm | Yêu cầu | Cách đáp ứng / kiểm chứng |
 |---|---|---|---|
-| NFR-01 | Bảo mật – mật khẩu | Băm BCrypt (strength 10), không lưu/ghi log mật khẩu rõ | `BCryptPasswordEncoder`; kiểm tra DB không có plaintext |
+| NFR-01 | Bảo mật – mật khẩu | Băm BCrypt, không lưu/ghi log mật khẩu rõ | Thư viện `BCrypt.Net-Next` (`BCrypt.HashPassword` / `Verify`); kiểm tra DB không có plaintext |
 | NFR-02 | Bảo mật – phân quyền | Kiểm tra quyền ở URL + service (ownership); mặc định từ chối | `[Authorize(Roles = ...)]` theo Area + kiểm tra chủ sở hữu trong Service; test 403 |
 | NFR-03 | Bảo mật – web | CSRF token cho mọi form POST; chống XSS (Razor tự mã hóa HTML); chống SQL injection (EF Core/LINQ tham số hóa) | Anti-forgery token của ASP.NET Core, Razor encode; không nối chuỗi SQL |
 | NFR-04 | Bảo mật – file | Chỉ JPEG (magic bytes), ≤ 5 MB, tên file Guid, chặn path traversal, phục vụ ảnh qua controller có kiểm tra quyền | BR-16..18, BR-20 |
 | NFR-05 | Session | Hết hạn sau 30 phút không hoạt động; đăng xuất hủy session | Cookie đăng nhập `ExpireTimeSpan = 30 phút`, `SlidingExpiration` |
 | NFR-06 | Validate | Validate cả client (HTML5/Bootstrap) và server (DataAnnotations `[Required]`, `[StringLength]`, `[EmailAddress]`, `[Range]`…); thông báo lỗi **tiếng Anh** tại từng trường | Test nhập sai |
-| NFR-07 | Toàn vẹn dữ liệu | Ràng buộc FK, UNIQUE (BR-01, BR-15, BR-31), CHECK (giá ≥ 0, ngày); thao tác ghi nhiều bảng trong `@Transactional`; file và DB nhất quán (xóa file khi rollback) | Script DDL Phần 2 |
+| NFR-07 | Toàn vẹn dữ liệu | Ràng buộc FK, UNIQUE (BR-01, BR-15, BR-31), CHECK (giá ≥ 0, ngày); thao tác ghi nhiều bảng trong một lần `SaveChangesAsync` của EF Core (một transaction), hoặc transaction EF Core tường minh khi có nhiều bước; file và DB nhất quán: file mới bị xóa nếu lưu DB lỗi, file cũ chỉ xóa sau khi lưu thành công | Script DDL Phần 2 |
 | NFR-08 | Hiệu năng | Trang danh sách < 2 giây với 1.000 bài nộp; phân trang 10–20 dòng; index các cột lọc (competitionId, studentId, submittedAt, rating) | Test với dữ liệu mẫu |
 | NFR-09 | Khả dụng (usability) | Giao diện nhất quán Bootstrap 5, menu theo role, breadcrumb, thông báo flash thành công/lỗi, xác nhận trước khi xóa | GUI Standards Document |
 | NFR-10 | Responsive | Dùng tốt trên desktop, tablet, mobile (≥ 360 px) | Kiểm tra Chrome DevTools |
@@ -636,7 +637,7 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 | NFR-13 | Sao lưu | Theo đặc tả eProject: **sao lưu mã nguồn và dữ liệu mỗi ngày** – Git push hằng ngày; script `BACKUP DATABASE` SQL Server + nén thư mục `uploads/` | Checklist hằng ngày |
 | NFR-14 | Khả năng bảo trì | Kiến trúc phân lớp Controller – Service – DbContext (EF Core) – Entity; **mọi khối mã có chú thích** (yêu cầu đặc tả); đặt tên theo chuẩn C# | Code review |
 | NFR-15 | Cấu hình | Đường dẫn `uploads/`, giới hạn dung lượng, kết nối DB nằm trong `appsettings.json` | |
-| NFR-16 | Ghi log | Log lỗi (SLF4J/Logback) ra file; không log dữ liệu nhạy cảm | |
+| NFR-16 | Ghi log | Log lỗi (Serilog, `Serilog.AspNetCore`) ra file; không log dữ liệu nhạy cảm. Thao tác quan trọng (POST trong các Area, thu hồi giải kèm lý do) ghi thêm vào nhật ký hoạt động (bảng `audit_log`, F-M17-01) | |
 | NFR-17 | Múi giờ & định dạng | Văn hóa mặc định `en-US` (cố định trong `Program.cs`, không phụ thuộc ngôn ngữ Windows); múi giờ học viện Asia/Ho_Chi_Minh; ngày hiển thị `dd MMM yyyy` (ví dụ 05 Nov 2026); tiền `$#,##0.00` | Nhập giá có phần thập phân trên máy Windows tiếng Việt vẫn đúng |
 | NFR-18 | Triển khai | Chạy được bằng `dotnet run` (hoặc F5 trong Visual Studio) trên Windows, SQL Server 2019+; có script tạo DB + dữ liệu mẫu | Hướng dẫn cài đặt |
 

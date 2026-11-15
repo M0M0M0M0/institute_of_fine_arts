@@ -21,8 +21,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // MVC: controllers + Razor views; validate the anti-forgery token on every POST form (CSRF protection)
 // + audit log row for every POST in the Admin/Staff/Manager/Student areas (F-M17-01, Infrastructure/Filters)
-// Texts translated through Resources/SharedResource*.resx (Vietnamese UI, F-M19-01); validation messages and
-// display names use the same file, keyed by their English text, so untranslated texts stay English
+// UI texts go through IStringLocalizer<SharedResource> (Resources/SharedResource.resx), keyed by their English text.
+// The site is English only: the optional Vietnamese UI (F-M19-01) was removed, so every text is shown in English.
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
 builder.Services.AddControllersWithViews(options =>
     {
@@ -147,15 +147,15 @@ app.Use(async (context, next) =>
 
 // Formatting culture fixed to en-US so numbers, dates and USD amounts are parsed and formatted the same way on every
 // machine, even when Windows uses another language (e.g. vi-VN uses "," for decimals).
-// UI texts: English by default, Vietnamese (M19) when the culture cookie set by POST /culture asks for it.
-// Only the cookie decides (no Accept-Language / query string), so pages stay English unless the user switches.
+// UI texts: English only. No culture provider is read (no cookie, Accept-Language or query string), so even a browser
+// that still has the old language cookie gets English.
 var english = new CultureInfo(InstituteOfFineArts.Web.Helpers.AppCultures.English);
 app.UseRequestLocalization(new RequestLocalizationOptions
 {
     DefaultRequestCulture = new RequestCulture(english),
     SupportedCultures = new[] { english },
-    SupportedUICultures = InstituteOfFineArts.Web.Helpers.AppCultures.UiCultures.Select(c => new CultureInfo(c)).ToList(),
-    RequestCultureProviders = [new CookieRequestCultureProvider()],
+    SupportedUICultures = new[] { english },
+    RequestCultureProviders = [],
 });
 
 app.UseHttpsRedirection();

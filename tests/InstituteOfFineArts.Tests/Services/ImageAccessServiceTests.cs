@@ -5,7 +5,9 @@ using InstituteOfFineArts.Web.Infrastructure.Security;
 using InstituteOfFineArts.Web.Models.Entities;
 using InstituteOfFineArts.Web.Models.Enums;
 using InstituteOfFineArts.Web.Services.Implementations;
+using InstituteOfFineArts.Web.Infrastructure.FileStorage;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace InstituteOfFineArts.Tests.Services;
 
@@ -91,26 +93,41 @@ public class ImageAccessServiceTests
         new Claim(ClaimTypes.Role, role), new Claim(ClaimsPrincipalExtensions.ProfileIdClaim, profileId),
     }, "Test"));
 
-    /// <summary>F-M13-02: guests and other students get the public image watermarked (view and thumbnail).</summary>
+    /// <summary>Service with the public watermark turned on (Upload:PublicWatermark = true).</summary>
+    private static ImageAccessService WithWatermark(AppDbContext db)
+        => new(db, Options.Create(new UploadOptions { PublicWatermark = true }));
+
+    /// <summary>Default (Upload:PublicWatermark off): nobody gets a watermarked copy, guests see the painting as it is.</summary>
+    [Fact]
+    public async Task Watermark_OffByDefault()
+    {
+        var (db, _, publicId, _) = CreateDb();
+        using var _ = db;
+
+        Assert.False((await new ImageAccessService(db).GetSubmissionImageAsync(publicId, Guest, false, false))!.Watermark);
+        Assert.False((await new ImageAccessService(db, Options.Create(new UploadOptions())).GetSubmissionImageAsync(publicId, Guest, true, false))!.Watermark);
+    }
+
+    /// <summary>F-M13-02 turned on: guests and other students get the public image watermarked (view and thumbnail).</summary>
     [Fact]
     public async Task Watermark_GuestAndOtherStudent()
     {
         var (db, _, publicId, _) = CreateDb();
         using var _ = db;
-        var service = new ImageAccessService(db);
+        var service = WithWatermark(db);
 
         Assert.True((await service.GetSubmissionImageAsync(publicId, Guest, false, false))!.Watermark);
         Assert.True((await service.GetSubmissionImageAsync(publicId, Guest, true, false))!.Watermark);
         Assert.True((await service.GetSubmissionImageAsync(publicId, UserWith(RoleNames.Student), false, false))!.Watermark);
     }
 
-    /// <summary>F-M13-02: owner, staff, manager and admin get the original (no watermark), downloads included.</summary>
+    /// <summary>F-M13-02 turned on: owner, staff, manager and admin still get the original, downloads included.</summary>
     [Fact]
     public async Task Watermark_NotForOwnerStaffManagerAdmin()
     {
         var (db, privateId, publicId, _) = CreateDb();
         using var _ = db;
-        var service = new ImageAccessService(db);
+        var service = WithWatermark(db);
 
         Assert.False((await service.GetSubmissionImageAsync(publicId, Owner, false, false))!.Watermark);
         Assert.False((await service.GetSubmissionImageAsync(privateId, Owner, false, true))!.Watermark);

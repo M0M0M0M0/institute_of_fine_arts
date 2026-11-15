@@ -1,0 +1,135 @@
+@model InstituteOfFineArts.Web.ViewModels.Public.ArtworkListVm
+@inject InstituteOfFineArts.Web.Services.Interfaces.IArtworkCatalogService Catalog
+@*
+    Public paintings (FE101 gallery listing design, real data): a category (/gallery/{subject|style|medium}/{key}),
+    new arrivals (/gallery/new), all artworks (/gallery/all) or one competition's paintings
+    (/gallery/competitions/{id}/artworks). Only public paintings (BR-20); images come from FilesController (watermark only if Upload:PublicWatermark is on).
+*@
+@{
+    ViewData["Title"] = Model.Title;
+    var items = Model.Items;
+    string PageUrl(int p) => $"{Context.Request.Path}?page={p}";
+}
+
+<!-- KHỐI GIỚI THIỆU (Màu kem) -->
+<div class="gallery-hero bg-cream py-5 mb-5 text-center">
+    <div class="container" style="max-width: 850px;">
+        <h1 class="art-title display-5 mb-4">@Model.Title</h1>
+        @if (!string.IsNullOrWhiteSpace(Model.Intro))
+        {
+            <p class="text-muted lh-lg mb-0" style="font-size: 0.95rem;">@Model.Intro</p>
+        }
+    </div>
+</div>
+
+<div class="container-fluid px-lg-5 mb-5">
+    <!-- Breadcrumb & số tranh -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb bg-transparent p-0 m-0 small">
+                <li class="breadcrumb-item"><a href="/" class="text-muted text-decoration-none">Homepage</a></li>
+                @if (Model.CompetitionId is { } competitionId)
+                {
+                    <li class="breadcrumb-item"><a href="/gallery/competitions" class="text-muted text-decoration-none">Competitions</a></li>
+                    <li class="breadcrumb-item"><a href="/gallery/competitions/@competitionId" class="text-muted text-decoration-none">@Model.Title</a></li>
+                }
+                else if (Model.Crumb != "All Artworks")
+                {
+                    <li class="breadcrumb-item"><a href="/gallery/all" class="text-muted text-decoration-none">All Artworks</a></li>
+                }
+                <li class="breadcrumb-item active text-dark fw-bold" aria-current="page">@Model.Crumb</li>
+            </ol>
+        </nav>
+        <span class="fw-bold fs-5 art-title">@items.TotalCount @(items.TotalCount == 1 ? "ARTWORK" : "ARTWORKS")</span>
+    </div>
+
+    <div class="row gx-5">
+        <!-- DANH MỤC BÊN TRÁI (thay cho bộ lọc tĩnh: các danh mục thật của mega menu) -->
+        <div class="col-lg-2 d-none d-lg-block">
+            <nav class="art-filters small" aria-label="Browse by category">
+                @foreach (var group in Catalog.Categories.GroupBy(c => c.Group))
+                {
+                    <div class="border-bottom py-3">
+                        <div class="text-uppercase fw-bold mb-2" style="letter-spacing: 0.5px;">@group.Key</div>
+                        <ul class="list-unstyled mb-0">
+                            @foreach (var c in group)
+                            {
+                                var active = Model.Category == c;
+                                <li class="mb-1">
+                                    <a href="/gallery/@c.Group/@c.Key"
+                                       class="text-decoration-none @(active ? "text-dark fw-bold" : "text-muted")"
+                                       aria-current="@(active ? "page" : null)">@c.Label</a>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                }
+                <div class="py-3">
+                    <a href="/gallery/new" class="d-block text-decoration-none text-muted mb-1">New Art This Month</a>
+                    <a href="/gallery/all" class="d-block text-decoration-none text-dark fw-bold">See All Artworks →</a>
+                </div>
+            </nav>
+        </div>
+
+        <!-- DANH SÁCH TÁC PHẨM (Grid 3 cột) -->
+        <div class="col-lg-10">
+            @if (items.TotalCount == 0)
+            {
+                <div class="text-center text-muted py-5">
+                    <i class="bi bi-image fs-1 d-block mb-3" aria-hidden="true"></i>
+                    <p class="mb-4">@Model.EmptyMessage</p>
+                    <a href="/gallery/all" class="btn btn-outline-dark rounded-0 px-4">See all artworks</a>
+                </div>
+            }
+            else
+            {
+                <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4 mb-5">
+                    @foreach (var a in items.Items)
+                    {
+                        <div class="col">
+                            <div class="artwork-card text-center">
+                                <a href="/gallery/artworks/@a.SubmissionId" class="d-block card-img-wrapper mb-3 text-decoration-none">
+                                    @if (a.HasThumbnail)
+                                    {
+                                        <img src="/files/submissions/@a.SubmissionId/thumb" alt="@a.Title – @a.StudentName" class="img-fluid" loading="lazy">
+                                    }
+                                    else
+                                    {
+                                        <span class="d-flex align-items-center justify-content-center bg-light text-muted" style="height: 380px;">Image not available</span>
+                                    }
+                                </a>
+                                <div class="card-body p-0">
+                                    @if (a.AwardName != null)
+                                    {
+                                        <div class="badge bg-light text-dark border mb-2 fw-normal text-uppercase" style="font-size: 0.7rem; letter-spacing: 1px;">@a.AwardName</div>
+                                    }
+                                    <div class="artist-name text-muted small mb-1">@a.StudentName</div>
+                                    <div class="artwork-title art-title fs-5 mb-1 text-dark">
+                                        <a href="/gallery/artworks/@a.SubmissionId" class="text-dark text-decoration-none">@a.Title</a>
+                                    </div>
+                                    <div class="small text-muted">@a.CompetitionTitle</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (items.TotalPages > 1)
+                {
+                    <!-- Phân trang (thay nút "Show next…") -->
+                    <nav class="d-flex justify-content-center align-items-center gap-3 mt-5" aria-label="Pages">
+                        @if (items.HasPrevious)
+                        {
+                            <a class="btn btn-outline-dark rounded-0 px-4" href="@PageUrl(items.Page - 1)">← Previous</a>
+                        }
+                        <span class="small text-muted">Page @items.Page of @items.TotalPages</span>
+                        @if (items.HasNext)
+                        {
+                            <a class="btn btn-dark rounded-0 px-4 fw-bold" href="@PageUrl(items.Page + 1)">Next @Math.Min(items.PageSize, items.TotalCount - items.Page * items.PageSize) of @items.TotalCount pieces →</a>
+                        }
+                    </nav>
+                }
+            }
+        </div>
+    </div>
+</div>

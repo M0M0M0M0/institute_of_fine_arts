@@ -1,0 +1,59 @@
+@model InstituteOfFineArts.Web.ViewModels.Public.ArtworkDetailVm
+@*
+    One public painting (/gallery/artworks/{id}, FE101 artwork detail design, real data): large image,
+    title, student, competition and award. The student's text and the evaluation stay private (BR-20); there is no
+    public voting in this system.
+*@
+@{
+    ViewData["Title"] = Model.Title + " - Artwork Detail";
+}
+
+<div class="container px-lg-5 my-5 pb-5">
+    <!-- Nút quay lại -->
+    <div class="mb-4">
+        <a href="/gallery/competitions/@Model.CompetitionId/artworks" class="text-dark text-decoration-none small fw-bold">
+            <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Back to @Model.CompetitionTitle
+        </a>
+    </div>
+
+    <div class="row gx-lg-5 align-items-center">
+        <!-- CỘT TRÁI: ẢNH LỚN -->
+        <div class="col-lg-7 mb-5 mb-lg-0 text-center">
+            <img src="/files/submissions/@Model.SubmissionId" alt="@Model.Title – @Model.StudentName" class="img-fluid shadow-sm border" style="max-height: 80vh; object-fit: contain; background-color: #faf9f6;" />
+        </div>
+
+        <!-- CỘT PHẢI: THÔNG TIN CHI TIẾT -->
+        <div class="col-lg-5">
+            <span class="badge bg-dark fw-normal px-2 py-1 mb-3 text-uppercase" style="letter-spacing: 1px; font-size: 0.7rem;">
+                @(Model.AwardName ?? (Model.IsBest ? "Rated best" : "Competition entry"))
+            </span>
+            <h1 class="art-title display-5 mb-2">@Model.Title</h1>
+            <p class="text-muted fs-5 mb-4">by <span class="text-dark fw-bold">@Model.StudentName</span></p>
+
+            <!-- Thuộc tính tranh -->
+            <ul class="list-unstyled mb-4 small lh-lg border-top pt-4">
+                <li class="d-flex mb-2">
+                    <span class="text-muted" style="width: 120px;">Competition:</span>
+                    <a href="/gallery/competitions/@Model.CompetitionId" class="fw-medium text-dark">@Model.CompetitionTitle</a>
+                </li>
+                @if (Model.AwardName != null)
+                {
+                    <li class="d-flex mb-2">
+                        <span class="text-muted" style="width: 120px;">Award:</span>
+                        <span class="fw-medium text-dark">@Model.AwardName</span>
+                    </li>
+                }
+                <li class="d-flex mb-2">
+                    <span class="text-muted" style="width: 120px;">Submitted:</span>
+                    <span class="fw-medium text-dark">@Model.SubmittedAt.ToString("MMM d, yyyy")</span>
+                </li>
+            </ul>
+
+            @if (!string.IsNullOrWhiteSpace(Model.CompetitionDescription))
+            {
+                <h2 class="h6 fw-bold mb-2">About the Competition</h2>
+                <p class="text-muted small lh-lg">@Model.CompetitionDescription</p>
+            }
+        </div>
+    </div>
+</div>

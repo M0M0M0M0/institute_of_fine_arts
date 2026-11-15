@@ -251,6 +251,51 @@ public class EvaluationServiceTests
         Assert.True(page.CanDelete);
     }
 
+    /// <summary>BA-07: the page carries the version of the evaluation; saving with that version works, saving with an
+    /// older one (someone changed it meanwhile) is refused and the other staff member's evaluation is kept.</summary>
+    [Fact]
+    public async Task Save_ChangedMeanwhile_Refused()
+    {
+        using var db = CreateDb();
+        var s = AddEntry(db);
+        AddEvaluation(db, s, Rating.GOOD);
+        var page = await Service(db).GetPageAsync(s.Id);
+        Assert.False(string.IsNullOrEmpty(page.Form.Version));
+
+        var stale = Form(Rating.BEST, positive: "Mine");
+        var current = await db.Evaluations.AsNoTracking().SingleAsync();
+        stale.Version = EvaluationService.Version(current.CreatedAt.AddMinutes(-5), null);
+        var ex = await Assert.ThrowsAsync<BusinessException>(() => Service(db).SaveAsync(s.Id, _staff2, stale));
+        Assert.Equal(EvaluationService.ChangedMeanwhileMessage, ex.Message);
+        Assert.Equal(Rating.GOOD, (await db.Evaluations.AsNoTracking().SingleAsync()).Rating);
+
+        var fresh = Form(Rating.BETTER, positive: "Better light");
+        fresh.Version = page.Form.Version;
+        await Service(db).SaveAsync(s.Id, _staff2, fresh);
+        Assert.Equal(Rating.BETTER, (await db.Evaluations.AsNoTracking().SingleAsync()).Rating);
+    }
+
+    /// <summary>BA-07: the page was opened before anyone evaluated (empty version) but an evaluation exists now → refused;
+    /// without a version (callers that check it themselves) the save is not checked.</summary>
+    [Fact]
+    public async Task Save_EvaluatedMeanwhile_RefusedUnlessUnchecked()
+    {
+        using var db = CreateDb();
+        var s = AddEntry(db);
+        var page = await Service(db).GetPageAsync(s.Id);
+        Assert.Equal(string.Empty, page.Form.Version);
+        AddEvaluation(db, s, Rating.GOOD);
+
+        var form = Form(Rating.BEST);
+        form.Version = page.Form.Version;
+        var ex = await Assert.ThrowsAsync<BusinessException>(() => Service(db).SaveAsync(s.Id, _staff2, form));
+        Assert.Equal(EvaluationService.ConcurrentCreateMessage, ex.Message);
+
+        form.Version = null;
+        Assert.False(await Service(db).SaveAsync(s.Id, _staff2, form));
+        Assert.Equal(Rating.BEST, (await db.Evaluations.AsNoTracking().SingleAsync()).Rating);
+    }
+
     /// <summary>TC-M07-04 / BR-14: a late entry only accepts DISQUALIFIED; the page offers and pre-selects only DISQUALIFIED.</summary>
     [Fact]
     public async Task LateEntry_OnlyDisqualified()

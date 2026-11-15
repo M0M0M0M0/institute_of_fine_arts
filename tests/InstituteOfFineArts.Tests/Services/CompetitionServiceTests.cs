@@ -318,6 +318,45 @@ public class CompetitionServiceTests
         Assert.Equal("Updated", saved.Description);
     }
 
+    /// <summary>BA-01: once an entry is evaluated the deadline can no longer be extended (students could replace the
+    /// evaluated picture); the texts and the unchanged end date can still be saved.</summary>
+    [Fact]
+    public async Task Update_AfterGradingStarted_NoExtension()
+    {
+        using var db = CreateDb();
+        var c = Add(db, "City at Night", -25, -1, CompetitionStatus.CLOSED, submissions: 2);
+        db.Evaluations.Add(new Evaluation { SubmissionId = c.Submissions.First().Id, EvaluatedBy = _staffId, Rating = Rating.GOOD, PositivePoints = "p", EvaluatedAt = DateTime.Now });
+        db.SaveChanges();
+
+        var ex = await Assert.ThrowsAsync<BusinessException>(() => Service(db).UpdateAsync(c.Id, new CompetitionFormVm
+        {
+            Title = c.Title, StartDate = c.StartDate, EndDate = Today.AddDays(5),
+        }));
+        Assert.Equal(CompetitionService.ExtendAfterGradingMessage, ex.Message);
+        Assert.Equal(nameof(CompetitionFormVm.EndDate), ex.Field);
+
+        await Service(db).UpdateAsync(c.Id, new CompetitionFormVm
+        {
+            Title = c.Title, Description = "Updated", StartDate = c.StartDate, EndDate = c.EndDate,
+        });
+        var saved = await db.Competitions.AsNoTracking().SingleAsync(x => x.Id == c.Id);
+        Assert.Equal(Today.AddDays(-1), saved.EndDate);
+        Assert.Equal("Updated", saved.Description);
+    }
+
+    /// <summary>BA-01: a CLOSED competition nobody has graded yet can still be extended; it reopens (ONGOING).</summary>
+    [Fact]
+    public async Task Update_ClosedNotGraded_ExtendReopens()
+    {
+        using var db = CreateDb();
+        var c = Add(db, "City at Night", -25, -1, CompetitionStatus.CLOSED, submissions: 2);
+
+        await Service(db).UpdateAsync(c.Id, new CompetitionFormVm { Title = c.Title, StartDate = c.StartDate, EndDate = Today.AddDays(5) });
+
+        var saved = await db.Competitions.AsNoTracking().SingleAsync(x => x.Id == c.Id);
+        Assert.Equal(CompetitionStatus.ONGOING, saved.Status);
+    }
+
     /// <summary>GRADED competitions are read only.</summary>
     [Fact]
     public async Task Update_Graded_ReadOnly()

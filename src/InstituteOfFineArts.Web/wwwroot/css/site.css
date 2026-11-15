@@ -600,9 +600,6 @@ html.has-zoom-viewer { overflow: hidden; }
 .dropdown-item:active { background: var(--ifa-ink); }
 .bell-count { background: var(--ifa-danger); color: #fff; font-size: .75rem; min-width: 1.25rem; height: 1.25rem; padding: 0 .35rem; border-radius: var(--ifa-radius-pill); display: inline-grid; place-items: center; font-variant-numeric: tabular-nums; }
 
-/* Language switch */
-.lang-switch .seg > button { padding: .2rem .65rem; font-size: .8125rem; }
-
 /* SweetAlert2 in the world */
 .swal2-popup { font-family: var(--ifa-font-ui) !important; border-radius: 6px !important; color: var(--ifa-text) !important; }
 .swal2-title { font-family: var(--ifa-font-display) !important; font-weight: 500 !important; color: var(--ifa-text) !important; }
