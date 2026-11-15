@@ -245,7 +245,8 @@ class _CountCard extends StatelessWidget {
             children: [
               Icon(icon, color: AppColors.brassText),
               const SizedBox(width: AppSpacing.md),
-              Text('$count', style: text.headlineSmall),
+              // Numbers in the body font: Bodoni's "1" reads like an "I"
+              Text('$count', style: text.headlineSmall!.copyWith(fontFamily: AppFonts.body, fontWeight: FontWeight.w600)),
               const SizedBox(width: AppSpacing.md),
               Expanded(child: Text(title, style: text.bodyLarge)),
               const Icon(Icons.chevron_right, color: AppColors.muted),

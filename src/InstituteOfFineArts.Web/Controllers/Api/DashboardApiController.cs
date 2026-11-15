@@ -22,10 +22,10 @@ public class DashboardApiController : ApiControllerBase
     public DashboardApiController(AppDbContext db) => _db = db;
 
     /// <summary>Competition the staff has to grade.</summary>
-    public sealed record ToGradeDto(long CompetitionId, string Title, DateOnly EndDate, int Total, int Evaluated);
+    public sealed record ToGradeDto(long CompetitionId, string Title, DateOnly EndDate, int Total, int Evaluated, bool HasCover = false);
 
     /// <summary>Fully graded competition waiting for its results to be published.</summary>
-    public sealed record ToPublishDto(long CompetitionId, string Title, int EmptySlots);
+    public sealed record ToPublishDto(long CompetitionId, string Title, int EmptySlots, bool HasCover = false);
 
     public sealed record StudentDashboardDto(IReadOnlyList<CompetitionSummaryDto> OpenToEnter, IReadOnlyList<SubmissionListItemDto> Editable,
         IReadOnlyList<SubmissionListItemDto> NewResults, int PendingProposals, int UnpaidSales);
@@ -79,7 +79,7 @@ public class DashboardApiController : ApiControllerBase
             .Where(c => c.Status != CompetitionStatus.GRADED && c.EndDate < today)
             .Select(c => new
             {
-                c.Id, c.Title, c.EndDate, Total = c.Submissions.Count,
+                c.Id, c.Title, c.EndDate, HasCover = c.CoverImagePath != null, Total = c.Submissions.Count,
                 Evaluated = c.Submissions.Count(s => s.Evaluation != null),
                 Slots = c.Awards.Sum(a => (int?)a.Quantity) ?? 0,
                 Issued = c.Awards.Sum(a => (int?)a.IssuedAwards.Count) ?? 0,
@@ -88,10 +88,10 @@ public class DashboardApiController : ApiControllerBase
 
         var toGrade = closed.Where(c => c.Total > c.Evaluated)
             .OrderBy(c => c.EndDate).ThenBy(c => c.Id)
-            .Select(c => new ToGradeDto(c.Id, c.Title, c.EndDate, c.Total, c.Evaluated)).ToList();
+            .Select(c => new ToGradeDto(c.Id, c.Title, c.EndDate, c.Total, c.Evaluated, c.HasCover)).ToList();
         var toPublish = closed.Where(c => c.Total > 0 && c.Total == c.Evaluated)
             .OrderBy(c => c.EndDate).ThenBy(c => c.Id)
-            .Select(c => new ToPublishDto(c.Id, c.Title, Math.Max(0, c.Slots - c.Issued))).ToList();
+            .Select(c => new ToPublishDto(c.Id, c.Title, Math.Max(0, c.Slots - c.Issued), c.HasCover)).ToList();
 
         var proposals = await _db.ExhibitionEntries.AsNoTracking().CountAsync(e => e.Status == EntryStatus.PENDING);
         var unpaid = await _db.ExhibitionEntries.AsNoTracking().CountAsync(e => e.Status == EntryStatus.SOLD && !e.PaidToStudent);

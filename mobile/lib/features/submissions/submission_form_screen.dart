@@ -79,7 +79,8 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
     _description = TextEditingController(text: i?.description ?? '');
     _textContent = TextEditingController(text: i?.textContent ?? '');
     _textType = i?.textType ?? TextType.poem;
-    _publicConsent = i?.publicConsent ?? false;
+    // The institute does not record a publishing consent (BR-20 decides what is public), so it is always sent as true
+    _publicConsent = true;
   }
 
   @override
@@ -359,13 +360,6 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
               validator: (v) => (v == null || v.trim().isEmpty)
                   ? 'Please enter the accompanying text'
                   : null,
-            ),
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              value: _publicConsent,
-              onChanged: (v) => setState(() => _publicConsent = v ?? false),
-              title: const Text('I agree to show this entry publicly'),
             ),
             const SizedBox(height: AppSpacing.lg),
             FilledButton.icon(

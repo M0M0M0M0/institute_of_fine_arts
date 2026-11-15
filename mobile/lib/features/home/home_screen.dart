@@ -59,6 +59,9 @@ class _HomeBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final preview = ref.watch(galleryPreviewProvider).value;
     final winners = data.latestWinners.where((w) => w.submissionId != null).toList();
+    // The gallery strip skips the paintings already shown under "Latest winners"
+    final winnerIds = {for (final w in winners) w.submissionId};
+    final galleryItems = preview?.items.where((a) => !winnerIds.contains(a.submissionId)).toList() ?? const [];
     final isEmpty =
         data.ongoing.isEmpty && data.upcoming.isEmpty && data.latestWinners.isEmpty && (preview?.items.isEmpty ?? true);
 
@@ -106,17 +109,17 @@ class _HomeBody extends ConsumerWidget {
               ),
           ]),
         ],
-        if (preview != null && preview.items.isNotEmpty) ...[
+        if (galleryItems.isNotEmpty) ...[
           SectionHeader('From the gallery', actionLabel: 'See the gallery', onAction: () => context.go('/gallery')),
           SizedBox(
             height: 300,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gutter),
-              itemCount: preview.items.length,
+              itemCount: galleryItems.length,
               separatorBuilder: (context, i) => const SizedBox(width: AppSpacing.md),
               itemBuilder: (context, i) {
-                final a = preview.items[i];
+                final a = galleryItems[i];
                 return Align(
                   alignment: Alignment.topLeft,
                   child: SizedBox(
@@ -134,21 +137,22 @@ class _HomeBody extends ConsumerWidget {
     );
   }
 
-  Widget _competitionStrip(BuildContext context, List<CompetitionSummary> items) => SizedBox(
-        height: 350,
-        child: ListView.separated(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gutter),
-          itemCount: items.length,
-          separatorBuilder: (context, i) => const SizedBox(width: AppSpacing.md),
-          itemBuilder: (context, i) => Align(
-            alignment: Alignment.topLeft,
-            child: CompetitionCard(
-              competition: items[i],
-              width: 280,
-              onTap: () => context.push('/competitions/${items[i].id}'),
-            ),
-          ),
+  /// Horizontal strip of competition cards, exactly as tall as the cards (no empty band below).
+  Widget _competitionStrip(BuildContext context, List<CompetitionSummary> items) => SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gutter),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var i = 0; i < items.length; i++) ...[
+              if (i > 0) const SizedBox(width: AppSpacing.md),
+              CompetitionCard(
+                competition: items[i],
+                width: 280,
+                onTap: () => context.push('/competitions/${items[i].id}'),
+              ),
+            ],
+          ],
         ),
       );
 }

@@ -94,7 +94,8 @@ class _StaffExhibitionListState extends ConsumerState<_StaffExhibitionList> {
               padding: const EdgeInsets.all(AppSpacing.xs),
               child: ChoiceChip(label: const Text('All'), selected: _status == null, onSelected: (_) => setState(() => _status = null)),
             ),
-            for (final s in ExhibitionStatus.values)
+            // No "Cancelled" filter: this system has no cancelled exhibitions
+            for (final s in ExhibitionStatus.values.where((s) => s != ExhibitionStatus.cancelled))
               Padding(
                 padding: const EdgeInsets.all(AppSpacing.xs),
                 child: ChoiceChip(label: Text(s.label), selected: _status == s, onSelected: (_) => setState(() => _status = s)),

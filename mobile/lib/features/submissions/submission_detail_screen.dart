@@ -119,19 +119,16 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
             child: ArtworkFrame(
               awarded: awarded,
               aspectRatio: null,
-              child: SizedBox(
-                height: 340,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    AuthImage(submissionId: d.id, thumb: false, fit: BoxFit.contain, semanticLabel: d.title),
-                    const Positioned(
-                      right: AppSpacing.sm,
-                      bottom: AppSpacing.sm,
-                      child: Icon(Icons.zoom_out_map, size: 20, color: AppColors.muted),
-                    ),
-                  ],
-                ),
+              // The frame hugs the painting at its own proportions
+              child: Stack(
+                children: [
+                  NaturalArtworkImage.private(submissionId: d.id, semanticLabel: d.title),
+                  const Positioned(
+                    right: AppSpacing.sm,
+                    bottom: AppSpacing.sm,
+                    child: Icon(Icons.zoom_out_map, size: 20, color: AppColors.muted),
+                  ),
+                ],
               ),
             ),
           ),
@@ -182,9 +179,6 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
           ),
           child: Text(d.textContent, style: text.bodyLarge!.copyWith(fontStyle: FontStyle.italic)),
         ),
-        const SizedBox(height: AppSpacing.sm),
-        Text(d.publicConsent ? 'You agreed to show this entry publicly.' : 'This entry is not shown publicly.',
-            style: text.bodySmall),
         // Evaluation card (only once there is an evaluation)
         if (ev != null) ...[
           const SectionHeader('Evaluation', padding: EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.sm)),

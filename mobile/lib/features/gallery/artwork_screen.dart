@@ -59,21 +59,14 @@ class _ArtworkBody extends StatelessWidget {
                 label: 'Zoom in on ${a.title}',
                 child: InkWell(
                   onTap: () => _zoom(context),
+                  // The frame hugs the painting at its own proportions (portrait or landscape)
                   child: ArtworkFrame(
                     awarded: a.isAwarded,
-                    aspectRatio: 4 / 5,
+                    aspectRatio: null,
                     matWidth: 16,
                     child: Stack(
-                      fit: StackFit.expand,
                       children: [
-                        ColoredBox(
-                          color: AppColors.wall,
-                          child: PublicImage(
-                            url: ApiUrls.submissionFull(a.submissionId),
-                            fit: BoxFit.contain,
-                            semanticLabel: a.title,
-                          ),
-                        ),
+                        NaturalArtworkImage.public(submissionId: a.submissionId, semanticLabel: a.title),
                         const Positioned(
                           right: AppSpacing.sm,
                           bottom: AppSpacing.sm,

@@ -8,5 +8,6 @@ export 'auth_image.dart';
 export 'competition_card.dart';
 export 'hero_header.dart';
 export 'layout_widgets.dart';
+export 'natural_image.dart';
 export 'public_image.dart';
 export 'status_chip.dart';

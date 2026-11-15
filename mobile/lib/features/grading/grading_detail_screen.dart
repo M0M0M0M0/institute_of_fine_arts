@@ -201,13 +201,11 @@ class _BodyState extends ConsumerState<_Body> {
                     subtitle: '${d.studentName} (${d.studentCode})',
                   ),
                 ),
+                // The frame hugs the painting at its own proportions (portrait or landscape)
                 child: ArtworkFrame(
                   awarded: awarded,
-                  aspectRatio: 4 / 5,
-                  child: ColoredBox(
-                    color: AppColors.stone,
-                    child: AuthImage(submissionId: d.id, thumb: false, fit: BoxFit.contain, semanticLabel: d.title),
-                  ),
+                  aspectRatio: null,
+                  child: NaturalArtworkImage.private(submissionId: d.id, semanticLabel: d.title),
                 ),
               ),
             ),
