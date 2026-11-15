@@ -16,7 +16,7 @@ void main() {
   });
 
   test('validatePrice báo lỗi khi giá không hợp lệ', () {
-    expect(validatePrice('', label: 'asking price'), 'Please enter the asking price (more than 0)');
+    expect(validatePrice('', label: 'an asking price'), 'Please enter an asking price greater than 0');
     expect(validatePrice('2000000'), isNull);
   });
 

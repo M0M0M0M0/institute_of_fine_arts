@@ -66,8 +66,8 @@ DateTime? _date(Object? v) => v == null ? null : DateTime.parse(v as String);
 double? _num(Object? v) => (v as num?)?.toDouble();
 
 /// Kiểm tra giá phía client; server vẫn là nơi quyết định cuối cùng (BR-41).
-String? validatePrice(String text, {String label = 'price'}) =>
-    parseMoney(text) == null ? 'Please enter the $label (more than 0)' : null;
+String? validatePrice(String text, {String label = 'a price'}) =>
+    parseMoney(text) == null ? 'Please enter $label greater than 0' : null;
 
 /// BR-44: bán dưới giá đề xuất thì cần xác nhận của học viên (ngày + hình thức).
 bool needsConsent(double soldPrice, double askingPrice) => soldPrice < askingPrice;

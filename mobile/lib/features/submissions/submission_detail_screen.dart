@@ -2,15 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/tokens.dart';
 import '../../core/api_client.dart';
 import '../../core/async_view.dart';
 import '../../core/file_download.dart';
 import '../../core/format.dart';
-import '../competitions/competition_widgets.dart';
-import 'submission_widgets.dart';
+import '../../shared/shared.dart';
+import '../competitions/competitions.dart';
+import '../student/dashboard.dart';
 import 'submissions.dart';
 
-/// Chi tiết bài của tôi: ảnh, nội dung, kết quả chấm, giải; sửa/xóa/tải (F-M06-02..07).
+/// M-S5 Entry detail: framed picture (tap to zoom), text, evaluation card once published,
+/// awards, and Edit / Delete while the competition is open.
 class SubmissionDetailScreen extends ConsumerWidget {
   const SubmissionDetailScreen({super.key, required this.id});
 
@@ -20,7 +23,7 @@ class SubmissionDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(submissionDetailProvider(id));
     return Scaffold(
-      appBar: AppBar(title: const Text('Chi tiết bài dự thi')),
+      appBar: AppBar(title: const Text('Entry')),
       body: AsyncValueView(
         value: detail,
         onRetry: () => ref.invalidate(submissionDetailProvider(id)),
@@ -44,17 +47,21 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
 
   void _toast(String text) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
 
-  // Xóa bài sau khi xác nhận (UC-04)
+  // Delete after confirmation (UC-04)
   Future<void> _delete() async {
     final d = widget.detail;
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Xóa bài dự thi?'),
-        content: Text('Bài "${d.title}" và ảnh sẽ bị xóa vĩnh viễn.'),
+        title: const Text('Delete this entry?'),
+        content: Text('"${d.title}" and its picture will be deleted permanently.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hủy')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Xóa')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
         ],
       ),
     );
@@ -65,9 +72,9 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
       await ref.read(submissionRepositoryProvider).delete(d.id);
       if (!mounted) return;
       refreshSubmissionData(ref, submissionId: d.id, competitionId: d.competitionId);
-      _toast('Đã xóa bài dự thi.');
-      // Về danh sách "Bài của tôi"
-      context.go('/student?tab=1');
+      ref.invalidate(studentDashboardProvider);
+      _toast('Entry deleted.');
+      context.go('/student/entries');
     } catch (e) {
       if (!mounted) return;
       _toast(ApiException.from(e).message);
@@ -75,14 +82,14 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
     }
   }
 
-  // Tải file gốc về máy (F-M06-06)
+  // Save the original file to the device (F-M06-06)
   Future<void> _download() async {
     final d = widget.detail;
     setState(() => _busy = true);
     try {
       final bytes = await ref.read(submissionRepositoryProvider).imageBytes(d.id, download: true);
       final saved = await saveBytesAsFile(bytes, d.originalFileName);
-      if (mounted) _toast(saved ? 'Đã tải ảnh về máy.' : 'Nền tảng này chưa hỗ trợ tải về (hãy chạy trên Chrome).');
+      if (mounted) _toast(saved ? 'Picture saved to your device.' : 'Saving is not supported on this platform (use Chrome).');
     } catch (e) {
       if (mounted) _toast(ApiException.from(e).message);
     } finally {
@@ -93,79 +100,151 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
   @override
   Widget build(BuildContext context) {
     final d = widget.detail;
-    final textTheme = Theme.of(context).textTheme;
+    final text = Theme.of(context).textTheme;
     final ev = d.evaluation;
+    final awarded = d.awards.isNotEmpty;
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, AppSpacing.md, AppSpacing.gutter, AppSpacing.xl),
       children: [
-        // Ảnh tải bằng Dio (có JWT)
-        SubmissionImage(submissionId: d.id, height: 320),
-        const SizedBox(height: 12),
-        Row(
+        // The picture, framed; tap to zoom
+        Semantics(
+          button: true,
+          label: 'Zoom the picture "${d.title}"',
+          child: GestureDetector(
+            onTap: () => ArtworkViewer.open(
+              context,
+              ArtworkViewer.private(submissionId: d.id, title: d.title, subtitle: d.competitionTitle),
+            ),
+            child: ArtworkFrame(
+              awarded: awarded,
+              aspectRatio: null,
+              child: SizedBox(
+                height: 340,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    AuthImage(submissionId: d.id, thumb: false, fit: BoxFit.contain, semanticLabel: d.title),
+                    const Positioned(
+                      right: AppSpacing.sm,
+                      bottom: AppSpacing.sm,
+                      child: Icon(Icons.zoom_out_map, size: 20, color: AppColors.muted),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Text(d.title, style: text.headlineSmall!.copyWith(fontStyle: FontStyle.italic)),
+        const SizedBox(height: 2),
+        Text(d.competitionTitle, style: text.bodyLarge),
+        const SizedBox(height: AppSpacing.sm),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.xs,
           children: [
-            Expanded(child: Text(d.title, style: textTheme.headlineSmall)),
-            if (ev != null) RatingChip(ev.rating),
+            if (ev != null)
+              StatusChip.rating(ev.rating)
+            else
+              StatusChip.custom(
+                label: d.competitionStatus == CompetitionStatus.ongoing ? 'Submitted' : 'Waiting for results',
+                color: d.competitionStatus == CompetitionStatus.ongoing
+                    ? AppColors.statusOngoing
+                    : AppColors.statusClosed,
+              ),
+            for (final a in d.awards)
+              StatusChip.custom(label: a.awardName, color: AppColors.brassText, icon: Icons.emoji_events_outlined),
           ],
         ),
-        const SizedBox(height: 4),
-        Text(d.competitionTitle, style: textTheme.bodyMedium),
-        const SizedBox(height: 4),
-        Text('Nộp: ${formatDateTime(d.submittedAt)}'
-            '${d.updatedAt != null ? ' • Sửa: ${formatDateTime(d.updatedAt!)}' : ''}'),
-        // Hết quyền sửa/xóa
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          'Submitted ${formatDateTime(d.submittedAt)}'
+          '${d.updatedAt != null ? ' · Edited ${formatDateTime(d.updatedAt!)}' : ''}',
+          style: text.bodySmall,
+        ),
         if (!d.canEdit)
-          Text('Đã quá hạn nộp bài – không thể sửa hoặc xóa.',
-              style: TextStyle(color: Theme.of(context).colorScheme.error)),
-        const SectionTitle('Mô tả'),
-        Text(d.description),
-        SectionTitle(d.textType.label),
-        Text(d.textContent),
-        const SizedBox(height: 8),
-        Text(d.publicConsent ? 'Đồng ý hiển thị công khai' : 'Không đồng ý hiển thị công khai',
-            style: textTheme.bodySmall),
-        // Kết quả chấm (chỉ khi đã có evaluation)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.xs),
+            child: Text('The deadline has passed: this entry can no longer be edited or deleted.',
+                style: text.bodySmall!.copyWith(color: AppColors.danger)),
+          ),
+        const SectionHeader('Description', padding: EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.xs)),
+        Text(d.description, style: text.bodyLarge),
+        SectionHeader(d.textType.label, padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.xs)),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: AppColors.mist,
+            borderRadius: AppRadius.mdAll,
+          ),
+          child: Text(d.textContent, style: text.bodyLarge!.copyWith(fontStyle: FontStyle.italic)),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(d.publicConsent ? 'You agreed to show this entry publicly.' : 'This entry is not shown publicly.',
+            style: text.bodySmall),
+        // Evaluation card (only once there is an evaluation)
         if (ev != null) ...[
-          const SectionTitle('Nhận xét của giáo viên'),
-          _Feedback(label: 'Điểm mạnh', text: ev.positivePoints),
-          _Feedback(label: 'Điểm yếu', text: ev.negativePoints),
-          _Feedback(label: 'Cần cải thiện', text: ev.improvementAreas),
-          Text('Chấm lúc ${formatDateTime(ev.evaluatedAt)}', style: textTheme.bodySmall),
+          const SectionHeader('Evaluation', padding: EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.sm)),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    Text('Rating', style: text.labelLarge),
+                    const SizedBox(width: AppSpacing.sm),
+                    StatusChip.rating(ev.rating),
+                  ]),
+                  _Feedback(label: 'Strengths', text: ev.positivePoints),
+                  _Feedback(label: 'Weaknesses', text: ev.negativePoints),
+                  _Feedback(label: 'To improve', text: ev.improvementAreas),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text('Evaluated ${formatDateTime(ev.evaluatedAt)}', style: text.bodySmall),
+                ],
+              ),
+            ),
+          ),
         ],
-        // Giải thưởng (chỉ khi có)
-        if (d.awards.isNotEmpty) ...[
-          const SectionTitle('Giải thưởng'),
+        if (awarded) ...[
+          const SectionHeader('Award', padding: EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.xs)),
           for (final a in d.awards)
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.emoji_events),
+              leading: const Icon(Icons.emoji_events_outlined, color: AppColors.brass),
               title: Text(a.awardName),
-              subtitle: Text('Hạng ${a.rank}'),
+              subtitle: Text('Rank ${a.rank}'),
             ),
         ],
-        const SizedBox(height: 16),
-        // Nút thao tác
+        const SizedBox(height: AppSpacing.lg),
         Wrap(
-          spacing: 12,
-          runSpacing: 8,
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.sm,
           children: [
-            OutlinedButton.icon(
-              onPressed: _busy ? null : _download,
-              icon: const Icon(Icons.download),
-              label: const Text('Tải về'),
-            ),
             if (d.canEdit) ...[
               FilledButton.icon(
                 onPressed: _busy ? null : () => context.push('/student/submissions/${d.id}/edit'),
-                icon: const Icon(Icons.edit),
-                label: const Text('Sửa'),
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text('Edit'),
               ),
-              FilledButton.tonalIcon(
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.danger,
+                  side: const BorderSide(color: AppColors.danger),
+                ),
                 onPressed: _busy ? null : _delete,
-                icon: const Icon(Icons.delete),
-                label: const Text('Xóa'),
+                icon: const Icon(Icons.delete_outline),
+                label: const Text('Delete'),
               ),
             ],
+            TextButton.icon(
+              onPressed: _busy ? null : _download,
+              icon: const Icon(Icons.download_outlined),
+              label: const Text('Download'),
+            ),
           ],
         ),
       ],
@@ -173,7 +252,7 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
   }
 }
 
-/// Một mục nhận xét; bỏ qua nếu giáo viên không nhập.
+/// One feedback item; skipped when the teacher left it empty.
 class _Feedback extends StatelessWidget {
   const _Feedback({required this.label, required this.text});
 
@@ -184,11 +263,12 @@ class _Feedback extends StatelessWidget {
   Widget build(BuildContext context) {
     if (text == null || text!.isEmpty) return const SizedBox.shrink();
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(top: AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(label, style: Theme.of(context).textTheme.titleSmall),
+          const SizedBox(height: 2),
           Text(text!),
         ],
       ),

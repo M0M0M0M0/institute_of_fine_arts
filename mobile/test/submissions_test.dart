@@ -110,18 +110,18 @@ void main() {
 
   group('Nhãn và giá trị API', () {
     test('nhãn xếp loại song ngữ', () {
-      expect(SubmissionRating.best.label, 'Xuất sắc nhất (BEST)');
-      expect(SubmissionRating.better.label, 'Tốt hơn (BETTER)');
-      expect(SubmissionRating.good.label, 'Tốt (GOOD)');
-      expect(SubmissionRating.moderate.label, 'Khá (MODERATE)');
-      expect(SubmissionRating.normal.label, 'Bình thường (NORMAL)');
-      expect(SubmissionRating.disqualified.label, 'Bị loại (DISQUALIFIED)');
+      expect(SubmissionRating.best.label, 'Best');
+      expect(SubmissionRating.better.label, 'Better');
+      expect(SubmissionRating.good.label, 'Good');
+      expect(SubmissionRating.moderate.label, 'Moderate');
+      expect(SubmissionRating.normal.label, 'Normal');
+      expect(SubmissionRating.disqualified.label, 'Disqualified');
     });
 
     test('apiValue viết hoa chữ đầu', () {
       expect(SubmissionRating.disqualified.apiValue, 'Disqualified');
       expect(TextType.quotation.apiValue, 'Quotation');
-      expect(TextType.story.label, 'Câu chuyện');
+      expect(TextType.story.label, 'Story');
     });
   });
 
@@ -132,17 +132,17 @@ void main() {
     });
 
     test('từ chối định dạng khác', () {
-      expect(validateImageFile('a.png', 100), 'Chỉ chấp nhận ảnh JPEG');
-      expect(validateImageFile('jpg', 100), 'Chỉ chấp nhận ảnh JPEG');
+      expect(validateImageFile('a.png', 100), 'Only JPEG images are accepted');
+      expect(validateImageFile('jpg', 100), 'Only JPEG images are accepted');
     });
 
     test('giới hạn 5 MB: đúng 5 MB được, hơn 1 byte thì không', () {
       expect(validateImageFile('a.jpg', maxImageBytes), isNull);
-      expect(validateImageFile('a.jpg', maxImageBytes + 1), 'Ảnh vượt quá 5 MB');
+      expect(validateImageFile('a.jpg', maxImageBytes + 1), 'The image is larger than 5 MB');
     });
 
     test('từ chối file rỗng', () {
-      expect(validateImageFile('a.jpg', 0), 'File ảnh rỗng, vui lòng chọn ảnh khác');
+      expect(validateImageFile('a.jpg', 0), 'The image file is empty, please choose another');
     });
   });
 
@@ -160,13 +160,13 @@ void main() {
 
   group('deadlineLabel', () {
     test('đang diễn ra', () {
-      expect(deadlineLabel(CompetitionStatus.ongoing, 3), 'Còn 3 ngày');
-      expect(deadlineLabel(CompetitionStatus.ongoing, 0), 'Hôm nay là hạn nộp cuối');
+      expect(deadlineLabel(CompetitionStatus.ongoing, 3), '3 days left');
+      expect(deadlineLabel(CompetitionStatus.ongoing, 0), 'Last day to submit');
     });
 
     test('đã đóng hoặc đã công bố', () {
-      expect(deadlineLabel(CompetitionStatus.closed, 0), 'Đã hết hạn nộp bài');
-      expect(deadlineLabel(CompetitionStatus.graded, 0), 'Đã hết hạn nộp bài');
+      expect(deadlineLabel(CompetitionStatus.closed, 0), 'Submissions closed');
+      expect(deadlineLabel(CompetitionStatus.graded, 0), 'Submissions closed');
     });
 
     test('sắp diễn ra không có nhãn', () {

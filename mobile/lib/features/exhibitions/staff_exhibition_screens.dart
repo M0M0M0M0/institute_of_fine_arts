@@ -666,7 +666,7 @@ class _DirectEntryScreenState extends ConsumerState<DirectEntryScreen> {
 
   Future<void> _submit() async {
     if (_submissionId == null) return _toast('Please choose an artwork');
-    final priceError = validatePrice(_price.text, label: 'price reported by the student');
+    final priceError = validatePrice(_price.text, label: 'the price reported by the student');
     if (priceError != null) return _toast(priceError);
     if (_note.text.trim().isEmpty) return _toast('Please note where the student reported the price');
 

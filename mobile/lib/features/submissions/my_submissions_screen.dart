@@ -2,21 +2,26 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/tokens.dart';
 import '../../core/async_view.dart';
-import '../../core/format.dart';
-import 'submission_widgets.dart';
+import '../../shared/shared.dart';
+import '../../shared/tab_scaffold.dart';
+import '../competitions/competitions.dart';
+import '../student/dashboard.dart';
+import 'results_tab.dart';
 import 'submissions.dart';
+import 'submission_widgets.dart';
 
-/// Tab "Bài của tôi": bộ lọc + danh sách (F-M06-05).
-class MySubmissionsTab extends ConsumerStatefulWidget {
-  const MySubmissionsTab({super.key});
+/// M-S4 "My entries": filters, entries with thumbnails and their state (Submitted / Waiting for results /
+/// rating / award). The old "Results & awards" tab lives here too: awards of the competitions the student entered.
+class MySubmissionsScreen extends ConsumerStatefulWidget {
+  const MySubmissionsScreen({super.key});
 
   @override
-  ConsumerState<MySubmissionsTab> createState() => _MySubmissionsTabState();
+  ConsumerState<MySubmissionsScreen> createState() => _MySubmissionsScreenState();
 }
 
-class _MySubmissionsTabState extends ConsumerState<MySubmissionsTab> {
-  // Ô tìm kiếm giữ chữ riêng; bộ lọc chỉ cập nhật khi bấm Enter
+class _MySubmissionsScreenState extends ConsumerState<MySubmissionsScreen> {
   late final TextEditingController _search;
 
   @override
@@ -31,206 +36,154 @@ class _MySubmissionsTabState extends ConsumerState<MySubmissionsTab> {
     super.dispose();
   }
 
-  // Chọn khoảng ngày nộp
-  Future<void> _pickRange(SubmissionFilter filter) async {
-    final now = DateTime.now();
-    final picked = await showDateRangePicker(
-      context: context,
-      firstDate: DateTime(now.year - 5),
-      lastDate: DateTime(now.year + 1),
-      initialDateRange:
-          filter.from != null && filter.to != null ? DateTimeRange(start: filter.from!, end: filter.to!) : null,
-    );
-    if (picked == null) return;
-    ref.read(submissionFilterProvider.notifier).set(filter.copyWith(from: () => picked.start, to: () => picked.end));
+  Future<void> _refresh() async {
+    ref.invalidate(allMySubmissionsProvider);
+    ref.invalidate(competitionAwardsProvider);
+    ref.invalidate(studentDashboardProvider);
+    ref.invalidate(mySubmissionsProvider);
+    await ref.read(mySubmissionsProvider.future);
   }
 
   @override
   Widget build(BuildContext context) {
     final filter = ref.watch(submissionFilterProvider);
     final notifier = ref.read(submissionFilterProvider.notifier);
-    final competitions = ref.watch(competitionListProvider).value ?? const [];
+    final competitions = ref.watch(competitionListProvider).value ?? const <CompetitionSummary>[];
     final list = ref.watch(mySubmissionsProvider);
 
-    return Column(
-      children: [
-        // ---- Khu vực bộ lọc ----
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-          child: Column(
-            children: [
-              TextField(
-                controller: _search,
-                textInputAction: TextInputAction.search,
-                decoration: InputDecoration(
-                  labelText: 'Tìm theo tiêu đề (Enter để tìm)',
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: IconButton(
-                    tooltip: 'Xóa chữ tìm kiếm',
-                    icon: const Icon(Icons.clear),
-                    onPressed: () {
-                      _search.clear();
-                      notifier.set(filter.copyWith(q: ''));
-                    },
+    return TabScaffold(
+      title: 'My entries',
+      body: AsyncValueView(
+        value: list,
+        onRetry: () => ref.invalidate(mySubmissionsProvider),
+        data: (items) {
+          // Graded competitions the student entered (any filter) → awards section
+          final graded = <int, String>{
+            for (final s in ref.watch(allMySubmissionsProvider).value ?? const <SubmissionListItem>[])
+              if (s.competitionStatus == CompetitionStatus.graded) s.competitionId: s.competitionTitle,
+          };
+          return RefreshIndicator(
+            onRefresh: _refresh,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, AppSpacing.md, AppSpacing.gutter, AppSpacing.xl),
+              children: [
+                TextField(
+                  controller: _search,
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    labelText: 'Search by title',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: filter.q.isEmpty && _search.text.isEmpty
+                        ? null
+                        : IconButton(
+                            tooltip: 'Clear search',
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              _search.clear();
+                              notifier.set(filter.copyWith(q: ''));
+                            },
+                          ),
+                    isDense: true,
                   ),
-                  border: const OutlineInputBorder(),
-                  isDense: true,
+                  onSubmitted: (v) => notifier.set(filter.copyWith(q: v)),
                 ),
-                onSubmitted: (v) => notifier.set(filter.copyWith(q: v)),
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  // Lọc theo cuộc thi
-                  Expanded(
-                    child: DropdownButtonFormField<int?>(
-                      isExpanded: true,
-                      initialValue: filter.competitionId,
-                      decoration:
-                          const InputDecoration(labelText: 'Cuộc thi', border: OutlineInputBorder(), isDense: true),
-                      items: [
-                        const DropdownMenuItem<int?>(value: null, child: Text('Tất cả')),
-                        for (final c in competitions)
-                          DropdownMenuItem<int?>(value: c.id, child: Text(c.title, overflow: TextOverflow.ellipsis)),
-                      ],
-                      onChanged: (v) => notifier.set(filter.copyWith(competitionId: () => v)),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Lọc theo xếp loại
-                  Expanded(
-                    child: DropdownButtonFormField<SubmissionRating?>(
-                      isExpanded: true,
-                      initialValue: filter.rating,
-                      decoration:
-                          const InputDecoration(labelText: 'Xếp loại', border: OutlineInputBorder(), isDense: true),
-                      items: [
-                        const DropdownMenuItem<SubmissionRating?>(value: null, child: Text('Tất cả')),
-                        for (final r in SubmissionRating.values)
-                          DropdownMenuItem<SubmissionRating?>(
-                              value: r, child: Text(r.label, overflow: TextOverflow.ellipsis)),
-                      ],
-                      onChanged: (v) => notifier.set(filter.copyWith(rating: () => v)),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              // Khoảng ngày nộp + nút xóa lọc
-              Row(
-                children: [
-                  Flexible(
-                    child: OutlinedButton.icon(
-                      onPressed: () => _pickRange(filter),
-                      icon: const Icon(Icons.date_range),
-                      label: Text(
-                        filter.from == null || filter.to == null
-                            ? 'Khoảng ngày nộp'
-                            : '${formatDate(filter.from!)} – ${formatDate(filter.to!)}',
-                        overflow: TextOverflow.ellipsis,
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: DropdownButtonFormField<int?>(
+                        isExpanded: true,
+                        initialValue: filter.competitionId,
+                        decoration: const InputDecoration(labelText: 'Competition', isDense: true),
+                        items: [
+                          const DropdownMenuItem<int?>(value: null, child: Text('All')),
+                          for (final c in competitions)
+                            DropdownMenuItem<int?>(value: c.id, child: Text(c.title, overflow: TextOverflow.ellipsis)),
+                        ],
+                        onChanged: (v) => notifier.set(filter.copyWith(competitionId: () => v)),
                       ),
                     ),
-                  ),
-                  if (filter.from != null)
-                    IconButton(
-                      tooltip: 'Bỏ lọc ngày',
-                      icon: const Icon(Icons.close),
-                      onPressed: () => notifier.set(filter.copyWith(from: () => null, to: () => null)),
+                    const SizedBox(width: AppSpacing.sm),
+                    Expanded(
+                      child: DropdownButtonFormField<SubmissionRating?>(
+                        isExpanded: true,
+                        initialValue: filter.rating,
+                        decoration: const InputDecoration(labelText: 'Rating', isDense: true),
+                        items: [
+                          const DropdownMenuItem<SubmissionRating?>(value: null, child: Text('All')),
+                          for (final r in SubmissionRating.values)
+                            DropdownMenuItem<SubmissionRating?>(
+                                value: r, child: Text(r.label, overflow: TextOverflow.ellipsis)),
+                        ],
+                        onChanged: (v) => notifier.set(filter.copyWith(rating: () => v)),
+                      ),
                     ),
-                  const Spacer(),
-                  if (filter.isActive)
-                    TextButton(
+                  ],
+                ),
+                if (filter.isActive)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton(
                       onPressed: () {
                         _search.clear();
                         notifier.set(const SubmissionFilter());
                       },
-                      child: const Text('Xóa bộ lọc'),
+                      child: const Text('Clear filters'),
                     ),
+                  ),
+                if (items.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.xl),
+                    child: EmptyState(
+                      title: filter.isActive ? 'No entries match your filters' : 'No entries yet',
+                      message: filter.isActive ? null : 'Enter an open competition and your work will appear here.',
+                      actionLabel: filter.isActive ? null : 'Browse competitions',
+                      onAction: filter.isActive ? null : () => context.go('/student/competitions'),
+                    ),
+                  )
+                else
+                  for (final item in items) ...[
+                    EntryTile(item: item),
+                    const Divider(height: 1),
+                  ],
+                if (graded.isNotEmpty) ...[
+                  const SectionHeader('Awards',
+                      subtitle: 'Prizes of the competitions you entered',
+                      padding: EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.sm)),
+                  for (final e in graded.entries) ...[
+                    Text(e.value, style: Theme.of(context).textTheme.titleSmall),
+                    AwardResultsList(competitionId: e.key),
+                    const SizedBox(height: AppSpacing.sm),
+                  ],
                 ],
-              ),
-            ],
-          ),
-        ),
-        // ---- Danh sách ----
-        Expanded(
-          child: AsyncValueView(
-            value: list,
-            onRetry: () => ref.invalidate(mySubmissionsProvider),
-            data: (items) => RefreshIndicator(
-              onRefresh: () => ref.refresh(mySubmissionsProvider.future),
-              child: items.isEmpty
-                  // Trạng thái rỗng vẫn cuộn được để kéo làm mới
-                  ? ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: [
-                        const SizedBox(height: 48),
-                        Icon(Icons.image_not_supported_outlined,
-                            size: 48, color: Theme.of(context).colorScheme.outline),
-                        const SizedBox(height: 12),
-                        Text(
-                          filter.isActive
-                              ? 'Không có bài nào khớp bộ lọc.'
-                              : 'Bạn chưa nộp bài nào. Vào tab "Cuộc thi" để nộp bài.',
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    )
-                  : ListView.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(16),
-                      itemCount: items.length,
-                      itemBuilder: (context, i) => SubmissionTile(item: items[i]),
-                    ),
+              ],
             ),
-          ),
-        ),
-      ],
+          );
+        },
+      ),
     );
   }
 }
 
-/// Một thẻ bài trong danh sách; bấm để mở chi tiết.
-class SubmissionTile extends StatelessWidget {
-  const SubmissionTile({super.key, required this.item});
+/// One entry of the list: opens the detail. Looks up the award once the results are published.
+class EntryTile extends ConsumerWidget {
+  const EntryTile({super.key, required this.item});
 
   final SubmissionListItem item;
 
   @override
-  Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => context.push('/student/submissions/${item.id}'),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(child: Text(item.title, style: textTheme.titleMedium)),
-                  // Chỉ hiện xếp loại khi đã chấm
-                  if (item.rating != null) RatingChip(item.rating!),
-                ],
-              ),
-              const SizedBox(height: 4),
-              Text(item.competitionTitle, style: textTheme.bodyMedium),
-              const SizedBox(height: 4),
-              Wrap(
-                spacing: 12,
-                children: [
-                  Text('Nộp: ${formatDateTime(item.submittedAt)}', style: textTheme.bodySmall),
-                  // Hết quyền sửa → nhắc đã quá hạn
-                  if (!item.canEdit)
-                    Text('Đã quá hạn',
-                        style: textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.error)),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    AwardResult? award;
+    if (item.competitionStatus == CompetitionStatus.graded) {
+      award = awardOf(item, ref.watch(competitionAwardsProvider(item.competitionId)).value ?? const []);
+    }
+    return SubmissionRow(
+      item: item,
+      awardName: award?.awardName,
+      note: item.canEdit ? 'You can still edit this entry' : null,
+      onTap: () => context.push('/student/submissions/${item.id}'),
     );
   }
 }
