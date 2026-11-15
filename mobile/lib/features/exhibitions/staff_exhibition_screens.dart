@@ -433,8 +433,6 @@ class _StaffExhibitionDetailScreenState extends ConsumerState<StaffExhibitionDet
             ],
             if (e.status == ExhibitionStatus.cancelled && e.cancelReason != null)
               NoticeCard(text: 'Cancelled: ${e.cancelReason}', error: true),
-            if (e.soldCount > 0)
-              const NoticeCard(text: 'Artworks have been sold, so the exhibition cannot be cancelled or moved.'),
             const SizedBox(height: AppSpacing.sm),
             Wrap(spacing: AppSpacing.md, runSpacing: AppSpacing.sm, children: [
               if (e.canSubmitEntries)

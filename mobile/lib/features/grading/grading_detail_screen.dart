@@ -8,7 +8,6 @@ import '../../core/async_view.dart';
 import '../../core/file_download.dart';
 import '../../core/format.dart';
 import '../../shared/shared.dart';
-import '../competitions/competitions.dart';
 import '../submissions/submissions.dart';
 import 'evaluation_fields.dart';
 import 'grading.dart';
@@ -246,86 +245,77 @@ class _BodyState extends ConsumerState<_Body> {
         const Divider(height: AppSpacing.xxl),
         Semantics(header: true, child: Text('Evaluation', style: text.titleLarge)),
         const SizedBox(height: AppSpacing.sm),
-        // UC-05 1a / 4a: the form is locked and the reason is explained
-        if (d.lockReason != null)
-          Container(
-            margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-            padding: const EdgeInsets.all(AppSpacing.md),
-            decoration: BoxDecoration(
-              color: AppColors.danger.withValues(alpha: 0.08),
-              borderRadius: AppRadius.mdAll,
-              border: Border.all(color: AppColors.danger.withValues(alpha: 0.4)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.lock_outline, color: AppColors.danger),
-                const SizedBox(width: AppSpacing.sm),
-                Expanded(child: Text(d.lockReason!)),
-              ],
-            ),
-          ),
         if (d.evaluation case final ev?)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: Text('Graded by ${ev.evaluatedByName} on ${formatDateTime(ev.evaluatedAt)}', style: text.bodySmall),
           ),
-        // Published competition: changes go through "Adjust result" (BR-34, reason required)
-        if (d.competitionStatus == CompetitionStatus.graded && d.evaluation != null)
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton.icon(
-              onPressed: () => context.push('/staff/awarding/submissions/${d.id}/adjust'),
-              icon: const Icon(Icons.edit_note),
-              label: const Text('Adjust result'),
-            ),
-          ),
-        const SizedBox(height: AppSpacing.sm),
-        Text('Rating *', style: text.labelLarge),
-        const SizedBox(height: AppSpacing.xs),
-        RatingChips(value: _rating, onChanged: editable ? (v) => setState(() => _rating = v) : null),
-        const SizedBox(height: AppSpacing.md),
-        EvaluationTextFields(
-          positive: _positive,
-          negative: _negative,
-          improvement: _improvement,
-          disqualified: disqualified,
-          enabled: editable,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Wrap(
-          spacing: AppSpacing.md,
-          runSpacing: AppSpacing.sm,
-          children: [
-            FilledButton.icon(
-              onPressed: editable ? () => _save(goNext: true) : null,
-              icon: _busy
-                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.skip_next),
-              label: const Text('Save & next'),
-            ),
-            OutlinedButton.icon(
-              onPressed: editable ? () => _save(goNext: false) : null,
-              icon: const Icon(Icons.save_outlined),
-              label: const Text('Save'),
-            ),
-            if (d.evaluation != null)
-              TextButton.icon(
-                onPressed: (d.canDeleteEvaluation && !_busy) ? _delete : null,
-                icon: const Icon(Icons.delete_outline),
-                label: const Text('Delete evaluation'),
-                style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+        // Not open for grading (competition still running, or results published): no form, just the result
+        if (!d.canEvaluate && d.evaluation != null)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    StatusChip.rating(d.evaluation!.rating),
+                    for (final (label, value) in [
+                      ('Strengths', d.evaluation!.positivePoints),
+                      ('Weaknesses', d.evaluation!.negativePoints),
+                      ('To improve', d.evaluation!.improvementAreas),
+                    ])
+                      if (value != null && value.trim().isNotEmpty) ...[
+                        const SizedBox(height: AppSpacing.sm),
+                        Text(label, style: text.titleSmall),
+                        Text(value),
+                      ],
+                  ],
+                ),
               ),
-          ],
-        ),
-        // Why the evaluation cannot be deleted even though the competition is not published
-        if (d.evaluation != null && !d.canDeleteEvaluation && d.canEvaluate)
-          Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.sm),
-            child: Text(
-              'This entry has an award or was sent to an exhibition, so its evaluation cannot be deleted.',
-              style: text.bodySmall,
             ),
+        if (!d.canEvaluate && d.evaluation == null)
+          Text('Not graded yet.', style: text.bodyMedium!.copyWith(color: AppColors.muted)),
+        if (d.canEvaluate) ...[
+          const SizedBox(height: AppSpacing.sm),
+          Text('Rating *', style: text.labelLarge),
+          const SizedBox(height: AppSpacing.xs),
+          RatingChips(value: _rating, onChanged: editable ? (v) => setState(() => _rating = v) : null),
+          const SizedBox(height: AppSpacing.md),
+          EvaluationTextFields(
+            positive: _positive,
+            negative: _negative,
+            improvement: _improvement,
+            disqualified: disqualified,
+            enabled: editable,
           ),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.md,
+            runSpacing: AppSpacing.sm,
+            children: [
+              FilledButton.icon(
+                onPressed: editable ? () => _save(goNext: true) : null,
+                icon: _busy
+                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.skip_next),
+                label: const Text('Save & next'),
+              ),
+              OutlinedButton.icon(
+                onPressed: editable ? () => _save(goNext: false) : null,
+                icon: const Icon(Icons.save_outlined),
+                label: const Text('Save'),
+              ),
+              // Only offered when it is allowed (no award, not sent to an exhibition)
+              if (d.evaluation != null && d.canDeleteEvaluation)
+                TextButton.icon(
+                  onPressed: _busy ? null : _delete,
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Delete evaluation'),
+                  style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+                ),
+            ],
+          ),
+        ],
         const SizedBox(height: AppSpacing.lg),
       ],
     );

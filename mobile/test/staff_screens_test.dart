@@ -227,7 +227,7 @@ void main() {
   });
 
   group('M-T2 Grading', () {
-    testWidgets('competition cards show progress and the deadline note', (tester) async {
+    testWidgets('competition cards show progress (no rule note)', (tester) async {
       final items = [
         GradingCompetition.fromJson({
           'id': 1,
@@ -251,7 +251,7 @@ void main() {
       expect(find.text('Autumn Colours'), findsOneWidget);
       expect(find.text('4 / 10'), findsOneWidget);
       expect(find.text('Graded'), findsNWidgets(2));
-      expect(find.text('Grading opens after the submission deadline.'), findsOneWidget);
+      expect(find.text('Grading opens after the submission deadline.'), findsNothing);
     });
 
     testWidgets('entry list shows thumbnails, rating chips and filters', (tester) async {
@@ -316,15 +316,15 @@ void main() {
       expect(find.text('Strengths'), findsOneWidget);
     });
 
-    testWidgets('lock reason banner is shown and the form is disabled', (tester) async {
+    testWidgets('not open for grading: no form, no rule banner, just "Not graded yet"', (tester) async {
       await _pump(tester, const GradingDetailScreen(id: 7), [
         gradingDetailProvider.overrideWith(
             (ref, id) async => GradingDetail.fromJson(_gradingDetail(canEvaluate: false, lockReason: 'Submissions are still open'))),
       ]);
-      expect(find.text('Submissions are still open'), findsOneWidget);
-      await tester.ensureVisible(find.text('Save & next'));
-      final button = tester.widget<ButtonStyleButton>(find.ancestor(of: find.text('Save & next'), matching: find.bySubtype<ButtonStyleButton>()));
-      expect(button.onPressed, isNull);
+      expect(find.text('Submissions are still open'), findsNothing);
+      expect(find.text('Save & next'), findsNothing);
+      await tester.ensureVisible(find.text('Not graded yet.'));
+      expect(find.text('Not graded yet.'), findsOneWidget);
     });
 
     testWidgets('existing evaluation is prefilled and can be deleted', (tester) async {
@@ -347,7 +347,7 @@ void main() {
   });
 
   group('M-T4 Awards', () {
-    testWidgets('competition card shows slot progress and ungraded warning', (tester) async {
+    testWidgets('competition card shows slot progress (no ungraded warning)', (tester) async {
       final items = [
         AwardingCompetition.fromJson({
           'id': 1,
@@ -363,7 +363,7 @@ void main() {
       await _pump(tester, const Scaffold(body: AwardingCompetitionsTab()),
           [awardingCompetitionsProvider.overrideWith((ref) async => items)]);
       expect(find.text('2 / 6'), findsOneWidget);
-      expect(find.textContaining('2 entries are not graded yet'), findsOneWidget);
+      expect(find.textContaining('2 entries are not graded yet'), findsNothing);
     });
 
     testWidgets('before publishing: checklist, publish button and award slot with edit/delete', (tester) async {

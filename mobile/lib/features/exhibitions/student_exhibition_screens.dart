@@ -222,9 +222,7 @@ class StudentExhibitionDetailScreen extends ConsumerWidget {
                 onPressed: () => context.push('/student/exhibitions/${e.id}/propose'),
                 icon: const Icon(Icons.send_outlined),
                 label: const Text('Propose a work'),
-              )
-            else
-              const NoticeCard(text: 'This exhibition has started or was cancelled, so it no longer accepts works.'),
+              ),
           ],
         ),
       ),

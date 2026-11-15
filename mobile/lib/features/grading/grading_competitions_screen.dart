@@ -92,15 +92,6 @@ class _CompetitionTile extends StatelessWidget {
                     total: item.submissionCount,
                     color: AppColors.statusOngoing,
                   ),
-                  // UC-05 1a: grading starts only after the submission deadline
-                  if (ongoing)
-                    Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.sm),
-                      child: Text(
-                        'Grading opens after the submission deadline.',
-                        style: text.bodySmall!.copyWith(color: AppColors.danger),
-                      ),
-                    ),
                 ],
               ),
             ),

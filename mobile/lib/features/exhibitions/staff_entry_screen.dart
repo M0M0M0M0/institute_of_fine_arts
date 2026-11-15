@@ -213,17 +213,6 @@ class _BodyState extends ConsumerState<_Body> {
               label: Text(e.adjustLimitedToPayment ? 'Edit payment details' : 'Adjust sale'),
             ),
         ]),
-        // Giải thích vì sao chưa có nút bán
-        if (e.status == EntryStatus.accepted && !e.canSell)
-          const Padding(
-            padding: EdgeInsets.only(top: 8),
-            child: Text('A sale can only be recorded once the exhibition has started.'),
-          ),
-        if (e.status == EntryStatus.pending && !e.canReview)
-          const Padding(
-            padding: EdgeInsets.only(top: 8),
-            child: Text('The exhibition has started, so this proposal can no longer be reviewed.'),
-          ),
       ],
     );
   }

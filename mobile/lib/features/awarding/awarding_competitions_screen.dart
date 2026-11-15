@@ -6,7 +6,6 @@ import '../../app/tokens.dart';
 import '../../core/async_view.dart';
 import '../../core/format.dart';
 import '../../shared/shared.dart';
-import '../competitions/competitions.dart';
 import 'awarding.dart';
 import 'awarding_widgets.dart';
 
@@ -56,8 +55,6 @@ class _CompetitionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final graded = item.status == CompetitionStatus.graded;
-    final pending = item.submissionCount - item.evaluatedCount;
     return Card(
       clipBehavior: Clip.antiAlias,
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -94,15 +91,6 @@ class _CompetitionTile extends StatelessWidget {
                     total: item.totalSlots,
                     color: AppColors.brass,
                   ),
-                  // Not published yet: remind how many entries are still ungraded (BR-08)
-                  if (!graded && pending > 0)
-                    Padding(
-                      padding: const EdgeInsets.only(top: AppSpacing.sm),
-                      child: Text(
-                        '$pending ${pending == 1 ? 'entry is' : 'entries are'} not graded yet, so results cannot be published.',
-                        style: text.bodySmall!.copyWith(color: AppColors.danger),
-                      ),
-                    ),
                   if (item.adjustedAt != null) AdjustedLabel(item.adjustedAt!),
                 ],
               ),

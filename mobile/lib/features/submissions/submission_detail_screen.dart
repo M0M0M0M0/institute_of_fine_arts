@@ -161,12 +161,6 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
           '${d.updatedAt != null ? ' · Edited ${formatDateTime(d.updatedAt!)}' : ''}',
           style: text.bodySmall,
         ),
-        if (!d.canEdit)
-          Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.xs),
-            child: Text('The deadline has passed: this entry can no longer be edited or deleted.',
-                style: text.bodySmall!.copyWith(color: AppColors.danger)),
-          ),
         const SectionHeader('Description', padding: EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.xs)),
         Text(d.description, style: text.bodyLarge),
         SectionHeader(d.textType.label, padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.xs)),
