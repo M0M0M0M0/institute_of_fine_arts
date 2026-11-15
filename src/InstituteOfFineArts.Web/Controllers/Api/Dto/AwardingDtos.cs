@@ -11,13 +11,13 @@ namespace InstituteOfFineArts.Web.Controllers.Api.Dto;
 /// <summary>Row of the "Awarding" tab (mobile AwardingCompetition).</summary>
 public sealed record AwardingCompetitionDto(
     long Id, string Title, DateOnly EndDate, CompetitionStatus Status, int SubmissionCount, int EvaluatedCount,
-    int TotalSlots, int IssuedSlots, DateTime? AdjustedAt);
+    int TotalSlots, int IssuedSlots, DateTime? AdjustedAt, bool HasCover = false);
 
 /// <summary>One issued award (mobile IssuedAward). The system deletes revoked awards, so Status is always "Active".</summary>
 public sealed record IssuedAwardDto(
     long Id, long SubmissionId, string SubmissionTitle, string StudentName, string StudentCode, Rating? Rating,
     DateOnly IssuedDate, string? Remarks, decimal PrizeValue, string Status, string? RevokedReason,
-    bool IsDelivered, DateTime? DeliveredAt, string RowVersion);
+    bool IsDelivered, DateTime? DeliveredAt, string RowVersion, bool HasThumbnail = false);
 
 /// <summary>Defined award with its slots (mobile AwardSlot).</summary>
 public sealed record AwardSlotDto(
@@ -30,10 +30,10 @@ public sealed record AwardingDetailDto(
     int EmptySlots, bool CanAward, bool CanPublish, string? PublishBlockReason, bool IsPublished, DateTime? PublishedAt,
     DateTime? AdjustedAt, List<AwardSlotDto> Awards,
     // Not supported by this system (no column / rule): the app hides "mark as delivered" and "adjust evaluation"
-    bool CanMarkDelivered = false, bool CanAdjustEvaluation = false);
+    bool CanMarkDelivered = false, bool CanAdjustEvaluation = false, bool HasCover = false);
 
 /// <summary>Entry that may receive an award (mobile AwardCandidate).</summary>
-public sealed record AwardCandidateDto(long SubmissionId, string Title, string StudentName, string StudentCode, Rating Rating);
+public sealed record AwardCandidateDto(long SubmissionId, string Title, string StudentName, string StudentCode, Rating Rating, bool HasThumbnail = false);
 
 /// <summary>Body of POST competitions/{id}/awards.</summary>
 public sealed class IssueAwardRequest
@@ -85,11 +85,12 @@ public static class AwardingQueries
                 EvaluatedCount = c.Submissions.Count(s => s.Evaluation != null),
                 TotalSlots = c.Awards.Sum(a => (int?)a.Quantity) ?? 0,
                 IssuedSlots = c.Awards.Sum(a => (int?)a.IssuedAwards.Count) ?? 0,
+                HasCover = c.CoverImagePath != null,
             })
             .ToListAsync();
         return rows.Select(r => new AwardingCompetitionDto(
             r.Id, r.Title, r.EndDate, r.Status == CompetitionStatus.GRADED ? CompetitionStatus.GRADED : CompetitionStatus.CLOSED,
-            r.SubmissionCount, r.EvaluatedCount, r.TotalSlots, r.IssuedSlots, null)).ToList();
+            r.SubmissionCount, r.EvaluatedCount, r.TotalSlots, r.IssuedSlots, null, r.HasCover)).ToList();
     }
 
     /// <summary>Awarding page of a competition; BusinessException when it is not CLOSED / GRADED yet.</summary>
@@ -119,7 +120,7 @@ public static class AwardingQueries
             var issued = a.IssuedAwards.OrderBy(i => i.IssuedDate).ThenBy(i => i.Id).Select(i => new IssuedAwardDto(
                 i.Id, i.SubmissionId, i.Submission.Title, i.Submission.Student.Account.FullName, i.Submission.Student.StudentCode,
                 i.Submission.Evaluation?.Rating, i.IssuedDate, i.Remarks, a.PrizeValue, "Active", null, false, null,
-                RowVersion.Of(i.CreatedAt, i.UpdatedAt))).ToList();
+                RowVersion.Of(i.CreatedAt, i.UpdatedAt), i.Submission.ThumbnailPath != null)).ToList();
             return new AwardSlotDto(a.Id, a.AwardName, a.Rank, a.PrizeValue, a.Quantity, a.PrizeDescription,
                 issued.Count, Math.Max(0, a.Quantity - issued.Count), issued);
         }).ToList();
@@ -133,6 +134,6 @@ public static class AwardingQueries
         return new AwardingDetailDto(
             competition.Id, competition.Title, status, submissionCount, evaluatedCount, pending,
             slots.Sum(s => s.Remaining), true, !isPublished && pending == 0, blockReason, isPublished,
-            isPublished ? competition.PublishedAt : null, null, slots);
+            isPublished ? competition.PublishedAt : null, null, slots, HasCover: competition.CoverImagePath != null);
     }
 }

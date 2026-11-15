@@ -18,6 +18,7 @@ public class GradingCompetitionDto
     public CompetitionStatus Status { get; set; }
     public int SubmissionCount { get; set; }
     public int EvaluatedCount { get; set; }
+    public bool HasCover { get; set; }
 }
 
 /// <summary>One row of the entries to grade; Rating null = not evaluated.</summary>
@@ -29,6 +30,8 @@ public class GradingItemDto
     public string StudentCode { get; set; } = string.Empty;
     public DateTime SubmittedAt { get; set; }
     public Rating? Rating { get; set; }
+    public long SubmissionId { get; set; }
+    public bool HasThumbnail { get; set; }
 }
 
 /// <summary>Entries of one competition; Total / Evaluated are the progress of the whole competition (not filtered).</summary>
@@ -76,6 +79,8 @@ public class GradingDetailDto
     public long? NextUnevaluatedId { get; set; }
     public int Total { get; set; }
     public int Evaluated { get; set; }
+    public long SubmissionId { get; set; }
+    public bool HasThumbnail { get; set; }
 }
 
 /// <summary>Body of PUT /api/staff/submissions/{id}/evaluation.</summary>
@@ -122,6 +127,7 @@ public static class GradingQueries
                 Status = x.Status,
                 SubmissionCount = x.Total,
                 EvaluatedCount = x.Evaluated,
+                HasCover = x.Competition.CoverImagePath != null,
             })
             .ToList();
     }
@@ -163,6 +169,8 @@ public static class GradingQueries
                 StudentCode = s.Student.StudentCode,
                 SubmittedAt = s.SubmittedAt,
                 Rating = s.Evaluation != null ? (Rating?)s.Evaluation.Rating : null,
+                SubmissionId = s.Id,
+                HasThumbnail = s.ThumbnailPath != null,
             })
             .ToListAsync();
 
@@ -187,6 +195,7 @@ public static class GradingQueries
             .Select(s => new
             {
                 s.UpdatedAt,
+                HasThumbnail = s.ThumbnailPath != null,
                 Evaluation = s.Evaluation == null ? null : new
                 {
                     s.Evaluation.Rating,
@@ -240,6 +249,8 @@ public static class GradingQueries
                 RowVersion = RowVersion.Of(meta.Evaluation.CreatedAt, meta.Evaluation.EvaluationUpdatedAt),
             },
             NextUnevaluatedId = next,
+            SubmissionId = page.SubmissionId,
+            HasThumbnail = meta.HasThumbnail,
             Total = entries.Count,
             Evaluated = entries.Count(e => e.Evaluated),
         };

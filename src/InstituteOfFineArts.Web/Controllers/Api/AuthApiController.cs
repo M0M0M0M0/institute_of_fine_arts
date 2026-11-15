@@ -37,7 +37,8 @@ public class AuthApiController : ApiControllerBase
     }
 
     /// <summary>Signed-in user as the app reads it (AppUser.fromJson).</summary>
-    public sealed record UserDto(long AccountId, string Username, string FullName, string Role);
+    public sealed record UserDto(long AccountId, string Username, string FullName, string Role,
+        string? Email = null, string? Code = null, string? ClassName = null, string? Position = null);
 
     /// <summary>POST /api/auth/login → { token, expiresAt, user }; 401 for a wrong username/password, 403 for a locked account.</summary>
     [HttpPost("login")]
@@ -63,7 +64,22 @@ public class AuthApiController : ApiControllerBase
     {
         var id = User.GetAccountId();
         var account = await _db.Accounts.AsNoTracking().FirstAsync(a => a.Id == id);
-        return new UserDto(account.Id, account.Username, account.FullName, account.Role.ToString());
+        string? code = null, className = null, position = null;
+        var student = await _db.StudentProfiles.AsNoTracking().Where(p => p.AccountId == id)
+            .Select(p => new { p.StudentCode, p.ClassName }).FirstOrDefaultAsync();
+        if (student != null)
+        {
+            code = student.StudentCode;
+            className = student.ClassName;
+        }
+        else
+        {
+            var staff = await _db.StaffProfiles.AsNoTracking().Where(p => p.AccountId == id)
+                .Select(p => new { p.StaffCode, p.Position }).FirstOrDefaultAsync();
+            code = staff?.StaffCode;
+            position = staff?.Position;
+        }
+        return new UserDto(account.Id, account.Username, account.FullName, account.Role.ToString(), account.Email, code, className, position);
     }
 
     /// <summary>User from the login principal's claims.</summary>

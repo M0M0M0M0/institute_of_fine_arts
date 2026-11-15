@@ -30,7 +30,13 @@ public class HomeAndCompetitionsApiController : ApiControllerBase
     [HttpGet("home")]
     [AllowAnonymous]
     public async Task<ActionResult<HomeDto>> Home()
-        => PublicAndSubmissionQueries.Home(await _site.GetHomeAsync(), DateTimeHelper.Today);
+    {
+        var vm = await _site.GetHomeAsync();
+        var ids = vm.Ongoing.Concat(vm.Upcoming).Select(c => c.Id).ToList();
+        var withCover = (await _db.Competitions.AsNoTracking()
+            .Where(c => ids.Contains(c.Id) && c.CoverImagePath != null).Select(c => c.Id).ToListAsync()).ToHashSet();
+        return PublicAndSubmissionQueries.Home(vm, DateTimeHelper.Today, withCover);
+    }
 
     /// <summary>Every competition, newest first (status for today, days left, entry count).</summary>
     [HttpGet("competitions")]

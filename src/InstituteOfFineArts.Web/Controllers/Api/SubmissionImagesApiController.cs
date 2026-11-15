@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace InstituteOfFineArts.Web.Controllers.Api;
 
 /// <summary>
-/// GET /api/submissions/{id}/image[?download=true] – JPEG of an entry for the mobile app (JWT instead of the web cookie).
+/// GET /api/submissions/{id}/image[?download=true|?thumb=true] – JPEG of an entry for the mobile app (JWT instead of the web cookie).
 /// Same viewing, download and watermark rules as FilesController (BR-20, F-M13-02), decided by IImageAccessService.
 /// A missing image and an image the user may not see both return 404.
 /// </summary>
@@ -30,9 +30,10 @@ public class SubmissionImagesApiController : ApiControllerBase
 
     /// <summary>Image bytes (original, or a watermarked copy when the viewer is not the owner/staff).</summary>
     [HttpGet("{id:long}/image")]
-    public async Task<IActionResult> Image(long id, bool download = false)
+    public async Task<IActionResult> Image(long id, bool download = false, bool thumb = false)
     {
-        var image = await _access.GetSubmissionImageAsync(id, User, thumbnail: false, download);
+        // thumb=true: the 400 px copy (the original when there is none); same permission rules
+        var image = await _access.GetSubmissionImageAsync(id, User, thumb && !download, download);
         var stream = image == null ? null : _storage.OpenRead(image.RelativePath);
         if (image == null || stream == null)
         {

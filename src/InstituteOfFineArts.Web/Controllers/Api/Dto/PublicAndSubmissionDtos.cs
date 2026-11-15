@@ -12,7 +12,7 @@ namespace InstituteOfFineArts.Web.Controllers.Api.Dto;
 
 /// <summary>CompetitionSummary of the app. Topic does not exist in this system, so it is always null.</summary>
 public sealed record CompetitionSummaryDto(long Id, string Title, string? Topic, DateOnly StartDate, DateOnly EndDate,
-    CompetitionStatus Status, int DaysLeft, int DaysUntilStart, int SubmissionCount);
+    CompetitionStatus Status, int DaysLeft, int DaysUntilStart, int SubmissionCount, bool HasCover = false);
 
 /// <summary>Award definition of a competition.</summary>
 public sealed record CompetitionAwardDto(string Name, int Rank, decimal PrizeValue, int Quantity, string? Description);
@@ -20,21 +20,23 @@ public sealed record CompetitionAwardDto(string Name, int Rank, decimal PrizeVal
 /// <summary>CompetitionDetail of the app: the summary fields plus description, conditions (= rules), deadline and awards.</summary>
 public sealed record CompetitionDetailDto(long Id, string Title, string? Topic, DateOnly StartDate, DateOnly EndDate,
     CompetitionStatus Status, int DaysLeft, int DaysUntilStart, int SubmissionCount,
-    string? Description, string? Conditions, DateTime Deadline, IReadOnlyList<CompetitionAwardDto> Awards);
+    string? Description, string? Conditions, DateTime Deadline, IReadOnlyList<CompetitionAwardDto> Awards, bool HasCover = false);
 
 /// <summary>Winner of the home page.</summary>
-public sealed record WinnerDto(string StudentName, string AwardName, int Rank, string PaintingTitle);
+public sealed record WinnerDto(string StudentName, string AwardName, int Rank, string PaintingTitle, long SubmissionId = 0,
+    bool HasThumbnail = false);
 
 /// <summary>HomeData of the app.</summary>
 public sealed record HomeDto(IReadOnlyList<CompetitionSummaryDto> Upcoming, IReadOnlyList<CompetitionSummaryDto> Ongoing,
     string? LatestGradedCompetition, IReadOnlyList<WinnerDto> LatestWinners);
 
 /// <summary>Issued award of a GRADED competition (AwardResult).</summary>
-public sealed record AwardResultDto(string AwardName, int Rank, string StudentName, string PaintingTitle, decimal PrizeValue);
+public sealed record AwardResultDto(string AwardName, int Rank, string StudentName, string PaintingTitle, decimal PrizeValue,
+    long SubmissionId = 0, bool HasThumbnail = false);
 
 /// <summary>Row of "My submissions".</summary>
 public sealed record SubmissionListItemDto(long Id, long CompetitionId, string CompetitionTitle, CompetitionStatus CompetitionStatus,
-    string Title, DateTime SubmittedAt, DateTime? UpdatedAt, bool CanEdit, Rating? Rating);
+    string Title, DateTime SubmittedAt, DateTime? UpdatedAt, bool CanEdit, Rating? Rating, long SubmissionId = 0, bool HasThumbnail = false);
 
 /// <summary>Evaluation shown to the owner once the competition is GRADED (BR-24).</summary>
 public sealed record SubmissionEvaluationDto(Rating Rating, string? PositivePoints, string? NegativePoints, string? ImprovementAreas,
@@ -47,7 +49,7 @@ public sealed record SubmissionAwardDto(string AwardName, int Rank);
 public sealed record SubmissionDetailDto(long Id, long CompetitionId, string CompetitionTitle, CompetitionStatus CompetitionStatus,
     string Title, string Description, TextType TextType, string TextContent, bool PublicConsent, string OriginalFileName,
     DateTime SubmittedAt, DateTime? UpdatedAt, bool CanEdit, SubmissionEvaluationDto? Evaluation,
-    IReadOnlyList<SubmissionAwardDto> Awards);
+    IReadOnlyList<SubmissionAwardDto> Awards, long SubmissionId = 0, bool HasThumbnail = false);
 
 /// <summary>
 /// Multipart body of POST /api/competitions/{id}/submissions and PUT /api/submissions/{id}. Everything is nullable so
@@ -83,22 +85,23 @@ public static class PublicAndSubmissionQueries
 
     /// <summary>Summary row from raw values.</summary>
     public static CompetitionSummaryDto Summary(long id, string title, DateOnly start, DateOnly end, CompetitionStatus stored,
-        int submissionCount, DateOnly today)
+        int submissionCount, DateOnly today, bool hasCover = false)
     {
         var status = CompetitionStatusResolver.Resolve(new Competition { Status = stored, StartDate = start, EndDate = end }, today);
         var (left, until) = Days(status, start, end, today);
-        return new CompetitionSummaryDto(id, title, null, start, end, status, left, until, submissionCount);
+        return new CompetitionSummaryDto(id, title, null, start, end, status, left, until, submissionCount, hasCover);
     }
 
     /// <summary>Home page blocks from the existing public service result.</summary>
-    public static HomeDto Home(HomeVm vm, DateOnly today)
+    public static HomeDto Home(HomeVm vm, DateOnly today, ISet<long>? coverIds = null)
     {
-        CompetitionSummaryDto Map(HomeCompetitionVm c) => Summary(c.Id, c.Title, c.StartDate, c.EndDate, c.Status, c.SubmissionCount, today);
+        CompetitionSummaryDto Map(HomeCompetitionVm c) => Summary(c.Id, c.Title, c.StartDate, c.EndDate, c.Status, c.SubmissionCount, today,
+            coverIds?.Contains(c.Id) ?? false);
         return new HomeDto(
             vm.Upcoming.Select(Map).ToList(),
             vm.Ongoing.Select(Map).ToList(),
             vm.LatestResults?.CompetitionTitle,
-            vm.LatestResults?.Winners.Select(w => new WinnerDto(w.StudentName, w.AwardName, w.Rank, w.ArtworkTitle)).ToList()
+            vm.LatestResults?.Winners.Select(w => new WinnerDto(w.StudentName, w.AwardName, w.Rank, w.ArtworkTitle, w.SubmissionId, w.HasThumbnail)).ToList()
                 ?? new List<WinnerDto>());
     }
 
@@ -108,9 +111,9 @@ public static class PublicAndSubmissionQueries
         var today = DateTimeHelper.Today;
         var rows = await db.Competitions.AsNoTracking()
             .OrderByDescending(c => c.StartDate).ThenByDescending(c => c.Id)
-            .Select(c => new { c.Id, c.Title, c.StartDate, c.EndDate, c.Status, Count = c.Submissions.Count })
+            .Select(c => new { c.Id, c.Title, c.StartDate, c.EndDate, c.Status, Count = c.Submissions.Count, HasCover = c.CoverImagePath != null })
             .ToListAsync();
-        return rows.Select(c => Summary(c.Id, c.Title, c.StartDate, c.EndDate, c.Status, c.Count, today)).ToList();
+        return rows.Select(c => Summary(c.Id, c.Title, c.StartDate, c.EndDate, c.Status, c.Count, today, c.HasCover)).ToList();
     }
 
     /// <summary>One competition with its award definitions.</summary>
@@ -124,7 +127,8 @@ public static class PublicAndSubmissionQueries
         return new CompetitionDetailDto(s.Id, s.Title, null, s.StartDate, s.EndDate, s.Status, s.DaysLeft, s.DaysUntilStart,
             s.SubmissionCount, c.Description, c.Rules, CompetitionStatusResolver.SubmissionDeadline(c.EndDate),
             c.Awards.OrderBy(a => a.Rank).ThenBy(a => a.AwardName)
-                .Select(a => new CompetitionAwardDto(a.AwardName, a.Rank, a.PrizeValue, a.Quantity, a.PrizeDescription)).ToList());
+                .Select(a => new CompetitionAwardDto(a.AwardName, a.Rank, a.PrizeValue, a.Quantity, a.PrizeDescription)).ToList(),
+            c.CoverImagePath != null);
     }
 
     /// <summary>Issued awards of a competition; empty until its results are published (GRADED).</summary>
@@ -141,7 +145,8 @@ public static class PublicAndSubmissionQueries
             .Where(a => a.Submission.CompetitionId == competitionId)
             .OrderBy(a => a.CompetitionAward.Rank).ThenBy(a => a.Submission.Student.Account.FullName).ThenBy(a => a.Id)
             .Select(a => new AwardResultDto(a.CompetitionAward.AwardName, a.CompetitionAward.Rank,
-                a.Submission.Student.Account.FullName, a.Submission.Title, a.CompetitionAward.PrizeValue))
+                a.Submission.Student.Account.FullName, a.Submission.Title, a.CompetitionAward.PrizeValue,
+                a.SubmissionId, a.Submission.ThumbnailPath != null))
             .ToListAsync();
     }
 
@@ -171,13 +176,14 @@ public static class PublicAndSubmissionQueries
                 s.Id, s.CompetitionId, CompetitionTitle = s.Competition.Title, s.Competition.StartDate, s.Competition.EndDate,
                 Stored = s.Competition.Status, s.Title, s.SubmittedAt, s.UpdatedAt,
                 Rating = s.Evaluation != null ? (Rating?)s.Evaluation.Rating : null,
+                HasThumbnail = s.ThumbnailPath != null,
             }).ToListAsync();
 
         return rows.Select(s =>
         {
             var status = CompetitionStatusResolver.Resolve(new Competition { Status = s.Stored, StartDate = s.StartDate, EndDate = s.EndDate }, today);
             return new SubmissionListItemDto(s.Id, s.CompetitionId, s.CompetitionTitle, status, s.Title, s.SubmittedAt, s.UpdatedAt,
-                status == CompetitionStatus.ONGOING, status == CompetitionStatus.GRADED ? s.Rating : null);
+                status == CompetitionStatus.ONGOING, status == CompetitionStatus.GRADED ? s.Rating : null, s.Id, s.HasThumbnail);
         }).ToList();
     }
 
@@ -198,6 +204,7 @@ public static class PublicAndSubmissionQueries
                 : null,
             graded && s.AwardIssued is { } a
                 ? new[] { new SubmissionAwardDto(a.CompetitionAward.AwardName, a.CompetitionAward.Rank) }
-                : Array.Empty<SubmissionAwardDto>());
+                : Array.Empty<SubmissionAwardDto>(),
+            s.Id, s.ThumbnailPath != null);
     }
 }

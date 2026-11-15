@@ -25,17 +25,19 @@ public sealed record ExhibitionDetailDto(long Id, string Name, string Venue, str
     string RowVersion);
 
 /// <summary>EligibleSubmission.fromJson.</summary>
-public sealed record EligibleSubmissionDto(long Id, string Title, string StudentName, string StudentCode, string CompetitionTitle);
+public sealed record EligibleSubmissionDto(long Id, string Title, string StudentName, string StudentCode, string CompetitionTitle,
+    long SubmissionId = 0, bool HasThumbnail = false);
 
 /// <summary>StudentEntry.fromJson.</summary>
 public sealed record StudentEntryDto(long Id, long ExhibitionId, string ExhibitionName, string Venue, string City,
     DateOnly ExhibitionStartDate, DateOnly ExhibitionEndDate, ExhibitionStatus ExhibitionStatus, string SubmissionTitle,
     string CompetitionTitle, decimal AskingPrice, EntryStatus Status, string? StatusReason, decimal? SoldPrice,
-    DateOnly? SoldDate, bool PaidToStudent, decimal? PaidAmount, DateOnly? PaidDate, bool CanEdit, string RowVersion);
+    DateOnly? SoldDate, bool PaidToStudent, decimal? PaidAmount, DateOnly? PaidDate, bool CanEdit, string RowVersion,
+    long SubmissionId = 0, bool HasThumbnail = false);
 
 /// <summary>EntryListItem.fromJson.</summary>
 public sealed record EntryListItemDto(long Id, long ExhibitionId, string ExhibitionName, string SubmissionTitle, string StudentName,
-    string StudentCode, decimal AskingPrice, EntryStatus Status, bool PaidToStudent, decimal? SoldPrice, string? StatusReason);
+    string StudentCode, decimal AskingPrice, EntryStatus Status, bool PaidToStudent, decimal? SoldPrice, string? StatusReason, long SubmissionId = 0, bool HasThumbnail = false);
 
 /// <summary>EntryDetail.fromJson.</summary>
 public sealed record EntryDetailDto(long Id, long ExhibitionId, string ExhibitionName, ExhibitionStatus ExhibitionStatus,
@@ -44,7 +46,7 @@ public sealed record EntryDetailDto(long Id, long ExhibitionId, string Exhibitio
     decimal? SoldPrice, DateOnly? SoldDate, long? CustomerId, string? CustomerName, DateOnly? ConsentDate, string? ConsentMethod,
     string? ConsentNote, bool PaidToStudent, decimal? PaidAmount, DateOnly? PaidDate, string? PaymentMethod,
     string? PaymentReference, DateOnly? PayDueDate, int OverdueDays, bool CanReview, bool CanSell, bool IsLateSale,
-    bool CanAdjustSale, bool AdjustLimitedToPayment, bool CanPay, string RowVersion);
+    bool CanAdjustSale, bool AdjustLimitedToPayment, bool CanPay, string RowVersion, long SubmissionId = 0, bool HasThumbnail = false);
 
 /// <summary>Customer.fromJson.</summary>
 public sealed record CustomerDto(long Id, string FullName, string? Phone, string? Email);
@@ -141,7 +143,8 @@ public static class ExhibitionApiQueries
         }
         return await query
             .OrderBy(s => s.Evaluation!.Rating).ThenByDescending(s => s.Competition.EndDate).ThenBy(s => s.Title)
-            .Select(s => new EligibleSubmissionDto(s.Id, s.Title, s.Student.Account.FullName, s.Student.StudentCode, s.Competition.Title))
+            .Select(s => new EligibleSubmissionDto(s.Id, s.Title, s.Student.Account.FullName, s.Student.StudentCode, s.Competition.Title,
+                s.Id, s.ThumbnailPath != null))
             .ToListAsync();
     }
 
@@ -158,11 +161,12 @@ public static class ExhibitionApiQueries
                 e.Exhibition.StartDate, e.Exhibition.EndDate, Title = e.Submission.Title,
                 Competition = e.Submission.Competition.Title, e.AskingPrice, e.Status, e.RejectReason, e.SoldPrice, e.SoldDate,
                 e.PaidToStudent, e.PaidAmount, e.PaidDate, e.CreatedAt, e.UpdatedAt,
+                e.SubmissionId, HasThumbnail = e.Submission.ThumbnailPath != null,
             })
             .ToListAsync();
         return rows.Select(r => new StudentEntryDto(r.Id, r.ExhibitionId, r.ExhibitionName, r.Venue, r.City, r.StartDate, r.EndDate,
             StatusOf(r.StartDate, r.EndDate), r.Title, r.Competition, r.AskingPrice, r.Status, r.RejectReason, r.SoldPrice, r.SoldDate,
-            r.PaidToStudent, r.PaidAmount, r.PaidDate, r.Status == EntryStatus.PENDING, RowVersion.Of(r.CreatedAt, r.UpdatedAt))).ToList();
+            r.PaidToStudent, r.PaidAmount, r.PaidDate, r.Status == EntryStatus.PENDING, RowVersion.Of(r.CreatedAt, r.UpdatedAt), r.SubmissionId, r.HasThumbnail)).ToList();
     }
 
     /// <summary>One entry of the student; 404 when unknown or someone else's.</summary>
@@ -191,7 +195,7 @@ public static class ExhibitionApiQueries
             .OrderByDescending(e => e.CreatedAt).ThenByDescending(e => e.Id)
             .Select(e => new EntryListItemDto(e.Id, e.ExhibitionId, e.Exhibition.Name, e.Submission.Title,
                 e.Submission.Student.Account.FullName, e.Submission.Student.StudentCode, e.AskingPrice, e.Status, e.PaidToStudent,
-                e.SoldPrice, e.RejectReason))
+                e.SoldPrice, e.RejectReason, e.SubmissionId, e.Submission.ThumbnailPath != null))
             .ToListAsync();
     }
 
@@ -201,13 +205,13 @@ public static class ExhibitionApiQueries
         var vm = await entries.GetDetailsAsync(id);
         var row = await db.ExhibitionEntries.AsNoTracking()
             .Where(e => e.Id == id)
-            .Select(e => new { e.CustomerId, e.CreatedAt, e.UpdatedAt })
+            .Select(e => new { e.CustomerId, e.CreatedAt, e.UpdatedAt, e.SubmissionId, HasThumbnail = e.Submission.ThumbnailPath != null })
             .FirstAsync();
         return new EntryDetailDto(vm.Id, vm.ExhibitionId, vm.ExhibitionName, vm.ExhibitionStatus, vm.StartDate, vm.EndDate, vm.Title,
             vm.StudentName, vm.StudentCode, vm.CompetitionTitle, vm.AskingPrice, vm.Notes, vm.Status, vm.RejectReason, vm.SoldPrice,
             vm.SoldDate, row.CustomerId, vm.CustomerName, null, null, null, vm.PaidToStudent, vm.PaidAmount, vm.PaidDate, null, null,
             null, 0, vm.CanAccept || vm.CanReject, vm.CanSell, vm.Status == EntryStatus.UNSOLD && vm.CanSell, false, false, vm.CanPay,
-            RowVersion.Of(row.CreatedAt, row.UpdatedAt));
+            RowVersion.Of(row.CreatedAt, row.UpdatedAt), row.SubmissionId, row.HasThumbnail);
     }
 
     /// <summary>True when the client's rowVersion is the current one of the exhibition (or none was sent).</summary>

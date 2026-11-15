@@ -48,8 +48,11 @@ public class AwardingApiController : ApiControllerBase
     public async Task<ActionResult<List<AwardCandidateDto>>> Candidates(long id)
     {
         var form = await _awards.GetForCreateAsync(id);
+        var ids = form.Submissions.Select(s => s.Id).ToList();
+        var withThumb = (await _db.Submissions.AsNoTracking().Where(s => ids.Contains(s.Id) && s.ThumbnailPath != null)
+            .Select(s => s.Id).ToListAsync()).ToHashSet();
         return form.Submissions
-            .Select(s => new AwardCandidateDto(s.Id, s.Title, s.StudentName, s.StudentCode, Rating.BEST))
+            .Select(s => new AwardCandidateDto(s.Id, s.Title, s.StudentName, s.StudentCode, Rating.BEST, withThumb.Contains(s.Id)))
             .ToList();
     }
 
