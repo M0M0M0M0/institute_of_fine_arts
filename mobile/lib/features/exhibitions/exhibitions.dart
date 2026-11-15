@@ -13,10 +13,10 @@ ExhibitionStatus exhibitionStatusFromJson(String value) =>
 
 extension ExhibitionStatusView on ExhibitionStatus {
   String get label => switch (this) {
-        ExhibitionStatus.upcoming => 'Sắp diễn ra',
-        ExhibitionStatus.ongoing => 'Đang diễn ra',
-        ExhibitionStatus.finished => 'Đã kết thúc',
-        ExhibitionStatus.cancelled => 'Đã hủy',
+        ExhibitionStatus.upcoming => 'Upcoming',
+        ExhibitionStatus.ongoing => 'On now',
+        ExhibitionStatus.finished => 'Finished',
+        ExhibitionStatus.cancelled => 'Cancelled',
       };
 
   /// Giá trị gửi lên API khi lọc (`status=Upcoming`).
@@ -31,12 +31,12 @@ EntryStatus entryStatusFromJson(String value) =>
 
 extension EntryStatusView on EntryStatus {
   String get label => switch (this) {
-        EntryStatus.pending => 'Chờ duyệt',
-        EntryStatus.accepted => 'Đã duyệt',
-        EntryStatus.rejected => 'Bị từ chối',
-        EntryStatus.sold => 'Đã bán',
-        EntryStatus.unsold => 'Chưa bán',
-        EntryStatus.withdrawn => 'Đã rút',
+        EntryStatus.pending => 'Pending review',
+        EntryStatus.accepted => 'Accepted',
+        EntryStatus.rejected => 'Rejected',
+        EntryStatus.sold => 'Sold',
+        EntryStatus.unsold => 'Unsold',
+        EntryStatus.withdrawn => 'Withdrawn',
       };
 
   String get apiValue => name[0].toUpperCase() + name.substring(1);
@@ -44,7 +44,7 @@ extension EntryStatusView on EntryStatus {
 
 /// Nhãn gộp trạng thái + đã trả tiền: SOLD và đã trả = "Đã bán – đã trả tiền" (PAID trong bảng 4.8).
 String entryStatusText(EntryStatus status, bool paid) =>
-    status == EntryStatus.sold && paid ? 'Đã bán – đã trả tiền' : status.label;
+    status == EntryStatus.sold && paid ? 'Sold · paid' : status.label;
 
 // ---------------- Hàm thuần ----------------
 
@@ -66,8 +66,8 @@ DateTime? _date(Object? v) => v == null ? null : DateTime.parse(v as String);
 double? _num(Object? v) => (v as num?)?.toDouble();
 
 /// Kiểm tra giá phía client; server vẫn là nơi quyết định cuối cùng (BR-41).
-String? validatePrice(String text, {String label = 'Giá'}) =>
-    parseMoney(text) == null ? 'Vui lòng nhập $label lớn hơn 0' : null;
+String? validatePrice(String text, {String label = 'price'}) =>
+    parseMoney(text) == null ? 'Please enter the $label (more than 0)' : null;
 
 /// BR-44: bán dưới giá đề xuất thì cần xác nhận của học viên (ngày + hình thức).
 bool needsConsent(double soldPrice, double askingPrice) => soldPrice < askingPrice;

@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('Hàm thuần của trao giải', () {
     test('validateReason: lý do rỗng hoặc toàn khoảng trắng bị từ chối (BR-34)', () {
-      expect(validateReason('  '), 'Vui lòng nhập lý do');
+      expect(validateReason('  '), 'Please enter a reason');
       expect(validateReason('Chấm nhầm'), isNull);
     });
 
@@ -15,7 +15,7 @@ void main() {
     });
 
     test('emptySlotsMessage nêu số suất còn trống (BR-32)', () {
-      expect(emptySlotsMessage(3), contains('3 suất'));
+      expect(emptySlotsMessage(3), contains('3 award slots'));
     });
   });
 

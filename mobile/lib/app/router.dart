@@ -188,7 +188,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/staff/exhibitions',
-              builder: (context, state) => const TabScaffold(title: 'Exhibitions', body: StaffExhibitionsTab()),
+              builder: (context, state) {
+                // ?show=pending|unpaid comes from the staff Home cards; the key rebuilds the tab for a new filter
+                final show = state.uri.queryParameters['show'];
+                return TabScaffold(title: 'Exhibitions', body: StaffExhibitionsTab(key: ValueKey(show), initialView: show));
+              },
             ),
           ]),
           StatefulShellBranch(

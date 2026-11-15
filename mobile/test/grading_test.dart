@@ -6,16 +6,16 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('validateEvaluation (BR-23)', () {
     test('bắt buộc chọn xếp loại', () {
-      expect(validateEvaluation(null, 'tốt', ''), 'Vui lòng chọn xếp loại');
+      expect(validateEvaluation(null, 'tốt', ''), 'Please choose a rating');
     });
 
     test('xếp loại thường bắt buộc điểm mạnh; điểm yếu và cải thiện không bắt buộc', () {
-      expect(validateEvaluation(SubmissionRating.good, '  ', 'yếu'), 'Vui lòng nhập điểm mạnh');
+      expect(validateEvaluation(SubmissionRating.good, '  ', 'yếu'), 'Please enter the strengths');
       expect(validateEvaluation(SubmissionRating.good, 'Màu đẹp', ''), isNull);
     });
 
     test('DISQUALIFIED bắt buộc lý do, không cần điểm mạnh', () {
-      expect(validateEvaluation(SubmissionRating.disqualified, 'tốt', ' '), 'Xếp loại DISQUALIFIED bắt buộc nhập lý do');
+      expect(validateEvaluation(SubmissionRating.disqualified, 'tốt', ' '), 'The Disqualified rating needs a reason');
       expect(validateEvaluation(SubmissionRating.disqualified, '', 'Đạo văn'), isNull);
     });
   });

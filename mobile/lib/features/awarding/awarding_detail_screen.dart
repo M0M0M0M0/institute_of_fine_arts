@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/tokens.dart';
 import '../../core/api_client.dart';
 import '../../core/async_view.dart';
 import '../../core/format.dart';
-import '../competitions/competition_widgets.dart';
-import '../submissions/submission_widgets.dart';
-import '../submissions/submissions.dart';
+import '../../shared/shared.dart';
+import '../grading/grading.dart';
 import 'awarding.dart';
 import 'awarding_widgets.dart';
 
-/// Màn trao giải và công bố của một cuộc thi (UC-06, SCR trao giải):
-/// danh sách giải + người nhận, checklist công bố; sau công bố là thu hồi/trao bổ sung/phát thưởng.
+/// M-T4 (2/2): award slots, recipients and the publish checklist of one competition (UC-06).
+/// After publishing: revoke, award extra, adjust evaluation.
 class AwardingDetailScreen extends ConsumerWidget {
   const AwardingDetailScreen({super.key, required this.competitionId});
 
@@ -22,7 +22,7 @@ class AwardingDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(awardingDetailProvider(competitionId));
     return Scaffold(
-      appBar: AppBar(title: const Text('Trao giải')),
+      appBar: AppBar(title: const Text('Awards')),
       body: AsyncValueView(
         value: detail,
         onRetry: () => ref.invalidate(awardingDetailProvider(competitionId)),
@@ -48,7 +48,8 @@ class _BodyState extends ConsumerState<_Body> {
 
   void _toast(String text) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
 
-  // Chạy một thao tác ghi: khóa nút trong lúc chờ, báo lỗi tiếng Việt, 409 (BR-52) thì tải lại bản mới nhất
+  // Runs a write: locks the buttons while waiting, shows the API's error, and always reloads
+  // (a 409, BR-52, then shows the latest server state).
   Future<void> _run(Future<void> Function() action, {String? success}) async {
     final container = ProviderScope.containerOf(context);
     setState(() => _busy = true);
@@ -58,22 +59,20 @@ class _BodyState extends ConsumerState<_Body> {
       if (success != null) _toast(success);
     } catch (e) {
       if (!mounted) return;
-      final err = ApiException.from(e);
-      _toast(err.message);
+      _toast(ApiException.from(e).message);
     } finally {
-      // Dù thành công hay xung đột đều nạp lại dữ liệu để màn hình khớp với server
       refreshAwardingData(container);
       if (mounted) setState(() => _busy = false);
     }
   }
 
-  // ---- Trao giải mới ----
+  // ---- Issue a new award ----
   Future<void> _issue(AwardSlot slot) async {
     final input = await showDialog<_IssueInput>(
       context: context,
       builder: (context) => _IssueDialog(
         competitionId: _d.id,
-        title: 'Trao ${slot.name}',
+        title: 'Award ${slot.name}',
         needReason: _d.isPublished,
       ),
     );
@@ -86,17 +85,17 @@ class _BodyState extends ConsumerState<_Body> {
             remarks: input.remarks,
             reason: input.reason,
           ),
-      success: 'Đã trao ${slot.name}.',
+      success: '${slot.name} awarded.',
     );
   }
 
-  // ---- Sửa giải (chỉ khi chưa công bố) ----
+  // ---- Edit an award (before publishing only) ----
   Future<void> _edit(AwardSlot slot, IssuedAward award) async {
     final input = await showDialog<_IssueInput>(
       context: context,
       builder: (context) => _IssueDialog(
         competitionId: _d.id,
-        title: 'Sửa ${slot.name}',
+        title: 'Edit ${slot.name}',
         needReason: false,
         current: award,
       ),
@@ -109,35 +108,35 @@ class _BodyState extends ConsumerState<_Body> {
             submissionId: input.submissionId,
             remarks: input.remarks,
           ),
-      success: 'Đã cập nhật giải.',
+      success: 'Award updated.',
     );
   }
 
-  // ---- Xóa giải (chỉ khi chưa công bố) ----
+  // ---- Delete an award (before publishing only) ----
   Future<void> _delete(AwardSlot slot, IssuedAward award) async {
     final ok = await _confirm(
-      'Xóa giải?',
-      '${slot.name} của ${award.studentName} sẽ bị xóa, suất giải được trả lại.',
-      'Xóa',
+      'Delete award?',
+      '${slot.name} for ${award.studentName} will be deleted and the slot becomes free again.',
+      'Delete',
     );
     if (ok != true || !mounted) return;
-    await _run(() => ref.read(awardingRepositoryProvider).delete(award), success: 'Đã xóa giải.');
+    await _run(() => ref.read(awardingRepositoryProvider).delete(award), success: 'Award deleted.');
   }
 
-  // ---- Thu hồi giải (sau công bố, bắt buộc lý do) ----
+  // ---- Revoke an award (after publishing, reason required) ----
   Future<void> _revoke(AwardSlot slot, IssuedAward award) async {
-    final reason = await _askReason('Thu hồi ${slot.name}', 'Lý do thu hồi *');
+    final reason = await _askReason('Revoke ${slot.name}', 'Reason for revoking *');
     if (reason == null || !mounted) return;
-    await _run(() => ref.read(awardingRepositoryProvider).revoke(award, reason), success: 'Đã thu hồi giải.');
+    await _run(() => ref.read(awardingRepositoryProvider).revoke(award, reason), success: 'Award revoked.');
   }
 
-  // ---- Đánh dấu đã/chưa phát thưởng ----
+  // ---- Mark delivered / not delivered ----
   Future<void> _toggleDelivery(IssuedAward award) => _run(
         () => ref.read(awardingRepositoryProvider).setDelivery(award, !award.isDelivered),
-        success: award.isDelivered ? 'Đã bỏ đánh dấu phát thưởng.' : 'Đã ghi nhận phát thưởng.',
+        success: award.isDelivered ? 'Delivery mark removed.' : 'Delivery recorded.',
       );
 
-  // ---- Công bố kết quả (UC-06 bước 5) ----
+  // ---- Publish results (UC-06 step 5) ----
   Future<void> _publish() async {
     final confirmEmpty = await showDialog<bool>(
       context: context,
@@ -146,7 +145,7 @@ class _BodyState extends ConsumerState<_Body> {
     if (confirmEmpty == null || !mounted) return;
     await _run(
       () => ref.read(awardingRepositoryProvider).publish(_d.id, confirmEmptySlots: confirmEmpty),
-      success: 'Đã công bố kết quả.',
+      success: 'Results published.',
     );
   }
 
@@ -156,13 +155,12 @@ class _BodyState extends ConsumerState<_Body> {
           title: Text(title),
           content: Text(text),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hủy')),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
             FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(action)),
           ],
         ),
       );
 
-  // Hộp nhập lý do bắt buộc; trả về null nếu hủy
   Future<String?> _askReason(String title, String label) => showDialog<String>(
         context: context,
         builder: (context) => _ReasonDialog(title: title, label: label),
@@ -171,9 +169,8 @@ class _BodyState extends ConsumerState<_Body> {
   @override
   Widget build(BuildContext context) {
     final d = _d;
-    final textTheme = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
-    // Trao thêm: trước công bố tự do; sau công bố là trao bổ sung (bắt buộc lý do)
+    final text = Theme.of(context).textTheme;
+    // Adding: free before publishing; after publishing it is an extra award (reason required)
     final canAdd = d.canAward || d.isPublished;
 
     return RefreshIndicator(
@@ -183,40 +180,48 @@ class _BodyState extends ConsumerState<_Body> {
       },
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.gutter),
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: Text(d.title, style: textTheme.headlineSmall)),
+              Expanded(child: Text(d.title, style: text.headlineSmall)),
+              const SizedBox(width: AppSpacing.sm),
               StatusChip(d.status),
             ],
           ),
-          if (d.publishedAt != null) Text('Công bố lúc ${formatDateTime(d.publishedAt!)}', style: textTheme.bodySmall),
+          if (d.publishedAt != null)
+            Text('Published ${formatDateTime(d.publishedAt!)}', style: text.bodySmall),
           if (d.adjustedAt != null) AdjustedLabel(d.adjustedAt!),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
 
-          // Checklist công bố (BR-32) chỉ hiện khi chưa công bố
+          // Publish checklist (BR-32): only before publishing
           if (!d.isPublished) _Checklist(detail: d, busy: _busy, onPublish: _publish),
           if (d.isPublished)
-            Card(
-              color: scheme.secondaryContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Kết quả đã công bố. Mọi sửa đổi từ đây là điều chỉnh sau công bố và bắt buộc có lý do.'),
-                    const SizedBox(height: 8),
-                    // Sửa Evaluation đi qua màn chấm bài của từng bài; từ đây vào danh sách bài của cuộc thi
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: AppColors.mist,
+                borderRadius: AppRadius.mdAll,
+                border: Border.all(color: AppColors.line),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Results are published. From now on every change is an adjustment and needs a reason.'),
+                  // Evaluations are changed per entry; go to the entry list of the competition
+                  if (d.canAdjustEvaluation) ...[
+                    const SizedBox(height: AppSpacing.sm),
                     OutlinedButton.icon(
                       onPressed: () => context.push('/staff/competitions/${d.id}/submissions'),
                       icon: const Icon(Icons.rate_review_outlined),
-                      label: const Text('Điều chỉnh đánh giá một bài'),
+                      label: const Text('Adjust one evaluation'),
                     ),
                   ],
-                ),
+                ],
               ),
             ),
+          const SizedBox(height: AppSpacing.sm),
 
           for (final slot in d.awards)
             _SlotCard(
@@ -233,14 +238,19 @@ class _BodyState extends ConsumerState<_Body> {
               onDelivery: _toggleDelivery,
               onAdjust: (a) => context.push('/staff/awarding/submissions/${a.submissionId}/adjust'),
             ),
-          if (d.awards.isEmpty) const Padding(padding: EdgeInsets.all(16), child: Text('Cuộc thi chưa định nghĩa giải thưởng.')),
+          if (d.awards.isEmpty)
+            const EmptyState(
+              icon: Icons.emoji_events_outlined,
+              title: 'No awards defined',
+              message: 'This competition has no prizes yet.',
+            ),
         ],
       ),
     );
   }
 }
 
-/// Checklist trước khi công bố: bài đã chấm hết chưa, còn bao nhiêu suất giải trống (BR-08, BR-32).
+/// Checklist before publishing: everything graded, how many slots are still empty (BR-08, BR-32).
 class _Checklist extends StatelessWidget {
   const _Checklist({required this.detail, required this.busy, required this.onPublish});
 
@@ -251,44 +261,51 @@ class _Checklist extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final d = detail;
-    final scheme = Theme.of(context).colorScheme;
     final allGraded = d.pendingEvaluations == 0;
 
     Widget line(bool ok, String text) => Padding(
           padding: const EdgeInsets.symmetric(vertical: 2),
           child: Row(
             children: [
-              Icon(ok ? Icons.check_circle : Icons.error_outline, size: 20, color: ok ? scheme.primary : scheme.error),
-              const SizedBox(width: 8),
+              Icon(ok ? Icons.check_circle : Icons.error_outline,
+                  size: 20, color: ok ? AppColors.statusOngoing : AppColors.danger),
+              const SizedBox(width: AppSpacing.sm),
               Expanded(child: Text(text)),
             ],
           ),
         );
 
     return Card(
+      margin: EdgeInsets.zero,
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Checklist công bố', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 4),
-            line(allGraded, allGraded
-                ? 'Đã chấm đủ ${d.submissionCount} bài'
-                : 'Còn ${d.pendingEvaluations} bài chưa chấm (${d.evaluatedCount}/${d.submissionCount})'),
-            line(d.emptySlots == 0, d.emptySlots == 0
-                ? 'Đã trao đủ mọi suất giải'
-                : 'Còn ${d.emptySlots} suất giải chưa trao (cần xác nhận để trống)'),
-            const SizedBox(height: 8),
+            Semantics(header: true, child: Text('Before publishing', style: Theme.of(context).textTheme.titleMedium)),
+            const SizedBox(height: AppSpacing.xs),
+            line(
+              allGraded,
+              allGraded
+                  ? 'All ${d.submissionCount} entries are graded'
+                  : '${d.pendingEvaluations} entries still to grade (${d.evaluatedCount}/${d.submissionCount})',
+            ),
+            line(
+              d.emptySlots == 0,
+              d.emptySlots == 0
+                  ? 'Every award slot is filled'
+                  : '${d.emptySlots} award ${d.emptySlots == 1 ? 'slot' : 'slots'} still empty (leaving them empty needs confirmation)',
+            ),
+            const SizedBox(height: AppSpacing.sm),
             FilledButton.icon(
               onPressed: (d.canPublish && !busy) ? onPublish : null,
               icon: const Icon(Icons.campaign),
-              label: const Text('Công bố kết quả'),
+              label: const Text('Publish results'),
             ),
             if (d.publishBlockReason != null)
               Padding(
                 padding: const EdgeInsets.only(top: 6),
-                child: Text(d.publishBlockReason!, style: TextStyle(color: scheme.error)),
+                child: Text(d.publishBlockReason!, style: const TextStyle(color: AppColors.danger)),
               ),
           ],
         ),
@@ -297,7 +314,7 @@ class _Checklist extends StatelessWidget {
   }
 }
 
-/// Một giải định nghĩa với các suất đã trao.
+/// One defined award with its issued places.
 class _SlotCard extends StatelessWidget {
   const _SlotCard({
     required this.slot,
@@ -329,22 +346,32 @@ class _SlotCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = Theme.of(context).textTheme;
+    final text = Theme.of(context).textTheme;
     return Card(
+      margin: const EdgeInsets.only(top: AppSpacing.md),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                CircleAvatar(radius: 14, child: Text('${slot.rank}')),
-                const SizedBox(width: 8),
-                Expanded(child: Text('${slot.name} • ${formatVnd(slot.prizeValue)}', style: textTheme.titleMedium)),
+                CircleAvatar(
+                  radius: 14,
+                  backgroundColor: AppColors.brass,
+                  foregroundColor: Colors.white,
+                  child: Text('${slot.rank}', style: text.labelMedium!.copyWith(color: Colors.white)),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(child: Text('${slot.name} · ${formatVnd(slot.prizeValue)}', style: text.titleMedium)),
               ],
             ),
-            Text('Đã trao ${slotsLabel(slot.activeCount, slot.quantity)} suất'
-                '${slot.remaining > 0 ? ' • còn ${slot.remaining} suất' : ''}', style: textTheme.bodySmall),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              '${slotsLabel(slot.activeCount, slot.quantity)} awarded'
+              '${slot.remaining > 0 ? ' · ${slot.remaining} free' : ''}',
+              style: text.bodySmall,
+            ),
             for (final a in slot.issued)
               _IssuedTile(
                 award: a,
@@ -364,7 +391,7 @@ class _SlotCard extends StatelessWidget {
                 child: TextButton.icon(
                   onPressed: busy ? null : onAdd,
                   icon: const Icon(Icons.add),
-                  label: Text(published ? 'Trao bổ sung' : 'Trao giải'),
+                  label: Text(published ? 'Award extra' : 'Award'),
                 ),
               ),
           ],
@@ -374,7 +401,7 @@ class _SlotCard extends StatelessWidget {
   }
 }
 
-/// Một giải đã trao: người nhận, tranh, xếp loại và các thao tác phù hợp trạng thái.
+/// An issued award: the framed picture, recipient, rating and the actions that fit the state.
 class _IssuedTile extends StatelessWidget {
   const _IssuedTile({
     required this.award,
@@ -403,48 +430,79 @@ class _IssuedTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final a = award;
+    final text = Theme.of(context).textTheme;
     final revoked = !a.isActive;
-    final scheme = Theme.of(context).colorScheme;
     final strike = revoked ? const TextStyle(decoration: TextDecoration.lineThrough) : null;
 
-    // Thao tác theo trạng thái: chưa công bố → sửa/xóa; sau công bố → phát thưởng/điều chỉnh đánh giá/thu hồi (BR-32, BR-33)
+    // Actions by state: before publishing edit/delete; after publishing delivery/adjust/revoke (BR-32, BR-33).
+    // Delivery and adjust are hidden when the API says they are unsupported.
     final actions = <PopupMenuEntry<String>>[
       if (a.isActive && !published) ...const [
-        PopupMenuItem(value: 'edit', child: Text('Sửa')),
-        PopupMenuItem(value: 'delete', child: Text('Xóa')),
+        PopupMenuItem(value: 'edit', child: Text('Edit')),
+        PopupMenuItem(value: 'delete', child: Text('Delete')),
       ],
       if (a.isActive && published) ...[
         if (canMarkDelivered)
-          PopupMenuItem(value: 'delivery', child: Text(a.isDelivered ? 'Bỏ đánh dấu đã phát thưởng' : 'Đánh dấu đã phát thưởng')),
-        if (canAdjustEvaluation) const PopupMenuItem(value: 'adjust', child: Text('Điều chỉnh đánh giá')),
-        const PopupMenuItem(value: 'revoke', child: Text('Thu hồi giải')),
+          PopupMenuItem(value: 'delivery', child: Text(a.isDelivered ? 'Remove delivered mark' : 'Mark as delivered')),
+        if (canAdjustEvaluation) const PopupMenuItem(value: 'adjust', child: Text('Adjust evaluation')),
+        const PopupMenuItem(value: 'revoke', child: Text('Revoke award')),
       ],
     ];
 
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      title: Text('${a.studentName} (${a.studentCode})', style: strike),
-      subtitle: Column(
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.md),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('${a.submissionTitle} • ${formatDate(a.issuedDate)}', style: strike),
-          if (a.remarks != null) Text('Ghi chú: ${a.remarks}'),
-          Wrap(
-            spacing: 6,
-            children: [
-              if (a.rating != null) RatingChip(a.rating!),
-              if (revoked) _Tag('Đã thu hồi', scheme.error),
-              if (a.isActive && a.isDelivered) _Tag('Đã phát thưởng', scheme.primary),
-            ],
+          SizedBox(
+            width: 84,
+            child: ArtworkFrame(
+              awarded: a.isActive,
+              aspectRatio: 1,
+              matWidth: 5,
+              child: a.hasThumbnail
+                  ? AuthImage(submissionId: a.submissionId, semanticLabel: a.submissionTitle)
+                  : const ImagePlaceholder(),
+            ),
           ),
-          if (revoked && a.revokedReason != null) Text('Lý do thu hồi: ${a.revokedReason}', style: TextStyle(color: scheme.error)),
-        ],
-      ),
-      isThreeLine: true,
-      trailing: actions.isEmpty
-          ? null
-          : PopupMenuButton<String>(
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  a.submissionTitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: text.titleSmall!.copyWith(
+                    fontStyle: FontStyle.italic,
+                    fontWeight: FontWeight.w500,
+                    decoration: revoked ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+                Text('${a.studentName} (${a.studentCode})', style: text.bodyMedium?.merge(strike)),
+                Text('Awarded ${formatDate(a.issuedDate)}', style: text.bodySmall),
+                if (a.remarks != null && a.remarks!.isNotEmpty) Text('Note: ${a.remarks}', style: text.bodySmall),
+                const SizedBox(height: AppSpacing.xs),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  children: [
+                    if (a.rating != null) StatusChip.rating(a.rating!),
+                    if (revoked) const StatusChip.custom(label: 'Revoked', color: AppColors.danger),
+                    if (a.isActive && a.isDelivered)
+                      const StatusChip.custom(label: 'Delivered', color: AppColors.statusOngoing),
+                  ],
+                ),
+                if (revoked && a.revokedReason != null)
+                  Text('Reason: ${a.revokedReason}', style: text.bodySmall!.copyWith(color: AppColors.danger)),
+              ],
+            ),
+          ),
+          if (actions.isNotEmpty)
+            PopupMenuButton<String>(
               enabled: !busy,
+              tooltip: 'Award actions',
               onSelected: (v) => switch (v) {
                 'edit' => onEdit(),
                 'delete' => onDelete(),
@@ -454,28 +512,15 @@ class _IssuedTile extends StatelessWidget {
               },
               itemBuilder: (context) => actions,
             ),
+        ],
+      ),
     );
   }
 }
 
-class _Tag extends StatelessWidget {
-  const _Tag(this.text, this.color);
+// ---------------- Dialogs ----------------
 
-  final String text;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) => Container(
-        margin: const EdgeInsets.only(top: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
-        child: Text(text, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
-      );
-}
-
-// ---------------- Hộp thoại ----------------
-
-/// Kết quả hộp chọn bài trao giải.
+/// Result of the issue dialog.
 class _IssueInput {
   const _IssueInput(this.submissionId, this.remarks, this.reason);
 
@@ -484,8 +529,8 @@ class _IssueInput {
   final String? reason;
 }
 
-/// Chọn bài nhận giải trong danh sách bài đủ điều kiện (BEST xếp trước – BR-30), kèm ghi chú và (sau công bố) lý do.
-/// [current] khác null khi sửa: bài hiện tại của giải cũng nằm trong danh sách chọn.
+/// Pick the entry that receives the award from the eligible candidates (BEST first, BR-30),
+/// with a note and, after publishing, a reason. When editing, [current] is also selectable.
 class _IssueDialog extends ConsumerStatefulWidget {
   const _IssueDialog({required this.competitionId, required this.title, required this.needReason, this.current});
 
@@ -520,11 +565,11 @@ class _IssueDialogState extends ConsumerState<_IssueDialog> {
 
   void _submit() {
     if (_selected == null) {
-      setState(() => _error = 'Vui lòng chọn bài nhận giải');
+      setState(() => _error = 'Please choose the winning entry');
       return;
     }
     if (widget.needReason && validateReason(_reason.text) != null) {
-      setState(() => _error = 'Trao bổ sung sau công bố bắt buộc nhập lý do');
+      setState(() => _error = 'A reason is required for an extra award after publishing');
       return;
     }
     Navigator.pop(
@@ -533,6 +578,18 @@ class _IssueDialogState extends ConsumerState<_IssueDialog> {
           widget.needReason ? _reason.text.trim() : null),
     );
   }
+
+  Widget _thumb(int submissionId, bool hasThumbnail, String title) => SizedBox(
+        width: 56,
+        height: 56,
+        child: ArtworkFrame(
+          aspectRatio: null,
+          matWidth: 3,
+          child: hasThumbnail
+              ? AuthImage(submissionId: submissionId, semanticLabel: title)
+              : const ImagePlaceholder(),
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -556,58 +613,65 @@ class _IssueDialogState extends ConsumerState<_IssueDialog> {
                     }),
                     child: Column(
                       children: [
-                        // Khi sửa: bài đang nhận giải này không còn trong danh sách ứng viên nên thêm lại ở đầu
+                        // When editing, the current winner is no longer a candidate, so list it first
                         if (current != null)
                           RadioListTile<int>(
+                            contentPadding: EdgeInsets.zero,
                             value: current.submissionId,
-                            title: Text(current.submissionTitle),
-                            subtitle: Text('${current.studentName} (${current.studentCode}) • bài hiện tại'),
+                            title: Text(current.submissionTitle, maxLines: 2, overflow: TextOverflow.ellipsis),
+                            subtitle: Text('${current.studentName} (${current.studentCode}) · current'),
+                            secondary: _thumb(current.submissionId, current.hasThumbnail, current.submissionTitle),
                           ),
                         for (final c in value)
                           RadioListTile<int>(
+                            contentPadding: EdgeInsets.zero,
                             value: c.submissionId,
-                            title: Text(c.title),
-                            subtitle: Text('${c.studentName} (${c.studentCode}) • ${c.rating.label}'),
+                            title: Text(c.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+                            subtitle: Text('${c.studentName} (${c.studentCode}) · ${ratingName(c.rating)}'),
+                            secondary: _thumb(c.submissionId, c.hasThumbnail, c.title),
                           ),
                         if (value.isEmpty && current == null)
                           const Padding(
-                            padding: EdgeInsets.all(8),
-                            child: Text('Không còn bài nào đủ điều kiện (đã chấm, không bị loại, chưa có giải).'),
+                            padding: EdgeInsets.all(AppSpacing.sm),
+                            child: Text('No eligible entries left (graded, not disqualified and without an award).'),
                           ),
                       ],
                     ),
                   ),
                 AsyncError(:final error) => Text(ApiException.from(error).message),
-                _ => const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator())),
+                _ => const Padding(
+                    padding: EdgeInsets.all(AppSpacing.md),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
               },
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.sm),
               TextField(
                 controller: _remarks,
                 maxLength: 1000,
                 maxLines: 2,
-                decoration: const InputDecoration(labelText: 'Ghi chú / nhận xét', border: OutlineInputBorder()),
+                decoration: const InputDecoration(labelText: 'Note / comment'),
               ),
               if (widget.needReason)
                 TextField(
                   controller: _reason,
                   maxLength: 1000,
                   maxLines: 2,
-                  decoration: const InputDecoration(labelText: 'Lý do trao bổ sung *', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(labelText: 'Reason for the extra award *'),
                 ),
-              if (_error != null) Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              if (_error != null) Text(_error!, style: const TextStyle(color: AppColors.danger)),
             ],
           ),
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
-        FilledButton(onPressed: _submit, child: const Text('Lưu')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        FilledButton(onPressed: _submit, child: const Text('Save')),
       ],
     );
   }
 }
 
-/// Hộp xác nhận công bố: nếu còn suất trống thì bắt buộc tick "để trống" (BR-32). Trả về giá trị đã tick; null nếu hủy.
+/// Confirms publishing: if slots are empty the staff must tick "leave empty" (BR-32). Returns the ticked value; null = cancelled.
 class _PublishDialog extends StatefulWidget {
   const _PublishDialog({required this.detail});
 
@@ -623,38 +687,37 @@ class _PublishDialogState extends State<_PublishDialog> {
   @override
   Widget build(BuildContext context) {
     final empty = widget.detail.emptySlots;
-    // Còn suất trống mà chưa tick thì chưa cho công bố
     final canConfirm = empty == 0 || _confirmEmpty;
     return AlertDialog(
-      title: const Text('Công bố kết quả?'),
+      title: const Text('Publish results?'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Xếp loại, nhận xét và giải sẽ hiển thị cho học viên và trang chủ. '
-              'Sau đó Evaluation và giải bị khóa; chỉ sửa được qua Điều chỉnh kết quả (kèm lý do).'),
+          const Text('Ratings, comments and awards become visible to students and on the public pages. '
+              'Afterwards they are locked and can only change through "Adjust result", with a reason.'),
           if (empty > 0) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: AppSpacing.md),
             Text(emptySlotsMessage(empty)),
             CheckboxListTile(
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
               value: _confirmEmpty,
               onChanged: (v) => setState(() => _confirmEmpty = v ?? false),
-              title: Text('Xác nhận để trống $empty suất'),
+              title: Text('Leave $empty ${empty == 1 ? 'slot' : 'slots'} empty'),
             ),
           ],
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
-        FilledButton(onPressed: canConfirm ? () => Navigator.pop(context, _confirmEmpty) : null, child: const Text('Công bố')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        FilledButton(onPressed: canConfirm ? () => Navigator.pop(context, _confirmEmpty) : null, child: const Text('Publish')),
       ],
     );
   }
 }
 
-/// Hộp nhập lý do bắt buộc (thu hồi giải…). Trả về lý do đã cắt khoảng trắng; null nếu hủy.
+/// Mandatory reason dialog (revoke...). Returns the trimmed reason; null = cancelled.
 class _ReasonDialog extends StatefulWidget {
   const _ReasonDialog({required this.title, required this.label});
 
@@ -683,10 +746,10 @@ class _ReasonDialogState extends State<_ReasonDialog> {
         controller: _controller,
         maxLength: 1000,
         maxLines: 3,
-        decoration: InputDecoration(labelText: widget.label, errorText: _error, border: const OutlineInputBorder()),
+        decoration: InputDecoration(labelText: widget.label, errorText: _error),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
         FilledButton(
           onPressed: () {
             final error = validateReason(_controller.text);
@@ -696,7 +759,7 @@ class _ReasonDialogState extends State<_ReasonDialog> {
             }
             Navigator.pop(context, _controller.text.trim());
           },
-          child: const Text('Xác nhận'),
+          child: const Text('Confirm'),
         ),
       ],
     );
