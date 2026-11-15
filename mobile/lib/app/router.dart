@@ -26,12 +26,12 @@ import '../features/staff/dashboard.dart';
 import '../features/staff/staff_home_screen.dart';
 import '../features/staff/staff_shell.dart';
 import '../features/student/dashboard.dart';
+import '../features/student/student_competitions_screen.dart';
 import '../features/student/student_home_screen.dart';
 import '../features/student/student_shell.dart';
 import '../features/submissions/submission_detail_screen.dart';
 import '../features/submissions/submission_form_screen.dart';
 import '../features/submissions/my_submissions_screen.dart';
-import '../features/submissions/results_tab.dart';
 import '../features/submissions/submissions.dart';
 import '../shared/auth_image.dart';
 import '../shared/tab_scaffold.dart';
@@ -123,13 +123,13 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/student/competitions',
-              builder: (context, state) => const TabScaffold(title: 'Competitions', body: CompetitionFeed()),
+              builder: (context, state) => const StudentCompetitionsScreen(),
             ),
           ]),
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/student/entries',
-              builder: (context, state) => const TabScaffold(title: 'My entries', body: MySubmissionsTab()),
+              builder: (context, state) => const MySubmissionsScreen(),
             ),
           ]),
           StatefulShellBranch(routes: [
@@ -142,11 +142,8 @@ final routerProvider = Provider<GoRouter>((ref) {
               routes: [GoRoute(path: '/student/account', builder: (context, state) => const AccountScreen())]),
         ],
       ),
-      // The old "Results & awards" tab, kept reachable until the entries screen absorbs it
-      GoRoute(
-        path: '/student/results',
-        builder: (context, state) => const TabScaffold(title: 'Results & awards', body: ResultsTab()),
-      ),
+      // The old "Results & awards" tab now lives in My entries
+      GoRoute(path: '/student/results', redirect: (context, state) => '/student/entries'),
       // Nộp bài mới cho một cuộc thi (phải đặt trước ':id' để "new" không bị hiểu là id)
       GoRoute(
         path: '/student/submissions/new',

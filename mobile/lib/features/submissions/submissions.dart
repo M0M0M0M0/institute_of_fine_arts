@@ -18,12 +18,12 @@ SubmissionRating ratingFromJson(String value) =>
 extension SubmissionRatingView on SubmissionRating {
   /// Nhãn song ngữ (NFR-11).
   String get label => switch (this) {
-        SubmissionRating.best => 'Xuất sắc nhất (BEST)',
-        SubmissionRating.better => 'Tốt hơn (BETTER)',
-        SubmissionRating.good => 'Tốt (GOOD)',
-        SubmissionRating.moderate => 'Khá (MODERATE)',
-        SubmissionRating.normal => 'Bình thường (NORMAL)',
-        SubmissionRating.disqualified => 'Bị loại (DISQUALIFIED)',
+        SubmissionRating.best => 'Best',
+        SubmissionRating.better => 'Better',
+        SubmissionRating.good => 'Good',
+        SubmissionRating.moderate => 'Moderate',
+        SubmissionRating.normal => 'Normal',
+        SubmissionRating.disqualified => 'Disqualified',
       };
 
   /// Giá trị gửi lên API khi lọc (`rating=Best`).
@@ -38,10 +38,10 @@ TextType textTypeFromJson(String value) =>
 
 extension TextTypeView on TextType {
   String get label => switch (this) {
-        TextType.poem => 'Thơ',
-        TextType.quotation => 'Trích dẫn',
-        TextType.story => 'Câu chuyện',
-        TextType.other => 'Khác',
+        TextType.poem => 'Poem',
+        TextType.quotation => 'Quotation',
+        TextType.story => 'Story',
+        TextType.other => 'Other',
       };
 
   /// Giá trị gửi lên API (`Poem`, `Quotation`...).
@@ -229,9 +229,9 @@ const maxImageBytes = 5 * 1024 * 1024;
 /// Máy chủ vẫn là nơi quyết định cuối cùng (kiểm tra cả magic bytes).
 String? validateImageFile(String fileName, int sizeBytes) {
   final lower = fileName.toLowerCase();
-  if (!lower.endsWith('.jpg') && !lower.endsWith('.jpeg')) return 'Chỉ chấp nhận ảnh JPEG';
-  if (sizeBytes <= 0) return 'File ảnh rỗng, vui lòng chọn ảnh khác';
-  if (sizeBytes > maxImageBytes) return 'Ảnh vượt quá 5 MB';
+  if (!lower.endsWith('.jpg') && !lower.endsWith('.jpeg')) return 'Only JPEG images are accepted';
+  if (sizeBytes <= 0) return 'The image file is empty, please choose another';
+  if (sizeBytes > maxImageBytes) return 'The image is larger than 5 MB';
   return null;
 }
 
@@ -242,8 +242,8 @@ const minRecommendedShortSide = 600;
 String? smallImageWarning(int width, int height) {
   final shortSide = width < height ? width : height;
   if (shortSide >= minRecommendedShortSide) return null;
-  return 'Ảnh khá nhỏ ($width×$height px). Nên dùng ảnh có cạnh ngắn từ $minRecommendedShortSide px trở lên '
-      'để tranh hiển thị rõ nét. Bạn vẫn có thể nộp ảnh này.';
+  return 'This image is small ($width×$height px). For a sharp picture use one whose shorter side is at least '
+      '$minRecommendedShortSide px. You can still submit it.';
 }
 
 /// Nhãn hạn nộp (F-M06-10): cuộc thi đang diễn ra → "Còn X ngày"; đã đóng/chấm → "Đã hết hạn nộp bài".
@@ -251,10 +251,10 @@ String? smallImageWarning(int width, int height) {
 String? deadlineLabel(CompetitionStatus status, int daysLeft) {
   switch (status) {
     case CompetitionStatus.ongoing:
-      return daysLeft <= 0 ? 'Hôm nay là hạn nộp cuối' : 'Còn $daysLeft ngày';
+      return daysLeft <= 0 ? 'Last day to submit' : (daysLeft == 1 ? '1 day left' : '$daysLeft days left');
     case CompetitionStatus.closed:
     case CompetitionStatus.graded:
-      return 'Đã hết hạn nộp bài';
+      return 'Submissions closed';
     case CompetitionStatus.upcoming:
       return null;
   }

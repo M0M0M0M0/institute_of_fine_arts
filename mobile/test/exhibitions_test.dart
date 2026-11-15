@@ -16,7 +16,7 @@ void main() {
   });
 
   test('validatePrice báo lỗi khi giá không hợp lệ', () {
-    expect(validatePrice('', label: 'giá đề xuất'), 'Vui lòng nhập giá đề xuất lớn hơn 0');
+    expect(validatePrice('', label: 'an asking price'), 'Please enter an asking price greater than 0');
     expect(validatePrice('2000000'), isNull);
   });
 
@@ -31,9 +31,9 @@ void main() {
   });
 
   test('entryStatusText: SOLD + đã trả = "Đã bán – đã trả tiền"', () {
-    expect(entryStatusText(EntryStatus.sold, true), 'Đã bán – đã trả tiền');
-    expect(entryStatusText(EntryStatus.sold, false), 'Đã bán');
-    expect(entryStatusText(EntryStatus.pending, false), 'Chờ duyệt');
+    expect(entryStatusText(EntryStatus.sold, true), 'Sold · paid');
+    expect(entryStatusText(EntryStatus.sold, false), 'Sold');
+    expect(entryStatusText(EntryStatus.pending, false), 'Pending review');
   });
 
   test('enum đọc từ API không phân biệt hoa thường', () {
