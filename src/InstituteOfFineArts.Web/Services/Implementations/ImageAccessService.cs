@@ -1,8 +1,10 @@
 using System.Security.Claims;
 using InstituteOfFineArts.Web.Data;
 using InstituteOfFineArts.Web.Helpers;
+using InstituteOfFineArts.Web.Infrastructure.FileStorage;
 using InstituteOfFineArts.Web.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace InstituteOfFineArts.Web.Services.Implementations;
 
@@ -14,10 +16,14 @@ public class ImageAccessService : IImageAccessService
     /// <summary>Database access.</summary>
     private readonly AppDbContext _db;
 
-    /// <summary>Receives the database context through Dependency Injection.</summary>
-    public ImageAccessService(AppDbContext db)
+    /// <summary>Whether public images get the watermark (Upload:PublicWatermark, off by default).</summary>
+    private readonly bool _publicWatermark;
+
+    /// <summary>Receives the database context and the upload settings through Dependency Injection.</summary>
+    public ImageAccessService(AppDbContext db, IOptions<UploadOptions>? options = null)
     {
         _db = db;
+        _publicWatermark = options?.Value.PublicWatermark ?? false;
     }
 
     /// <inheritdoc />
@@ -45,7 +51,7 @@ public class ImageAccessService : IImageAccessService
         }
 
         var isPublic = SubmissionImagePolicy.IsPublic(submission);
-        var watermark = NeedsWatermark(submission, user);
+        var watermark = _publicWatermark && NeedsWatermark(submission, user);
         if (download)
         {
             return new ImageFile(submission.ImagePath, DownloadName(submission.OriginalFileName), isPublic, watermark);
@@ -57,8 +63,8 @@ public class ImageAccessService : IImageAccessService
     }
 
     /// <summary>
-    /// F-M13-02: the original goes to the owner, STAFF, MANAGER and ADMIN; everyone else (guests, other students)
-    /// receives a watermarked copy. Full access (owner, staff, manager) is exactly who may download (BR-20).
+    /// F-M13-02 (when Upload:PublicWatermark is on): the original goes to the owner, STAFF, MANAGER and ADMIN; everyone
+    /// else (guests, other students) receives a watermarked copy. Full access (owner, staff, manager) is exactly who may download (BR-20).
     /// </summary>
     private static bool NeedsWatermark(Models.Entities.Submission submission, ClaimsPrincipal user)
         => !SubmissionImagePolicy.CanDownload(submission, user)

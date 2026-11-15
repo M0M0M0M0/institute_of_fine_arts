@@ -18,6 +18,12 @@ public class UploadOptions
     public int ThumbnailWidth { get; set; } = 400;
 
     /// <summary>
+    /// F-M13-02 (Could): draw the institute's name on public images seen by guests and other students. Off by default –
+    /// the team found the watermark spoils the paintings; set "Upload:PublicWatermark": true to turn it back on.
+    /// </summary>
+    public bool PublicWatermark { get; set; }
+
+    /// <summary>
     /// Absolute path of the upload root: RootPath combined with the content root when it is relative.
     /// </summary>
     /// <param name="contentRootPath">IWebHostEnvironment.ContentRootPath</param>

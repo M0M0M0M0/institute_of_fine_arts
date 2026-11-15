@@ -3,7 +3,7 @@
 @*
     Public paintings (FE101 gallery listing design, real data): a category (/gallery/{subject|style|medium}/{key}),
     new arrivals (/gallery/new), all artworks (/gallery/all) or one competition's paintings
-    (/gallery/competitions/{id}/artworks). Only public paintings (BR-20); images are served watermarked.
+    (/gallery/competitions/{id}/artworks). Only public paintings (BR-20); images come from FilesController (watermark only if Upload:PublicWatermark is on).
 *@
 @{
     ViewData["Title"] = Model.Title;
