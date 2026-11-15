@@ -5,6 +5,7 @@
 // 4. Painting viewer: <div class="artwork-frame" data-zoom data-zoom-download="...?download=true"><img ...></div> opens the
 //    painting full screen at its real resolution: wheel / pinch / +/- to zoom, drag or arrow keys to move, double click
 //    for 100 %, Esc to close, so teachers can study line work and colour while grading.
+// 5. Back to top (FE101, public layout): the round button appears after scrolling down and scrolls back up.
 (function () {
     "use strict";
 
@@ -279,4 +280,16 @@
             if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openViewer(frame); }
         });
     });
+
+    // ---- 5. Back to top ----
+    const backToTop = document.querySelector(".back-to-top-btn");
+    if (backToTop) {
+        const toggle = function () { backToTop.style.display = window.scrollY > 500 ? "flex" : "none"; };
+        window.addEventListener("scroll", toggle, { passive: true });
+        toggle();
+        backToTop.addEventListener("click", function () {
+            const smooth = !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+            window.scrollTo({ top: 0, behavior: smooth ? "smooth" : "auto" });
+        });
+    }
 })();

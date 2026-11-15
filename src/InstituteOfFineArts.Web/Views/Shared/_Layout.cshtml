@@ -1,9 +1,11 @@
 @inject Microsoft.Extensions.Localization.IStringLocalizer<InstituteOfFineArts.Web.SharedResource> L
+@inject InstituteOfFineArts.Web.Services.Interfaces.IArtworkCatalogService Catalog
 @using InstituteOfFineArts.Web.Helpers
 @*
     Public layout (home, competitions, gallery, about, FAQ, login, errors…). Design by FE (branch FE101: promo ticker,
     logo navbar with search, mega footer, theme in wwwroot/css/public-fe101.css), wired to the backend: real links only,
     account menu (My workspace / profile / log out POST), notification bell, EN/VI switch, local Bootstrap Icons.
+    FE101 mega menu "Gallery" (subject / style / medium → GalleryController with real paintings), Contact page, back-to-top.
     Signed-in work happens in _LayoutDashboard (navy rail with the role menu), reached through "My workspace".
 *@
 @{
@@ -111,15 +113,39 @@
                         <li class="nav-item">
                             <a class="nav-link text-dark" href="/">@L["Home"]</a>
                         </li>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle text-dark" href="#" role="button" data-bs-toggle="dropdown">@L["Gallery"]</a>
-                            <ul class="dropdown-menu border-0 shadow-sm">
-                                <li><a class="dropdown-item" href="/gallery">Awarded paintings</a></li>
-                                <li><a class="dropdown-item" href="/competitions">@L["Competitions"]</a></li>
-                            </ul>
+                        <!-- Mega menu (FE101): full-width panel, opens on hover on desktop and on click/tap -->
+                        <li class="nav-item dropdown dropdown-mega position-static">
+                            <a class="nav-link dropdown-toggle text-dark" href="/gallery/all" role="button" data-bs-toggle="dropdown" aria-expanded="false">@L["Gallery"]</a>
+                            <div class="dropdown-menu dropdown-mega-menu w-100 border-0 border-top shadow-sm py-4">
+                                <div class="container px-4">
+                                    <div class="row g-4">
+                                        @foreach (var group in Catalog.Categories.GroupBy(c => c.Group))
+                                        {
+                                            <div class="col-lg-2 col-md-4">
+                                                <h6 class="mega-menu-title text-uppercase fw-bold mb-3">@group.Key</h6>
+                                                <ul class="list-unstyled mega-menu-list">
+                                                    @foreach (var c in group)
+                                                    {
+                                                        <li class="mb-1"><a class="text-dark text-decoration-none" href="/gallery/@c.Group/@c.Key">@c.Label</a></li>
+                                                    }
+                                                </ul>
+                                            </div>
+                                        }
+                                        <div class="col-lg-3 col-md-6">
+                                            <h6 class="mega-menu-title text-uppercase fw-bold mb-3">Highlights</h6>
+                                            <ul class="list-unstyled mega-menu-list fw-medium">
+                                                <li class="mb-2"><a class="text-dark text-decoration-none" href="/gallery/new">New Art This Month</a></li>
+                                                <li class="mb-2"><a class="text-dark text-decoration-none" href="/gallery">Awarded paintings</a></li>
+                                                <li class="mb-2"><a class="text-dark text-decoration-none" href="/gallery/competitions">Open competitions</a></li>
+                                                <li class="mt-3"><a href="/gallery/all" class="text-dark fw-bold text-decoration-none border-bottom border-dark pb-1">See All Artworks →</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link text-dark" href="/competitions">@L["Competitions"]</a>
+                            <a class="nav-link text-dark" href="/gallery/competitions">@L["Competitions"]</a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link text-dark" href="/about">@L["About"]</a>
@@ -128,9 +154,9 @@
 
                     <!-- Search Bar (Giữa): searches the public competitions by title or code -->
                     <form class="d-flex mx-auto col-lg-5 col-md-7 my-2 my-lg-0" method="get" action="/competitions" role="search">
-                        <div class="input-group">
-                            <input class="form-control border-end-0 shadow-none rounded-0" type="search" name="Keyword" placeholder="Search competitions..." aria-label="Search competitions">
-                            <button class="btn btn-outline-secondary border-start-0 rounded-0 bg-transparent text-dark" type="submit" aria-label="Search">
+                        <div class="input-group art-search-box">
+                            <input class="form-control border-0 shadow-none rounded-0 bg-transparent" type="search" name="Keyword" placeholder="Search competitions..." aria-label="Search competitions">
+                            <button class="btn border-0 rounded-0 bg-transparent text-dark px-3" type="submit" aria-label="Search">
                                 <i class="bi bi-search"></i>
                             </button>
                         </div>
@@ -221,7 +247,7 @@
                             <a asp-controller="Home" asp-action="Shipping" class="text-decoration-none text-muted">Shipping Info</a>
                         </li>
                         <li class="mb-2">
-                            <a href="/about" class="text-decoration-none text-muted">Contact Us</a>
+                            <a href="/contact" class="text-decoration-none text-muted">Contact Us</a>
                         </li>
                         @if (workspace != null)
                         {
@@ -233,6 +259,9 @@
                 <div class="col-lg-2 col-md-6">
                     <h6 class="text-uppercase fw-bold mb-3">Browse Art</h6>
                     <ul class="list-unstyled small">
+                        <li class="mb-2"><a href="/gallery/medium/OilPaintings" class="text-decoration-none text-muted">Oil Paintings</a></li>
+                        <li class="mb-2"><a href="/gallery/medium/WatercolorPaintings" class="text-decoration-none text-muted">Watercolors</a></li>
+                        <li class="mb-2"><a href="/gallery/style/Abstract" class="text-decoration-none text-muted">Abstract</a></li>
                         <li class="mb-2"><a href="/gallery" class="text-decoration-none text-muted">Awarded paintings</a></li>
                         <li class="mb-2"><a href="/competitions" class="text-decoration-none text-muted">@L["Competitions"]</a></li>
                     </ul>
@@ -257,6 +286,10 @@
             </div>
         </div>
     </footer>
+    <!-- Back to top (FE101): shown after scrolling down, site.js §5 -->
+    <button type="button" class="btn btn-dark rounded-circle position-fixed bottom-0 end-0 m-4 shadow back-to-top-btn" aria-label="Back to top">
+        <i class="bi bi-arrow-up" aria-hidden="true"></i>
+    </button>
     <partial name="_Scripts" />
     @await RenderSectionAsync("Scripts", required: false)
 </body>
