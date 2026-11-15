@@ -41,6 +41,11 @@ public class HomeController : Controller
         return View();
     }
 
+    /// <summary>Contact details and map of the institute (static page, FE101).</summary>
+    [HttpGet("/contact")]
+    public IActionResult Contact()
+        => View();
+
     /// <summary>Frequently asked questions (static page, FE101).</summary>
     [HttpGet("/faq")]
     public IActionResult Faq()
