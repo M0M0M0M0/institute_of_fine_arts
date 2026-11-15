@@ -2,37 +2,155 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/tokens.dart';
 import '../../core/async_view.dart';
+import '../../shared/shared.dart';
 import '../auth/auth.dart';
 import '../competitions/competition_widgets.dart';
 import '../competitions/competitions.dart';
+import '../gallery/gallery.dart';
+import '../gallery/gallery_widgets.dart';
 
-/// Trang chủ công khai cho khách (F-M02-01..04).
+/// M-G1: public home. Hero with the latest winning painting, open and upcoming competitions,
+/// latest winners and a strip of the gallery.
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = currentUserOf(ref.watch(authControllerProvider));
-
+    final home = ref.watch(homeProvider);
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Institute of Fine Arts'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: user == null
-                ? FilledButton.tonal(onPressed: () => context.go('/login'), child: const Text('Đăng nhập'))
-                : FilledButton.tonal(
-                    onPressed: () => context.go(homePathFor(user.role)),
-                    child: const Text('Trang của tôi'),
-                  ),
-          ),
-        ],
+      body: AsyncValueView(
+        value: home,
+        onRetry: () => ref.invalidate(homeProvider),
+        data: (data) => RefreshIndicator(
+          edgeOffset: 40,
+          onRefresh: () async {
+            ref.invalidate(galleryPreviewProvider);
+            ref.invalidate(homeProvider);
+            await ref.read(homeProvider.future);
+          },
+          child: _HomeBody(data: data),
+        ),
       ),
-      body: const CompetitionFeed(showWinners: true),
     );
   }
+}
+
+class _HomeBody extends ConsumerWidget {
+  const _HomeBody({required this.data});
+
+  final HomeData data;
+
+  Widget? _heroBackground() {
+    final winner = data.latestWinners.where((w) => w.submissionId != null).firstOrNull;
+    if (winner != null) {
+      return PublicImage(
+        url: ApiUrls.submissionFull(winner.submissionId!),
+        semanticLabel: 'Winning painting: ${winner.paintingTitle}',
+      );
+    }
+    final withCover = [...data.ongoing, ...data.upcoming].where((c) => c.hasCover).firstOrNull;
+    if (withCover != null) return PublicImage(url: ApiUrls.competitionCover(withCover.id));
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final preview = ref.watch(galleryPreviewProvider).value;
+    final winners = data.latestWinners.where((w) => w.submissionId != null).toList();
+    final isEmpty =
+        data.ongoing.isEmpty && data.upcoming.isEmpty && data.latestWinners.isEmpty && (preview?.items.isEmpty ?? true);
+
+    return ListView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.zero,
+      children: [
+        HeroHeader(
+          title: 'Institute of Fine Arts',
+          subtitle: 'Where young painters compete, exhibit and are seen.',
+          background: _heroBackground(),
+          ctaLabel: 'Browse competitions',
+          onCta: () => context.go('/competitions'),
+          height: 340,
+        ),
+        if (isEmpty)
+          const SizedBox(
+            height: 320,
+            child: EmptyState(title: 'Nothing on show yet', message: 'New competitions and artworks will appear here.'),
+          ),
+        if (data.ongoing.isNotEmpty) ...[
+          SectionHeader(
+            'Open now',
+            subtitle: 'Competitions you can enter today',
+            actionLabel: 'All',
+            onAction: () => context.go('/competitions'),
+          ),
+          _competitionStrip(context, data.ongoing),
+        ],
+        if (data.upcoming.isNotEmpty) ...[
+          const SectionHeader('Coming soon'),
+          _competitionStrip(context, data.upcoming),
+        ],
+        if (winners.isNotEmpty) ...[
+          SectionHeader('Latest winners', subtitle: data.latestGradedCompetition),
+          TwoColumnGrid(tiles: [
+            for (final w in winners)
+              ArtworkTile.public(
+                submissionId: w.submissionId!,
+                title: w.paintingTitle,
+                artist: w.studentName,
+                awardName: w.awardName,
+                awarded: true,
+                onTap: () => context.push('/gallery/artworks/${w.submissionId}'),
+              ),
+          ]),
+        ],
+        if (preview != null && preview.items.isNotEmpty) ...[
+          SectionHeader('From the gallery', actionLabel: 'See the gallery', onAction: () => context.go('/gallery')),
+          SizedBox(
+            height: 300,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gutter),
+              itemCount: preview.items.length,
+              separatorBuilder: (context, i) => const SizedBox(width: AppSpacing.md),
+              itemBuilder: (context, i) {
+                final a = preview.items[i];
+                return Align(
+                  alignment: Alignment.topLeft,
+                  child: SizedBox(
+                    width: 160,
+                    child: galleryTile(a,
+                        showCompetition: false, onTap: () => context.push('/gallery/artworks/${a.submissionId}')),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+        const SizedBox(height: AppSpacing.xl),
+      ],
+    );
+  }
+
+  Widget _competitionStrip(BuildContext context, List<CompetitionSummary> items) => SizedBox(
+        height: 350,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gutter),
+          itemCount: items.length,
+          separatorBuilder: (context, i) => const SizedBox(width: AppSpacing.md),
+          itemBuilder: (context, i) => Align(
+            alignment: Alignment.topLeft,
+            child: CompetitionCard(
+              competition: items[i],
+              width: 280,
+              onTap: () => context.push('/competitions/${items[i].id}'),
+            ),
+          ),
+        ),
+      );
 }
 
 /// Đường dẫn trang chính theo vai trò. Admin/Manager dùng bản web (app chỉ phục vụ Student + Staff).
@@ -42,12 +160,10 @@ String homePathFor(Role role) => switch (role) {
       _ => '/unsupported',
     };
 
-/// Danh sách cuộc thi đang/sắp diễn ra (+ người đạt giải nếu [showWinners]).
-/// Dùng chung cho trang chủ và tab "Cuộc thi" của học viên.
+/// Open and upcoming competitions as a plain list.
+/// Still used by the student "Competitions" tab until the student agent switches it to `CompetitionsScreen`.
 class CompetitionFeed extends ConsumerWidget {
-  const CompetitionFeed({super.key, this.showWinners = false});
-
-  final bool showWinners;
+  const CompetitionFeed({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -61,25 +177,12 @@ class CompetitionFeed extends ConsumerWidget {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            const SectionTitle('Đang diễn ra'),
-            if (data.ongoing.isEmpty) const Text('Hiện chưa có cuộc thi nào đang diễn ra.'),
+            const SectionTitle('Open now'),
+            if (data.ongoing.isEmpty) const Text('No competition is open right now.'),
             for (final c in data.ongoing) _cardOf(context, c),
-            const SectionTitle('Sắp diễn ra'),
-            if (data.upcoming.isEmpty) const Text('Chưa có cuộc thi sắp tới.'),
+            const SectionTitle('Coming soon'),
+            if (data.upcoming.isEmpty) const Text('No upcoming competition yet.'),
             for (final c in data.upcoming) _cardOf(context, c),
-            if (showWinners) ...[
-              SectionTitle(data.latestGradedCompetition == null
-                  ? 'Học viên đạt giải'
-                  : 'Đạt giải: ${data.latestGradedCompetition}'),
-              if (data.latestWinners.isEmpty) const Text('Chưa có cuộc thi nào công bố kết quả.'),
-              for (final w in data.latestWinners)
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.emoji_events),
-                  title: Text('${w.studentName} – ${w.awardName}'),
-                  subtitle: Text('Tác phẩm: ${w.paintingTitle}'),
-                ),
-            ],
           ],
         ),
       ),

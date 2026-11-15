@@ -11,6 +11,8 @@ import '../features/awarding/awarding_competitions_screen.dart';
 import '../features/awarding/awarding_detail_screen.dart';
 import '../features/auth/login_screen.dart';
 import '../features/competitions/competition_detail_screen.dart';
+import '../features/competitions/competitions_screen.dart';
+import '../features/gallery/artwork_screen.dart';
 import '../features/gallery/gallery_screen.dart';
 import '../features/guest/guest_shell.dart';
 import '../features/exhibitions/exhibitions.dart';
@@ -102,8 +104,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/competitions',
-              // PLACEHOLDER list until the guest phase-2 screen (M-G2) exists
-              builder: (context, state) => const TabScaffold(title: 'Competitions', body: CompetitionFeed()),
+              builder: (context, state) => const CompetitionsScreen(),
             ),
           ]),
           StatefulShellBranch(routes: [GoRoute(path: '/gallery', builder: (context, state) => const GalleryScreen())]),
@@ -112,6 +113,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/competitions/:id',
         builder: (context, state) => CompetitionDetailScreen(id: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/gallery/artworks/:id',
+        builder: (context, state) => ArtworkScreen(id: int.parse(state.pathParameters['id']!)),
       ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       // Student shell: Home, Competitions, My entries, Exhibitions, Account

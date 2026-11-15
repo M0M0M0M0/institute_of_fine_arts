@@ -16,6 +16,8 @@ class GalleryArtwork {
     required this.competitionTitle,
     this.awardName,
     this.hasThumbnail = false,
+    this.competitionDescription,
+    this.submittedAt,
   });
 
   final int submissionId;
@@ -28,6 +30,10 @@ class GalleryArtwork {
   final String? awardName;
   final bool hasThumbnail;
 
+  /// Only sent by `GET /api/gallery/artworks/{id}`.
+  final String? competitionDescription;
+  final DateTime? submittedAt;
+
   bool get isAwarded => awardName != null && awardName!.isNotEmpty;
 
   factory GalleryArtwork.fromJson(Map<String, dynamic> json) => GalleryArtwork(
@@ -38,6 +44,8 @@ class GalleryArtwork {
         competitionTitle: (json['competitionTitle'] as String?) ?? '',
         awardName: json['awardName'] as String?,
         hasThumbnail: (json['hasThumbnail'] as bool?) ?? false,
+        competitionDescription: json['competitionDescription'] as String?,
+        submittedAt: DateTime.tryParse((json['submittedAt'] as String?) ?? ''),
       );
 }
 

@@ -43,7 +43,7 @@ void main() {
 
     await tester.tap(find.descendant(of: bar, matching: find.text('Sign in')));
     await tester.pumpAndSettle();
-    expect(find.text('Đăng nhập'), findsWidgets); // login screen (owned by the guest phase-2 agent)
+    expect(find.text('Sign in to enter competitions and follow your entries.'), findsOneWidget); // login screen
   });
 
   testWidgets('student bottom bar has five tabs and the account tab shows the profile', (tester) async {
