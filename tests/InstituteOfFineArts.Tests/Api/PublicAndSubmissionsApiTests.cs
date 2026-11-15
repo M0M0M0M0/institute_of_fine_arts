@@ -72,8 +72,10 @@ public sealed class PublicAndSubmissionsApiTests : IDisposable
         => WithUser(new StudentSubmissionsApiController(new SubmissionService(_db, _files, NullLogger<SubmissionService>.Instance), _db),
             UserOf(RoleNames.Student, profileId));
 
-    private SubmissionImagesApiController ImageApi(ClaimsPrincipal user)
-        => WithUser(new SubmissionImagesApiController(new ImageAccessService(_db), _files,
+    /// <summary>Image API; <paramref name="watermark"/> turns on Upload:PublicWatermark (off by default since PR #56).</summary>
+    private SubmissionImagesApiController ImageApi(ClaimsPrincipal user, bool watermark = false)
+        => WithUser(new SubmissionImagesApiController(
+            new ImageAccessService(_db, Options.Create(new UploadOptions { PublicWatermark = watermark })), _files,
             new WatermarkService(NullLogger<WatermarkService>.Instance)), user);
 
     private static JsonElement ToJson(object? value) => JsonSerializer.SerializeToElement(value, value?.GetType() ?? typeof(object), Json);
@@ -436,7 +438,12 @@ public sealed class PublicAndSubmissionsApiTests : IDisposable
         var graded = AddCompetition("Done", -20, -10, CompetitionStatus.GRADED);
         var s = AddSubmission(graded, 1, withFile: true, rating: Rating.BEST);
 
-        var viewed = Assert.IsType<FileContentResult>(await ImageApi(UserOf(RoleNames.Student, 2)).Image(s.Id));
+        // Default (no public watermark): the stored file itself
+        var plain = Assert.IsType<FileStreamResult>(await ImageApi(UserOf(RoleNames.Student, 2)).Image(s.Id));
+        await plain.FileStream.DisposeAsync();
+
+        // Upload:PublicWatermark on: a new watermarked JPEG
+        var viewed = Assert.IsType<FileContentResult>(await ImageApi(UserOf(RoleNames.Student, 2), watermark: true).Image(s.Id));
         Assert.Equal("image/jpeg", viewed.ContentType);
         Assert.NotEmpty(viewed.FileContents);
 
