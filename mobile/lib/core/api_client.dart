@@ -30,7 +30,7 @@ final dioProvider = Provider<Dio>((ref) {
   return dio;
 });
 
-/// Lỗi gọi API đã được dịch sang thông báo tiếng Việt để hiển thị thẳng cho người dùng.
+/// API error turned into a message that can be shown to the user as is (the API `title` is already English).
 class ApiException implements Exception {
   ApiException(this.message, {this.statusCode, this.extensions = const {}});
 
@@ -57,7 +57,7 @@ class ApiException implements Exception {
     if (error is DioException) {
       final response = error.response;
       if (response == null) {
-        return ApiException('Không kết nối được máy chủ. Kiểm tra API đã chạy chưa.');
+        return ApiException('Cannot reach the server. Check your connection and that the API is running.');
       }
       String? message;
       Object? data = response.data;
@@ -86,10 +86,10 @@ class ApiException implements Exception {
           if (!_standardKeys.contains(k)) extensions[k.toString()] = v;
         });
       }
-      return ApiException(message ?? 'Lỗi máy chủ (${response.statusCode})',
+      return ApiException(message ?? 'Server error (${response.statusCode})',
           statusCode: response.statusCode, extensions: extensions);
     }
-    return ApiException('Đã có lỗi xảy ra: $error');
+    return ApiException('Something went wrong: $error');
   }
 
   @override

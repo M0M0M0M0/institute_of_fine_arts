@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_client.dart';
+import '../../shared/auth_image.dart';
 import '../competitions/competitions.dart';
 
 // ---------------- Model (khớp DTO của API) ----------------
@@ -59,8 +60,11 @@ class SubmissionListItem {
     required this.updatedAt,
     required this.canEdit,
     required this.rating,
+    this.hasThumbnail = true,
   });
 
+  /// Whether a thumbnail exists; defaults to true when the API does not say (a submission always has an image).
+  final bool hasThumbnail;
   final int id;
   final int competitionId;
   final String competitionTitle;
@@ -81,6 +85,7 @@ class SubmissionListItem {
         updatedAt: _dateOrNull(json['updatedAt']),
         canEdit: json['canEdit'] as bool,
         rating: json['rating'] == null ? null : ratingFromJson(json['rating'] as String),
+        hasThumbnail: (json['hasThumbnail'] as bool?) ?? true,
       );
 }
 
@@ -189,8 +194,13 @@ class AwardResult {
     required this.studentName,
     required this.paintingTitle,
     required this.prizeValue,
+    this.submissionId,
+    this.hasThumbnail = false,
   });
 
+  /// Winning submission (public image `/files/submissions/{id}/thumb`); null when the API does not say.
+  final int? submissionId;
+  final bool hasThumbnail;
   final String awardName;
   final int rank;
   final String studentName;
@@ -203,6 +213,8 @@ class AwardResult {
         studentName: json['studentName'] as String,
         paintingTitle: json['paintingTitle'] as String,
         prizeValue: json['prizeValue'] as num,
+        submissionId: json['submissionId'] as int?,
+        hasThumbnail: (json['hasThumbnail'] as bool?) ?? false,
       );
 }
 
@@ -478,6 +490,8 @@ void refreshSubmissionData(WidgetRef ref, {int? submissionId, int? competitionId
   if (submissionId != null) {
     ref.invalidate(submissionDetailProvider(submissionId));
     ref.invalidate(submissionImageProvider(submissionId));
+    ref.invalidate(authImageProvider((submissionId, true)));
+    ref.invalidate(authImageProvider((submissionId, false)));
   }
   if (competitionId != null) {
     ref.invalidate(mySubmissionIdProvider(competitionId));

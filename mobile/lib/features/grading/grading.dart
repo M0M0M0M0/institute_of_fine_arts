@@ -16,7 +16,10 @@ class GradingCompetition {
     required this.status,
     required this.submissionCount,
     required this.evaluatedCount,
+    this.hasCover = false,
   });
+
+  final bool hasCover;
 
   final int id;
   final String title;
@@ -32,6 +35,7 @@ class GradingCompetition {
         status: statusFromJson(json['status'] as String),
         submissionCount: json['submissionCount'] as int,
         evaluatedCount: json['evaluatedCount'] as int,
+        hasCover: (json['hasCover'] as bool?) ?? false,
       );
 }
 
@@ -44,8 +48,11 @@ class GradingItem {
     required this.studentCode,
     required this.submittedAt,
     required this.rating,
+    this.hasThumbnail = true,
   });
 
+  /// Whether a thumbnail exists; defaults to true when the API does not say (a submission always has an image).
+  final bool hasThumbnail;
   final int id;
   final String title;
   final String studentName;
@@ -62,6 +69,7 @@ class GradingItem {
         studentCode: json['studentCode'] as String,
         submittedAt: DateTime.parse(json['submittedAt'] as String),
         rating: json['rating'] == null ? null : ratingFromJson(json['rating'] as String),
+        hasThumbnail: (json['hasThumbnail'] as bool?) ?? true,
       );
 }
 

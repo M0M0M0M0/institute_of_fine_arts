@@ -225,8 +225,11 @@ class EligibleSubmission {
     required this.studentName,
     required this.studentCode,
     required this.competitionTitle,
+    this.hasThumbnail = true,
   });
 
+  /// Whether a thumbnail exists; defaults to true when the API does not say (a submission always has an image).
+  final bool hasThumbnail;
   final int id;
   final String title;
   final String studentName;
@@ -239,6 +242,7 @@ class EligibleSubmission {
         studentName: json['studentName'] as String,
         studentCode: json['studentCode'] as String,
         competitionTitle: json['competitionTitle'] as String,
+        hasThumbnail: (json['hasThumbnail'] as bool?) ?? true,
       );
 }
 
@@ -256,8 +260,14 @@ class EntryListItem {
     required this.paidToStudent,
     required this.soldPrice,
     required this.statusReason,
+    this.submissionId,
+    this.hasThumbnail = true,
   });
 
+  /// Id of the submission shown by this entry (for `AuthImage`); null when the API does not say.
+  final int? submissionId;
+  /// Whether a thumbnail exists; defaults to true when the API does not say (a submission always has an image).
+  final bool hasThumbnail;
   final int id;
   final int exhibitionId;
   final String exhibitionName;
@@ -282,6 +292,8 @@ class EntryListItem {
         paidToStudent: json['paidToStudent'] as bool,
         soldPrice: _num(json['soldPrice']),
         statusReason: json['statusReason'] as String?,
+        submissionId: json['submissionId'] as int?,
+        hasThumbnail: (json['hasThumbnail'] as bool?) ?? true,
       );
 }
 
@@ -289,6 +301,7 @@ class EntryListItem {
 class EntryDetail {
   const EntryDetail({
     required this.id,
+    this.submissionId,
     required this.exhibitionId,
     required this.exhibitionName,
     required this.exhibitionStatus,
@@ -325,6 +338,8 @@ class EntryDetail {
     required this.rowVersion,
   });
 
+  /// Submission shown by this entry (for `AuthImage`); null when the API does not say.
+  final int? submissionId;
   final int id;
   final int exhibitionId;
   final String exhibitionName;
@@ -397,6 +412,7 @@ class EntryDetail {
         adjustLimitedToPayment: json['adjustLimitedToPayment'] as bool,
         canPay: json['canPay'] as bool,
         rowVersion: json['rowVersion'] as String,
+        submissionId: json['submissionId'] as int?,
       );
 }
 
@@ -439,8 +455,13 @@ class StudentEntry {
     required this.paidDate,
     required this.canEdit,
     required this.rowVersion,
+    this.submissionId,
+    this.hasThumbnail = true,
   });
 
+  final int? submissionId;
+  /// Whether a thumbnail exists; defaults to true when the API does not say (a submission always has an image).
+  final bool hasThumbnail;
   final int id;
   final int exhibitionId;
   final String exhibitionName;
@@ -485,6 +506,8 @@ class StudentEntry {
         paidDate: _date(json['paidDate']),
         canEdit: json['canEdit'] as bool,
         rowVersion: json['rowVersion'] as String,
+        submissionId: json['submissionId'] as int?,
+        hasThumbnail: (json['hasThumbnail'] as bool?) ?? true,
       );
 }
 
