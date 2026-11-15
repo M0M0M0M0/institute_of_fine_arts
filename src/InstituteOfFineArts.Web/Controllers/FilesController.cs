@@ -1,5 +1,7 @@
+using InstituteOfFineArts.Web.Infrastructure.Api;
 using InstituteOfFineArts.Web.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 
 namespace InstituteOfFineArts.Web.Controllers;
@@ -16,6 +18,9 @@ namespace InstituteOfFineArts.Web.Controllers;
 /// the stored file never changes.
 /// </summary>
 [AllowAnonymous]
+// CORS: the mobile app running in a browser (Flutter web) loads public pictures from here. Only the cookie sees
+// private images, and the CORS policy sends no credentials, so another site still only gets public images.
+[EnableCors(ApiSetup.CorsPolicy)]
 [Route("files")]
 public class FilesController : Controller
 {

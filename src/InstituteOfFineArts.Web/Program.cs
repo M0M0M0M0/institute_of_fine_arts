@@ -3,6 +3,7 @@ using System.Text.Encodings.Web;
 using System.Text.Unicode;
 using InstituteOfFineArts.Web.Data;
 using InstituteOfFineArts.Web.Data.Seed;
+using InstituteOfFineArts.Web.Infrastructure.Api;
 using InstituteOfFineArts.Web.Infrastructure.Configuration;
 using InstituteOfFineArts.Web.Infrastructure.DependencyInjection;
 using InstituteOfFineArts.Web.Infrastructure.FileStorage;
@@ -28,6 +29,8 @@ builder.Services.AddControllersWithViews(options =>
         options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
         options.Filters.Add<InstituteOfFineArts.Web.Infrastructure.Filters.AuditActionFilter>();
     })
+    // Enums as text in JSON ("ONGOING", "BEST"…): read by the mobile app (case-insensitive both ways)
+    .AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()))
     .AddViewLocalization()
     .AddDataAnnotationsLocalization(options =>
         options.DataAnnotationLocalizerProvider = (_, factory) => factory.Create(typeof(InstituteOfFineArts.Web.SharedResource)));
@@ -94,6 +97,9 @@ QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 // Background jobs: every BackgroundService in Infrastructure/BackgroundJobs is registered automatically
 builder.Services.AddBackgroundJobs();
 
+// JSON Web API for the Flutter mobile app (mobile/): JWT bearer login + CORS, controllers in Controllers/Api
+builder.AddMobileApi();
+
 var app = builder.Build();
 
 // Create the upload root (outside wwwroot) at start-up so the first upload does not fail
@@ -115,8 +121,8 @@ else
 
 // Friendly error pages in every environment (F-M01-07): unhandled exception → /error/500 (logged; details shown
 // on the page in Development only); empty 4xx/5xx responses such as 404 → /error/{code}. See ErrorController.
-app.UseExceptionHandler("/error/500");
-app.UseStatusCodePagesWithReExecute("/error/{0}");
+// Requests to /api get ProblemDetails JSON instead (Infrastructure/Api/ApiSetup.cs).
+app.UseErrorHandling();
 
 // Reject oversized requests up front with 413 (→ "File too large" page). Without this, the anti-forgery check
 // reads the form first, hits the size limit and answers 400 "Bad request". Requests without a Content-Length
@@ -127,6 +133,12 @@ app.Use(async (context, next) =>
     if (context.Request.ContentLength > maxRequestBytes
         && context.Features.Get<IStatusCodeReExecuteFeature>() == null)
     {
+        if (context.IsApiRequest())
+        {
+            await ApiSetup.WriteProblemAsync(context, StatusCodes.Status413PayloadTooLarge,
+                $"The file is too large (maximum {maxRequestBytes / 1024 / 1024 - 1} MB).");
+            return;
+        }
         context.Response.StatusCode = StatusCodes.Status413PayloadTooLarge;
         return;
     }
@@ -148,6 +160,8 @@ app.UseRequestLocalization(new RequestLocalizationOptions
 
 app.UseHttpsRedirection();
 app.UseRouting();
+// CORS for the mobile app's API calls (policy used by Infrastructure/Api/ApiControllerBase only)
+app.UseCors();
 
 // Read the login cookie → User; must come before UseAuthorization
 app.UseAuthentication();

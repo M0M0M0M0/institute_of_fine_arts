@@ -45,3 +45,6 @@ database/test-upload/
 
 # Archive sample paintings (~450 MB): downloaded by database/seed-images/nga/fetch-images.ps1, not in Git
 database/seed-images/nga/images/
+
+# JWT signing key generated for the mobile API (Infrastructure/Api/ApiSetup.cs) – never commit
+src/InstituteOfFineArts.Web/App_Data/
