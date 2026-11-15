@@ -255,10 +255,10 @@ DateTime? _dateOrNull(Object? value) => value == null ? null : DateTime.parse(va
 String slotsLabel(int issued, int total) => '$issued/$total';
 
 /// Kiểm tra lý do bắt buộc khi điều chỉnh sau công bố (BR-34); null nếu hợp lệ. Server vẫn là nơi quyết định cuối.
-String? validateReason(String reason) => reason.trim().isEmpty ? 'Vui lòng nhập lý do' : null;
+String? validateReason(String reason) => reason.trim().isEmpty ? 'Please enter a reason' : null;
 
 /// Thông báo nhắc xác nhận để trống khi công bố (UC-06 bước 5).
-String emptySlotsMessage(int emptySlots) => 'Còn $emptySlots suất giải chưa trao. Tick xác nhận để trống các suất này.';
+String emptySlotsMessage(int emptySlots) => '$emptySlots award ${emptySlots == 1 ? 'slot is' : 'slots are'} still empty. Tick the box to confirm leaving ${emptySlots == 1 ? 'it' : 'them'} empty.';
 
 // ---------------- Repository ----------------
 

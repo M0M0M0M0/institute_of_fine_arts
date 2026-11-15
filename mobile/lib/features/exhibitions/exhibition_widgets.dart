@@ -191,7 +191,7 @@ class DateField extends StatelessWidget {
             },
       child: InputDecorator(
         decoration: InputDecoration(labelText: label, suffixIcon: const Icon(Icons.calendar_today, size: 18)),
-        child: Text(value == null ? 'Chọn ngày' : formatDate(value!)),
+        child: Text(value == null ? 'Select date' : formatDate(value!)),
       ),
     );
   }

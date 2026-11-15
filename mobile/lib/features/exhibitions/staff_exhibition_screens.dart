@@ -2,37 +2,54 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/tokens.dart';
 import '../../core/api_client.dart';
 import '../../core/async_view.dart';
 import '../../core/format.dart';
-import '../competitions/competition_widgets.dart';
+import '../../shared/shared.dart';
 import 'exhibition_widgets.dart';
 import 'exhibitions.dart';
 
-/// Tab "Triển lãm" của giáo viên: danh sách triển lãm + danh sách tranh gửi triển lãm (F-M09-01, 02, 09).
+/// Staff "Exhibitions" tab: exhibitions + submitted artworks (F-M09-01, 02, 09).
+/// [initialView] comes from the Home cards: `pending` (proposals to review) or `unpaid`
+/// (sales to pay out) opens the artworks list with that filter.
 class StaffExhibitionsTab extends StatelessWidget {
-  const StaffExhibitionsTab({super.key});
+  const StaffExhibitionsTab({super.key, this.initialView});
+
+  final String? initialView;
 
   @override
   Widget build(BuildContext context) {
-    return const DefaultTabController(
+    final entries = initialView == 'pending' || initialView == 'unpaid';
+    return DefaultTabController(
       length: 2,
+      initialIndex: entries ? 1 : 0,
       child: Column(
         children: [
-          TabBar(tabs: [Tab(text: 'Triển lãm'), Tab(text: 'Tranh gửi triển lãm')]),
-          Expanded(child: TabBarView(children: [_StaffExhibitionList(), _StaffEntriesList()])),
+          const TabBar(tabs: [Tab(text: 'Exhibitions'), Tab(text: 'Artworks')]),
+          Expanded(
+            child: TabBarView(children: [
+              const _StaffExhibitionList(),
+              _StaffEntriesList(
+                initialStatus: initialView == 'pending'
+                    ? EntryStatus.pending
+                    : (initialView == 'unpaid' ? EntryStatus.sold : null),
+                initialPaid: initialView == 'unpaid' ? false : null,
+              ),
+            ]),
+          ),
         ],
       ),
     );
   }
 }
 
-Widget _emptyList(String text) => ListView(
+Widget _emptyList(String title, {String? message}) => ListView(
       physics: const AlwaysScrollableScrollPhysics(),
-      children: [Padding(padding: const EdgeInsets.all(32), child: Center(child: Text(text, textAlign: TextAlign.center)))],
+      children: [const SizedBox(height: AppSpacing.xl), EmptyState(title: title, message: message)],
     );
 
-// ===================== Danh sách triển lãm =====================
+// ===================== Exhibition list =====================
 
 class _StaffExhibitionList extends ConsumerStatefulWidget {
   const _StaffExhibitionList();
@@ -48,37 +65,38 @@ class _StaffExhibitionListState extends ConsumerState<_StaffExhibitionList> {
   @override
   Widget build(BuildContext context) {
     final list = ref.watch(staffExhibitionsProvider);
+    final text = Theme.of(context).textTheme;
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, AppSpacing.md, AppSpacing.gutter, 0),
           child: Row(children: [
             Expanded(
               child: TextField(
                 decoration: const InputDecoration(
-                    hintText: 'Tìm theo tên, địa điểm, thành phố', prefixIcon: Icon(Icons.search), isDense: true),
+                    hintText: 'Search name, venue or city', prefixIcon: Icon(Icons.search), isDense: true),
                 onChanged: (v) => setState(() => _q = v.trim().toLowerCase()),
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSpacing.sm),
             FilledButton.icon(
               onPressed: () => context.push('/staff/exhibitions/new'),
               icon: const Icon(Icons.add),
-              label: const Text('Thêm'),
+              label: const Text('New'),
             ),
           ]),
         ),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
           child: Row(children: [
             Padding(
-              padding: const EdgeInsets.all(4),
-              child: ChoiceChip(label: const Text('Tất cả'), selected: _status == null, onSelected: (_) => setState(() => _status = null)),
+              padding: const EdgeInsets.all(AppSpacing.xs),
+              child: ChoiceChip(label: const Text('All'), selected: _status == null, onSelected: (_) => setState(() => _status = null)),
             ),
             for (final s in ExhibitionStatus.values)
               Padding(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(AppSpacing.xs),
                 child: ChoiceChip(label: Text(s.label), selected: _status == s, onSelected: (_) => setState(() => _status = s)),
               ),
           ]),
@@ -88,7 +106,7 @@ class _StaffExhibitionListState extends ConsumerState<_StaffExhibitionList> {
             value: list,
             onRetry: () => ref.invalidate(staffExhibitionsProvider),
             data: (all) {
-              // Lọc ở app vì số triển lãm ít; trạng thái do server tính sẵn
+              // Filtered in the app: there are few exhibitions and the server already computes the status
               final items = all
                   .where((e) => _status == null || e.status == _status)
                   .where((e) => _q.isEmpty || '${e.name} ${e.venue} ${e.city}'.toLowerCase().contains(_q))
@@ -99,30 +117,41 @@ class _StaffExhibitionListState extends ConsumerState<_StaffExhibitionList> {
                   await ref.read(staffExhibitionsProvider.future);
                 },
                 child: items.isEmpty
-                    ? _emptyList('Không có triển lãm phù hợp.')
+                    ? _emptyList('No matching exhibitions')
                     : ListView.builder(
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(AppSpacing.gutter),
                         itemCount: items.length,
                         itemBuilder: (context, i) {
                           final e = items[i];
                           return Card(
+                            margin: const EdgeInsets.only(bottom: AppSpacing.md),
                             child: InkWell(
                               onTap: () => context.push('/staff/exhibitions/${e.id}'),
                               child: Padding(
-                                padding: const EdgeInsets.all(12),
+                                padding: const EdgeInsets.all(AppSpacing.md),
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Row(children: [
-                                      Expanded(child: Text(e.name, style: Theme.of(context).textTheme.titleMedium)),
-                                      ExhibitionStatusChip(e.status),
+                                    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                      Expanded(child: Text(e.name, style: text.titleMedium)),
+                                      const SizedBox(width: AppSpacing.sm),
+                                      StatusChip.exhibition(e.status),
                                     ]),
-                                    const SizedBox(height: 4),
-                                    Text('${e.venue} – ${e.city}'),
-                                    Text(dateRange(e.startDate, e.endDate)),
-                                    Text('${e.entryCount} tranh${e.pendingCount > 0 ? ' • ${e.pendingCount} chờ duyệt' : ''}',
-                                        style: Theme.of(context).textTheme.bodySmall),
+                                    const SizedBox(height: AppSpacing.xs),
+                                    Row(children: [
+                                      const Icon(Icons.place_outlined, size: 16, color: AppColors.muted),
+                                      const SizedBox(width: 4),
+                                      Expanded(child: Text('${e.venue}, ${e.city}', style: text.bodyMedium)),
+                                    ]),
+                                    Text(dateRange(e.startDate, e.endDate), style: text.bodySmall),
+                                    const SizedBox(height: AppSpacing.xs),
+                                    Text(
+                                      '${e.entryCount} ${e.entryCount == 1 ? 'artwork' : 'artworks'}'
+                                      '${e.pendingCount > 0 ? ' · ${e.pendingCount} to review' : ''}',
+                                      style: text.labelMedium!.copyWith(
+                                          color: e.pendingCount > 0 ? AppColors.brassText : AppColors.muted),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -139,28 +168,31 @@ class _StaffExhibitionListState extends ConsumerState<_StaffExhibitionList> {
   }
 }
 
-// ===================== Danh sách tranh gửi triển lãm =====================
+// ===================== Submitted artworks list =====================
 
 class _StaffEntriesList extends ConsumerStatefulWidget {
-  const _StaffEntriesList();
+  const _StaffEntriesList({this.initialStatus, this.initialPaid});
+
+  final EntryStatus? initialStatus;
+  final bool? initialPaid;
 
   @override
   ConsumerState<_StaffEntriesList> createState() => _StaffEntriesListState();
 }
 
 class _StaffEntriesListState extends ConsumerState<_StaffEntriesList> {
-  EntryStatus? _status;
-  bool? _paid;
+  late EntryStatus? _status = widget.initialStatus;
+  late bool? _paid = widget.initialPaid;
   String _q = '';
 
-  // Các bộ lọc nhanh: (nhãn, trạng thái, đã trả)
+  // Quick filters: (label, status, paid)
   static const _quick = <(String, EntryStatus?, bool?)>[
-    ('Tất cả', null, null),
-    ('Chờ duyệt', EntryStatus.pending, null),
-    ('Đã duyệt', EntryStatus.accepted, null),
-    ('Đã bán', EntryStatus.sold, null),
-    ('Cần trả tiền', EntryStatus.sold, false),
-    ('Chưa bán', EntryStatus.unsold, null),
+    ('All', null, null),
+    ('Pending review', EntryStatus.pending, null),
+    ('Accepted', EntryStatus.accepted, null),
+    ('Sold', EntryStatus.sold, null),
+    ('To pay out', EntryStatus.sold, false),
+    ('Unsold', EntryStatus.unsold, null),
   ];
 
   @override
@@ -170,9 +202,10 @@ class _StaffEntriesListState extends ConsumerState<_StaffEntriesList> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, AppSpacing.md, AppSpacing.gutter, 0),
           child: TextField(
-            decoration: const InputDecoration(hintText: 'Tìm theo học viên, mã HV, tên tranh', prefixIcon: Icon(Icons.search), isDense: true),
+            decoration: const InputDecoration(
+                hintText: 'Search student, code or title', prefixIcon: Icon(Icons.search), isDense: true),
             onSubmitted: (v) => setState(() => _q = v.trim()),
             onChanged: (v) {
               if (v.trim().isEmpty && _q.isNotEmpty) setState(() => _q = '');
@@ -181,11 +214,11 @@ class _StaffEntriesListState extends ConsumerState<_StaffEntriesList> {
         ),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
           child: Row(children: [
             for (final (label, status, paid) in _quick)
               Padding(
-                padding: const EdgeInsets.all(4),
+                padding: const EdgeInsets.all(AppSpacing.xs),
                 child: ChoiceChip(
                   label: Text(label),
                   selected: _status == status && _paid == paid,
@@ -207,10 +240,10 @@ class _StaffEntriesListState extends ConsumerState<_StaffEntriesList> {
                 await ref.read(entriesProvider(filter).future);
               },
               child: items.isEmpty
-                  ? _emptyList('Không có tranh nào phù hợp.')
+                  ? _emptyList('No matching artworks')
                   : ListView.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(AppSpacing.gutter),
                       itemCount: items.length,
                       itemBuilder: (context, i) => EntryListCard(item: items[i]),
                     ),
@@ -222,7 +255,7 @@ class _StaffEntriesListState extends ConsumerState<_StaffEntriesList> {
   }
 }
 
-/// Thẻ một tranh gửi triển lãm trong danh sách của Staff.
+/// One submitted artwork in the staff lists: thumbnail in its frame, student, price and status.
 class EntryListCard extends StatelessWidget {
   const EntryListCard({super.key, required this.item, this.showExhibition = true});
 
@@ -232,23 +265,51 @@ class EntryListCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final e = item;
+    final text = Theme.of(context).textTheme;
     return Card(
+      margin: const EdgeInsets.only(bottom: AppSpacing.md),
       child: InkWell(
         onTap: () => context.push('/staff/exhibition-entries/${e.id}'),
         child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Column(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(children: [
-                Expanded(child: Text(e.submissionTitle, style: Theme.of(context).textTheme.titleMedium)),
-                EntryStatusChip(e.status, paid: e.paidToStudent),
-              ]),
-              const SizedBox(height: 4),
-              Text('${e.studentName} (${e.studentCode})'),
-              if (showExhibition) Text(e.exhibitionName),
-              Text('Giá đề xuất: ${formatVnd(e.askingPrice)}'
-                  '${e.soldPrice != null ? ' • Giá bán: ${formatVnd(e.soldPrice!)}' : ''}'),
+              SizedBox(
+                width: 84,
+                child: ArtworkFrame(
+                  aspectRatio: 1,
+                  matWidth: 5,
+                  awarded: e.status == EntryStatus.sold,
+                  child: e.submissionId != null && e.hasThumbnail
+                      ? AuthImage(submissionId: e.submissionId!, semanticLabel: e.submissionTitle)
+                      : const ImagePlaceholder(),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      e.submissionTitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: text.titleSmall!.copyWith(fontStyle: FontStyle.italic, fontWeight: FontWeight.w500),
+                    ),
+                    Text('${e.studentName} (${e.studentCode})', style: text.bodyMedium),
+                    if (showExhibition) Text(e.exhibitionName, style: text.bodySmall),
+                    Text(
+                      'Asking ${formatVnd(e.askingPrice)}'
+                      '${e.soldPrice != null ? ' · sold ${formatVnd(e.soldPrice!)}' : ''}',
+                      style: text.bodySmall,
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    StatusChip.entry(e.status, paid: e.paidToStudent),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: AppColors.muted),
             ],
           ),
         ),
@@ -257,9 +318,9 @@ class EntryListCard extends StatelessWidget {
   }
 }
 
-// ===================== Chi tiết triển lãm =====================
+// ===================== Exhibition detail =====================
 
-/// Chi tiết triển lãm cho Staff: thông tin, thao tác (sửa/hủy/kết thúc/xóa), danh sách tranh (F-M09-01, 13).
+/// Staff exhibition detail: info, actions (edit / cancel / finish / delete) and its artworks (F-M09-01, 13).
 class StaffExhibitionDetailScreen extends ConsumerStatefulWidget {
   const StaffExhibitionDetailScreen({super.key, required this.id});
 
@@ -281,7 +342,7 @@ class _StaffExhibitionDetailScreenState extends ConsumerState<StaffExhibitionDet
     setState(() => _busy = false);
   }
 
-  // Chạy một thao tác ghi, báo kết quả và làm mới dữ liệu
+  // Runs a write, reports the result and refreshes the data
   Future<void> _run(Future<void> Function() action, String done) async {
     setState(() => _busy = true);
     final container = ProviderScope.containerOf(context);
@@ -303,35 +364,37 @@ class _StaffExhibitionDetailScreenState extends ConsumerState<StaffExhibitionDet
           title: Text(title),
           content: Text(message),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Đóng')),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Close')),
             FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(ok)),
           ],
         ),
       ) ??
       false;
 
-  // Hủy triển lãm cần lý do (BR-42a)
+  // Cancelling needs a reason (BR-42a)
   Future<void> _cancel() async {
-    final reason = await askReason(context, title: 'Hủy triển lãm', label: 'Lý do hủy *',
-        hint: 'Tranh đang chờ duyệt/đã duyệt sẽ chuyển sang "Đã rút".');
+    final reason = await askReason(context,
+        title: 'Cancel exhibition',
+        label: 'Reason for cancelling *',
+        hint: 'Pending and accepted artworks become "Withdrawn".');
     if (reason == null || !mounted) return;
-    await _run(() => ref.read(exhibitionRepositoryProvider).cancelExhibition(widget.id, reason), 'Đã hủy triển lãm.');
+    await _run(() => ref.read(exhibitionRepositoryProvider).cancelExhibition(widget.id, reason), 'Exhibition cancelled.');
   }
 
   Future<void> _finish() async {
-    if (!await _confirm('Kết thúc triển lãm?', 'Các tranh đã duyệt nhưng chưa bán sẽ chuyển sang "Chưa bán".', 'Kết thúc')) return;
-    await _run(() => ref.read(exhibitionRepositoryProvider).finishExhibition(widget.id), 'Đã kết thúc triển lãm.');
+    if (!await _confirm('Finish exhibition?', 'Accepted artworks that are not sold become "Unsold".', 'Finish')) return;
+    await _run(() => ref.read(exhibitionRepositoryProvider).finishExhibition(widget.id), 'Exhibition finished.');
   }
 
   Future<void> _delete() async {
-    if (!await _confirm('Xóa triển lãm?', 'Triển lãm chưa có tranh nào nên có thể xóa.', 'Xóa')) return;
+    if (!await _confirm('Delete exhibition?', 'This exhibition has no artworks, so it can be deleted.', 'Delete')) return;
     if (!mounted) return;
     final container = ProviderScope.containerOf(context);
     setState(() => _busy = true);
     try {
       await ref.read(exhibitionRepositoryProvider).deleteExhibition(widget.id);
       if (!mounted) return;
-      _toast('Đã xóa triển lãm.');
+      _toast('Exhibition deleted.');
       context.pop();
       refreshExhibitionData(container);
     } catch (e) {
@@ -343,67 +406,75 @@ class _StaffExhibitionDetailScreenState extends ConsumerState<StaffExhibitionDet
   Widget build(BuildContext context) {
     final detail = ref.watch(staffExhibitionProvider(widget.id));
     final entries = ref.watch(entriesProvider(EntryFilter(exhibitionId: widget.id)));
+    final text = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Triển lãm')),
+      appBar: AppBar(title: const Text('Exhibition')),
       body: AsyncValueView(
         value: detail,
         onRetry: () => ref.invalidate(staffExhibitionProvider(widget.id)),
         data: (e) => ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(AppSpacing.gutter),
           children: [
-            Row(children: [
-              Expanded(child: Text(e.name, style: Theme.of(context).textTheme.headlineSmall)),
-              ExhibitionStatusChip(e.status),
+            Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Expanded(child: Text(e.name, style: text.headlineSmall)),
+              const SizedBox(width: AppSpacing.sm),
+              StatusChip.exhibition(e.status),
             ]),
-            const SizedBox(height: 8),
-            InfoRow('Địa điểm', '${e.venue}, ${e.city}'),
-            InfoRow('Thời gian', dateRange(e.startDate, e.endDate)),
-            if (e.organizer != null) InfoRow('Ban tổ chức', e.organizer!),
-            InfoRow('Tranh', '${e.entryCount} (chờ duyệt ${e.pendingCount}, đã duyệt ${e.acceptedCount}, đã bán ${e.soldCount})'),
-            if (e.description != null) ...[const SectionTitle('Mô tả'), Text(e.description!)],
+            const SizedBox(height: AppSpacing.sm),
+            InfoRow('Venue', '${e.venue}, ${e.city}'),
+            InfoRow('Dates', dateRange(e.startDate, e.endDate)),
+            if (e.organizer != null) InfoRow('Organizer', e.organizer!),
+            InfoRow('Artworks',
+                '${e.entryCount} (${e.pendingCount} to review, ${e.acceptedCount} accepted, ${e.soldCount} sold)'),
+            if (e.description != null) ...[
+              const SectionHeader('About', padding: EdgeInsets.fromLTRB(0, AppSpacing.md, 0, AppSpacing.xs)),
+              Text(e.description!),
+            ],
             if (e.status == ExhibitionStatus.cancelled && e.cancelReason != null)
-              NoticeCard(text: 'Đã hủy: ${e.cancelReason}', error: true),
-            if (e.soldCount > 0) const NoticeCard(text: 'Đã có tranh bán nên không thể hủy hoặc đổi ngày triển lãm.'),
-            const SizedBox(height: 8),
-            Wrap(spacing: 12, runSpacing: 8, children: [
+              NoticeCard(text: 'Cancelled: ${e.cancelReason}', error: true),
+            if (e.soldCount > 0)
+              const NoticeCard(text: 'Artworks have been sold, so the exhibition cannot be cancelled or moved.'),
+            const SizedBox(height: AppSpacing.sm),
+            Wrap(spacing: AppSpacing.md, runSpacing: AppSpacing.sm, children: [
               if (e.canSubmitEntries)
                 FilledButton.icon(
                   onPressed: _busy ? null : () => context.push('/staff/exhibitions/${e.id}/add-entry'),
                   icon: const Icon(Icons.add_photo_alternate),
-                  label: const Text('Thêm tranh'),
+                  label: const Text('Add artwork'),
                 ),
               if (e.canEdit)
-                FilledButton.tonalIcon(
+                OutlinedButton.icon(
                   onPressed: _busy ? null : () => context.push('/staff/exhibitions/${e.id}/edit'),
                   icon: const Icon(Icons.edit),
-                  label: const Text('Sửa'),
+                  label: const Text('Edit'),
                 ),
               if (e.canFinish)
-                FilledButton.tonalIcon(
+                OutlinedButton.icon(
                   onPressed: _busy ? null : _finish,
                   icon: const Icon(Icons.flag),
-                  label: const Text('Kết thúc triển lãm'),
+                  label: const Text('Finish exhibition'),
                 ),
               if (e.canCancel)
-                FilledButton.tonalIcon(
+                OutlinedButton.icon(
                   onPressed: _busy ? null : _cancel,
                   icon: const Icon(Icons.cancel),
-                  label: const Text('Hủy triển lãm'),
+                  label: const Text('Cancel exhibition'),
                 ),
               if (e.canDelete)
-                FilledButton.tonalIcon(
+                TextButton.icon(
                   onPressed: _busy ? null : _delete,
-                  icon: const Icon(Icons.delete),
-                  label: const Text('Xóa'),
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Delete'),
+                  style: TextButton.styleFrom(foregroundColor: AppColors.danger),
                 ),
             ]),
-            const SectionTitle('Tranh gửi triển lãm'),
+            const SectionHeader('Submitted artworks', padding: EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.sm)),
             switch (entries) {
               AsyncData(:final value) => value.isEmpty
-                  ? const Padding(padding: EdgeInsets.all(8), child: Text('Chưa có tranh nào.'))
+                  ? const EmptyState(title: 'No artworks yet')
                   : Column(children: [for (final it in value) EntryListCard(item: it, showExhibition: false)]),
               AsyncError(:final error) => Text(ApiException.from(error).message),
-              _ => const Padding(padding: EdgeInsets.all(8), child: Center(child: CircularProgressIndicator())),
+              _ => const Padding(padding: EdgeInsets.all(AppSpacing.sm), child: Center(child: CircularProgressIndicator())),
             },
           ],
         ),
@@ -412,9 +483,9 @@ class _StaffExhibitionDetailScreenState extends ConsumerState<StaffExhibitionDet
   }
 }
 
-// ===================== Form tạo / sửa triển lãm =====================
+// ===================== Create / edit exhibition =====================
 
-/// Tạo hoặc sửa triển lãm (F-M09-01). [id] null = tạo mới.
+/// Create or edit an exhibition (F-M09-01). [id] null = create.
 class ExhibitionFormScreen extends ConsumerWidget {
   const ExhibitionFormScreen({super.key, this.id});
 
@@ -423,7 +494,7 @@ class ExhibitionFormScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: Text(id == null ? 'Thêm triển lãm' : 'Sửa triển lãm')),
+      appBar: AppBar(title: Text(id == null ? 'New exhibition' : 'Edit exhibition')),
       body: id == null
           ? const _ExhibitionForm()
           : AsyncValueView(
@@ -464,13 +535,13 @@ class _ExhibitionFormState extends ConsumerState<_ExhibitionForm> {
 
   void _toast(String text) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
 
-  /// Kiểm tra phía client; server vẫn quyết định cuối cùng (BR-42).
+  /// Client-side check; the server decides in the end (BR-42).
   String? _validate() {
-    if (_name.text.trim().isEmpty) return 'Vui lòng nhập tên triển lãm';
-    if (_venue.text.trim().isEmpty) return 'Vui lòng nhập địa điểm';
-    if (_city.text.trim().isEmpty) return 'Vui lòng nhập thành phố';
-    if (_start == null || _end == null) return 'Vui lòng chọn ngày bắt đầu và kết thúc';
-    if (_start!.isAfter(_end!)) return 'Ngày bắt đầu phải trước hoặc bằng ngày kết thúc';
+    if (_name.text.trim().isEmpty) return 'Please enter the exhibition name';
+    if (_venue.text.trim().isEmpty) return 'Please enter the venue';
+    if (_city.text.trim().isEmpty) return 'Please enter the city';
+    if (_start == null || _end == null) return 'Please choose the start and end dates';
+    if (_start!.isAfter(_end!)) return 'The start date must not be after the end date';
     return null;
   }
 
@@ -498,7 +569,7 @@ class _ExhibitionFormState extends ConsumerState<_ExhibitionForm> {
           ? await repo.createExhibition(input)
           : await repo.updateExhibition(widget.detail!.id, input);
       if (!mounted) return;
-      _toast('Đã lưu triển lãm.');
+      _toast('Exhibition saved.');
       if (widget.detail == null) {
         context.pushReplacement('/staff/exhibitions/${saved.id}');
       } else {
@@ -509,7 +580,7 @@ class _ExhibitionFormState extends ConsumerState<_ExhibitionForm> {
       if (!mounted) return;
       final err = ApiException.from(e);
       _toast(err.message);
-      if (err.statusCode == 409) refreshExhibitionData(container); // dữ liệu đã đổi → tải lại, form dựng lại
+      if (err.statusCode == 409) refreshExhibitionData(container); // data changed -> reload, the form is rebuilt
       setState(() => _busy = false);
     }
   }
@@ -518,54 +589,54 @@ class _ExhibitionFormState extends ConsumerState<_ExhibitionForm> {
   Widget build(BuildContext context) {
     final today = todayDate();
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.gutter),
       children: [
-        TextField(controller: _name, maxLength: 200, decoration: const InputDecoration(labelText: 'Tên triển lãm *')),
-        const SizedBox(height: 8),
-        TextField(controller: _venue, maxLength: 200, decoration: const InputDecoration(labelText: 'Địa điểm *')),
-        const SizedBox(height: 8),
-        TextField(controller: _city, maxLength: 100, decoration: const InputDecoration(labelText: 'Thành phố (trong nước) *')),
-        const SizedBox(height: 8),
-        TextField(controller: _organizer, maxLength: 200, decoration: const InputDecoration(labelText: 'Ban tổ chức')),
-        const SizedBox(height: 8),
+        TextField(controller: _name, maxLength: 200, decoration: const InputDecoration(labelText: 'Exhibition name *')),
+        const SizedBox(height: AppSpacing.sm),
+        TextField(controller: _venue, maxLength: 200, decoration: const InputDecoration(labelText: 'Venue *')),
+        const SizedBox(height: AppSpacing.sm),
+        TextField(controller: _city, maxLength: 100, decoration: const InputDecoration(labelText: 'City (in Vietnam) *')),
+        const SizedBox(height: AppSpacing.sm),
+        TextField(controller: _organizer, maxLength: 200, decoration: const InputDecoration(labelText: 'Organizer')),
+        const SizedBox(height: AppSpacing.sm),
         DateField(
-          label: 'Ngày bắt đầu *',
+          label: 'Start date *',
           value: _start,
           firstDate: widget.detail == null ? today : DateTime(today.year - 1),
           lastDate: DateTime(today.year + 5),
           onChanged: (d) => setState(() => _start = d),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         DateField(
-          label: 'Ngày kết thúc *',
+          label: 'End date *',
           value: _end,
           firstDate: widget.detail == null ? today : DateTime(today.year - 1),
           lastDate: DateTime(today.year + 5),
           onChanged: (d) => setState(() => _end = d),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSpacing.md),
         TextField(
           controller: _description,
           maxLength: 4000,
           maxLines: 4,
-          decoration: const InputDecoration(labelText: 'Mô tả', alignLabelWithHint: true),
+          decoration: const InputDecoration(labelText: 'Description', alignLabelWithHint: true),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         FilledButton.icon(
           onPressed: _busy ? null : _save,
           icon: _busy
               ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
               : const Icon(Icons.save),
-          label: const Text('Lưu'),
+          label: const Text('Save'),
         ),
       ],
     );
   }
 }
 
-// ===================== Staff thêm tranh trực tiếp =====================
+// ===================== Staff adds an artwork directly =====================
 
-/// Staff tìm bài BEST và tạo entry ACCEPTED với giá học viên đã báo, kèm nguồn giá (F-M09-05, BR-41).
+/// Staff searches BEST entries and creates an ACCEPTED entry with the price the student reported, plus the price source (F-M09-05, BR-41).
 class DirectEntryScreen extends ConsumerStatefulWidget {
   const DirectEntryScreen({super.key, required this.exhibitionId});
 
@@ -594,10 +665,10 @@ class _DirectEntryScreenState extends ConsumerState<DirectEntryScreen> {
   void _toast(String text) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
 
   Future<void> _submit() async {
-    if (_submissionId == null) return _toast('Vui lòng chọn bài');
-    final priceError = validatePrice(_price.text, label: 'giá học viên đã báo');
+    if (_submissionId == null) return _toast('Please choose an artwork');
+    final priceError = validatePrice(_price.text, label: 'price reported by the student');
     if (priceError != null) return _toast(priceError);
-    if (_note.text.trim().isEmpty) return _toast('Vui lòng ghi nguồn giá học viên đã báo');
+    if (_note.text.trim().isEmpty) return _toast('Please note where the student reported the price');
 
     final container = ProviderScope.containerOf(context);
     setState(() => _busy = true);
@@ -605,7 +676,7 @@ class _DirectEntryScreenState extends ConsumerState<DirectEntryScreen> {
       final entry = await ref.read(exhibitionRepositoryProvider).createDirectEntry(widget.exhibitionId,
           submissionId: _submissionId!, askingPrice: parseMoney(_price.text)!, priceSourceNote: _note.text.trim());
       if (!mounted) return;
-      _toast('Đã thêm tranh (đã duyệt).');
+      _toast('Artwork added (accepted).');
       context.pushReplacement('/staff/exhibition-entries/${entry.id}');
       refreshExhibitionData(container);
     } catch (e) {
@@ -617,56 +688,71 @@ class _DirectEntryScreenState extends ConsumerState<DirectEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Danh sách theo từ khóa tìm; FutureBuilder đơn giản vì chỉ dùng ở màn này
+    // The list depends on the search text; a plain FutureBuilder is enough since only this screen uses it
     final repo = ref.read(exhibitionRepositoryProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Thêm tranh vào triển lãm')),
+      appBar: AppBar(title: const Text('Add artwork')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.gutter),
         children: [
           TextField(
             controller: _search,
-            decoration: const InputDecoration(hintText: 'Tìm bài BEST theo học viên hoặc tên tranh', prefixIcon: Icon(Icons.search)),
+            decoration: const InputDecoration(
+                hintText: 'Search BEST entries by student or title', prefixIcon: Icon(Icons.search)),
             onSubmitted: (v) => setState(() {
               _q = v.trim();
               _submissionId = null;
             }),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           FutureBuilder<List<EligibleSubmission>>(
             key: ValueKey(_q),
             future: repo.staffEligible(_q),
             builder: (context, snap) {
               if (snap.hasError) return Text(ApiException.from(snap.error!).message);
-              if (!snap.hasData) return const Padding(padding: EdgeInsets.all(16), child: Center(child: CircularProgressIndicator()));
+              if (!snap.hasData) {
+                return const Padding(padding: EdgeInsets.all(AppSpacing.md), child: Center(child: CircularProgressIndicator()));
+              }
               final items = snap.data!;
-              if (items.isEmpty) return const NoticeCard(text: 'Không có bài BEST nào đủ điều kiện.');
+              if (items.isEmpty) return const NoticeCard(text: 'No eligible BEST entries found.');
               return RadioGroup<int>(
                 groupValue: _submissionId,
                 onChanged: (v) => setState(() => _submissionId = v),
                 child: Column(children: [
                   for (final s in items)
                     RadioListTile<int>(
+                      contentPadding: EdgeInsets.zero,
                       value: s.id,
-                      title: Text(s.title),
-                      subtitle: Text('${s.studentName} (${s.studentCode}) • ${s.competitionTitle}'),
+                      title: Text(s.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+                      subtitle: Text('${s.studentName} (${s.studentCode}) · ${s.competitionTitle}'),
+                      secondary: SizedBox(
+                        width: 56,
+                        height: 56,
+                        child: ArtworkFrame(
+                          aspectRatio: null,
+                          matWidth: 3,
+                          child: s.hasThumbnail
+                              ? AuthImage(submissionId: s.id, semanticLabel: s.title)
+                              : const ImagePlaceholder(),
+                        ),
+                      ),
                     ),
                 ]),
               );
             },
           ),
-          const SizedBox(height: 12),
-          MoneyField(controller: _price, label: 'Giá học viên đã báo (giá tối thiểu)'),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.md),
+          MoneyField(controller: _price, label: 'Price reported by the student (minimum price)'),
+          const SizedBox(height: AppSpacing.md),
           TextField(
             controller: _note,
             maxLength: 500,
-            decoration: const InputDecoration(labelText: 'Nguồn giá *', hintText: 'Vd: học viên báo qua điện thoại ngày …'),
+            decoration: const InputDecoration(labelText: 'Price source *', hintText: 'e.g. reported by phone on …'),
           ),
           FilledButton.icon(
             onPressed: _busy ? null : _submit,
             icon: const Icon(Icons.add),
-            label: const Text('Thêm tranh'),
+            label: const Text('Add artwork'),
           ),
         ],
       ),
@@ -674,9 +760,9 @@ class _DirectEntryScreenState extends ConsumerState<DirectEntryScreen> {
   }
 }
 
-// ===================== Hộp thoại dùng chung =====================
+// ===================== Shared dialog =====================
 
-/// Hộp thoại nhập một lý do bắt buộc; trả về chuỗi đã cắt khoảng trắng hoặc null nếu đóng.
+/// Dialog asking for one mandatory reason; returns the trimmed text or null when closed.
 Future<String?> askReason(BuildContext context, {required String title, required String label, String? hint}) async {
   final controller = TextEditingController();
   final result = await showDialog<String>(
@@ -700,17 +786,17 @@ Future<String?> askReason(BuildContext context, {required String title, required
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Đóng')),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
             FilledButton(
               onPressed: () {
                 final text = controller.text.trim();
                 if (text.isEmpty) {
-                  setState(() => error = 'Vui lòng nhập lý do');
+                  setState(() => error = 'Please enter a reason');
                   return;
                 }
                 Navigator.pop(context, text);
               },
-              child: const Text('Xác nhận'),
+              child: const Text('Confirm'),
             ),
           ],
         ),

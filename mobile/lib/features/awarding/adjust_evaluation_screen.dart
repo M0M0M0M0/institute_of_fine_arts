@@ -3,12 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/api_client.dart';
+import '../../app/tokens.dart';
 import '../../core/async_view.dart';
 import '../../core/format.dart';
-import '../competitions/competition_widgets.dart';
 import '../competitions/competitions.dart';
+import '../../shared/shared.dart';
+import '../grading/evaluation_fields.dart';
 import '../grading/grading.dart';
-import '../submissions/submission_widgets.dart';
 import '../submissions/submissions.dart';
 import 'awarding.dart';
 
@@ -24,7 +25,7 @@ class AdjustEvaluationScreen extends ConsumerWidget {
     // Dùng lại chi tiết chấm bài của 4a: có sẵn đánh giá hiện tại và RowVersion
     final detail = ref.watch(gradingDetailProvider(id));
     return Scaffold(
-      appBar: AppBar(title: const Text('Điều chỉnh kết quả')),
+      appBar: AppBar(title: const Text('Adjust result')),
       body: AsyncValueView(
         value: detail,
         onRetry: () => ref.invalidate(gradingDetailProvider(id)),
@@ -99,7 +100,7 @@ class _BodyState extends ConsumerState<_Body> {
             _reason.text.trim(),
           );
       if (!mounted) return;
-      _toast('Đã điều chỉnh kết quả.');
+      _toast('Result adjusted.');
       context.pop();
       refreshAwardingData(container);
     } catch (e) {
@@ -115,100 +116,90 @@ class _BodyState extends ConsumerState<_Body> {
   @override
   Widget build(BuildContext context) {
     final d = _d;
-    final textTheme = Theme.of(context).textTheme;
+    final text = Theme.of(context).textTheme;
     final disqualified = _rating == SubmissionRating.disqualified;
     final canAdjust = d.evaluation != null && d.competitionStatus == CompetitionStatus.graded && !_busy;
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.gutter),
       children: [
-        SubmissionImage(submissionId: d.id, height: 240),
-        const SizedBox(height: 12),
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 360),
+            child: InkWell(
+              onTap: () => ArtworkViewer.open(
+                context,
+                ArtworkViewer.private(
+                  submissionId: d.id,
+                  title: d.title,
+                  subtitle: '${d.studentName} (${d.studentCode})',
+                ),
+              ),
+              child: ArtworkFrame(
+                aspectRatio: 4 / 5,
+                child: ColoredBox(
+                  color: AppColors.stone,
+                  child: AuthImage(submissionId: d.id, thumb: false, fit: BoxFit.contain, semanticLabel: d.title),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(child: Text(d.title, style: textTheme.headlineSmall)),
+            Expanded(child: Text(d.title, style: text.headlineSmall!.copyWith(fontStyle: FontStyle.italic))),
+            const SizedBox(width: AppSpacing.sm),
             StatusChip(d.competitionStatus),
           ],
         ),
-        Text('${d.studentName} (${d.studentCode}) • ${d.competitionTitle}'),
+        Text('${d.studentName} (${d.studentCode}) · ${d.competitionTitle}'),
         if (d.evaluation case final ev?)
-          Text('Chấm bởi ${ev.evaluatedByName} lúc ${formatDateTime(ev.evaluatedAt)}', style: textTheme.bodySmall),
-        const SizedBox(height: 8),
+          Text('Graded by ${ev.evaluatedByName} on ${formatDateTime(ev.evaluatedAt)}', style: text.bodySmall),
+        const SizedBox(height: AppSpacing.sm),
         if (!canAdjust && !_busy)
-          Card(
-            color: Theme.of(context).colorScheme.errorContainer,
-            child: const Padding(
-              padding: EdgeInsets.all(12),
-              child: Text('Chỉ điều chỉnh được bài đã có đánh giá của cuộc thi đã công bố. '
-                  'Cuộc thi chưa công bố thì sửa ở mục Chấm bài.'),
+          Container(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: AppColors.danger.withValues(alpha: 0.08),
+              borderRadius: AppRadius.mdAll,
+              border: Border.all(color: AppColors.danger.withValues(alpha: 0.4)),
             ),
+            child: const Text('Only graded entries of a published competition can be adjusted here. '
+                'For an unpublished competition, change the evaluation under Grading.'),
           ),
-        const Divider(height: 24),
-        Text('Đánh giá điều chỉnh', style: textTheme.titleLarge),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<SubmissionRating>(
-          initialValue: _rating,
-          decoration: const InputDecoration(labelText: 'Xếp loại *', border: OutlineInputBorder()),
-          items: [for (final r in SubmissionRating.values) DropdownMenuItem(value: r, child: Text(r.label))],
-          onChanged: canAdjust ? (v) => setState(() => _rating = v) : null,
-        ),
-        const SizedBox(height: 12),
-        TextFormField(
-          controller: _positive,
+        const Divider(height: AppSpacing.xl),
+        Semantics(header: true, child: Text('Adjusted evaluation', style: text.titleLarge)),
+        const SizedBox(height: AppSpacing.sm),
+        Text('Rating *', style: text.labelLarge),
+        const SizedBox(height: AppSpacing.xs),
+        RatingChips(value: _rating, onChanged: canAdjust ? (v) => setState(() => _rating = v) : null),
+        const SizedBox(height: AppSpacing.md),
+        EvaluationTextFields(
+          positive: _positive,
+          negative: _negative,
+          improvement: _improvement,
+          disqualified: disqualified,
           enabled: canAdjust,
-          maxLength: 2000,
-          maxLines: 3,
-          decoration: InputDecoration(
-            labelText: disqualified ? 'Điểm mạnh' : 'Điểm mạnh *',
-            alignLabelWithHint: true,
-            border: const OutlineInputBorder(),
-          ),
         ),
-        TextFormField(
-          controller: _negative,
-          enabled: canAdjust,
-          maxLength: 2000,
-          maxLines: 3,
-          decoration: InputDecoration(
-            // BR-23: DISQUALIFIED dùng ô này để ghi lý do bắt buộc
-            labelText: disqualified ? 'Lý do bị loại *' : 'Điểm yếu',
-            alignLabelWithHint: true,
-            border: const OutlineInputBorder(),
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: _improvement,
-          enabled: canAdjust,
-          maxLength: 2000,
-          maxLines: 3,
-          decoration: const InputDecoration(
-            labelText: 'Điểm cần cải thiện',
-            alignLabelWithHint: true,
-            border: OutlineInputBorder(),
-          ),
-        ),
-        const SizedBox(height: 8),
-        // BR-34: mọi điều chỉnh sau công bố đều phải có lý do, lưu vào lịch sử thay đổi
+        // BR-34: every adjustment after publishing needs a reason, kept in the change history
         TextFormField(
           controller: _reason,
           enabled: canAdjust,
           maxLength: 1000,
           maxLines: 2,
-          decoration: const InputDecoration(
-            labelText: 'Lý do điều chỉnh *',
-            alignLabelWithHint: true,
-            border: OutlineInputBorder(),
-          ),
+          decoration: const InputDecoration(labelText: 'Reason for the adjustment *', alignLabelWithHint: true),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSpacing.sm),
         FilledButton.icon(
           onPressed: canAdjust ? _save : null,
           icon: _busy
               ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
               : const Icon(Icons.save),
-          label: const Text('Lưu điều chỉnh'),
+          label: const Text('Save adjustment'),
         ),
+        const SizedBox(height: AppSpacing.lg),
       ],
     );
   }

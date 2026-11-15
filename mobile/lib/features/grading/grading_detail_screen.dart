@@ -2,17 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/tokens.dart';
 import '../../core/api_client.dart';
 import '../../core/async_view.dart';
 import '../../core/file_download.dart';
 import '../../core/format.dart';
-import '../competitions/competition_widgets.dart';
+import '../../shared/shared.dart';
 import '../competitions/competitions.dart';
-import '../submissions/submission_widgets.dart';
 import '../submissions/submissions.dart';
+import 'evaluation_fields.dart';
 import 'grading.dart';
 
-/// Màn chấm bài: ảnh, nội dung bài, form xếp loại + nhận xét (UC-05, SCR-27).
+/// M-T3: grade one entry: framed picture (tap to zoom), entry info, evaluation form (UC-05).
 class GradingDetailScreen extends ConsumerWidget {
   const GradingDetailScreen({super.key, required this.id});
 
@@ -22,11 +23,11 @@ class GradingDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(gradingDetailProvider(id));
     return Scaffold(
-      appBar: AppBar(title: const Text('Chấm bài')),
+      appBar: AppBar(title: const Text('Grade entry')),
       body: AsyncValueView(
         value: detail,
         onRetry: () => ref.invalidate(gradingDetailProvider(id)),
-        // Key theo RowVersion: khi tải lại sau xung đột / xóa, form được dựng lại với dữ liệu mới
+        // Keyed by RowVersion: after a conflict reload / delete the form is rebuilt with fresh data
         data: (d) => _Body(key: ValueKey('${d.id}-${d.evaluation?.rowVersion}'), detail: d),
       ),
     );
@@ -43,7 +44,6 @@ class _Body extends ConsumerStatefulWidget {
 }
 
 class _BodyState extends ConsumerState<_Body> {
-  final _formKey = GlobalKey<FormState>();
   late final TextEditingController _positive;
   late final TextEditingController _negative;
   late final TextEditingController _improvement;
@@ -55,7 +55,6 @@ class _BodyState extends ConsumerState<_Body> {
   @override
   void initState() {
     super.initState();
-    // Điền sẵn khi đã có đánh giá
     final ev = _d.evaluation;
     _positive = TextEditingController(text: ev?.positivePoints ?? '');
     _negative = TextEditingController(text: ev?.negativePoints ?? '');
@@ -73,23 +72,22 @@ class _BodyState extends ConsumerState<_Body> {
 
   void _toast(String text) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
 
-  // Lỗi 409 = dữ liệu đã bị người khác đổi (BR-52): báo rõ và tải lại bản mới nhất
+  // 409 = somebody else changed the data (BR-52): say so and reload the latest version
   void _handleError(Object e) {
     final err = ApiException.from(e);
-    _toast(err.message);
+    _toast(err.statusCode == 409 ? '${err.message} The entry was reloaded with the latest version.' : err.message);
     if (err.statusCode == 409) ref.invalidate(gradingDetailProvider(_d.id));
     setState(() => _busy = false);
   }
 
-  // Lưu đánh giá: chưa có → tạo, đã có → sửa kèm RowVersion
-  Future<void> _save() async {
+  /// Saves the evaluation (create, or update with RowVersion). [goNext] moves on to the next ungraded entry.
+  Future<void> _save({required bool goNext}) async {
     final error = validateEvaluation(_rating, _positive.text, _negative.text);
     if (error != null) {
       _toast(error);
       return;
     }
-    final creating = _d.evaluation == null;
-    // Giữ container để làm mới dữ liệu SAU khi rời màn hình (ref của widget đã dispose thì không dùng được)
+    // Keep the container to refresh data AFTER leaving the screen (a disposed widget's ref is unusable)
     final container = ProviderScope.containerOf(context);
     final id = _d.id;
     setState(() => _busy = true);
@@ -105,15 +103,14 @@ class _BodyState extends ConsumerState<_Body> {
             ),
           );
       if (!mounted) return;
-      _toast('Đã lưu đánh giá.');
-      // UC-05 bước 5: chấm mới xong thì chuyển sang bài chưa chấm kế tiếp
-      // (hỏi API trực tiếp, chưa làm mới provider để màn hình này không bị dựng lại giữa chừng)
-      final nextId = creating ? await _nextAfterSave() : null;
+      _toast('Evaluation saved.');
+      // Ask the API directly for the next ungraded entry (providers are refreshed only after leaving)
+      final nextId = goNext ? await _nextAfterSave() : null;
       if (!mounted) return;
       if (nextId != null) {
         context.pushReplacement('/staff/submissions/$nextId/evaluate');
       } else {
-        if (creating) _toast('Đã chấm hết các bài của cuộc thi này.');
+        if (goNext) _toast('Every entry of this competition is graded.');
         context.pop();
       }
       _invalidateAfterChange(container, id);
@@ -122,7 +119,6 @@ class _BodyState extends ConsumerState<_Body> {
     }
   }
 
-  // Làm mới mọi dữ liệu phụ thuộc đánh giá: tiến độ, danh sách, chi tiết chấm và chi tiết bài của học viên
   void _invalidateAfterChange(ProviderContainer container, int id) {
     container.invalidate(gradingCompetitionsProvider);
     container.invalidate(gradingListProvider);
@@ -130,7 +126,6 @@ class _BodyState extends ConsumerState<_Body> {
     container.invalidate(submissionDetailProvider(id));
   }
 
-  // Tải lại chi tiết để biết bài chưa chấm kế tiếp (do API tính sau khi lưu)
   Future<int?> _nextAfterSave() async {
     try {
       final fresh = await ref.read(gradingRepositoryProvider).detail(_d.id);
@@ -140,17 +135,16 @@ class _BodyState extends ConsumerState<_Body> {
     }
   }
 
-  // Xóa đánh giá sau khi xác nhận (F-M07-05)
   Future<void> _delete() async {
     final ev = _d.evaluation!;
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Xóa đánh giá?'),
-        content: const Text('Đánh giá của bài này sẽ bị xóa, bài trở về trạng thái chưa chấm.'),
+        title: const Text('Delete evaluation?'),
+        content: const Text('The evaluation of this entry will be removed and the entry goes back to "To grade".'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hủy')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Xóa')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
         ],
       ),
     );
@@ -160,21 +154,19 @@ class _BodyState extends ConsumerState<_Body> {
     try {
       await ref.read(gradingRepositoryProvider).deleteEvaluation(_d.id, ev.rowVersion);
       if (!mounted) return;
-      _toast('Đã xóa đánh giá.');
-      // Ở lại màn hình: tải lại chi tiết, form được dựng lại ở trạng thái "chưa chấm"
+      _toast('Evaluation deleted.');
       _invalidateAfterChange(ProviderScope.containerOf(context), _d.id);
     } catch (e) {
       if (mounted) _handleError(e);
     }
   }
 
-  // Tải file gốc về máy (F-M06-06)
   Future<void> _download() async {
     setState(() => _busy = true);
     try {
       final bytes = await ref.read(submissionRepositoryProvider).imageBytes(_d.id, download: true);
       final saved = await saveBytesAsFile(bytes, 'submission-${_d.id}.jpg');
-      if (mounted) _toast(saved ? 'Đã tải ảnh về máy.' : 'Nền tảng này chưa hỗ trợ tải về (hãy chạy trên Chrome).');
+      if (mounted) _toast(saved ? 'Picture downloaded.' : 'Downloading is not supported on this platform (use Chrome).');
     } catch (e) {
       if (mounted) _toast(ApiException.from(e).message);
     } finally {
@@ -185,145 +177,159 @@ class _BodyState extends ConsumerState<_Body> {
   @override
   Widget build(BuildContext context) {
     final d = _d;
-    final textTheme = Theme.of(context).textTheme;
-    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
     final editable = d.canEvaluate && !_busy;
     final disqualified = _rating == SubmissionRating.disqualified;
+    final awarded = _rating == SubmissionRating.best;
 
-    return Form(
-      key: _formKey,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          SubmissionImage(submissionId: d.id, height: 320),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: Text(d.title, style: textTheme.headlineSmall)),
-              StatusChip(d.competitionStatus),
-            ],
+    return ListView(
+      padding: const EdgeInsets.all(AppSpacing.gutter),
+      children: [
+        // Large framed picture; tap to zoom
+        Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 440),
+            child: Semantics(
+              button: true,
+              label: 'Open ${d.title} full screen',
+              child: InkWell(
+                onTap: () => ArtworkViewer.open(
+                  context,
+                  ArtworkViewer.private(
+                    submissionId: d.id,
+                    title: d.title,
+                    subtitle: '${d.studentName} (${d.studentCode})',
+                  ),
+                ),
+                child: ArtworkFrame(
+                  awarded: awarded,
+                  aspectRatio: 4 / 5,
+                  child: ColoredBox(
+                    color: AppColors.stone,
+                    child: AuthImage(submissionId: d.id, thumb: false, fit: BoxFit.contain, semanticLabel: d.title),
+                  ),
+                ),
+              ),
+            ),
           ),
-          const SizedBox(height: 4),
-          Text('${d.studentName} (${d.studentCode}) • ${d.competitionTitle}'),
-          Text('Nộp: ${formatDateTime(d.submittedAt)}'
-              '${d.updatedAt != null ? ' • Sửa: ${formatDateTime(d.updatedAt!)}' : ''}'),
-          Text('Đã chấm ${progressLabel(d.evaluated, d.total)} bài', style: textTheme.bodySmall),
-          const SectionTitle('Mô tả'),
-          Text(d.description),
-          SectionTitle(d.textType.label),
-          Text(d.textContent),
+        ),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: _busy ? null : _download,
+            icon: const Icon(Icons.download, size: 18),
+            label: const Text('Download original'),
+          ),
+        ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: Text(d.title, style: text.headlineSmall!.copyWith(fontStyle: FontStyle.italic)),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            StatusChip(d.competitionStatus),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        Text('${d.studentName} (${d.studentCode})', style: text.bodyLarge),
+        Text(d.competitionTitle, style: text.bodyMedium),
+        Text(
+          'Submitted ${formatDateTime(d.submittedAt)}'
+          '${d.updatedAt != null ? ' · edited ${formatDateTime(d.updatedAt!)}' : ''}',
+          style: text.bodySmall,
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        ProgressBarRow(label: 'Graded in this competition', value: d.evaluated, total: d.total),
+        const SectionHeader('Description', padding: EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.xs)),
+        Text(d.description),
+        SectionHeader(textTypeName(d.textType), padding: const EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.xs)),
+        Text(d.textContent),
+        const Divider(height: AppSpacing.xxl),
+        Semantics(header: true, child: Text('Evaluation', style: text.titleLarge)),
+        const SizedBox(height: AppSpacing.sm),
+        // UC-05 1a / 4a: the form is locked and the reason is explained
+        if (d.lockReason != null)
+          Container(
+            margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+            padding: const EdgeInsets.all(AppSpacing.md),
+            decoration: BoxDecoration(
+              color: AppColors.danger.withValues(alpha: 0.08),
+              borderRadius: AppRadius.mdAll,
+              border: Border.all(color: AppColors.danger.withValues(alpha: 0.4)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.lock_outline, color: AppColors.danger),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(child: Text(d.lockReason!)),
+              ],
+            ),
+          ),
+        if (d.evaluation case final ev?)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            child: Text('Graded by ${ev.evaluatedByName} on ${formatDateTime(ev.evaluatedAt)}', style: text.bodySmall),
+          ),
+        // Published competition: changes go through "Adjust result" (BR-34, reason required)
+        if (d.competitionStatus == CompetitionStatus.graded && d.evaluation != null)
           Align(
             alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: _busy ? null : _download,
-              icon: const Icon(Icons.download),
-              label: const Text('Tải ảnh gốc'),
+            child: OutlinedButton.icon(
+              onPressed: () => context.push('/staff/awarding/submissions/${d.id}/adjust'),
+              icon: const Icon(Icons.edit_note),
+              label: const Text('Adjust result'),
             ),
           ),
-          const Divider(height: 32),
-          Text('Đánh giá', style: textTheme.titleLarge),
-          // UC-05 1a / 4a: khóa form và nói rõ lý do
-          if (d.lockReason != null)
-            Card(
-              color: scheme.errorContainer,
-              child: Padding(
-                padding: const EdgeInsets.all(12),
-                child: Row(
-                  children: [
-                    const Icon(Icons.lock_outline),
-                    const SizedBox(width: 8),
-                    Expanded(child: Text(d.lockReason!)),
-                  ],
-                ),
+        const SizedBox(height: AppSpacing.sm),
+        Text('Rating *', style: text.labelLarge),
+        const SizedBox(height: AppSpacing.xs),
+        RatingChips(value: _rating, onChanged: editable ? (v) => setState(() => _rating = v) : null),
+        const SizedBox(height: AppSpacing.md),
+        EvaluationTextFields(
+          positive: _positive,
+          negative: _negative,
+          improvement: _improvement,
+          disqualified: disqualified,
+          enabled: editable,
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Wrap(
+          spacing: AppSpacing.md,
+          runSpacing: AppSpacing.sm,
+          children: [
+            FilledButton.icon(
+              onPressed: editable ? () => _save(goNext: true) : null,
+              icon: _busy
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.skip_next),
+              label: const Text('Save & next'),
+            ),
+            OutlinedButton.icon(
+              onPressed: editable ? () => _save(goNext: false) : null,
+              icon: const Icon(Icons.save_outlined),
+              label: const Text('Save'),
+            ),
+            if (d.evaluation != null)
+              TextButton.icon(
+                onPressed: (d.canDeleteEvaluation && !_busy) ? _delete : null,
+                icon: const Icon(Icons.delete_outline),
+                label: const Text('Delete evaluation'),
+                style: TextButton.styleFrom(foregroundColor: AppColors.danger),
               ),
-            ),
-          if (d.evaluation case final ev?)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Text('Chấm bởi ${ev.evaluatedByName} lúc ${formatDateTime(ev.evaluatedAt)}', style: textTheme.bodySmall),
-            ),
-          // Cuộc thi đã công bố: sửa đánh giá chỉ qua form Điều chỉnh kết quả (BR-34, bắt buộc lý do)
-          if (d.competitionStatus == CompetitionStatus.graded && d.evaluation != null)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: FilledButton.tonalIcon(
-                onPressed: () => context.push('/staff/awarding/submissions/${d.id}/adjust'),
-                icon: const Icon(Icons.edit_note),
-                label: const Text('Điều chỉnh kết quả'),
-              ),
-            ),
-          const SizedBox(height: 8),
-          DropdownButtonFormField<SubmissionRating>(
-            initialValue: _rating,
-            decoration: const InputDecoration(labelText: 'Xếp loại *', border: OutlineInputBorder()),
-            items: [for (final r in SubmissionRating.values) DropdownMenuItem(value: r, child: Text(r.label))],
-            onChanged: editable ? (v) => setState(() => _rating = v) : null,
-          ),
-          const SizedBox(height: 12),
-          TextFormField(
-            controller: _positive,
-            enabled: editable,
-            maxLength: 2000,
-            maxLines: 3,
-            decoration: InputDecoration(
-              labelText: disqualified ? 'Điểm mạnh' : 'Điểm mạnh *',
-              alignLabelWithHint: true,
-              border: const OutlineInputBorder(),
+          ],
+        ),
+        // Why the evaluation cannot be deleted even though the competition is not published
+        if (d.evaluation != null && !d.canDeleteEvaluation && d.canEvaluate)
+          Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.sm),
+            child: Text(
+              'This entry has an award or was sent to an exhibition, so its evaluation cannot be deleted.',
+              style: text.bodySmall,
             ),
           ),
-          TextFormField(
-            controller: _negative,
-            enabled: editable,
-            maxLength: 2000,
-            maxLines: 3,
-            decoration: InputDecoration(
-              // BR-23: DISQUALIFIED dùng ô này để ghi lý do bắt buộc
-              labelText: disqualified ? 'Lý do bị loại *' : 'Điểm yếu',
-              alignLabelWithHint: true,
-              border: const OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextFormField(
-            controller: _improvement,
-            enabled: editable,
-            maxLength: 2000,
-            maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'Điểm cần cải thiện',
-              alignLabelWithHint: true,
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: [
-              FilledButton.icon(
-                onPressed: editable ? _save : null,
-                icon: _busy
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.save),
-                label: Text(d.evaluation == null ? 'Lưu đánh giá' : 'Lưu thay đổi'),
-              ),
-              if (d.evaluation != null)
-                FilledButton.tonalIcon(
-                  onPressed: (d.canDeleteEvaluation && !_busy) ? _delete : null,
-                  icon: const Icon(Icons.delete),
-                  label: const Text('Xóa đánh giá'),
-                ),
-            ],
-          ),
-          // Giải thích vì sao không xóa được dù cuộc thi chưa công bố
-          if (d.evaluation != null && !d.canDeleteEvaluation && d.canEvaluate)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text('Bài đã được trao giải hoặc gửi triển lãm nên không thể xóa đánh giá.',
-                  style: textTheme.bodySmall),
-            ),
-        ],
-      ),
+        const SizedBox(height: AppSpacing.lg),
+      ],
     );
   }
 }

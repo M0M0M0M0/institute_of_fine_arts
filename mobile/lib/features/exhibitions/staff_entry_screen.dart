@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_client.dart';
 import '../../core/async_view.dart';
+import '../../app/tokens.dart';
 import '../../core/format.dart';
-import '../competitions/competition_widgets.dart';
+import '../../shared/shared.dart';
 import 'exhibition_widgets.dart';
 import 'exhibitions.dart';
 import 'staff_exhibition_screens.dart' show askReason;
@@ -19,7 +20,7 @@ class StaffEntryDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(entryDetailProvider(id));
     return Scaffold(
-      appBar: AppBar(title: const Text('Tranh gửi triển lãm')),
+      appBar: AppBar(title: const Text('Exhibition artwork')),
       body: AsyncValueView(
         value: detail,
         onRetry: () => ref.invalidate(entryDetailProvider(id)),
@@ -69,12 +70,12 @@ class _BodyState extends ConsumerState<_Body> {
   }
 
   Future<void> _accept() => _run(
-      () => ref.read(exhibitionRepositoryProvider).review(_e.id, accept: true), 'Đã duyệt đề xuất.');
+      () => ref.read(exhibitionRepositoryProvider).review(_e.id, accept: true), 'Proposal accepted.');
 
   Future<void> _reject() async {
-    final reason = await askReason(context, title: 'Từ chối đề xuất', label: 'Lý do từ chối *');
+    final reason = await askReason(context, title: 'Reject proposal', label: 'Reason for rejecting *');
     if (reason == null || !mounted) return;
-    await _run(() => ref.read(exhibitionRepositoryProvider).review(_e.id, accept: false, reason: reason), 'Đã từ chối đề xuất.');
+    await _run(() => ref.read(exhibitionRepositoryProvider).review(_e.id, accept: false, reason: reason), 'Proposal rejected.');
   }
 
   Future<void> _sell() async {
@@ -84,7 +85,7 @@ class _BodyState extends ConsumerState<_Body> {
     );
     if (body == null || !mounted) return;
     body['rowVersion'] = _e.rowVersion;
-    await _run(() => ref.read(exhibitionRepositoryProvider).sell(_e.id, body), 'Đã ghi nhận bán.');
+    await _run(() => ref.read(exhibitionRepositoryProvider).sell(_e.id, body), 'Sale recorded.');
   }
 
   Future<void> _adjust() async {
@@ -94,7 +95,7 @@ class _BodyState extends ConsumerState<_Body> {
     );
     if (body == null || !mounted) return;
     body['rowVersion'] = _e.rowVersion;
-    await _run(() => ref.read(exhibitionRepositoryProvider).adjustSale(_e.id, body), 'Đã điều chỉnh giao dịch.');
+    await _run(() => ref.read(exhibitionRepositoryProvider).adjustSale(_e.id, body), 'Sale adjusted.');
   }
 
   Future<void> _pay() async {
@@ -104,7 +105,7 @@ class _BodyState extends ConsumerState<_Body> {
     );
     if (body == null || !mounted) return;
     body['rowVersion'] = _e.rowVersion;
-    await _run(() => ref.read(exhibitionRepositoryProvider).pay(_e.id, body), 'Đã ghi nhận trả tiền cho học viên.');
+    await _run(() => ref.read(exhibitionRepositoryProvider).pay(_e.id, body), 'Payment to the student recorded.');
   }
 
   @override
@@ -112,79 +113,116 @@ class _BodyState extends ConsumerState<_Body> {
     final e = _e;
     final textTheme = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
+    const sectionPad = EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.xs);
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppSpacing.gutter),
       children: [
-        Row(children: [
-          Expanded(child: Text(e.submissionTitle, style: textTheme.headlineSmall)),
-          EntryStatusChip(e.status, paid: e.paidToStudent),
+        // Framed picture; tap to zoom (only when the API tells which entry the artwork belongs to)
+        if (e.submissionId != null)
+          Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 380),
+              child: Semantics(
+                button: true,
+                label: 'Open ${e.submissionTitle} full screen',
+                child: InkWell(
+                  onTap: () => ArtworkViewer.open(
+                    context,
+                    ArtworkViewer.private(
+                      submissionId: e.submissionId!,
+                      title: e.submissionTitle,
+                      subtitle: '${e.studentName} (${e.studentCode})',
+                    ),
+                  ),
+                  child: ArtworkFrame(
+                    awarded: e.status == EntryStatus.sold,
+                    aspectRatio: 4 / 5,
+                    child: ColoredBox(
+                      color: AppColors.stone,
+                      child: AuthImage(
+                        submissionId: e.submissionId!,
+                        thumb: false,
+                        fit: BoxFit.contain,
+                        semanticLabel: e.submissionTitle,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        const SizedBox(height: AppSpacing.md),
+        Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Expanded(child: Text(e.submissionTitle, style: textTheme.headlineSmall!.copyWith(fontStyle: FontStyle.italic))),
+          const SizedBox(width: AppSpacing.sm),
+          StatusChip.entry(e.status, paid: e.paidToStudent),
         ]),
-        const SizedBox(height: 8),
-        InfoRow('Học viên', '${e.studentName} (${e.studentCode})'),
-        InfoRow('Cuộc thi', e.competitionTitle),
-        InfoRow('Triển lãm', e.exhibitionName),
-        InfoRow('Thời gian', dateRange(e.exhibitionStartDate, e.exhibitionEndDate)),
-        InfoRow('Trạng thái TL', e.exhibitionStatus.label),
-        const SectionTitle('Giá'),
-        InfoRow('Giá đề xuất', formatVnd(e.askingPrice)),
-        if (e.priceSourceNote != null) InfoRow('Nguồn giá', e.priceSourceNote!),
+        const SizedBox(height: AppSpacing.sm),
+        InfoRow('Student', '${e.studentName} (${e.studentCode})'),
+        InfoRow('Competition', e.competitionTitle),
+        InfoRow('Exhibition', e.exhibitionName),
+        InfoRow('Dates', dateRange(e.exhibitionStartDate, e.exhibitionEndDate)),
+        InfoRow('Exhibition status', e.exhibitionStatus.label),
+        const SectionHeader('Price', padding: sectionPad),
+        InfoRow('Asking price', formatVnd(e.askingPrice)),
+        if (e.priceSourceNote != null) InfoRow('Price source', e.priceSourceNote!),
         if (e.statusReason != null) NoticeCard(text: e.statusReason!, error: e.status == EntryStatus.rejected || e.status == EntryStatus.withdrawn),
         if (e.status == EntryStatus.sold) ...[
-          const SectionTitle('Bán'),
-          InfoRow('Giá bán', formatVnd(e.soldPrice ?? 0)),
-          if (e.soldDate != null) InfoRow('Ngày bán', formatDate(e.soldDate!)),
-          InfoRow('Khách mua', e.customerName ?? '—'),
+          const SectionHeader('Sale', padding: sectionPad),
+          InfoRow('Sold price', formatVnd(e.soldPrice ?? 0)),
+          if (e.soldDate != null) InfoRow('Sold on', formatDate(e.soldDate!)),
+          InfoRow('Buyer', e.customerName ?? '—'),
           if (e.consentDate != null)
-            InfoRow('Xác nhận của HV',
+            InfoRow('Student consent',
                 '${formatDate(e.consentDate!)} – ${e.consentMethod ?? ''}${e.consentNote != null ? '\n${e.consentNote}' : ''}'),
-          const SectionTitle('Trả tiền cho học viên'),
-          InfoRow('Phải trả', formatVnd(e.soldPrice ?? 0)),
+          const SectionHeader('Payout to the student', padding: sectionPad),
+          InfoRow('Amount due', formatVnd(e.soldPrice ?? 0)),
           if (e.paidToStudent) ...[
-            InfoRow('Đã trả', formatVnd(e.paidAmount ?? 0)),
-            if (e.paidDate != null) InfoRow('Ngày trả', formatDate(e.paidDate!)),
-            InfoRow('Hình thức', e.paymentMethod ?? ''),
-            if (e.paymentReference != null) InfoRow('Chứng từ', e.paymentReference!),
+            InfoRow('Paid', formatVnd(e.paidAmount ?? 0)),
+            if (e.paidDate != null) InfoRow('Paid on', formatDate(e.paidDate!)),
+            InfoRow('Method', e.paymentMethod ?? ''),
+            if (e.paymentReference != null) InfoRow('Reference', e.paymentReference!),
           ] else ...[
-            if (e.payDueDate != null) InfoRow('Hạn trả', formatDate(e.payDueDate!)),
+            if (e.payDueDate != null) InfoRow('Due date', formatDate(e.payDueDate!)),
             if (e.overdueDays > 0)
               Padding(
                 padding: const EdgeInsets.only(top: 4),
-                child: Text('Quá hạn ${e.overdueDays} ngày', style: TextStyle(color: scheme.error, fontWeight: FontWeight.w600)),
+                child: Text('Overdue by ${e.overdueDays} ${e.overdueDays == 1 ? 'day' : 'days'}', style: TextStyle(color: scheme.error, fontWeight: FontWeight.w600)),
               ),
-            if (e.overdueDays == 0) const InfoRow('Trạng thái', 'Chưa trả tiền'),
+            if (e.overdueDays == 0) const InfoRow('Status', 'Not paid yet'),
           ],
         ],
         const SizedBox(height: 16),
         Wrap(spacing: 12, runSpacing: 8, children: [
           if (e.canReview) ...[
-            FilledButton.icon(onPressed: _busy ? null : _accept, icon: const Icon(Icons.check), label: const Text('Duyệt')),
-            FilledButton.tonalIcon(onPressed: _busy ? null : _reject, icon: const Icon(Icons.close), label: const Text('Từ chối')),
+            FilledButton.icon(onPressed: _busy ? null : _accept, icon: const Icon(Icons.check), label: const Text('Accept')),
+            FilledButton.tonalIcon(onPressed: _busy ? null : _reject, icon: const Icon(Icons.close), label: const Text('Reject')),
           ],
           if (e.canSell)
             FilledButton.icon(
               onPressed: _busy ? null : _sell,
               icon: const Icon(Icons.sell),
-              label: Text(e.isLateSale ? 'Ghi nhận bán muộn' : 'Đã bán'),
+              label: Text(e.isLateSale ? 'Record late sale' : 'Mark as sold'),
             ),
           if (e.canPay)
-            FilledButton.icon(onPressed: _busy ? null : _pay, icon: const Icon(Icons.payments), label: const Text('Đã trả tiền')),
+            FilledButton.icon(onPressed: _busy ? null : _pay, icon: const Icon(Icons.payments), label: const Text('Record payout')),
           if (e.canAdjustSale)
             FilledButton.tonalIcon(
               onPressed: _busy ? null : _adjust,
               icon: const Icon(Icons.edit_note),
-              label: Text(e.adjustLimitedToPayment ? 'Sửa chứng từ' : 'Điều chỉnh giao dịch'),
+              label: Text(e.adjustLimitedToPayment ? 'Edit payment details' : 'Adjust sale'),
             ),
         ]),
         // Giải thích vì sao chưa có nút bán
         if (e.status == EntryStatus.accepted && !e.canSell)
           const Padding(
             padding: EdgeInsets.only(top: 8),
-            child: Text('Chỉ ghi nhận bán khi triển lãm đã bắt đầu.'),
+            child: Text('A sale can only be recorded once the exhibition has started.'),
           ),
         if (e.status == EntryStatus.pending && !e.canReview)
           const Padding(
             padding: EdgeInsets.only(top: 8),
-            child: Text('Triển lãm đã bắt đầu nên không còn duyệt được.'),
+            child: Text('The exhibition has started, so this proposal can no longer be reviewed.'),
           ),
       ],
     );
@@ -193,7 +231,7 @@ class _BodyState extends ConsumerState<_Body> {
 
 // ===================== Hộp thoại ghi nhận bán / điều chỉnh bán =====================
 
-const _consentMethods = ['Tin nhắn', 'Email', 'Ký tên', 'Khác'];
+const _consentMethods = ['Message', 'Email', 'Signed', 'Other'];
 const _newCustomer = -1; // giá trị đặc biệt trong danh sách khách: tạo khách mới
 
 /// Ghi nhận bán (adjust = false) hoặc điều chỉnh giao dịch bán chưa trả tiền (adjust = true) (BR-44, BR-49).
@@ -249,16 +287,16 @@ class _SaleDialogState extends ConsumerState<_SaleDialog> {
 
   void _submit() {
     final price = parseMoney(_price.text);
-    if (price == null) return setState(() => _error = 'Vui lòng nhập giá bán lớn hơn 0');
-    if (_customerId == null) return setState(() => _error = 'Vui lòng chọn khách mua');
+    if (price == null) return setState(() => _error = 'Please enter a sold price greater than 0');
+    if (_customerId == null) return setState(() => _error = 'Please choose the buyer');
     if (_customerId == _newCustomer && _custName.text.trim().isEmpty) {
-      return setState(() => _error = 'Vui lòng nhập họ tên khách mới');
+      return setState(() => _error = 'Please enter the new customer name');
     }
     if (_below && (_consentDate == null || _consentMethod == null)) {
-      return setState(() => _error = 'Giá thấp hơn giá đề xuất: cần xác nhận của học viên (ngày và hình thức)');
+      return setState(() => _error = 'Below the asking price: student consent (date and method) is required');
     }
     if ((widget.adjust || e.isLateSale) && _reason.text.trim().isEmpty) {
-      return setState(() => _error = widget.adjust ? 'Vui lòng nhập lý do điều chỉnh' : 'Bán muộn: vui lòng nhập lý do');
+      return setState(() => _error = widget.adjust ? 'Please enter the reason for the adjustment' : 'Late sale: please enter the reason');
     }
     final body = <String, dynamic>{
       'soldPrice': price,
@@ -285,7 +323,7 @@ class _SaleDialogState extends ConsumerState<_SaleDialog> {
   Widget build(BuildContext context) {
     final customers = ref.watch(_customersProvider);
     return AlertDialog(
-      title: Text(widget.adjust ? 'Điều chỉnh giao dịch bán' : (e.isLateSale ? 'Ghi nhận bán muộn' : 'Ghi nhận bán')),
+      title: Text(widget.adjust ? 'Adjust sale' : (e.isLateSale ? 'Record late sale' : 'Record sale')),
       content: SizedBox(
         width: 420,
         child: SingleChildScrollView(
@@ -293,12 +331,12 @@ class _SaleDialogState extends ConsumerState<_SaleDialog> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Giá đề xuất: ${formatVnd(e.askingPrice)}'),
+              Text('Asking price: ${formatVnd(e.askingPrice)}'),
               const SizedBox(height: 8),
-              MoneyField(controller: _price, label: 'Giá bán *'),
+              MoneyField(controller: _price, label: 'Sold price *'),
               const SizedBox(height: 12),
               DateField(
-                label: 'Ngày bán *',
+                label: 'Sold on *',
                 value: _soldDate,
                 firstDate: e.exhibitionStartDate,
                 lastDate: _lastDate.isBefore(e.exhibitionStartDate) ? e.exhibitionStartDate : _lastDate,
@@ -309,10 +347,10 @@ class _SaleDialogState extends ConsumerState<_SaleDialog> {
                 AsyncData(:final value) => DropdownButtonFormField<int>(
                     initialValue: value.any((c) => c.id == _customerId) || _customerId == _newCustomer ? _customerId : null,
                     isExpanded: true,
-                    decoration: const InputDecoration(labelText: 'Khách mua *'),
+                    decoration: const InputDecoration(labelText: 'Buyer *'),
                     items: [
                       for (final c in value) DropdownMenuItem(value: c.id, child: Text(c.fullName, overflow: TextOverflow.ellipsis)),
-                      if (!widget.adjust) const DropdownMenuItem(value: _newCustomer, child: Text('+ Khách mới')),
+                      if (!widget.adjust) const DropdownMenuItem(value: _newCustomer, child: Text('+ New customer')),
                     ],
                     onChanged: (v) => setState(() => _customerId = v),
                   ),
@@ -321,19 +359,19 @@ class _SaleDialogState extends ConsumerState<_SaleDialog> {
               },
               if (_customerId == _newCustomer) ...[
                 const SizedBox(height: 8),
-                TextField(controller: _custName, decoration: const InputDecoration(labelText: 'Họ tên khách *')),
+                TextField(controller: _custName, decoration: const InputDecoration(labelText: 'Customer full name *')),
                 const SizedBox(height: 8),
-                TextField(controller: _custPhone, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Số điện thoại')),
+                TextField(controller: _custPhone, keyboardType: TextInputType.phone, decoration: const InputDecoration(labelText: 'Phone')),
                 const SizedBox(height: 8),
                 TextField(controller: _custEmail, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Email')),
               ],
               if (_below) ...[
                 const Divider(height: 24),
-                Text('Giá thấp hơn giá đề xuất – cần xác nhận của học viên (BR-44)',
+                Text('Below the asking price: the student must consent (BR-44)',
                     style: TextStyle(color: Theme.of(context).colorScheme.error)),
                 const SizedBox(height: 8),
                 DateField(
-                  label: 'Ngày học viên xác nhận *',
+                  label: 'Student consent date *',
                   value: _consentDate,
                   firstDate: DateTime(todayDate().year - 1),
                   lastDate: todayDate(),
@@ -342,12 +380,12 @@ class _SaleDialogState extends ConsumerState<_SaleDialog> {
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
                   initialValue: _consentMethod,
-                  decoration: const InputDecoration(labelText: 'Hình thức xác nhận *'),
+                  decoration: const InputDecoration(labelText: 'Consent method *'),
                   items: [for (final m in _consentMethods) DropdownMenuItem(value: m, child: Text(m))],
                   onChanged: (v) => setState(() => _consentMethod = v),
                 ),
                 const SizedBox(height: 8),
-                TextField(controller: _consentNote, maxLength: 1000, decoration: const InputDecoration(labelText: 'Ghi chú bằng chứng')),
+                TextField(controller: _consentNote, maxLength: 1000, decoration: const InputDecoration(labelText: 'Evidence note')),
               ],
               if (widget.adjust || e.isLateSale) ...[
                 const SizedBox(height: 8),
@@ -355,7 +393,7 @@ class _SaleDialogState extends ConsumerState<_SaleDialog> {
                   controller: _reason,
                   maxLength: 1000,
                   maxLines: 2,
-                  decoration: InputDecoration(labelText: widget.adjust ? 'Lý do điều chỉnh *' : 'Lý do bán muộn *'),
+                  decoration: InputDecoration(labelText: widget.adjust ? 'Reason for the adjustment *' : 'Reason for the late sale *'),
                 ),
               ],
               if (_error != null) Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
@@ -364,8 +402,8 @@ class _SaleDialogState extends ConsumerState<_SaleDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
-        FilledButton(onPressed: _submit, child: const Text('Lưu')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        FilledButton(onPressed: _submit, child: const Text('Save')),
       ],
     );
   }
@@ -401,8 +439,8 @@ class _PaymentNoteDialogState extends State<_PaymentNoteDialog> {
   }
 
   void _submit() {
-    if (_method.text.trim().isEmpty) return setState(() => _error = 'Hình thức trả tiền không được để trống');
-    if (_reason.text.trim().isEmpty) return setState(() => _error = 'Vui lòng nhập lý do điều chỉnh');
+    if (_method.text.trim().isEmpty) return setState(() => _error = 'The payment method is required');
+    if (_reason.text.trim().isEmpty) return setState(() => _error = 'Please enter the reason for the adjustment');
     Navigator.pop(context, {
       'paymentMethod': _method.text.trim(),
       'paymentReference': _reference.text.trim(),
@@ -413,28 +451,28 @@ class _PaymentNoteDialogState extends State<_PaymentNoteDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Sửa thông tin trả tiền'),
+      title: const Text('Edit payment details'),
       content: SizedBox(
         width: 420,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Đã trả tiền: không đổi giá/khách/ngày. Sai lệch số tiền xử lý ngoài hệ thống và ghi chú lại.'),
+              const Text('Already paid: price, buyer and dates cannot change. Handle any amount difference outside the system and note it.'),
               const SizedBox(height: 8),
-              TextField(controller: _method, decoration: const InputDecoration(labelText: 'Hình thức trả *')),
+              TextField(controller: _method, decoration: const InputDecoration(labelText: 'Payment method *')),
               const SizedBox(height: 8),
-              TextField(controller: _reference, decoration: const InputDecoration(labelText: 'Số chứng từ / ghi chú')),
+              TextField(controller: _reference, decoration: const InputDecoration(labelText: 'Reference / note')),
               const SizedBox(height: 8),
-              TextField(controller: _reason, maxLength: 1000, maxLines: 2, decoration: const InputDecoration(labelText: 'Lý do điều chỉnh *')),
+              TextField(controller: _reason, maxLength: 1000, maxLines: 2, decoration: const InputDecoration(labelText: 'Reason for the adjustment *')),
               if (_error != null) Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
             ],
           ),
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
-        FilledButton(onPressed: _submit, child: const Text('Lưu')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        FilledButton(onPressed: _submit, child: const Text('Save')),
       ],
     );
   }
@@ -442,7 +480,7 @@ class _PaymentNoteDialogState extends State<_PaymentNoteDialog> {
 
 // ===================== Hộp thoại ghi nhận trả tiền =====================
 
-const _payMethods = ['Chuyển khoản', 'Tiền mặt', 'Khác'];
+const _payMethods = ['Bank transfer', 'Cash', 'Other'];
 
 /// Ghi nhận trả đủ một lần cho học viên: số tiền = giá bán (BR-45).
 class _PayDialog extends StatefulWidget {
@@ -477,9 +515,9 @@ class _PayDialogState extends State<_PayDialog> {
 
   void _submit() {
     final amount = parseMoney(_amount.text);
-    if (amount == null) return setState(() => _error = 'Vui lòng nhập số tiền trả');
-    if (amount != widget.entry.soldPrice) return setState(() => _error = 'Số tiền trả phải bằng giá bán');
-    if (_method == null) return setState(() => _error = 'Vui lòng chọn hình thức trả tiền');
+    if (amount == null) return setState(() => _error = 'Please enter the amount paid');
+    if (amount != widget.entry.soldPrice) return setState(() => _error = 'The amount paid must equal the sold price');
+    if (_method == null) return setState(() => _error = 'Please choose the payment method');
     Navigator.pop(context, {
       'paidAmount': amount,
       'paidDate': apiDate(_date),
@@ -492,19 +530,19 @@ class _PayDialogState extends State<_PayDialog> {
   Widget build(BuildContext context) {
     final sold = widget.entry.soldDate ?? DateTime(todayDate().year - 1);
     return AlertDialog(
-      title: const Text('Ghi nhận trả tiền cho học viên'),
+      title: const Text('Record payout to the student'),
       content: SizedBox(
         width: 420,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Phải trả học viên: ${formatVnd(widget.entry.soldPrice ?? 0)} (trả đủ một lần)'),
+              Text('Due to the student: ${formatVnd(widget.entry.soldPrice ?? 0)} (paid in full, once)'),
               const SizedBox(height: 8),
-              MoneyField(controller: _amount, label: 'Số tiền trả *'),
+              MoneyField(controller: _amount, label: 'Amount paid *'),
               const SizedBox(height: 12),
               DateField(
-                label: 'Ngày trả *',
+                label: 'Paid on *',
                 value: _date,
                 firstDate: sold,
                 lastDate: todayDate().isBefore(sold) ? sold : todayDate(),
@@ -513,20 +551,20 @@ class _PayDialogState extends State<_PayDialog> {
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
                 initialValue: _method,
-                decoration: const InputDecoration(labelText: 'Hình thức trả *'),
+                decoration: const InputDecoration(labelText: 'Payment method *'),
                 items: [for (final m in _payMethods) DropdownMenuItem(value: m, child: Text(m))],
                 onChanged: (v) => setState(() => _method = v),
               ),
               const SizedBox(height: 8),
-              TextField(controller: _reference, maxLength: 100, decoration: const InputDecoration(labelText: 'Số chứng từ / ghi chú')),
+              TextField(controller: _reference, maxLength: 100, decoration: const InputDecoration(labelText: 'Reference / note')),
               if (_error != null) Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
             ],
           ),
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Hủy')),
-        FilledButton(onPressed: _submit, child: const Text('Ghi nhận')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        FilledButton(onPressed: _submit, child: const Text('Record')),
       ],
     );
   }

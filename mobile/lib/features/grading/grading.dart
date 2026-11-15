@@ -235,12 +235,30 @@ class EvaluationInput {
 /// Kiểm tra phía client theo BR-23; server vẫn là nơi quyết định cuối cùng.
 /// DISQUALIFIED bắt buộc lý do (ở ô "điểm yếu"); xếp loại khác bắt buộc điểm mạnh.
 String? validateEvaluation(SubmissionRating? rating, String positive, String negative) {
-  if (rating == null) return 'Vui lòng chọn xếp loại';
+  if (rating == null) return 'Please choose a rating';
   if (rating == SubmissionRating.disqualified) {
-    return negative.trim().isEmpty ? 'Xếp loại DISQUALIFIED bắt buộc nhập lý do' : null;
+    return negative.trim().isEmpty ? 'The Disqualified rating needs a reason' : null;
   }
-  return positive.trim().isEmpty ? 'Vui lòng nhập điểm mạnh' : null;
+  return positive.trim().isEmpty ? 'Please enter the strengths' : null;
 }
+
+/// Staff-facing rating name ("Best", "Better", ...), the same wording as the chips.
+String ratingName(SubmissionRating rating) => switch (rating) {
+      SubmissionRating.best => 'Best',
+      SubmissionRating.better => 'Better',
+      SubmissionRating.good => 'Good',
+      SubmissionRating.moderate => 'Moderate',
+      SubmissionRating.normal => 'Normal',
+      SubmissionRating.disqualified => 'Disqualified',
+    };
+
+/// Staff-facing name of the text that goes with an artwork.
+String textTypeName(TextType type) => switch (type) {
+      TextType.poem => 'Poem',
+      TextType.quotation => 'Quotation',
+      TextType.story => 'Story',
+      TextType.other => 'Other',
+    };
 
 /// Tiến độ dạng "x/y" (UC-05 bước 5).
 String progressLabel(int evaluated, int total) => '$evaluated/$total';

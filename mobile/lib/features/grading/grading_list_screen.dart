@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/tokens.dart';
 import '../../core/async_view.dart';
 import '../../core/format.dart';
-import '../competitions/competition_widgets.dart';
-import '../submissions/submission_widgets.dart';
+import '../../shared/shared.dart';
 import '../submissions/submissions.dart';
 import 'grading.dart';
 
-/// Danh sách bài của một cuộc thi để chấm, có lọc chưa/đã chấm, xếp loại, tìm tên/mã HV (F-M07-01, 06).
+/// M-T2 (2/2): the entries of one competition to grade, with thumbnails and filters
+/// (graded / rating / search by student name, code or title).
 class GradingListScreen extends ConsumerStatefulWidget {
   const GradingListScreen({super.key, required this.competitionId});
 
@@ -37,16 +38,12 @@ class _GradingListScreenState extends ConsumerState<GradingListScreen> {
     final list = ref.watch(gradingListProvider(key));
 
     return Scaffold(
-      appBar: AppBar(title: Text(list.value?.competitionTitle ?? 'Danh sách bài')),
+      appBar: AppBar(title: Text(list.value?.competitionTitle ?? 'Entries')),
       body: Column(
         children: [
-          // Tiến độ chỉ hiện khi đã có dữ liệu; đổi bộ lọc thì ẩn trong lúc tải lại (khóa provider đổi theo bộ lọc)
+          // Progress only shows once data exists; it hides while a new filter loads (the provider key changes)
           if (list.value case final data?) _Progress(data: data),
-          _Filters(
-            filter: _filter,
-            search: _search,
-            onChanged: _setFilter,
-          ),
+          _Filters(filter: _filter, search: _search, onChanged: _setFilter),
           Expanded(
             child: AsyncValueView(
               value: list,
@@ -59,11 +56,16 @@ class _GradingListScreenState extends ConsumerState<GradingListScreen> {
                 child: data.items.isEmpty
                     ? ListView(
                         physics: const AlwaysScrollableScrollPhysics(),
-                        children: const [Padding(padding: EdgeInsets.all(32), child: Center(child: Text('Không có bài phù hợp.')))],
+                        children: const [
+                          SizedBox(height: AppSpacing.xl),
+                          EmptyState(title: 'No matching entries', message: 'Try another filter or search.'),
+                        ],
                       )
-                    : ListView.builder(
+                    : ListView.separated(
                         physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(AppSpacing.gutter),
                         itemCount: data.items.length,
+                        separatorBuilder: (context, i) => const Divider(height: AppSpacing.lg),
                         itemBuilder: (context, i) => _ItemTile(item: data.items[i]),
                       ),
               ),
@@ -75,7 +77,7 @@ class _GradingListScreenState extends ConsumerState<GradingListScreen> {
   }
 }
 
-/// Thanh tiến độ "Đã chấm x/y bài" của cả cuộc thi.
+/// Progress of the whole competition, independent of the filter.
 class _Progress extends StatelessWidget {
   const _Progress({required this.data});
 
@@ -84,18 +86,20 @@ class _Progress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, AppSpacing.md, AppSpacing.gutter, 0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          Row(
-            children: [
-              Expanded(child: Text('Đã chấm ${progressLabel(data.evaluated, data.total)} bài')),
-              StatusChip(data.status),
-            ],
+          Expanded(
+            child: ProgressBarRow(
+              label: 'Graded',
+              value: data.evaluated,
+              total: data.total,
+              color: AppColors.statusOngoing,
+            ),
           ),
-          const SizedBox(height: 4),
-          LinearProgressIndicator(value: data.total == 0 ? 0 : data.evaluated / data.total),
+          const SizedBox(width: AppSpacing.md),
+          StatusChip(data.status),
         ],
       ),
     );
@@ -111,53 +115,58 @@ class _Filters extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    GradingFilter with_({bool? graded, bool clearGraded = false, SubmissionRating? rating, bool clearRating = false, String? q}) =>
+        GradingFilter(
+          graded: clearGraded ? null : (graded ?? filter.graded),
+          rating: clearRating ? null : (rating ?? filter.rating),
+          q: q ?? filter.q,
+        );
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, AppSpacing.sm, AppSpacing.gutter, 0),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Chưa chấm / Đã chấm / Tất cả
-          SegmentedButton<bool?>(
-            showSelectedIcon: false,
-            segments: const [
-              ButtonSegment(value: null, label: Text('Tất cả')),
-              ButtonSegment(value: false, label: Text('Chưa chấm')),
-              ButtonSegment(value: true, label: Text('Đã chấm')),
-            ],
-            selected: {filter.graded},
-            onSelectionChanged: (s) => onChanged(GradingFilter(graded: s.first, rating: filter.rating, q: filter.q)),
+          TextField(
+            controller: search,
+            decoration: const InputDecoration(
+              hintText: 'Student name, code or title',
+              prefixIcon: Icon(Icons.search),
+              isDense: true,
+            ),
+            textInputAction: TextInputAction.search,
+            onSubmitted: (v) => onChanged(with_(q: v)),
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: search,
-                  decoration: const InputDecoration(
-                    hintText: 'Tên, mã học viên hoặc tiêu đề',
-                    prefixIcon: Icon(Icons.search),
-                    isDense: true,
-                    border: OutlineInputBorder(),
-                  ),
-                  textInputAction: TextInputAction.search,
-                  onSubmitted: (v) => onChanged(GradingFilter(graded: filter.graded, rating: filter.rating, q: v)),
-                ),
-              ),
-              const SizedBox(width: 8),
-              DropdownButton<SubmissionRating?>(
-                value: filter.rating,
-                hint: const Text('Xếp loại'),
-                onChanged: (v) => onChanged(GradingFilter(graded: filter.graded, rating: v, q: filter.q)),
-                items: [
-                  const DropdownMenuItem(value: null, child: Text('Mọi xếp loại')),
-                  for (final r in SubmissionRating.values) DropdownMenuItem(value: r, child: Text(r.name.toUpperCase())),
-                ],
-              ),
-            ],
+          const SizedBox(height: AppSpacing.xs),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _chip('All', filter.graded == null, () => onChanged(with_(clearGraded: true))),
+                _chip('To grade', filter.graded == false, () => onChanged(with_(graded: false))),
+                _chip('Graded', filter.graded == true, () => onChanged(with_(graded: true))),
+              ],
+            ),
+          ),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _chip('Any rating', filter.rating == null, () => onChanged(with_(clearRating: true))),
+                for (final r in SubmissionRating.values)
+                  _chip(ratingName(r), filter.rating == r, () => onChanged(with_(rating: r))),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
+
+  Widget _chip(String label, bool selected, VoidCallback onTap) => Padding(
+        padding: const EdgeInsets.only(right: AppSpacing.sm),
+        child: ChoiceChip(label: Text(label), selected: selected, onSelected: (_) => onTap()),
+      );
 }
 
 class _ItemTile extends StatelessWidget {
@@ -167,14 +176,48 @@ class _ItemTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      title: Text(item.title),
-      subtitle: Text('${item.studentName} (${item.studentCode})\nNộp: ${formatDateTime(item.submittedAt)}'),
-      isThreeLine: true,
-      trailing: item.rating == null
-          ? const Chip(label: Text('Chưa chấm'), visualDensity: VisualDensity.compact)
-          : RatingChip(item.rating!),
+    final text = Theme.of(context).textTheme;
+    return InkWell(
       onTap: () => context.push('/staff/submissions/${item.id}/evaluate'),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 84,
+              child: ArtworkFrame(
+                aspectRatio: 1,
+                matWidth: 5,
+                child: item.hasThumbnail
+                    ? AuthImage(submissionId: item.id, semanticLabel: item.title)
+                    : const ImagePlaceholder(),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: text.titleSmall!.copyWith(fontStyle: FontStyle.italic, fontWeight: FontWeight.w500),
+                  ),
+                  Text('${item.studentName} (${item.studentCode})', style: text.bodyMedium),
+                  Text('Submitted ${formatDateTime(item.submittedAt)}', style: text.bodySmall),
+                  const SizedBox(height: AppSpacing.xs),
+                  item.rating == null
+                      ? const StatusChip.custom(label: 'To grade', color: AppColors.statusUpcoming)
+                      : StatusChip.rating(item.rating!),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: AppColors.muted),
+          ],
+        ),
+      ),
     );
   }
 }
