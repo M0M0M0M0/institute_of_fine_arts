@@ -6,8 +6,9 @@ import '../../core/token_storage.dart';
 
 // ---------------- Model ----------------
 
-/// Vai trò, khớp enum Role của API (trả về dạng chữ "Student", "Staff"...).
-enum Role { admin, manager, staff, student }
+/// Vai trò, khớp enum Role của API (trả về dạng chữ "Student", "Staff", "Teacher"...).
+/// Staff run the institute (awards, exhibitions) and do not grade; teachers grade.
+enum Role { admin, staff, teacher, student }
 
 Role roleFromJson(String value) =>
     Role.values.firstWhere((r) => r.name.toLowerCase() == value.toLowerCase());

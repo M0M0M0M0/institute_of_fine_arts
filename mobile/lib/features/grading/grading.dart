@@ -1,9 +1,16 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/api_client.dart';
 import '../competitions/competitions.dart';
 import '../submissions/submissions.dart';
+
+/// Route prefix of the grading screens: `/teacher` for a teacher (who grades), `/staff` for staff (published
+/// results, read only). Taken from the current location, so the same screens serve both shells.
+String gradingBase(BuildContext context) =>
+    GoRouterState.of(context).matchedLocation.startsWith('/teacher') ? '/teacher' : '/staff';
 
 // ---------------- Model (khớp DTO của API chấm bài) ----------------
 

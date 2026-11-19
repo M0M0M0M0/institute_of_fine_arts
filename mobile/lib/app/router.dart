@@ -31,6 +31,7 @@ import '../features/student/dashboard.dart';
 import '../features/student/student_competitions_screen.dart';
 import '../features/student/student_home_screen.dart';
 import '../features/student/student_shell.dart';
+import '../features/teacher/teacher_shell.dart';
 import '../features/submissions/submission_detail_screen.dart';
 import '../features/submissions/submission_form_screen.dart';
 import '../features/submissions/my_submissions_screen.dart';
@@ -73,7 +74,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       final user = currentUserOf(auth);
       final location = state.matchedLocation;
       final needsLogin =
-          location.startsWith('/student') || location.startsWith('/staff') || location == '/unsupported';
+          location.startsWith('/student') ||
+          location.startsWith('/staff') ||
+          location.startsWith('/teacher') ||
+          location == '/unsupported';
 
       if (user == null) return needsLogin ? '/login' : null;
 
@@ -92,6 +96,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       if (location == '/login' || location == '/') return home;
       if (location.startsWith('/student') && user.role != Role.student) return home;
       if (location.startsWith('/staff') && user.role != Role.staff) return home;
+      if (location.startsWith('/teacher') && user.role != Role.teacher) return home;
       if (location == '/unsupported' && home != '/unsupported') return home;
       return null;
     },
@@ -196,6 +201,29 @@ final routerProvider = Provider<GoRouter>((ref) {
               routes: [GoRoute(path: '/staff/account', builder: (context, state) => const AccountScreen())]),
         ],
       ),
+      // Teacher shell: Grading (home), Account. Teachers grade the entries of closed competitions.
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, shell) => TeacherShell(navigationShell: shell),
+        branches: [
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/teacher',
+              builder: (context, state) => const TabScaffold(title: 'Grading', body: GradingCompetitionsTab()),
+            ),
+          ]),
+          StatefulShellBranch(
+              routes: [GoRoute(path: '/teacher/account', builder: (context, state) => const AccountScreen())]),
+        ],
+      ),
+      GoRoute(
+        path: '/teacher/competitions/:id/submissions',
+        builder: (context, state) => GradingListScreen(competitionId: int.parse(state.pathParameters['id']!)),
+      ),
+      GoRoute(
+        path: '/teacher/submissions/:id/evaluate',
+        builder: (context, state) => GradingDetailScreen(id: int.parse(state.pathParameters['id']!)),
+      ),
+      // Staff: published results, read only (staff do not grade)
       // Chấm bài: danh sách bài của cuộc thi và màn chấm một bài (UC-05, SCR-26, SCR-27)
       GoRoute(
         path: '/staff/competitions/:id/submissions',

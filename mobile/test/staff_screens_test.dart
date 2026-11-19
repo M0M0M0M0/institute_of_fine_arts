@@ -194,7 +194,8 @@ void main() {
       await _pump(tester, const SizedBox(), [staffDashboardProvider.overrideWith((ref) async => data)], router: router);
 
       expect(find.textContaining('Lan'), findsOneWidget); // greeting uses the first name
-      expect(find.text('To grade'), findsOneWidget);
+      // Grading is the teachers' work: staff follow the progress, the card does not open the grading screen
+      expect(find.text('Being graded'), findsOneWidget);
       expect(find.text('3 left to grade'), findsOneWidget);
       expect(find.text('7 / 10'), findsOneWidget);
       expect(find.text('Ready to publish'), findsOneWidget);
@@ -204,9 +205,7 @@ void main() {
 
       await tester.tap(find.text('Autumn Colours'));
       await tester.pumpAndSettle();
-      expect(find.text('GRADING 5'), findsOneWidget);
-      router.pop();
-      await tester.pumpAndSettle();
+      expect(find.text('GRADING 5'), findsNothing);
 
       await tester.tap(find.text('Spring Colours'));
       await tester.pumpAndSettle();

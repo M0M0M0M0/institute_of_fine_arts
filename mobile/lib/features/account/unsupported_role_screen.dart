@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../auth/auth.dart';
 
-/// Admin / Manager signed in on the app: ask them to use the website.
+/// Admin signed in on the app: ask them to use the website.
 class UnsupportedRoleScreen extends ConsumerWidget {
   const UnsupportedRoleScreen({super.key});
 
@@ -22,7 +22,7 @@ class UnsupportedRoleScreen extends ConsumerWidget {
               Text('Please use the website', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
               const Text(
-                'Administrator and Manager accounts are managed on the website.\nThe mobile app is for students and staff.',
+                'Administrator accounts are managed on the website.\nThe mobile app is for students, staff and teachers.',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),

@@ -69,8 +69,17 @@ void main() {
     expect(find.byType(AppBar), findsOneWidget);
   });
 
-  testWidgets('manager is sent to the "use the website" screen', (tester) async {
-    await _pump(tester, _user(Role.manager));
+  testWidgets('teacher bottom bar: Grading, Account', (tester) async {
+    await _pump(tester, _user(Role.teacher));
+    final bar = find.byType(NavigationBar);
+    for (final label in ['Grading', 'Account']) {
+      expect(find.descendant(of: bar, matching: find.text(label)), findsOneWidget);
+    }
+    expect(find.descendant(of: bar, matching: find.text('Awards')), findsNothing);
+  });
+
+  testWidgets('admin is sent to the "use the website" screen', (tester) async {
+    await _pump(tester, _user(Role.admin));
     expect(find.text('Please use the website'), findsOneWidget);
   });
 }

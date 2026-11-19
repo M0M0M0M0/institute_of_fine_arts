@@ -178,7 +178,7 @@ class _ItemTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     return InkWell(
-      onTap: () => context.push('/staff/submissions/${item.id}/evaluate'),
+      onTap: () => context.push('${gradingBase(context)}/submissions/${item.id}/evaluate'),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
         child: Row(

@@ -49,7 +49,7 @@ class StaffHomeScreen extends ConsumerWidget {
                   ),
                 ),
               if (d.toGrade.isNotEmpty) ...[
-                const SectionHeader('To grade', subtitle: 'Closed competitions with ungraded entries'),
+                const SectionHeader('Being graded', subtitle: 'Closed competitions the teachers are grading'),
                 for (final item in d.toGrade) _ToGradeCard(item: item),
               ],
               if (d.toPublish.isNotEmpty) ...[
@@ -90,8 +90,8 @@ class _Greeting extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    final tasks = data.toGrade.length +
-        data.toPublish.length +
+    // Grading is the teachers' work, so it is not counted as a task of the staff member
+    final tasks = data.toPublish.length +
         (data.pendingProposals > 0 ? 1 : 0) +
         (data.unpaidSales > 0 ? 1 : 0);
     return Container(
@@ -152,8 +152,9 @@ class _ToGradeCard extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: AppSpacing.gutter, vertical: AppSpacing.xs),
-      child: InkWell(
-        onTap: () => context.push('/staff/competitions/${item.competitionId}/submissions'),
+      // Information only: staff follow the progress, teachers grade (the entries open once the results are published)
+      child: Semantics(
+        container: true,
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
           child: Row(
@@ -172,7 +173,6 @@ class _ToGradeCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: AppColors.muted),
             ],
           ),
         ),

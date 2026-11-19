@@ -60,7 +60,7 @@ class _CompetitionTile extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
       child: InkWell(
-        onTap: () => context.push('/staff/competitions/${item.id}/submissions'),
+        onTap: () => context.push('${gradingBase(context)}/competitions/${item.id}/submissions'),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

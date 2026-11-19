@@ -161,6 +161,7 @@ class _HomeBody extends ConsumerWidget {
 String homePathFor(Role role) => switch (role) {
       Role.student => '/student',
       Role.staff => '/staff',
+      Role.teacher => '/teacher',
       _ => '/unsupported',
     };
 

@@ -107,7 +107,7 @@ class _BodyState extends ConsumerState<_Body> {
       final nextId = goNext ? await _nextAfterSave() : null;
       if (!mounted) return;
       if (nextId != null) {
-        context.pushReplacement('/staff/submissions/$nextId/evaluate');
+        context.pushReplacement('${gradingBase(context)}/submissions/$nextId/evaluate');
       } else {
         if (goNext) _toast('Every entry of this competition is graded.');
         context.pop();
