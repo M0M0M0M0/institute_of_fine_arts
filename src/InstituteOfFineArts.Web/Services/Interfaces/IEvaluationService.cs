@@ -14,6 +14,8 @@ public interface IEvaluationService
     /// (never throws BusinessException: a page that cannot be saved is shown read only with the reason).
     /// </summary>
     /// <param name="submissionId">Submission id</param>
+    /// <exception cref="Exceptions.NotFoundException">Unknown id, or the competition still takes entries (UPCOMING /
+    /// ONGOING): graders never see a painting before the deadline</exception>
     Task<EvaluationPageVm> GetPageAsync(long submissionId);
 
     /// <summary>

@@ -1,0 +1,71 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.Competitions.CompetitionFormVm
+@*
+    Awards of the competition create / edit form (BR-09, BR-31), saved together with the competition.
+    - Empty new rows are ignored. Existing awards keep their id; removing one sends Remove=true (the server refuses it
+      when the award was already given, and the quantity cannot go below the number given).
+    - Rows use the "Awards.Index" key, so wwwroot/js/award-rows.js can add and remove rows without renumbering.
+    - Errors of a row (key "Awards[i].Field", set by CompetitionService) are shown under that row.
+*@
+@{
+    string? AwardError(int i, string field)
+        => ViewData.ModelState.TryGetValue($"Awards[{i}].{field}", out var entry) && entry.Errors.Count > 0 ? entry.Errors[0].ErrorMessage : null;
+    var fields = new[] { "Rank", "AwardName", "PrizeValue", "Quantity", "PrizeDescription" };
+}
+<fieldset class="award-rows mb-3" data-award-rows>
+    <legend class="form-label fw-semibold mb-1">Awards</legend>
+    <p class="form-text mt-0 mb-2">Rank 1 is the highest award. Prize values are in USD. A new row left empty is skipped.</p>
+    <div class="award-head" aria-hidden="true">
+        <span>Rank</span><span>Award name</span><span>Prize (USD)</span><span>Winners</span><span></span>
+    </div>
+    <div data-award-list>
+        @for (var i = 0; i < Model.Awards.Count; i++)
+        {
+            var a = Model.Awards[i];
+            var key = $"Awards[{i}]";
+            var given = a.IssuedCount > 0;
+            <div class="award-row @(a.Remove ? "is-removed" : "")" data-award-row>
+                <input type="hidden" name="Awards.Index" value="@i" />
+                <input type="hidden" name="@(key).Id" value="@a.Id" />
+                @if (a.Id != 0)
+                {
+                    <input type="hidden" name="@(key).Remove" value="@(a.Remove ? "true" : "false")" data-award-remove-flag />
+                }
+                <input class="form-control" name="@(key).Rank" value="@a.Rank" type="number" min="1" max="1000" step="1" aria-label="Rank" />
+                <input class="form-control" name="@(key).AwardName" value="@a.AwardName" maxlength="100" placeholder="e.g. First Prize" aria-label="Award name" />
+                <input class="form-control" name="@(key).PrizeValue" value="@a.PrizeValue?.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)" type="number" min="0" step="0.01" placeholder="0.00" aria-label="Prize value in USD" />
+                <input class="form-control" name="@(key).Quantity" value="@a.Quantity" type="number" min="@(given ? a.IssuedCount : 1)" max="1000" step="1" aria-label="Number of winners" />
+                @if (given)
+                {
+                    <span class="award-given" title="Already given, so it cannot be removed"><i class="bi bi-trophy" aria-hidden="true"></i>@a.IssuedCount given</span>
+                }
+                else
+                {
+                    <button type="button" class="btn btn-sm btn-link text-danger" data-award-remove aria-label="Remove this award"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+                }
+                <input class="form-control form-control-sm award-desc" name="@(key).PrizeDescription" value="@a.PrizeDescription" maxlength="500" placeholder="Prize description (optional), e.g. Certificate and art supplies" aria-label="Prize description" />
+                @foreach (var field in fields)
+                {
+                    if (AwardError(i, field) is { } error)
+                    {
+                        <span class="text-danger small award-error">@error</span>
+                    }
+                }
+            </div>
+        }
+    </div>
+    <button type="button" class="btn btn-sm btn-outline-primary mt-1" data-award-add><i class="bi bi-plus-lg" aria-hidden="true"></i>Add award</button>
+
+    @* Template of a new row: __i__ is replaced by a unique key *@
+    <template data-award-template>
+        <div class="award-row" data-award-row>
+            <input type="hidden" name="Awards.Index" value="__i__" />
+            <input type="hidden" name="Awards[__i__].Id" value="0" />
+            <input class="form-control" name="Awards[__i__].Rank" type="number" min="1" max="1000" step="1" aria-label="Rank" />
+            <input class="form-control" name="Awards[__i__].AwardName" maxlength="100" placeholder="e.g. Second Prize" aria-label="Award name" />
+            <input class="form-control" name="Awards[__i__].PrizeValue" type="number" min="0" step="0.01" placeholder="0.00" aria-label="Prize value in USD" />
+            <input class="form-control" name="Awards[__i__].Quantity" value="1" type="number" min="1" max="1000" step="1" aria-label="Number of winners" />
+            <button type="button" class="btn btn-sm btn-link text-danger" data-award-remove aria-label="Remove this award"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+            <input class="form-control form-control-sm award-desc" name="Awards[__i__].PrizeDescription" maxlength="500" placeholder="Prize description (optional)" aria-label="Prize description" />
+        </div>
+    </template>
+</fieldset>

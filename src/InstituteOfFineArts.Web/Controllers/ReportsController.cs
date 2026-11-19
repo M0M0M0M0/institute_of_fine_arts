@@ -50,7 +50,7 @@ public class ReportsController : Controller
     /// <summary>RPT-01: submissions of one competition in a date range by rating (F-M10-01, TC-M10-01..04).</summary>
     /// <param name="filter">Filters from the query string</param>
     [HttpGet("rpt-01")]
-    [Authorize(Roles = ReportCatalog.StaffAndManager)]
+    [Authorize(Roles = ReportCatalog.StaffOnly)]
     public async Task<IActionResult> Rpt01([FromQuery] Rpt01FilterVm filter)
     {
         var vm = new Rpt01PageVm
@@ -83,7 +83,7 @@ public class ReportsController : Controller
     /// <summary>RPT-02: participation and ratings per competition, plus the BR-12 list of non-submitters (F-M10-02).</summary>
     /// <param name="filter">Filters from the query string</param>
     [HttpGet("rpt-02")]
-    [Authorize(Roles = ReportCatalog.StaffAndManager)]
+    [Authorize(Roles = ReportCatalog.StaffOnly)]
     public async Task<IActionResult> Rpt02([FromQuery] Rpt02FilterVm filter)
     {
         var vm = new Rpt02PageVm { Filter = filter, Competitions = await _submissions.GetCompetitionOptionsAsync() };
@@ -106,7 +106,7 @@ public class ReportsController : Controller
     /// <summary>RPT-03: awards issued with the total prize value (F-M10-03).</summary>
     /// <param name="filter">Filters from the query string</param>
     [HttpGet("rpt-03")]
-    [Authorize(Roles = ReportCatalog.StaffAndManager)]
+    [Authorize(Roles = ReportCatalog.StaffOnly)]
     public async Task<IActionResult> Rpt03([FromQuery] Rpt03FilterVm filter)
     {
         var vm = new Rpt03PageVm { Filter = filter, Competitions = await _awards.GetCompetitionOptionsAsync() };
@@ -129,7 +129,7 @@ public class ReportsController : Controller
     /// <summary>RPT-06: achievement profile of one student (F-M10-06).</summary>
     /// <param name="filter">Filters from the query string</param>
     [HttpGet("rpt-06")]
-    [Authorize(Roles = ReportCatalog.StaffAndManager)]
+    [Authorize(Roles = ReportCatalog.StaffOnly)]
     public async Task<IActionResult> Rpt06([FromQuery] Rpt06FilterVm filter)
     {
         var vm = new Rpt06PageVm { Filter = filter, Students = await _reports.GetStudentOptionsAsync() };
@@ -160,7 +160,7 @@ public class ReportsController : Controller
     /// <param name="filter">Filters from the query string</param>
     /// <param name="format">xlsx or pdf</param>
     [HttpGet("rpt-01/export")]
-    [Authorize(Roles = ReportCatalog.StaffAndManager)]
+    [Authorize(Roles = ReportCatalog.StaffOnly)]
     public async Task<IActionResult> Rpt01Export([FromQuery] Rpt01FilterVm filter, [FromQuery] string? format)
     {
         if (CheckExport(format, out var exportFormat) is { } refused)
@@ -182,7 +182,7 @@ public class ReportsController : Controller
     /// <param name="filter">Filters from the query string</param>
     /// <param name="format">xlsx or pdf</param>
     [HttpGet("rpt-02/export")]
-    [Authorize(Roles = ReportCatalog.StaffAndManager)]
+    [Authorize(Roles = ReportCatalog.StaffOnly)]
     public async Task<IActionResult> Rpt02Export([FromQuery] Rpt02FilterVm filter, [FromQuery] string? format)
     {
         if (CheckExport(format, out var exportFormat) is { } refused)
@@ -204,7 +204,7 @@ public class ReportsController : Controller
     /// <param name="filter">Filters from the query string</param>
     /// <param name="format">xlsx or pdf</param>
     [HttpGet("rpt-03/export")]
-    [Authorize(Roles = ReportCatalog.StaffAndManager)]
+    [Authorize(Roles = ReportCatalog.StaffOnly)]
     public async Task<IActionResult> Rpt03Export([FromQuery] Rpt03FilterVm filter, [FromQuery] string? format)
     {
         if (CheckExport(format, out var exportFormat) is { } refused)
@@ -230,7 +230,7 @@ public class ReportsController : Controller
     /// <param name="filter">Filters from the query string</param>
     /// <param name="format">xlsx or pdf</param>
     [HttpGet("rpt-06/export")]
-    [Authorize(Roles = ReportCatalog.StaffAndManager)]
+    [Authorize(Roles = ReportCatalog.StaffOnly)]
     public async Task<IActionResult> Rpt06Export([FromQuery] Rpt06FilterVm filter, [FromQuery] string? format)
     {
         if (CheckExport(format, out var exportFormat) is { } refused)

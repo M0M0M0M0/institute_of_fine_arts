@@ -124,7 +124,7 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                         {
                             t.HasCheckConstraint("CK_account_gender", "[gender] IS NULL OR [gender] IN ('M','F','O')");
 
-                            t.HasCheckConstraint("CK_account_role", "[role] IN ('ADMIN','MANAGER','STAFF','STUDENT')");
+                            t.HasCheckConstraint("CK_account_role", "[role] IN ('ADMIN','STAFF','TEACHER','STUDENT')");
                         });
                 });
 
@@ -148,6 +148,17 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                         .HasColumnType("varchar(50)")
                         .HasColumnName("action");
 
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("category");
+
+                    b.Property<long?>("CompetitionId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("competition_id");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasPrecision(0)
@@ -156,8 +167,8 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                         .HasDefaultValueSql("SYSDATETIME()");
 
                     b.Property<string>("Details")
-                        .HasMaxLength(500)
-                        .HasColumnType("nvarchar(500)")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
                         .HasColumnName("details");
 
                     b.Property<string>("Entity")
@@ -170,11 +181,28 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("entity_id");
 
+                    b.Property<long?>("ExhibitionId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("exhibition_id");
+
                     b.Property<string>("IpAddress")
                         .HasMaxLength(45)
                         .IsUnicode(false)
                         .HasColumnType("varchar(45)")
                         .HasColumnName("ip_address");
+
+                    b.Property<long?>("SubmissionId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("submission_id");
+
+                    b.Property<string>("Summary")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)")
+                        .HasColumnName("summary");
+
+                    b.Property<long?>("TargetAccountId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("target_account_id");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasPrecision(0)
@@ -196,7 +224,22 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                     b.HasIndex("AccountId", "CreatedAt")
                         .HasDatabaseName("IX_audit_log_account");
 
-                    b.ToTable("audit_log", (string)null);
+                    b.HasIndex("CompetitionId", "CreatedAt")
+                        .HasDatabaseName("IX_audit_log_competition");
+
+                    b.HasIndex("ExhibitionId", "CreatedAt")
+                        .HasDatabaseName("IX_audit_log_exhibition");
+
+                    b.HasIndex("SubmissionId", "CreatedAt")
+                        .HasDatabaseName("IX_audit_log_submission");
+
+                    b.HasIndex("TargetAccountId", "CreatedAt")
+                        .HasDatabaseName("IX_audit_log_target_account");
+
+                    b.ToTable("audit_log", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_audit_log_category", "[category] IN ('LOGIN','ACCOUNT','COMPETITION','SUBMISSION','GRADING','AWARD','EXHIBITION','SALE','OTHER')");
+                        });
                 });
 
             modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.AwardIssued", b =>

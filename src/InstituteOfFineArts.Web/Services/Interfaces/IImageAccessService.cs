@@ -10,7 +10,7 @@ namespace InstituteOfFineArts.Web.Services.Interfaces;
 /// <param name="IsPublic">True when anyone may see it (allows public browser caching)</param>
 /// <param name="Watermark">
 /// True when the image must be sent with the institute watermark (F-M13-02): the viewer is neither the owner
-/// nor STAFF / MANAGER / ADMIN
+/// nor STAFF / TEACHER (after the deadline) / ADMIN
 /// </param>
 public record ImageFile(string RelativePath, string? DownloadName, bool IsPublic, bool Watermark = false);
 

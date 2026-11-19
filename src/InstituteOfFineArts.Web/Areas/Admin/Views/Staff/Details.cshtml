@@ -107,4 +107,22 @@
     </div>
 </section>
 
+@* Account history (audit log): ?tab=logins (default) | activity | changes *@
+@if (ViewBag.History is InstituteOfFineArts.Web.ViewModels.Admin.AuditLog.HistoryVm history)
+{
+    var tab = (string)ViewBag.Tab;
+    var tabs = new (string Key, string Text)[] { ("logins", "Login history"), ("activity", "Activity"), ("changes", "Changes to this account") };
+    <section class="section" aria-label="Account history">
+        <nav class="audit-tabs" aria-label="Account history">
+            @foreach (var (key, text) in tabs)
+            {
+                <a href="?tab=@key#account-history" aria-current="@(tab == key ? "page" : null)">@text</a>
+            }
+        </nav>
+        <div id="account-history">
+            <partial name="_History" model="history" />
+        </div>
+    </section>
+}
+
 <a asp-action="Index" class="btn btn-link px-0 mt-4"><i class="bi bi-arrow-left" aria-hidden="true"></i>Back to staff list</a>

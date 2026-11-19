@@ -17,7 +17,7 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
         // Table name + CHECK constraints for the enum columns
         b.ToTable("account", t =>
         {
-            t.HasCheckConstraint("CK_account_role", "[role] IN ('ADMIN','MANAGER','STAFF','STUDENT')");
+            t.HasCheckConstraint("CK_account_role", "[role] IN ('ADMIN','STAFF','TEACHER','STUDENT')");
             t.HasCheckConstraint("CK_account_gender", "[gender] IS NULL OR [gender] IN ('M','F','O')");
         });
 

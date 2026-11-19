@@ -12,7 +12,7 @@
     // Workspace (dashboard) of the signed-in role
     string? workspace = null;
     if (User.IsInRole(RoleNames.Admin)) { workspace = "/admin"; }
-    else if (User.IsInRole(RoleNames.Manager)) { workspace = "/manager"; }
+    else if (User.IsInRole(RoleNames.Teacher)) { workspace = "/teacher"; }
     else if (User.IsInRole(RoleNames.Staff)) { workspace = "/staff"; }
     else if (User.IsInRole(RoleNames.Student)) { workspace = "/student"; }
     var signedIn = User.Identity?.IsAuthenticated == true;
@@ -64,7 +64,7 @@
                     <span class="ticker-divider">•</span>
                     <span class="ticker-item">
                         <i class="bi bi-arrow-right-circle me-2"></i>Don’t miss this chance to showcase your talent.
-                        <a href="/competitions" class="text-white text-decoration-underline ms-1 fw-bold">See the competitions</a>
+                        <a href="/gallery/competitions" class="text-white text-decoration-underline ms-1 fw-bold">See the competitions</a>
                     </span>
                     <span class="ticker-divider">•</span>
                 </div>
@@ -85,7 +85,7 @@
                     <span class="ticker-divider">•</span>
                     <span class="ticker-item">
                         <i class="bi bi-arrow-right-circle me-2"></i>Don’t miss this chance to showcase your talent.
-                        <a href="/competitions" class="text-white text-decoration-underline ms-1 fw-bold" tabindex="-1">See the competitions</a>
+                        <a href="/gallery/competitions" class="text-white text-decoration-underline ms-1 fw-bold" tabindex="-1">See the competitions</a>
                     </span>
                     <span class="ticker-divider">•</span>
                 </div>
@@ -153,7 +153,7 @@
                     </ul>
 
                     <!-- Search Bar (Giữa): searches the public competitions by title or code -->
-                    <form class="d-flex mx-auto col-lg-5 col-md-7 my-2 my-lg-0" method="get" action="/competitions" role="search">
+                    <form class="d-flex mx-auto col-lg-5 col-md-7 my-2 my-lg-0" method="get" action="/competitions/search" role="search">
                         <div class="input-group art-search-box">
                             <input class="form-control border-0 shadow-none rounded-0 bg-transparent" type="search" name="Keyword" placeholder="Search competitions..." aria-label="Search competitions">
                             <button class="btn border-0 rounded-0 bg-transparent text-dark px-3" type="submit" aria-label="Search">
@@ -261,7 +261,7 @@
                         <li class="mb-2"><a href="/gallery/medium/WatercolorPaintings" class="text-decoration-none text-muted">Watercolors</a></li>
                         <li class="mb-2"><a href="/gallery/style/Abstract" class="text-decoration-none text-muted">Abstract</a></li>
                         <li class="mb-2"><a href="/gallery" class="text-decoration-none text-muted">Awarded paintings</a></li>
-                        <li class="mb-2"><a href="/competitions" class="text-decoration-none text-muted">@L["Competitions"]</a></li>
+                        <li class="mb-2"><a href="/gallery/competitions" class="text-decoration-none text-muted">@L["Competitions"]</a></li>
                     </ul>
                 </div>
                 <!-- Cột 4: For Artists -->

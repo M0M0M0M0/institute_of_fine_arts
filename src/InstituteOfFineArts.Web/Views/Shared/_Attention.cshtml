@@ -1,0 +1,27 @@
+@model List<InstituteOfFineArts.Web.ViewModels.Common.AttentionItemVm>
+@*
+    "Needs attention" strip at the top of the Manager and Staff dashboards (AttentionItems): one card per kind of work
+    waiting, the whole card links to the list filtered on the same rows. Nothing waiting → one calm line.
+*@
+<section class="attention" aria-labelledby="attention-heading">
+    <h2 id="attention-heading" class="attention-title">Needs attention</h2>
+    @if (Model.Count == 0)
+    {
+        <p class="attention-none"><i class="bi bi-check2-circle" aria-hidden="true"></i>Nothing is waiting. Every closed competition is graded and every sale is paid out.</p>
+    }
+    else
+    {
+        <ul class="attention-list">
+            @foreach (var item in Model)
+            {
+                <li>
+                    <a href="@item.Url" class="attention-card">
+                        <i class="bi @item.Icon" aria-hidden="true"></i>
+                        <span class="attention-head"><span class="attention-count">@item.Count</span> @item.Title</span>
+                        <span class="attention-text">@item.Text</span>
+                    </a>
+                </li>
+            }
+        </ul>
+    }
+</section>

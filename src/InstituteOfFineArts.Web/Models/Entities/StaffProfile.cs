@@ -1,7 +1,7 @@
 namespace InstituteOfFineArts.Web.Models.Entities;
 
 /// <summary>
-/// Employment details of ADMIN, MANAGER and STAFF members (table staff_profile).
+/// Employment details of ADMIN, STAFF and TEACHER members (table staff_profile).
 /// </summary>
 public class StaffProfile : BaseEntity
 {

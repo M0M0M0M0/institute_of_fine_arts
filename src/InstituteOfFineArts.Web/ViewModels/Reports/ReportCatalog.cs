@@ -19,42 +19,42 @@ public record ReportLinkVm(string Code, string Title, string Description, string
 /// </summary>
 public static class ReportCatalog
 {
-    /// <summary>Roles of RPT-01..06 (role matrix §2.3: STAFF and MANAGER).</summary>
-    public const string StaffAndManager = RoleNames.Staff + "," + RoleNames.Manager;
+    /// <summary>Roles of RPT-01..06: STAFF (the operations role, which took over the former Manager's overview).</summary>
+    public const string StaffOnly = RoleNames.Staff;
 
-    /// <summary>Roles of RPT-07 (role matrix §2.3: ADMIN and MANAGER).</summary>
-    public const string AdminAndManager = RoleNames.Admin + "," + RoleNames.Manager;
+    /// <summary>Roles of RPT-07: ADMIN and STAFF.</summary>
+    public const string AdminAndStaff = RoleNames.Admin + "," + RoleNames.Staff;
 
-    /// <summary>Roles of the report index: anyone who may open at least one report.</summary>
-    public const string AnyReportViewer = RoleNames.Staff + "," + RoleNames.Manager + "," + RoleNames.Admin;
+    /// <summary>Roles of the report index: anyone who may open at least one report. Teachers have no reports.</summary>
+    public const string AnyReportViewer = RoleNames.Staff + "," + RoleNames.Admin;
 
     /// <summary>Every report in code order.</summary>
     public static readonly IReadOnlyList<ReportLinkVm> All = new[]
     {
         new ReportLinkVm("RPT-01", "Submissions by rating",
             "Submissions of one competition in a date range, filtered by rating and class, with the count per rating.",
-            "/reports/rpt-01", Split(StaffAndManager)),
+            "/reports/rpt-01", Split(StaffOnly)),
         new ReportLinkVm("RPT-02", "Participation & ratings per competition",
             "Per competition: submissions, % participation of active students, count per rating, and who has not submitted.",
-            "/reports/rpt-02", Split(StaffAndManager)),
+            "/reports/rpt-02", Split(StaffOnly)),
         new ReportLinkVm("RPT-03", "Awards issued",
             "Awards issued by competition, issued date and student, with the total prize value.",
-            "/reports/rpt-03", Split(StaffAndManager)),
+            "/reports/rpt-03", Split(StaffOnly)),
         new ReportLinkVm("RPT-04", "Exhibition paintings & sales",
             "Paintings sent to exhibitions with asking and sold prices, and the sales totals.",
-            "/reports/rpt-04", Split(StaffAndManager)),
+            "/reports/rpt-04", Split(StaffOnly)),
         new ReportLinkVm("RPT-05", "Payments due to students",
             "Sold paintings whose money has not been paid to the student yet.",
-            "/reports/rpt-05", Split(StaffAndManager)),
+            "/reports/rpt-05", Split(StaffOnly)),
         new ReportLinkVm("RPT-06", "Student achievement profile",
             "One student's entries, ratings, awards, exhibitions and total sales in a period.",
-            "/reports/rpt-06", Split(StaffAndManager)),
+            "/reports/rpt-06", Split(StaffOnly)),
         new ReportLinkVm("RPT-07", "Account statistics",
             "Accounts per role and status, and students per class and course.",
-            "/reports/rpt-07", Split(AdminAndManager)),
+            "/reports/rpt-07", Split(AdminAndStaff)),
     };
 
     /// <summary>Turns a comma separated role list into a list.</summary>
-    /// <param name="roles">e.g. "STAFF,MANAGER"</param>
+    /// <param name="roles">e.g. "ADMIN,STAFF"</param>
     private static string[] Split(string roles) => roles.Split(',');
 }

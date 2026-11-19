@@ -19,20 +19,14 @@
             ("Insight", "Reports", "/reports", "bi-file-earmark-bar-graph"),
         ]);
     }
-    else if (User.IsInRole(RoleNames.Manager))
+    else if (User.IsInRole(RoleNames.Teacher))
     {
-        role = "Manager";
+        role = "Teacher";
         items.AddRange([
-            ("", "Dashboard", "/manager", "bi-speedometer2"),
-            ("People", "Students", "/manager/students", "bi-people"),
-            ("People", "Staff", "/manager/staff", "bi-person-badge"),
-            ("Competitions", "Competitions", "/manager/competitions", "bi-easel"),
-            ("Competitions", "Submissions", "/manager/submissions", "bi-images"),
-            ("Competitions", "Awards", "/manager/awards", "bi-trophy"),
-            ("Exhibitions", "Exhibitions", "/manager/exhibitions", "bi-bank"),
-            ("Exhibitions", "Artworks", "/manager/exhibition-entries", "bi-easel2"),
-            ("Exhibitions", "Customers", "/manager/customers", "bi-person-vcard"),
-            ("Insight", "Reports", "/reports", "bi-file-earmark-bar-graph"),
+            ("", "Dashboard", "/teacher", "bi-speedometer2"),
+            ("Grading", "Entries", "/teacher/submissions", "bi-pencil-square"),
+            ("Grading", "Competitions", "/teacher/competitions", "bi-easel"),
+            ("Exhibitions", "Exhibitions", "/teacher/exhibitions", "bi-bank"),
         ]);
     }
     else if (User.IsInRole(RoleNames.Staff))
@@ -45,6 +39,7 @@
             ("Competitions", "By rating", "/staff/submissions/by-rating", "bi-funnel"),
             ("Competitions", "Awards", "/staff/awards", "bi-trophy"),
             ("People", "Students", "/staff/students", "bi-people"),
+            ("People", "Team", "/staff/team", "bi-person-badge"),
             ("Exhibitions", "Exhibitions", "/staff/exhibitions", "bi-bank"),
             ("Exhibitions", "Artworks", "/staff/exhibition-entries", "bi-easel2"),
             ("Exhibitions", "Customers", "/staff/customers", "bi-person-vcard"),
@@ -69,10 +64,10 @@
     // Current page = the longest menu URL the path starts with ("/staff" must not win over "/staff/awards")
     var path = (Context.Request.Path.Value ?? "/").TrimEnd('/').ToLowerInvariant();
     if (path.Length == 0) { path = "/"; }
-    // The grading screen is reached from Submissions and lives under /staff/evaluations: highlight Submissions
-    if (path.StartsWith("/staff/evaluations"))
+    // The grading screen is reached from Entries and lives under /teacher/evaluations: highlight Entries
+    if (path.StartsWith("/teacher/evaluations"))
     {
-        path = "/staff/submissions";
+        path = "/teacher/submissions";
     }
     var current = items
         .Where(i => path == i.Url || path.StartsWith(i.Url + "/"))

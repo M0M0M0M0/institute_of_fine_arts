@@ -63,8 +63,8 @@ public class ImageAccessService : IImageAccessService
     }
 
     /// <summary>
-    /// F-M13-02 (when Upload:PublicWatermark is on): the original goes to the owner, STAFF, MANAGER and ADMIN; everyone
-    /// else (guests, other students) receives a watermarked copy. Full access (owner, staff, manager) is exactly who may download (BR-20).
+    /// F-M13-02 (when Upload:PublicWatermark is on): the original goes to the owner, STAFF, TEACHER (after the deadline)
+    /// and ADMIN; everyone else (guests, other students) receives a watermarked copy. Full access is exactly who may download (BR-20).
     /// </summary>
     private static bool NeedsWatermark(Models.Entities.Submission submission, ClaimsPrincipal user)
         => !SubmissionImagePolicy.CanDownload(submission, user)

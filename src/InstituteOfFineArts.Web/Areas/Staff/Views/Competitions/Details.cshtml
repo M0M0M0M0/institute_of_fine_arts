@@ -215,4 +215,10 @@
     </section>
 }
 
+@* History of this object (audit log): who did what and when *@
+@if (ViewBag.History is InstituteOfFineArts.Web.ViewModels.Admin.AuditLog.HistoryVm history)
+{
+    <partial name="_History" model="history" />
+}
+
 <p class="mt-4"><a asp-action="Index" class="btn btn-link px-0">Back to competitions</a></p>

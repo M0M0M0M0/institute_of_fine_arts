@@ -156,9 +156,17 @@ public class CompetitionAwardService : ICompetitionAwardService
 
     /// <summary>Checks the form values again (no caller can skip BR-09) and returns them trimmed / not null.</summary>
     private static (string Name, int Rank, decimal Prize, int Quantity) Validate(CompetitionAwardFormVm form)
+        => Validate(form.AwardName, form.Rank, form.PrizeValue, form.Quantity, form.PrizeDescription);
+
+    /// <summary>
+    /// Rules of one award, shared with the award rows of the competition form (CompetitionService). Errors name the
+    /// field (AwardName, Rank, PrizeValue, Quantity, PrizeDescription), the same names as on CompetitionAwardRowVm.
+    /// </summary>
+    internal static (string Name, int Rank, decimal Prize, int Quantity) Validate(string? awardName, int? rankValue,
+        decimal? prizeValue, int? quantityValue, string? prizeDescription)
     {
         // Name: required, at most 100 characters
-        var name = form.AwardName?.Trim() ?? string.Empty;
+        var name = awardName?.Trim() ?? string.Empty;
         if (name.Length == 0)
         {
             throw new BusinessException("Please enter the award name", nameof(CompetitionAwardFormVm.AwardName));
@@ -169,13 +177,13 @@ public class CompetitionAwardService : ICompetitionAwardService
         }
 
         // Rank ≥ 1
-        if (form.Rank is not { } rank || rank < 1)
+        if (rankValue is not { } rank || rank < 1)
         {
             throw new BusinessException(CompetitionAwardFormVm.RankMessage, nameof(CompetitionAwardFormVm.Rank));
         }
 
         // Prize ≥ 0 USD, fits decimal(18,2)
-        if (form.PrizeValue is not { } prize || prize < 0 || prize > MaxPrize)
+        if (prizeValue is not { } prize || prize < 0 || prize > MaxPrize)
         {
             throw new BusinessException(CompetitionAwardFormVm.PrizeMessage, nameof(CompetitionAwardFormVm.PrizeValue));
         }
@@ -185,13 +193,13 @@ public class CompetitionAwardService : ICompetitionAwardService
         }
 
         // Quantity ≥ 1
-        if (form.Quantity is not { } quantity || quantity < 1)
+        if (quantityValue is not { } quantity || quantity < 1)
         {
             throw new BusinessException(CompetitionAwardFormVm.QuantityMessage, nameof(CompetitionAwardFormVm.Quantity));
         }
 
         // Description: optional, at most 500 characters
-        if (form.PrizeDescription?.Trim().Length > 500)
+        if (prizeDescription?.Trim().Length > 500)
         {
             throw new BusinessException("Prize description must be at most 500 characters", nameof(CompetitionAwardFormVm.PrizeDescription));
         }

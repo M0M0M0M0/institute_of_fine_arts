@@ -37,7 +37,7 @@ public class AdminDashboardServiceTests
             Account("staff01", Role.STAFF, loginMinutes: 10),
             Account("staff02", Role.STAFF, loginMinutes: 20),
             Account("staff03", Role.STAFF, active: false),
-            Account("manager01", Role.MANAGER, loginMinutes: 30),
+            Account("teacher01", Role.TEACHER, loginMinutes: 30),
             Account("admin01", Role.ADMIN, loginMinutes: 60),
             Account("admin02", Role.ADMIN, active: false));
 
@@ -100,7 +100,7 @@ public class AdminDashboardServiceTests
         var vm = await new AdminDashboardService(db).GetAsync(Today);
 
         Assert.Equal(3, vm.StaffByRole[Role.STAFF]);
-        Assert.Equal(1, vm.StaffByRole[Role.MANAGER]);
+        Assert.Equal(1, vm.StaffByRole[Role.TEACHER]);
         Assert.Equal(2, vm.StaffByRole[Role.ADMIN]);
         Assert.False(vm.StaffByRole.ContainsKey(Role.STUDENT));
         Assert.Equal(4, vm.StaffActive);
@@ -173,7 +173,7 @@ public class AdminDashboardServiceTests
         var vm = await new AdminDashboardService(db).GetAsync(Today);
 
         Assert.Equal(AdminDashboardService.RecentLoginCount, vm.RecentLogins.Count);
-        Assert.Equal(new[] { "admin01", "student01", "student02", "manager01", "staff02" }, vm.RecentLogins.Select(l => l.Username));
+        Assert.Equal(new[] { "admin01", "student01", "student02", "teacher01", "staff02" }, vm.RecentLogins.Select(l => l.Username));
         var first = vm.RecentLogins[0];
         Assert.Equal("ADMIN01", first.FullName);
         Assert.Equal(Role.ADMIN, first.Role);

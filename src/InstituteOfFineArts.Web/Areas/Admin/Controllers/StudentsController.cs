@@ -1,3 +1,5 @@
+using InstituteOfFineArts.Web.Models.Enums;
+using InstituteOfFineArts.Web.ViewModels.Admin.AuditLog;
 using InstituteOfFineArts.Web.Exceptions;
 using InstituteOfFineArts.Web.Services.Interfaces;
 using InstituteOfFineArts.Web.ViewModels.Admin.Students;
@@ -13,12 +15,16 @@ namespace InstituteOfFineArts.Web.Areas.Admin.Controllers;
 [Route("admin/students")]
 public class StudentsController : AdminBaseController
 {
+    /// <summary>History of the account (audit log).</summary>
+    private readonly IAuditLogService _audit;
+
     /// <summary>Student service.</summary>
     private readonly IStudentService _students;
 
     /// <summary>Receives the student service through Dependency Injection.</summary>
-    public StudentsController(IStudentService students)
+    public StudentsController(IStudentService students, IAuditLogService audit)
     {
+        _audit = audit;
         _students = students;
     }
 
@@ -60,11 +66,13 @@ public class StudentsController : AdminBaseController
     /// <summary>Details: login, personal and study information, related data.</summary>
     /// <param name="id">student_profile.id</param>
     [HttpGet("{id:long}")]
-    public async Task<IActionResult> Details(long id)
+    public async Task<IActionResult> Details(long id, [FromQuery] string? tab, [FromQuery] int page = 1)
     {
         try
         {
-            return View(await _students.GetDetailsAsync(id));
+            var details = await _students.GetDetailsAsync(id);
+            await LoadHistoryAsync(id, tab, page);
+            return View(details);
         }
         catch (NotFoundException)
         {
@@ -194,5 +202,28 @@ public class StudentsController : AdminBaseController
             TempData["Error"] = ex.Message;
         }
         return RedirectToAction(nameof(Details), new { id });
+    }
+
+    /// <summary>
+    /// History tab of the account page: "logins" (sign-ins, refused sign-ins, sign-outs – web and app), "activity"
+    /// (what the account did) or "changes" (what was done to the account: edited, locked, password reset…).
+    /// </summary>
+    private async Task LoadHistoryAsync(long profileId, string? tab, int page)
+    {
+        tab = tab is "activity" or "changes" ? tab : "logins";
+        ViewBag.Tab = tab;
+        if (await _audit.AccountIdOfProfileAsync(student: true, profileId) is not { } accountId)
+        {
+            return;
+        }
+        var query = tab switch
+        {
+            "activity" => new AuditHistoryQuery { ActorAccountId = accountId, ExceptCategory = AuditCategory.LOGIN },
+            "changes" => new AuditHistoryQuery { TargetAccountId = accountId, ExceptCategory = AuditCategory.LOGIN },
+            _ => new AuditHistoryQuery { AccountId = accountId, Category = AuditCategory.LOGIN },
+        };
+        query.Page = page;
+        var title = tab switch { "activity" => "Activity", "changes" => "Changes to this account", _ => "Login history" };
+        ViewBag.History = new HistoryVm(await _audit.GetHistoryAsync(query), title, ShowObject: tab == "activity");
     }
 }

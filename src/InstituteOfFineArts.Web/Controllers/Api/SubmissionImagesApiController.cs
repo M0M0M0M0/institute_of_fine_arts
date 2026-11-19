@@ -1,3 +1,4 @@
+using InstituteOfFineArts.Web.Infrastructure.Audit;
 using InstituteOfFineArts.Web.Helpers;
 using InstituteOfFineArts.Web.Infrastructure.Api;
 using InstituteOfFineArts.Web.Services.Interfaces;
@@ -12,7 +13,7 @@ namespace InstituteOfFineArts.Web.Controllers.Api;
 /// A missing image and an image the user may not see both return 404.
 /// </summary>
 [Route("api/submissions")]
-[Authorize(Roles = $"{RoleNames.Student},{RoleNames.Staff},{RoleNames.Manager},{RoleNames.Admin}")]
+[Authorize(Roles = $"{RoleNames.Student},{RoleNames.Staff},{RoleNames.Teacher},{RoleNames.Admin}")]
 public class SubmissionImagesApiController : ApiControllerBase
 {
     private const string JpegContentType = "image/jpeg";
@@ -30,6 +31,7 @@ public class SubmissionImagesApiController : ApiControllerBase
 
     /// <summary>Image bytes (original, or a watermarked copy when the viewer is not the owner/staff).</summary>
     [HttpGet("{id:long}/image")]
+    [AuditView]
     public async Task<IActionResult> Image(long id, bool download = false, bool thumb = false)
     {
         // thumb=true: the 400 px copy (the original when there is none); same permission rules

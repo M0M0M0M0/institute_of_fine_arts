@@ -8,7 +8,7 @@ namespace InstituteOfFineArts.Web.ViewModels.Admin;
 /// </summary>
 public class AdminDashboardVm
 {
-    /// <summary>Staff accounts per role (STAFF, MANAGER, ADMIN).</summary>
+    /// <summary>Staff accounts per role (STAFF, TEACHER, ADMIN).</summary>
     public IReadOnlyDictionary<Role, int> StaffByRole { get; set; } = new Dictionary<Role, int>();
 
     /// <summary>Active staff accounts (all three staff roles).</summary>

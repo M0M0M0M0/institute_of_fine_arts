@@ -98,8 +98,16 @@ public class GradingEvaluationRequest
 /// <summary>Read side of the grading API (AsNoTracking queries + the evaluation page of the web).</summary>
 public static class GradingQueries
 {
-    /// <summary>Competitions with entries or CLOSED / GRADED, with their grading progress; ready to grade first.</summary>
-    public static async Task<List<GradingCompetitionDto>> CompetitionsAsync(AppDbContext db)
+    /// <summary>What a teacher sees: competitions whose submission period is over (they grade the CLOSED ones).</summary>
+    public static readonly IReadOnlySet<CompetitionStatus> TeacherStatuses = new HashSet<CompetitionStatus> { CompetitionStatus.CLOSED, CompetitionStatus.GRADED };
+
+    /// <summary>What staff see: published results only, read only (staff do not grade).</summary>
+    public static readonly IReadOnlySet<CompetitionStatus> StaffStatuses = new HashSet<CompetitionStatus> { CompetitionStatus.GRADED };
+
+    /// <summary>Competitions of the given statuses (today) with their grading progress; ready to grade first.</summary>
+    /// <param name="db">Database</param>
+    /// <param name="visible"><see cref="TeacherStatuses"/> or <see cref="StaffStatuses"/></param>
+    public static async Task<List<GradingCompetitionDto>> CompetitionsAsync(AppDbContext db, IReadOnlySet<CompetitionStatus> visible)
     {
         var competitions = await db.Competitions.AsNoTracking().ToListAsync();
         var counts = await db.Submissions.AsNoTracking()
@@ -115,7 +123,7 @@ public static class GradingQueries
                 Total = counts.TryGetValue(c.Id, out var n) ? n.Total : 0,
                 Evaluated = counts.TryGetValue(c.Id, out var m) ? m.Evaluated : 0,
             })
-            .Where(x => x.Total > 0 || x.Status is CompetitionStatus.CLOSED or CompetitionStatus.GRADED)
+            .Where(x => visible.Contains(x.Status))
             // CLOSED (needs grading) first, then the rest; newest end date first
             .OrderBy(x => x.Status == CompetitionStatus.CLOSED ? 0 : 1)
             .ThenByDescending(x => x.Competition.EndDate)
@@ -133,10 +141,15 @@ public static class GradingQueries
     }
 
     /// <summary>All entries of a competition matching the filters, oldest submission first.</summary>
-    public static async Task<GradingListDto> ListAsync(AppDbContext db, long competitionId, bool? graded, Rating? rating, string? q)
+    /// <param name="visible">Statuses the caller may see; another status is reported as not found (no leak before the deadline)</param>
+    public static async Task<GradingListDto> ListAsync(AppDbContext db, long competitionId, bool? graded, Rating? rating, string? q,
+        IReadOnlySet<CompetitionStatus> visible)
     {
-        var competition = await db.Competitions.AsNoTracking().FirstOrDefaultAsync(c => c.Id == competitionId)
-            ?? throw new NotFoundException($"Competition {competitionId} was not found.");
+        var competition = await db.Competitions.AsNoTracking().FirstOrDefaultAsync(c => c.Id == competitionId);
+        if (competition == null || !visible.Contains(CompetitionStatusResolver.Resolve(competition)))
+        {
+            throw new NotFoundException($"Competition {competitionId} was not found.");
+        }
 
         var all = db.Submissions.AsNoTracking().Where(s => s.CompetitionId == competitionId);
         var total = await all.CountAsync();
@@ -186,9 +199,16 @@ public static class GradingQueries
     }
 
     /// <summary>The entry with its evaluation, what staff may do now (from the web's evaluation page) and the next entry to grade.</summary>
-    public static async Task<GradingDetailDto> DetailAsync(AppDbContext db, IEvaluationService evaluations, long submissionId)
+    /// <param name="visible">Statuses the caller may see; another status is reported as not found</param>
+    /// <param name="canGrade">False for staff: the entry is shown read only</param>
+    public static async Task<GradingDetailDto> DetailAsync(AppDbContext db, IEvaluationService evaluations, long submissionId,
+        IReadOnlySet<CompetitionStatus> visible, bool canGrade)
     {
         EvaluationPageVm page = await evaluations.GetPageAsync(submissionId);
+        if (!visible.Contains(page.CompetitionStatus))
+        {
+            throw new NotFoundException($"Submission {submissionId} was not found.");
+        }
 
         var meta = await db.Submissions.AsNoTracking()
             .Where(s => s.Id == submissionId)
@@ -235,9 +255,9 @@ public static class GradingQueries
             StudentCode = page.StudentCode,
             SubmittedAt = page.SubmittedAt,
             UpdatedAt = meta.UpdatedAt,
-            CanEvaluate = page.CanEvaluate,
-            CanDeleteEvaluation = page.CanDelete,
-            LockReason = page.ReadOnlyReason,
+            CanEvaluate = canGrade && page.CanEvaluate,
+            CanDeleteEvaluation = canGrade && page.CanDelete,
+            LockReason = canGrade ? page.ReadOnlyReason : "Only teachers grade entries; results are shown once published.",
             Evaluation = meta.Evaluation == null ? null : new GradingEvaluationDto
             {
                 Rating = meta.Evaluation.Rating,

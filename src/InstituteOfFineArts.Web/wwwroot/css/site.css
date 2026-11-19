@@ -42,7 +42,8 @@
     --ifa-warning-soft: #f8edd3;
 
     /* Type */
-    --ifa-font-display: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+    /* Titles use the UI sans too: the Didone (Bodoni Moda) titles were hard to read on working screens */
+    --ifa-font-display: var(--ifa-font-ui);
     --ifa-font-ui: "General Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
 
     /* Shape: pills for actions and filters, crisp 3px for fields, 0 for paintings */
@@ -83,10 +84,10 @@ body {
     font-variant-numeric: lining-nums;
 }
 
-/* Titles speak Didone; sizes step clearly (Elements of Typographic Style scale) */
+/* Titles: same sans as the UI, a heavier weight; sizes step clearly (Elements of Typographic Style scale) */
 h1, h2, h3, .h1, .h2, .h3, .display-title {
     font-family: var(--ifa-font-display);
-    font-weight: 500;
+    font-weight: 600;
     color: var(--ifa-text);
     letter-spacing: -0.01em;
     line-height: 1.12;
@@ -911,5 +912,88 @@ progress.meter.progress-inline::-webkit-progress-bar { background: var(--ifa-wal
 }
 /* Text links among page actions sit flush instead of wrapping with button padding */
 .page-actions .btn-link { padding-inline: 0; }
-/* Bodoni Moda's wide W/V/A sidebearings open gaps at display sizes ("W elcome"): tighten the display tracking */
+/* Large titles: slightly tighter tracking at display sizes */
 h1, .h1, .hero-title, .band-title { letter-spacing: -0.02em; }
+
+/* ===== Dashboards: "Needs attention", linked key figures, period switch (manager + staff review, 2026-11) ===== */
+/* Secondary text a step darker than --ifa-muted (8.6:1 on white) for descriptions read at a glance */
+:root { --ifa-text-soft: #4a463e; --ifa-on-ink-soft: #c9d6db; --ifa-attention: #8a5a00; --ifa-attention-soft: #fbf1dc; }
+.page-head .page-sub, .chart-figure figcaption p { color: var(--ifa-text-soft); }
+/* Rail: role and group labels readable on navy (11.4:1) */
+.rail-role, .rail-group { color: var(--ifa-on-ink-soft); }
+.rail-badge {
+    display: inline-block; margin-left: .5rem; padding: .1rem .5rem; border: 1px solid currentColor; border-radius: var(--ifa-radius-pill);
+    font-size: .75rem; font-weight: 600; line-height: 1.4; vertical-align: .1em; color: var(--ifa-on-ink);
+}
+
+.attention { margin: 0 0 2rem; }
+.attention-title { font-size: 1.125rem; margin: 0 0 .75rem; }
+.attention-none { display: flex; align-items: center; gap: .5rem; margin: 0; padding: .85rem 1rem; background: var(--ifa-ongoing-soft); color: var(--ifa-ongoing); border-radius: 6px; }
+.attention-list { list-style: none; margin: 0; padding: 0; display: grid; gap: .75rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); }
+.attention-card {
+    display: grid; grid-template-columns: auto 1fr; column-gap: .6rem; align-items: baseline; height: 100%;
+    padding: .9rem 1rem; border: 1px solid var(--ifa-line); border-left: 4px solid var(--ifa-attention); border-radius: 6px;
+    background: var(--ifa-attention-soft); color: var(--ifa-text); text-decoration: none;
+}
+.attention-card:hover, .attention-card:focus-visible { border-color: var(--ifa-attention); text-decoration: none; }
+.attention-card .bi { grid-row: span 2; color: var(--ifa-attention); font-size: 1.1rem; }
+.attention-head { font-weight: 600; }
+.attention-count { font-size: 1.5rem; line-height: 1.1; margin-right: .15rem; font-variant-numeric: tabular-nums; }
+.attention-text { font-size: .875rem; color: var(--ifa-text-soft); }
+
+/* Period switch: three plain links, the current one filled */
+.segmented { display: inline-flex; border: 1px solid var(--ifa-line-strong); border-radius: var(--ifa-radius-pill); overflow: hidden; }
+.segmented a { padding: .3rem .9rem; font-size: .875rem; font-weight: 500; color: var(--ifa-ink); text-decoration: none; }
+.segmented a + a { border-left: 1px solid var(--ifa-line-strong); }
+.segmented a:hover { background: var(--ifa-mist); }
+.segmented a[aria-current="page"] { background: var(--ifa-ink); color: var(--ifa-on-ink); }
+
+/* Key figures: the whole card is one link (stretched from the label), no underlined links inside */
+.ledger.is-linked > div { position: relative; padding-left: 1.25rem; }
+.ledger.is-linked > div:hover { background: var(--ifa-mist); }
+.ledger.is-linked dt a { color: inherit; text-decoration: none; }
+.ledger.is-linked dt a:focus-visible { outline: none; }
+.ledger.is-linked > div:has(a:focus-visible) { outline: 2px solid var(--ifa-ink); outline-offset: -2px; }
+.ledger .ledger-period { font-size: .75rem; font-weight: 500; color: var(--ifa-text-soft); white-space: nowrap; }
+.ledger dd.ledger-sub { font-size: .875rem; color: var(--ifa-text-soft); }
+.ledger dd.ledger-change { color: var(--ifa-text); font-weight: 500; }
+.ledger dd.is-owed strong { color: var(--ifa-attention); }
+
+/* Chart caption with a filter on the right */
+.chart-caption-row { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: .75rem 1.5rem; }
+.chart-filter { display: flex; align-items: center; gap: .5rem; }
+.chart-filter .form-label { margin: 0; font-size: .875rem; }
+.chart-filter .form-select { width: auto; min-width: 7rem; }
+.chart-figure[data-chart="revenue"] .chart-box, .chart-figure[data-chart="rating"] .chart-box { height: 20rem; }
+
+/* Award rows of the competition form: rank | name | prize | winners | remove, the description on its own line */
+.award-rows { border: 0; padding: 0; margin-top: 1.5rem; min-width: 0; }
+.award-head, .award-row { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr) 8rem 5.5rem 4rem; gap: .5rem; align-items: center; }
+.award-head { font-size: .8125rem; color: var(--ifa-muted); padding: 0 0 .25rem; }
+.award-row { padding: .6rem 0; border-top: 1px solid var(--ifa-line); }
+.award-row .award-desc, .award-row .award-error { grid-column: 2 / -1; }
+.award-row.is-removed > input:not([type=hidden]) { opacity: .45; text-decoration: line-through; pointer-events: none; }
+.award-given { font-size: .75rem; color: var(--ifa-gilt-text); white-space: nowrap; }
+.award-given .bi { margin-right: .2rem; }
+@media (max-width: 575.98px) {
+    .award-head { display: none; }
+    .award-row { grid-template-columns: 4rem minmax(0, 1fr) 4rem; }
+}
+
+/* ---------- History of an object (Views/Shared/_History.cshtml, audit_log) ---------- */
+.audit-day { font-size: .8rem; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--ifa-muted); margin: 1.25rem 0 .5rem; }
+.audit-day:first-of-type { margin-top: 0; }
+.audit-list { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--ifa-line); }
+.audit-row { display: grid; grid-template-columns: 3.25rem 1fr; gap: .75rem; padding: .5rem 0 .5rem .75rem; position: relative; }
+.audit-row::before { content: ""; position: absolute; left: -5px; top: .95rem; width: 8px; height: 8px; border-radius: 50%; background: var(--ifa-ink); }
+.audit-row.is-failed::before { background: var(--ifa-danger); }
+.audit-time { color: var(--ifa-muted); font-size: .85rem; padding-top: .1rem; }
+.audit-body { min-width: 0; }
+.audit-text { margin: 0; overflow-wrap: anywhere; }
+.audit-role { display: inline-block; font-size: .72rem; padding: 0 .4rem; margin: 0 .25rem; border: 1px solid var(--ifa-line-strong); color: var(--ifa-muted); vertical-align: .1em; }
+.audit-changes { margin: .3rem 0 0; padding-left: 1.1rem; font-size: .875rem; color: var(--ifa-muted); }
+.audit-meta { margin: .2rem 0 0; font-size: .78rem; color: var(--ifa-muted); display: flex; flex-wrap: wrap; gap: .75rem; }
+.audit-kind { font-weight: 600; }
+.audit-tabs { display: flex; flex-wrap: wrap; gap: .25rem; border-bottom: 1px solid var(--ifa-line); margin-bottom: 1.25rem; }
+.audit-tabs a { padding: .5rem .9rem; text-decoration: none; color: var(--ifa-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+.audit-tabs a[aria-current="page"] { color: var(--ifa-ink); border-bottom-color: var(--ifa-ink); font-weight: 600; }

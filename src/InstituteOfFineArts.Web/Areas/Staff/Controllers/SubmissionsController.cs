@@ -1,3 +1,5 @@
+using InstituteOfFineArts.Web.ViewModels.Admin.AuditLog;
+using InstituteOfFineArts.Web.Infrastructure.Audit;
 using InstituteOfFineArts.Web.Exceptions;
 using InstituteOfFineArts.Web.Services.Implementations;
 using InstituteOfFineArts.Web.Services.Interfaces;
@@ -10,7 +12,7 @@ namespace InstituteOfFineArts.Web.Areas.Staff.Controllers;
 /// Staff – submissions, read only (M07, tasks BE2-06, BE2-07; screens SCR-26, SCR-27):
 /// GET /staff/submissions (list + filters + evaluation progress) · GET /staff/submissions/{id} (details)
 /// GET /staff/submissions/by-rating (rating search to pick paintings for exhibitions).
-/// Evaluating is done at /staff/evaluations/{submissionId} (EvaluationsController, BE1-10).
+/// Staff do not grade: teachers do it in the Teacher area (/teacher/evaluations/{submissionId}).
 /// </summary>
 [Route("staff/submissions")]
 public class SubmissionsController : StaffBaseController
@@ -18,10 +20,14 @@ public class SubmissionsController : StaffBaseController
     /// <summary>Submission queries.</summary>
     private readonly IStaffSubmissionService _submissions;
 
-    /// <summary>Receives the submission service through Dependency Injection.</summary>
-    public SubmissionsController(IStaffSubmissionService submissions)
+    /// <summary>History of the entry (audit log).</summary>
+    private readonly IAuditLogService _audit;
+
+    /// <summary>Receives the services through Dependency Injection.</summary>
+    public SubmissionsController(IStaffSubmissionService submissions, IAuditLogService audit)
     {
         _submissions = submissions;
+        _audit = audit;
     }
 
     /// <summary>List with filters and paging; with a competition chosen, also its evaluation progress.</summary>
@@ -50,11 +56,17 @@ public class SubmissionsController : StaffBaseController
     /// <summary>Details: painting, texts, student, competition, evaluation, award, exhibition entries.</summary>
     /// <param name="id">Submission id</param>
     [HttpGet("{id:long}")]
-    public async Task<IActionResult> Details(long id)
+    [AuditView]
+    public async Task<IActionResult> Details(long id, [FromQuery] int page = 1)
     {
         try
         {
-            return View(await _submissions.GetDetailsAsync(id));
+            var details = await _submissions.GetDetailsAsync(id);
+            // The entry's own history: submitted, edited, opened by staff / teachers, graded, awarded, exhibited, sold
+            ViewBag.History = new HistoryVm(
+                await _audit.GetHistoryAsync(new AuditHistoryQuery { SubmissionId = id, Page = page, PageSize = 10 }),
+                "History of this entry");
+            return View(details);
         }
         catch (NotFoundException)
         {

@@ -40,7 +40,7 @@ public class Account : BaseEntity
     /// <summary>Time of the latest successful login.</summary>
     public DateTime? LastLoginAt { get; set; }
 
-    /// <summary>Staff profile (when the role is ADMIN, MANAGER or STAFF).</summary>
+    /// <summary>Staff profile (when the role is ADMIN, STAFF or TEACHER).</summary>
     public StaffProfile? StaffProfile { get; set; }
 
     /// <summary>Student profile (when the role is STUDENT).</summary>

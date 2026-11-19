@@ -11,10 +11,10 @@ namespace InstituteOfFineArts.Web.Controllers;
 /// JSON data of the dashboard charts (task BE2-OPT 2; F-M15-01), drawn with Chart.js by the FE:
 /// GET /charts/submissions-by-competition?status= · /charts/ratings?competitionId=&amp;status= ·
 /// /charts/sales-by-exhibition?status=. Shape <c>{ labels: [...], datasets: [{ label, data: [...] }] }</c>.
-/// STAFF and MANAGER only (same roles as the competition and sales reports, role matrix §2.3); other roles → 403.
+/// STAFF only (same role as the competition and sales reports); other roles → 403.
 /// </summary>
 [Route("charts")]
-[Authorize(Roles = ReportCatalog.StaffAndManager)]
+[Authorize(Roles = ReportCatalog.StaffOnly)]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public class ChartsController : Controller
 {
@@ -33,13 +33,13 @@ public class ChartsController : Controller
     /// <summary>Submissions and evaluated submissions per competition.</summary>
     /// <param name="status">Only competitions with this actual status</param>
     [HttpGet("submissions-by-competition")]
-    public async Task<IActionResult> SubmissionsByCompetition([FromQuery] CompetitionStatus? status)
+    public async Task<IActionResult> SubmissionsByCompetition([FromQuery] CompetitionStatus? status, [FromQuery] int? year)
     {
         if (!ModelState.IsValid)
         {
             return BadRequest(new { error = InvalidFilterMessage });
         }
-        return Json(await _charts.GetSubmissionsByCompetitionAsync(status));
+        return Json(await _charts.GetSubmissionsByCompetitionAsync(status, year: year));
     }
 
     /// <summary>Rating distribution (plus "Not graded") of all or one competition.</summary>

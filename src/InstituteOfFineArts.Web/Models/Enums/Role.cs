@@ -9,14 +9,14 @@ namespace InstituteOfFineArts.Web.Models.Enums;
 /// </remarks>
 public enum Role
 {
-    /// <summary>Administrator: manages staff and student accounts</summary>
+    /// <summary>Administrator: manages staff, teacher and student accounts, the audit log</summary>
     ADMIN,
 
-    /// <summary>Manager: views all data, manages exhibitions</summary>
-    MANAGER,
-
-    /// <summary>Staff/teacher: competitions, grading, awards, exhibitions</summary>
+    /// <summary>Staff: runs the institute – competitions, awards, exhibitions, sales, dashboard and reports. Does not grade.</summary>
     STAFF,
+
+    /// <summary>Teacher: the subject expert who grades entries once the competition is closed (jury member)</summary>
+    TEACHER,
 
     /// <summary>Student: submits paintings, views results</summary>
     STUDENT

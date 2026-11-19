@@ -19,7 +19,18 @@
                         </a>
                     </td>
                     <td class="row-title"><a asp-controller="Submissions" asp-action="Details" asp-route-id="@s.Id">@s.Title</a></td>
-                    <td><a asp-controller="Students" asp-action="Details" asp-route-id="@s.StudentId">@s.StudentName</a> <span class="text-muted small">@s.StudentCode</span></td>
+                    <td>
+                        @* The Teacher area has no student pages (ViewData["StudentLinks"] = false) *@
+                        @if (ViewData["StudentLinks"] is false)
+                        {
+                            @s.StudentName
+                        }
+                        else
+                        {
+                            <a asp-controller="Students" asp-action="Details" asp-route-id="@s.StudentId">@s.StudentName</a>
+                        }
+                        <span class="text-muted small">@s.StudentCode</span>
+                    </td>
                     <td><a asp-controller="Competitions" asp-action="Details" asp-route-id="@s.CompetitionId">@s.CompetitionTitle</a></td>
                     <td class="num">
                         <span class="text-nowrap">@s.SubmittedAt.ToString("dd MMM yyyy HH:mm")</span>

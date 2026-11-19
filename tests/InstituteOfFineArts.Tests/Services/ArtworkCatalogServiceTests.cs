@@ -4,6 +4,7 @@ using InstituteOfFineArts.Web.Helpers;
 using InstituteOfFineArts.Web.Models.Entities;
 using InstituteOfFineArts.Web.Models.Enums;
 using InstituteOfFineArts.Web.Services.Implementations;
+using InstituteOfFineArts.Web.ViewModels.Public;
 using Microsoft.EntityFrameworkCore;
 
 namespace InstituteOfFineArts.Tests.Services;
@@ -197,6 +198,77 @@ public class ArtworkCatalogServiceTests
         Assert.Equal(new[] { "Ongoing", "Upcoming" }, showcase.Open.Select(c => c.Title));
         Assert.Equal(new[] { "Graded 4", "Graded 3", "Graded 2", "Graded 1" }, showcase.Results.Select(c => c.Title));
         Assert.Equal(CompetitionStatus.ONGOING, showcase.Open[0].Status);
+    }
+
+    /// <summary>Tabs: Open = ongoing then upcoming; Past = closed then graded (every one, not only 4); All = everything.</summary>
+    [Fact]
+    public async Task SearchShowcase_Tabs()
+    {
+        using var db = CreateDb();
+        AddCompetition(db, "Upcoming", 5, 30);
+        AddCompetition(db, "Ongoing", -5, 10);
+        AddCompetition(db, "Closed", -30, -1);
+        for (var i = 0; i < 5; i++) AddCompetition(db, $"Graded {i}", -100, -90, graded: true, publishedDaysAgo: 50 - i);
+        var service = new ArtworkCatalogService(db);
+
+        var open = await service.SearchShowcaseAsync(new GalleryCompetitionSearchVm { Tab = GalleryCompetitionTab.Open }, pageSize: 20);
+        var past = await service.SearchShowcaseAsync(new GalleryCompetitionSearchVm { Tab = GalleryCompetitionTab.Past }, pageSize: 20);
+        var all = await service.SearchShowcaseAsync(new GalleryCompetitionSearchVm { Tab = GalleryCompetitionTab.All }, pageSize: 20);
+
+        Assert.Equal(new[] { "Ongoing", "Upcoming" }, open.Items.Select(c => c.Title));
+        // The closed one first, then all 5 graded ones, latest results first
+        Assert.Equal(new[] { "Closed", "Graded 4", "Graded 3", "Graded 2", "Graded 1", "Graded 0" }, past.Items.Select(c => c.Title));
+        Assert.Equal(CompetitionStatus.CLOSED, past.Items[0].Status);
+        Assert.Equal(8, all.TotalCount);
+    }
+
+    /// <summary>Keyword (title or code) and status filters; a status of another tab switches the tab.</summary>
+    [Fact]
+    public async Task SearchShowcase_KeywordAndStatus()
+    {
+        using var db = CreateDb();
+        AddCompetition(db, "Spring Landscapes", -5, 10);
+        AddCompetition(db, "City at Night", -5, 12);
+        var graded = AddCompetition(db, "Winter Landscapes", -100, -90, graded: true);
+        var service = new ArtworkCatalogService(db);
+
+        var landscapes = await service.SearchShowcaseAsync(new GalleryCompetitionSearchVm { Tab = GalleryCompetitionTab.All, Keyword = " Landscapes " }); // SQL Server is case-insensitive; the in-memory test database is not
+        var byCode = await service.SearchShowcaseAsync(new GalleryCompetitionSearchVm { Tab = GalleryCompetitionTab.All, Keyword = graded.Code });
+        var search = new GalleryCompetitionSearchVm { Tab = GalleryCompetitionTab.Open, Status = CompetitionStatus.GRADED };
+        var gradedOnly = await service.SearchShowcaseAsync(search);
+
+        Assert.Equal(new[] { "Spring Landscapes", "Winter Landscapes" }, landscapes.Items.Select(c => c.Title));
+        Assert.Equal(new[] { "Winter Landscapes" }, byCode.Items.Select(c => c.Title));
+        Assert.Equal(new[] { "Winter Landscapes" }, gradedOnly.Items.Select(c => c.Title));
+        Assert.Equal(GalleryCompetitionTab.Past, search.Tab);
+    }
+
+    /// <summary>Paging: page size respected, a page past the end shows the last page.</summary>
+    [Fact]
+    public async Task SearchShowcase_Paging()
+    {
+        using var db = CreateDb();
+        for (var i = 0; i < 7; i++) AddCompetition(db, $"Graded {i}", -100, -90, graded: true, publishedDaysAgo: 50 - i);
+        var service = new ArtworkCatalogService(db);
+
+        var first = await service.SearchShowcaseAsync(new GalleryCompetitionSearchVm { Tab = GalleryCompetitionTab.Past });
+        var beyond = await service.SearchShowcaseAsync(new GalleryCompetitionSearchVm { Tab = GalleryCompetitionTab.Past, Page = 9 });
+
+        Assert.Equal(6, first.Items.Count);
+        Assert.Equal(7, first.TotalCount);
+        Assert.True(first.HasNext);
+        Assert.Equal(2, beyond.Page);
+        Assert.Single(beyond.Items);
+    }
+
+    /// <summary>No filter at all = the highlights view (open + latest results); any filter = the paged list.</summary>
+    [Fact]
+    public void SearchVm_IsDefault()
+    {
+        Assert.True(new GalleryCompetitionSearchVm().IsDefault);
+        Assert.False(new GalleryCompetitionSearchVm { Tab = GalleryCompetitionTab.Past }.IsDefault);
+        Assert.False(new GalleryCompetitionSearchVm { Keyword = "x" }.IsDefault);
+        Assert.False(new GalleryCompetitionSearchVm { Status = CompetitionStatus.ONGOING }.IsDefault);
     }
 
     /// <summary>Artwork page: public painting with its award; a private one (not BEST, no award) → 404.</summary>

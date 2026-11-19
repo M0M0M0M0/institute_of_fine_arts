@@ -157,6 +157,61 @@ public class ArtworkCatalogService : IArtworkCatalogService
     }
 
     /// <inheritdoc />
+    public async Task<PagedResult<CompetitionShowcaseVm>> SearchShowcaseAsync(GalleryCompetitionSearchVm search, int pageSize = 6)
+    {
+        var today = DateTimeHelper.Today;
+        if (search.Status is { } wanted && !GalleryCompetitionSearchVm.StatusesOf(search.Tab).Contains(wanted))
+        {
+            search.Tab = GalleryCompetitionSearchVm.TabOf(wanted);
+        }
+        var statuses = search.Status is { } only ? [only] : GalleryCompetitionSearchVm.StatusesOf(search.Tab);
+
+        var query = _db.Competitions.AsNoTracking();
+        if (!string.IsNullOrWhiteSpace(search.Keyword))
+        {
+            var keyword = search.Keyword.Trim();
+            query = query.Where(c => c.Title.Contains(keyword) || c.Code.Contains(keyword));
+        }
+
+        // A few dozen competitions: status from the dates and the order by status are worked out in memory
+        var rows = await query
+            .Select(c => new { Competition = c, HasCover = c.CoverImagePath != null, Count = c.Submissions.Count })
+            .ToListAsync();
+        var listed = rows
+            .Select(r => (r.Competition, Vm: new CompetitionShowcaseVm(r.Competition.Id, r.Competition.Title, r.Competition.Description,
+                r.Competition.StartDate, r.Competition.EndDate, CompetitionStatusResolver.Resolve(r.Competition, today), r.HasCover, r.Count)))
+            .Where(x => statuses.Contains(x.Vm.Status))
+            .OrderBy(x => x.Vm.Status switch
+            {
+                CompetitionStatus.ONGOING => 0,
+                CompetitionStatus.UPCOMING => 1,
+                CompetitionStatus.CLOSED => 2,
+                _ => 3,
+            })
+            // Within a status: nearest deadline / soonest start first; closed and graded newest first
+            .ThenBy(x => x.Vm.Status switch
+            {
+                CompetitionStatus.ONGOING => x.Vm.EndDate.ToDateTime(TimeOnly.MinValue).Ticks,
+                CompetitionStatus.UPCOMING => x.Vm.StartDate.ToDateTime(TimeOnly.MinValue).Ticks,
+                CompetitionStatus.CLOSED => -x.Vm.EndDate.ToDateTime(TimeOnly.MinValue).Ticks,
+                _ => -(x.Competition.PublishedAt ?? x.Vm.EndDate.ToDateTime(TimeOnly.MinValue)).Ticks,
+            })
+            .ThenByDescending(x => x.Vm.Id)
+            .Select(x => x.Vm)
+            .ToList();
+
+        var size = Math.Max(1, pageSize);
+        var page = Math.Clamp(search.Page, 1, Math.Max(1, (int)Math.Ceiling(listed.Count / (double)size)));
+        return new PagedResult<CompetitionShowcaseVm>
+        {
+            Items = listed.Skip((page - 1) * size).Take(size).ToList(),
+            Page = page,
+            PageSize = size,
+            TotalCount = listed.Count,
+        };
+    }
+
+    /// <inheritdoc />
     public async Task<ArtworkDetailVm> GetArtworkAsync(long submissionId)
         => await PublicSubmissions()
                .Where(s => s.Id == submissionId)

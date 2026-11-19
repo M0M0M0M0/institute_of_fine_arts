@@ -30,6 +30,15 @@ public interface IArtworkCatalogService
     /// <summary>Open competitions and the latest published results.</summary>
     Task<CompetitionShowcaseListVm> GetShowcaseAsync();
 
+    /// <summary>
+    /// Competitions of one tab of /gallery/competitions, filtered by title / code and status, paged.
+    /// Order: ongoing (nearest deadline first), upcoming (soonest start), closed (latest deadline), graded (latest results).
+    /// A status that belongs to another tab switches the tab (search.Tab is updated).
+    /// </summary>
+    /// <param name="search">Tab, keyword, status, page</param>
+    /// <param name="pageSize">Competitions per page (large image rows: 6 by default)</param>
+    Task<ViewModels.Common.PagedResult<CompetitionShowcaseVm>> SearchShowcaseAsync(GalleryCompetitionSearchVm search, int pageSize = 6);
+
     /// <summary>One public painting; NotFoundException when it does not exist or is not public.</summary>
     Task<ArtworkDetailVm> GetArtworkAsync(long submissionId);
 }

@@ -11,7 +11,7 @@ namespace InstituteOfFineArts.Web.Controllers;
 /// <summary>
 /// Financial and account reports (task BE2-12 part 2; F-M10-04, 05, 07, 08; BA §7; screen SCR-33), read-only:
 /// GET /reports/rpt-04 (exhibition artworks &amp; sales revenue) · GET /reports/rpt-05 (money owed to students) –
-/// STAFF and MANAGER; GET /reports/rpt-07 (account statistics) – ADMIN and MANAGER. Any other role → /error/403,
+/// STAFF; GET /reports/rpt-07 (account statistics) – ADMIN and STAFF. Any other role → /error/403,
 /// guests → login. Each page is a GET filter form, a printable table and the totals of §7.
 /// Export (task BE2-OPT 1; F-M14-01): GET /reports/rpt-04|05|07/export?format=xlsx|pdf&amp;&lt;same filters&gt; returns
 /// the same rows and totals as an Excel / PDF file (same roles); invalid filters → back to the page with the error.
@@ -21,10 +21,10 @@ namespace InstituteOfFineArts.Web.Controllers;
 public class FinanceReportsController : Controller
 {
     /// <summary>Roles allowed to view RPT-01..06 (BA §7).</summary>
-    private const string StaffAndManager = RoleNames.Staff + "," + RoleNames.Manager;
+    private const string StaffOnly = RoleNames.Staff;
 
     /// <summary>Roles allowed to view RPT-07 (BA §7).</summary>
-    private const string AdminAndManager = RoleNames.Admin + "," + RoleNames.Manager;
+    private const string AdminAndStaff = RoleNames.Admin + "," + RoleNames.Staff;
 
     /// <summary>RPT-04 / RPT-05 queries.</summary>
     private readonly IExhibitionReportService _exhibitionReports;
@@ -51,7 +51,7 @@ public class FinanceReportsController : Controller
     /// <summary>RPT-04: exhibition artworks with asking / sale price, buyer, payment to the student and totals.</summary>
     /// <param name="search">Filters from the query string</param>
     [HttpGet("rpt-04")]
-    [Authorize(Roles = StaffAndManager)]
+    [Authorize(Roles = StaffOnly)]
     public async Task<IActionResult> Rpt04([FromQuery] ExhibitionSalesSearchVm search)
     {
         ViewBag.Search = search;
@@ -71,7 +71,7 @@ public class FinanceReportsController : Controller
     /// <summary>RPT-05: sold paintings whose money has not been paid to the student, with days unpaid and the total.</summary>
     /// <param name="search">Filters from the query string</param>
     [HttpGet("rpt-05")]
-    [Authorize(Roles = StaffAndManager)]
+    [Authorize(Roles = StaffOnly)]
     public async Task<IActionResult> Rpt05([FromQuery] StudentDebtSearchVm search)
     {
         ViewBag.Search = search;
@@ -91,7 +91,7 @@ public class FinanceReportsController : Controller
     /// <summary>RPT-07: accounts per role and status, students per course / class and enrollment status.</summary>
     /// <param name="search">Filters from the query string</param>
     [HttpGet("rpt-07")]
-    [Authorize(Roles = AdminAndManager)]
+    [Authorize(Roles = AdminAndStaff)]
     public async Task<IActionResult> Rpt07([FromQuery] AccountStatisticsSearchVm search)
     {
         ViewBag.Search = search;
@@ -104,7 +104,7 @@ public class FinanceReportsController : Controller
     /// <param name="search">Filters from the query string</param>
     /// <param name="format">xlsx or pdf</param>
     [HttpGet("rpt-04/export")]
-    [Authorize(Roles = StaffAndManager)]
+    [Authorize(Roles = StaffOnly)]
     public async Task<IActionResult> Rpt04Export([FromQuery] ExhibitionSalesSearchVm search, [FromQuery] string? format)
     {
         if (!ReportExportService.TryParseFormat(format, out var exportFormat))
@@ -127,7 +127,7 @@ public class FinanceReportsController : Controller
     /// <param name="search">Filters from the query string</param>
     /// <param name="format">xlsx or pdf</param>
     [HttpGet("rpt-05/export")]
-    [Authorize(Roles = StaffAndManager)]
+    [Authorize(Roles = StaffOnly)]
     public async Task<IActionResult> Rpt05Export([FromQuery] StudentDebtSearchVm search, [FromQuery] string? format)
     {
         if (!ReportExportService.TryParseFormat(format, out var exportFormat))
@@ -150,7 +150,7 @@ public class FinanceReportsController : Controller
     /// <param name="search">Filters from the query string</param>
     /// <param name="format">xlsx or pdf</param>
     [HttpGet("rpt-07/export")]
-    [Authorize(Roles = AdminAndManager)]
+    [Authorize(Roles = AdminAndStaff)]
     public async Task<IActionResult> Rpt07Export([FromQuery] AccountStatisticsSearchVm search, [FromQuery] string? format)
     {
         if (!ReportExportService.TryParseFormat(format, out var exportFormat))

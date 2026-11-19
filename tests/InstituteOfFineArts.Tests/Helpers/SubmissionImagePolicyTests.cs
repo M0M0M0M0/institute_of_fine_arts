@@ -38,15 +38,41 @@ public class SubmissionImagePolicyTests
         return new ClaimsPrincipal(new ClaimsIdentity(claims, "Test"));
     }
 
-    /// <summary>Staff and managers view and download every image, even unpublished ones.</summary>
-    [Theory]
-    [InlineData(RoleNames.Staff)]
-    [InlineData(RoleNames.Manager)]
-    public void StaffAndManager_FullAccess(string role)
+    /// <summary>Staff view and download every image, even while the competition is open (they support the students).</summary>
+    [Fact]
+    public void Staff_FullAccess()
     {
         var entry = Entry(CompetitionStatus.ONGOING);
-        Assert.True(SubmissionImagePolicy.CanView(entry, User(role, 1)));
-        Assert.True(SubmissionImagePolicy.CanDownload(entry, User(role, 1)));
+        Assert.True(SubmissionImagePolicy.CanView(entry, User(RoleNames.Staff, 1)));
+        Assert.True(SubmissionImagePolicy.CanDownload(entry, User(RoleNames.Staff, 1)));
+    }
+
+    /// <summary>
+    /// Teachers (the jury) see an entry only once the submission period is over: no painting leaks before the
+    /// deadline, not even to the people who will grade it. The status comes from the dates, like everywhere else.
+    /// </summary>
+    [Fact]
+    public void Teacher_OnlyAfterTheDeadline()
+    {
+        var today = InstituteOfFineArts.Web.Helpers.DateTimeHelper.Today;
+        var teacher = User(RoleNames.Teacher, 3);
+        Submission Dated(DateOnly start, DateOnly end, CompetitionStatus stored = CompetitionStatus.UPCOMING) => new()
+        {
+            StudentId = OwnerId,
+            Competition = new Competition { Status = stored, StartDate = start, EndDate = end },
+        };
+
+        var open = Dated(today.AddDays(-5), today);              // ONGOING: deadline is tonight
+        var upcoming = Dated(today.AddDays(2), today.AddDays(9));
+        var closed = Dated(today.AddDays(-20), today.AddDays(-1)); // CLOSED since this morning
+        var graded = Dated(today.AddDays(-40), today.AddDays(-30), CompetitionStatus.GRADED);
+
+        Assert.False(SubmissionImagePolicy.CanView(open, teacher));
+        Assert.False(SubmissionImagePolicy.CanDownload(open, teacher));
+        Assert.False(SubmissionImagePolicy.CanView(upcoming, teacher));
+        Assert.True(SubmissionImagePolicy.CanView(closed, teacher));
+        Assert.True(SubmissionImagePolicy.CanDownload(closed, teacher));
+        Assert.True(SubmissionImagePolicy.CanView(graded, teacher));
     }
 
     /// <summary>The owner views and downloads their own image at any time.</summary>

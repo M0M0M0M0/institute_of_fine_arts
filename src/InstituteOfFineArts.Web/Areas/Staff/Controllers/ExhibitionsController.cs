@@ -1,3 +1,6 @@
+using InstituteOfFineArts.Web.Models.Enums;
+using InstituteOfFineArts.Web.ViewModels.Admin.AuditLog;
+using InstituteOfFineArts.Web.Infrastructure.Audit;
 using InstituteOfFineArts.Web.Exceptions;
 using InstituteOfFineArts.Web.Infrastructure.Security;
 using InstituteOfFineArts.Web.Services.Interfaces;
@@ -18,10 +21,14 @@ public class ExhibitionsController : StaffBaseController
     /// <summary>Exhibition service.</summary>
     private readonly IExhibitionService _exhibitions;
 
+    /// <summary>History of the exhibition (audit log).</summary>
+    private readonly IAuditLogService _audit;
+
     /// <summary>Receives the exhibition service through Dependency Injection.</summary>
-    public ExhibitionsController(IExhibitionService exhibitions)
+    public ExhibitionsController(IExhibitionService exhibitions, IAuditLogService audit)
     {
         _exhibitions = exhibitions;
+        _audit = audit;
     }
 
     /// <summary>List with filters (name, city, status, date range) and paging.</summary>
@@ -66,7 +73,37 @@ public class ExhibitionsController : StaffBaseController
     {
         try
         {
-            return View(await _exhibitions.GetDetailsAsync(id));
+            var details = await _exhibitions.GetDetailsAsync(id);
+            ViewBag.History = new HistoryVm(
+                await _audit.GetHistoryAsync(new AuditHistoryQuery { ExhibitionId = id, PageSize = 8 }),
+                "History", $"/staff/exhibitions/{id}/history");
+            return View(details);
+        }
+        catch (NotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    /// <summary>Full history of the exhibition: edits, artworks proposed / accepted / rejected, sales and payments.</summary>
+    /// <param name="id">Exhibition id</param>
+    /// <param name="category">Kind of work (null = all)</param>
+    /// <param name="user">Part of the user name</param>
+    /// <param name="page">Page number</param>
+    [HttpGet("{id:long}/history")]
+    public async Task<IActionResult> History(long id, [FromQuery] AuditCategory? category, [FromQuery] string? user, [FromQuery] int page = 1)
+    {
+        try
+        {
+            var details = await _exhibitions.GetDetailsAsync(id);
+            var rows = await _audit.GetHistoryAsync(new AuditHistoryQuery { ExhibitionId = id, Category = category, User = user, Page = page });
+            return View("~/Views/Shared/HistoryPage.cshtml", new HistoryPageVm
+            {
+                Title = $"History of {details.Name}", BackUrl = $"/staff/exhibitions/{id}", BackText = details.Name,
+                Category = category, User = user,
+                Categories = [AuditCategory.EXHIBITION, AuditCategory.SALE],
+                History = new HistoryVm(rows, "History"),
+            });
         }
         catch (NotFoundException)
         {
@@ -99,7 +136,7 @@ public class ExhibitionsController : StaffBaseController
         {
             if (ModelState.IsValid)
             {
-                await _exhibitions.UpdateAsync(id, form);
+                HttpContext.Items[AuditItems.Changes] = await _exhibitions.UpdateAsync(id, form);
                 TempData["Success"] = "Exhibition updated.";
                 return RedirectToAction(nameof(Details), new { id });
             }

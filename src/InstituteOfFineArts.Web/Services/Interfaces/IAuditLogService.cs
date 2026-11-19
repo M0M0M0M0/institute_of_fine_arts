@@ -1,3 +1,4 @@
+using InstituteOfFineArts.Web.Infrastructure.Audit;
 using InstituteOfFineArts.Web.ViewModels.Admin.AuditLog;
 using InstituteOfFineArts.Web.ViewModels.Common;
 
@@ -30,8 +31,19 @@ public interface IAuditLogService
     /// <param name="details">Short description (cut to 500 characters)</param>
     Task LogAsAsync(long? accountId, string? username, string action, string? details = null);
 
+    /// <summary>Records an action of the current user with the objects it belongs to (see <see cref="AuditEntry"/>).</summary>
+    /// <param name="entry">The row: action, kind of work, sentence, details and the competition / exhibition / entry / account</param>
+    Task RecordAsync(AuditEntry entry);
+
+    /// <summary>History of one object (competition, exhibition, entry) or one account, newest first.</summary>
+    /// <param name="query">The object, an optional kind of work and the page</param>
+    Task<PagedResult<AuditLogListItemVm>> GetHistoryAsync(AuditHistoryQuery query);
+
+    /// <summary>Account id of a student profile (<paramref name="student"/>) or staff profile; null when unknown.</summary>
+    Task<long?> AccountIdOfProfileAsync(bool student, long profileId);
+
     /// <summary>Log rows matching the filters, newest first, 10 per page.</summary>
-    /// <param name="search">Filters (user, action, date range) and page</param>
+    /// <param name="search">Filters (user, action, kind, competition, exhibition, date range) and page</param>
     /// <exception cref="Exceptions.BusinessException">From date after To date</exception>
     Task<PagedResult<AuditLogListItemVm>> SearchAsync(AuditLogSearchVm search);
 }

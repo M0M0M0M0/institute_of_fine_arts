@@ -224,10 +224,10 @@ public sealed class MobileRedesignApiTests : IDisposable
     }
 
     private async Task<JsonElement> Web_GradingCompetitions()
-        => ToJson((await GradingQueries.CompetitionsAsync(_db))[0]);
+        => ToJson((await GradingQueries.CompetitionsAsync(_db, GradingQueries.TeacherStatuses))[0]);
 
     private Task<GradingListDto> Web_GradingList(long id)
-        => GradingQueries.ListAsync(_db, id, null, null, null);
+        => GradingQueries.ListAsync(_db, id, null, null, null, GradingQueries.TeacherStatuses);
 
     private Task<List<AwardingCompetitionDto>> Web_AwardingCompetitions()
         => AwardingQueries.CompetitionsAsync(_db);

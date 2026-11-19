@@ -1,7 +1,9 @@
 @model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Admin.AuditLog.AuditLogListItemVm>
 @*
-    Admin – audit log, read only (/admin/audit-log, F-M17-01): who did what and when; filters user, action,
-    date range; newest first, 10 per page.
+    Admin – audit log, read only (/admin/audit-log, F-M17-01): who did what and when; filters user, action / text,
+    kind of work, one competition or exhibition (?CompetitionId= / ?ExhibitionId=, from the links), date range;
+    newest first, 10 per page. Each row links to the history of its competition / exhibition. The same rows are
+    also shown where they belong: competition, exhibition and entry pages (Staff), account pages (logins, activity).
     Created by BE1-OPT; styled by FE2-02 (filters bar, dense ledger table, pager).
 *@
 @{
@@ -10,7 +12,7 @@
     // Keeps the filters when moving between pages
     object PageRoute(int page) => new
     {
-        search.User, search.Activity,
+        search.User, search.Activity, search.Category, search.CompetitionId, search.ExhibitionId,
         From = search.From?.ToString("yyyy-MM-dd"), To = search.To?.ToString("yyyy-MM-dd"), page,
     };
 }
@@ -31,8 +33,26 @@
     </div>
     <div class="filter">
         <label class="form-label" for="Activity">Action</label>
-        <input class="form-control" id="Activity" name="Activity" value="@search.Activity" placeholder="e.g. LOGIN or Competitions/Delete" />
+        <input class="form-control" id="Activity" name="Activity" value="@search.Activity" placeholder="e.g. sale, Locked, LOGIN" />
     </div>
+    <div class="filter">
+        <label class="form-label" for="Category">Kind</label>
+        <select class="form-select" id="Category" name="Category">
+            <option value="">All</option>
+            @foreach (var c in Enum.GetValues<InstituteOfFineArts.Web.Models.Enums.AuditCategory>())
+            {
+                <option value="@c" selected="@(search.Category == c)">@InstituteOfFineArts.Web.Helpers.EnumText.Of(c)</option>
+            }
+        </select>
+    </div>
+    @if (search.CompetitionId is { } onlyCompetition)
+    {
+        <input type="hidden" name="CompetitionId" value="@onlyCompetition" />
+    }
+    @if (search.ExhibitionId is { } onlyExhibition)
+    {
+        <input type="hidden" name="ExhibitionId" value="@onlyExhibition" />
+    }
     <div class="filter">
         <label class="form-label" for="From">From</label>
         <input class="form-control" type="date" id="From" name="From" value="@search.From?.ToString("yyyy-MM-dd")" />
@@ -47,6 +67,16 @@
     </div>
 </form>
 
+@if (search.CompetitionId != null || search.ExhibitionId != null)
+{
+    <p class="mb-3">
+        Showing only the rows of
+        @(search.CompetitionId is { } cid ? $"competition #{cid}" : $"exhibition #{search.ExhibitionId}")
+        (its entries, awards, grading and sales included).
+        <a asp-action="Index">Show every row</a>
+    </p>
+}
+
 @if (Model.TotalCount == 0)
 {
     <div class="empty">
@@ -60,17 +90,46 @@ else
     <div class="table-responsive">
         <table class="table table-sm table-hover">
             <thead>
-                <tr><th>Time</th><th>User</th><th>Action</th><th>Object</th><th>Details</th><th>IP address</th></tr>
+                <tr><th>Time</th><th>User</th><th>What</th><th>Kind</th><th>Belongs to</th><th>IP address</th></tr>
             </thead>
             <tbody>
                 @foreach (var l in Model.Items)
                 {
                     <tr>
                         <td class="text-nowrap num">@l.CreatedAt.ToString("dd MMM yyyy HH:mm")</td>
-                        <td>@(l.Username ?? "–")</td>
-                        <td class="row-title">@l.Action</td>
-                        <td class="text-nowrap">@l.Entity @(l.EntityId.HasValue ? "#" + l.EntityId : "")</td>
-                        <td class="small">@l.Details</td>
+                        <td>@(l.Username ?? "–")@if (l.Role is { } role) { <div class="small text-muted">@InstituteOfFineArts.Web.Helpers.EnumText.Of(role)</div> }</td>
+                        <td>
+                            <span class="row-title">@l.Text</span>
+                            @if (l.Failed)
+                            {
+                                <span class="tag tag-REJECTED tag-plain">Refused</span>
+                            }
+                            @if (l.Changes.Count > 0)
+                            {
+                                <ul class="audit-changes">
+                                    @foreach (var change in l.Changes)
+                                    {
+                                        <li>@change</li>
+                                    }
+                                </ul>
+                            }
+                            <div class="small text-muted">@l.Action</div>
+                        </td>
+                        <td class="small">@InstituteOfFineArts.Web.Helpers.EnumText.Of(l.Category)</td>
+                        <td class="small text-nowrap">
+                            @if (l.CompetitionId is { } c)
+                            {
+                                <a href="?CompetitionId=@c">Competition #@c</a><br />
+                            }
+                            @if (l.ExhibitionId is { } e)
+                            {
+                                <a href="?ExhibitionId=@e">Exhibition #@e</a><br />
+                            }
+                            @if (l.SubmissionId is { } s)
+                            {
+                                <span class="text-muted">Entry #@s</span>
+                            }
+                        </td>
                         <td class="small text-muted num">@l.IpAddress</td>
                     </tr>
                 }

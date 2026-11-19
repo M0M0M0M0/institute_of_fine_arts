@@ -11,6 +11,15 @@ public class ChartDataVm
 
     /// <summary>Series; each has one value per label.</summary>
     public List<ChartDatasetVm> Datasets { get; set; } = new();
+
+    /// <summary>Optional: id of the record behind each label (the chart links a bar to its page), same order as Labels.</summary>
+    public List<long>? Ids { get; set; }
+
+    /// <summary>Optional: full name of each label for the tooltip (e.g. competition title, dates), same order as Labels.</summary>
+    public List<string>? Details { get; set; }
+
+    /// <summary>Optional: short text shown on the axis instead of the label (e.g. the start date "31/10"), same order as Labels.</summary>
+    public List<string>? SubLabels { get; set; }
 }
 
 /// <summary>One series of a chart.</summary>

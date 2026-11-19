@@ -1,3 +1,4 @@
+using InstituteOfFineArts.Web.Infrastructure.Audit;
 using InstituteOfFineArts.Web.Controllers.Api.Dto;
 using InstituteOfFineArts.Web.Data;
 using InstituteOfFineArts.Web.Exceptions;
@@ -139,7 +140,7 @@ public class StaffExhibitionsApiController : ApiControllerBase
     public async Task<IActionResult> UpdateExhibition(long id, ExhibitionRequest request)
     {
         if (!await ExhibitionApiQueries.ExhibitionVersionOkAsync(_db, id, request.RowVersion)) return StaleVersion();
-        await _exhibitions.UpdateAsync(id, ToForm(request));
+        HttpContext.Items[AuditItems.Changes] = await _exhibitions.UpdateAsync(id, ToForm(request));
         return Ok(await ExhibitionApiQueries.ExhibitionAsync(_db, id, null));
     }
 

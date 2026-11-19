@@ -3,6 +3,7 @@ using System.Security.Claims;
 using InstituteOfFineArts.Web.Data;
 using InstituteOfFineArts.Web.Infrastructure.Api;
 using InstituteOfFineArts.Web.Infrastructure.Security;
+using InstituteOfFineArts.Web.Services.Implementations;
 using InstituteOfFineArts.Web.Services.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -19,11 +20,15 @@ public class AuthApiController : ApiControllerBase
     private readonly JwtTokenIssuer _tokens;
     private readonly AppDbContext _db;
 
-    public AuthApiController(IAuthService auth, JwtTokenIssuer tokens, AppDbContext db)
+    /// <summary>Audit log (sign-ins from the app appear in the account's login history); null in unit tests.</summary>
+    private readonly IAuditLogService? _audit;
+
+    public AuthApiController(IAuthService auth, JwtTokenIssuer tokens, AppDbContext db, IAuditLogService? audit = null)
     {
         _auth = auth;
         _tokens = tokens;
         _db = db;
+        _audit = audit;
     }
 
     /// <summary>Body of POST /api/auth/login.</summary>
@@ -46,6 +51,22 @@ public class AuthApiController : ApiControllerBase
     public async Task<IActionResult> Login(LoginRequest request)
     {
         var result = await _auth.LoginAsync(request.Username, request.Password, JwtBearerDefaults.AuthenticationScheme);
+
+        // Audit (F-M17-01): who signed in from the app, or the user name that was tried and why – never the password
+        if (_audit != null)
+        {
+            if (result.Status == LoginStatus.Success && result.Principal != null)
+            {
+                await _audit.LogAsAsync(result.Principal.GetAccountId(), result.Principal.Identity?.Name,
+                    AuditLogService.LoginAction, "Mobile app");
+            }
+            else
+            {
+                await _audit.LogAsAsync(null, request.Username, AuditLogService.LoginFailedAction,
+                    "Mobile app: " + (result.Status == LoginStatus.Locked ? "Account locked" : "Invalid username or password"));
+            }
+        }
+
         switch (result.Status)
         {
             case LoginStatus.Locked:

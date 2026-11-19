@@ -11,3 +11,9 @@
 }
 
 <partial name="~/Views/Shared/Exhibitions/_ExhibitionDetails.cshtml" model="Model" />
+
+@* History of this object (audit log): who did what and when *@
+@if (ViewBag.History is InstituteOfFineArts.Web.ViewModels.Admin.AuditLog.HistoryVm history)
+{
+    <partial name="_History" model="history" />
+}

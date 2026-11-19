@@ -13,6 +13,13 @@ public class SubmissionSearchVm
     [Display(Name = "Competition")]
     public long? CompetitionId { get; set; }
 
+    /// <summary>
+    /// Only entries of competitions in this actual status (calculated from the dates, GRADED stored), e.g. CLOSED +
+    /// Evaluated=false = the entries still to grade (link of the dashboards' "Needs attention" card).
+    /// </summary>
+    [Display(Name = "Competition status")]
+    public CompetitionStatus? CompetitionStatus { get; set; }
+
     /// <summary>true = evaluated only, false = not evaluated only, null = both.</summary>
     [Display(Name = "Evaluation")]
     public bool? Evaluated { get; set; }

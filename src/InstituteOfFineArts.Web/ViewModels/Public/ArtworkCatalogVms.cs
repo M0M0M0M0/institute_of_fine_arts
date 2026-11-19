@@ -51,6 +51,67 @@ public class ArtworkListVm
 public record CompetitionShowcaseVm(long Id, string Title, string? Description, DateOnly StartDate, DateOnly EndDate,
     CompetitionStatus Status, bool HasCover, int SubmissionCount);
 
+/// <summary>Tab of the "Open Art Competitions" page (?Tab=open|past|all).</summary>
+public enum GalleryCompetitionTab
+{
+    /// <summary>Ongoing and upcoming competitions (default).</summary>
+    Open,
+
+    /// <summary>Competitions past their deadline: closed (results coming) and graded (results published).</summary>
+    Past,
+
+    /// <summary>Every competition.</summary>
+    All,
+}
+
+/// <summary>
+/// Filters of /gallery/competitions: tab, part of the title or code, status (calculated for today) and page.
+/// With no filter at all the page shows its highlights (open competitions + the latest results).
+/// </summary>
+public class GalleryCompetitionSearchVm
+{
+    /// <summary>Which competitions the page lists.</summary>
+    public GalleryCompetitionTab Tab { get; set; } = GalleryCompetitionTab.Open;
+
+    /// <summary>Part of the title or the code.</summary>
+    [System.ComponentModel.DataAnnotations.StringLength(100)]
+    public string? Keyword { get; set; }
+
+    /// <summary>Only this status (BR-07, calculated for today). A status of another tab switches to that tab.</summary>
+    public CompetitionStatus? Status { get; set; }
+
+    /// <summary>Page number (1-based).</summary>
+    public int Page { get; set; } = 1;
+
+    /// <summary>True when nothing is filtered: the page shows its highlights instead of a paged list.</summary>
+    public bool IsDefault => Tab == GalleryCompetitionTab.Open && string.IsNullOrWhiteSpace(Keyword) && Status == null && Page <= 1;
+
+    /// <summary>Statuses listed by a tab.</summary>
+    public static CompetitionStatus[] StatusesOf(GalleryCompetitionTab tab) => tab switch
+    {
+        GalleryCompetitionTab.Open => [CompetitionStatus.ONGOING, CompetitionStatus.UPCOMING],
+        GalleryCompetitionTab.Past => [CompetitionStatus.CLOSED, CompetitionStatus.GRADED],
+        _ => Enum.GetValues<CompetitionStatus>(),
+    };
+
+    /// <summary>The tab that lists a status (used when the status filter does not belong to the chosen tab).</summary>
+    public static GalleryCompetitionTab TabOf(CompetitionStatus status)
+        => status is CompetitionStatus.ONGOING or CompetitionStatus.UPCOMING ? GalleryCompetitionTab.Open : GalleryCompetitionTab.Past;
+}
+
+/// <summary>/gallery/competitions: the filters, then either the highlights (no filter) or a paged list.</summary>
+public class GalleryCompetitionsPageVm
+{
+    /// <summary>Current filters (the tab may have been switched by the status filter).</summary>
+    public GalleryCompetitionSearchVm Search { get; set; } = new();
+
+    /// <summary>Open competitions + latest results, when nothing is filtered.</summary>
+    public CompetitionShowcaseListVm? Highlights { get; set; }
+
+    /// <summary>Paged competitions of the tab / filters, when something is filtered.</summary>
+    public PagedResult<CompetitionShowcaseVm>? Results { get; set; }
+}
+
 /// <summary>Competitions for the showcase page: open ones (ongoing, upcoming) and the latest published results.</summary>
 public class CompetitionShowcaseListVm
 {

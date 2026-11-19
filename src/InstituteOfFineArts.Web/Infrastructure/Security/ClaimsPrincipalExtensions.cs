@@ -24,7 +24,7 @@ public static class ClaimsPrincipalExtensions
     }
 
     /// <summary>
-    /// Returns the profile id: staff_profile.id for ADMIN/MANAGER/STAFF, student_profile.id for STUDENT.
+    /// Returns the profile id: staff_profile.id for ADMIN/STAFF/TEACHER, student_profile.id for STUDENT.
     /// Used when writing created_by, evaluated_by, student_id…
     /// </summary>
     public static long GetProfileId(this ClaimsPrincipal user)

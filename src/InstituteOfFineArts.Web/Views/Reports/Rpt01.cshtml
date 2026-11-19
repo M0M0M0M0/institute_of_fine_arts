@@ -10,7 +10,7 @@
     var filter = Model.Filter;
     var result = Model.Result;
     // Submission details page of the user's area (staff or manager)
-    var detailsBase = User.IsInRole(RoleNames.Manager) ? "/manager/submissions/" : "/staff/submissions/";
+    var detailsBase = "/staff/submissions/";
     var ratingChoices = Enum.GetValues<Rating>().Select(r => (Value: r.ToString(), Text: r.ToString()))
         .Append((Value: Rpt01FilterVm.NotGraded, Text: "Not graded")).ToList();
 }

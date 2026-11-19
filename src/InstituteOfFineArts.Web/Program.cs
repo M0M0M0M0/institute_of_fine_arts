@@ -20,7 +20,7 @@ var builder = WebApplication.CreateBuilder(args);
 // ===== Service registration (Dependency Injection) =====
 
 // MVC: controllers + Razor views; validate the anti-forgery token on every POST form (CSRF protection)
-// + audit log row for every POST in the Admin/Staff/Manager/Student areas (F-M17-01, Infrastructure/Filters)
+// + audit log row for every POST in the Admin/Staff/Teacher/Student areas (F-M17-01, Infrastructure/Filters)
 // UI texts go through IStringLocalizer<SharedResource> (Resources/SharedResource.resx), keyed by their English text.
 // The site is English only: the optional Vietnamese UI (F-M19-01) was removed, so every text is shown in English.
 builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
@@ -171,7 +171,7 @@ app.UseAuthorization();
 // Static files in wwwroot (css, js, lib, img)
 app.MapStaticAssets();
 
-// Route for the areas (Admin, Staff, Student, Manager) – must come before the default route
+// Route for the areas (Admin, Staff, Teacher, Student) – must come before the default route
 app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}")

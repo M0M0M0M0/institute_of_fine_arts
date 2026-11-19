@@ -42,7 +42,7 @@ public class AccountReportService : IAccountReportService
             .ToListAsync();
 
         // Every role listed in a fixed order (0 when nobody has it), or only the chosen role
-        var roles = search.Role is { } chosen ? new[] { chosen } : new[] { Role.ADMIN, Role.MANAGER, Role.STAFF, Role.STUDENT };
+        var roles = search.Role is { } chosen ? new[] { chosen } : new[] { Role.ADMIN, Role.STAFF, Role.TEACHER, Role.STUDENT };
         vm.Roles = roles.Select(r => new AccountRoleRowVm
         {
             Role = r,

@@ -1,7 +1,8 @@
 @model InstituteOfFineArts.Web.ViewModels.Staff.Submissions.SubmissionDetailsVm
 @*
     Staff – submission details (/staff/submissions/{id}, SCR-27; F-M07-02, F-M06-06): painting + download, texts,
-    student, competition, dates, evaluation, award, exhibition entries; link to the evaluation form while CLOSED.
+    student, competition, dates, evaluation, award, exhibition entries. Read only for the evaluation: teachers grade
+    (Teacher area), staff follow the result.
     Created by BE2 (BE2-06); styled by FE2-04: painting on its stone mat with the wall label beside it.
 *@
 @{
@@ -25,11 +26,6 @@
         </p>
     </div>
     <div class="page-actions">
-        @* BR-21: evaluating only while the competition is CLOSED; the form is the evaluation page (BE1-10) *@
-        @if (Model.CanEvaluate)
-        {
-            <a href="/staff/evaluations/@Model.Id" class="btn btn-primary" id="evaluate-link"><i class="bi bi-pencil-square" aria-hidden="true"></i>@(Model.Evaluation == null ? "Evaluate" : "Edit evaluation")</a>
-        }
     </div>
 </div>
 <partial name="_Alerts" />
@@ -90,10 +86,6 @@
 <section class="section" aria-labelledby="evaluation-title">
     <div class="section-head">
         <h2 id="evaluation-title">Evaluation</h2>
-        @if (Model.CanEvaluate)
-        {
-            <a href="/staff/evaluations/@Model.Id" class="btn btn-sm btn-outline-primary">@(Model.Evaluation == null ? "Evaluate" : "Edit evaluation")</a>
-        }
     </div>
     @if (Model.Evaluation is { } e)
     {
@@ -111,7 +103,7 @@
     }
     else
     {
-        <p class="text-muted">Not evaluated</p>
+        <p class="text-muted">Not evaluated yet. @(Model.CanEvaluate ? "The teachers are grading this competition." : "")</p>
     }
 </section>
 
@@ -145,5 +137,11 @@
         <partial name="~/Areas/Staff/Views/StudentHistory/_ExhibitionEntries.cshtml" model="Model.ExhibitionEntries" />
     }
 </section>
+
+@* History of this object (audit log): who did what and when *@
+@if (ViewBag.History is InstituteOfFineArts.Web.ViewModels.Admin.AuditLog.HistoryVm history)
+{
+    <partial name="_History" model="history" />
+}
 
 <p class="mt-4"><a asp-action="Index" asp-route-competitionId="@Model.CompetitionId" class="btn btn-link px-0">Back to submissions</a></p>

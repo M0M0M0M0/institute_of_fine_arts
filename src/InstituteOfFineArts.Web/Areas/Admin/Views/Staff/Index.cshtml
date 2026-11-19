@@ -30,7 +30,7 @@
         <label class="form-label" for="Role">Role</label>
         <select class="form-select" id="Role" name="Role">
             <option value="">All</option>
-            @foreach (var r in new[] { Role.STAFF, Role.MANAGER, Role.ADMIN })
+            @foreach (var r in new[] { Role.STAFF, Role.TEACHER, Role.ADMIN })
             {
                 <option value="@r" selected="@(search.Role == r)">@r</option>
             }

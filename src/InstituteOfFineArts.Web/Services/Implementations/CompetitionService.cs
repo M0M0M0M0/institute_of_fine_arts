@@ -202,8 +202,21 @@ public class CompetitionService : ICompetitionService
             EndDate = c.EndDate,
             HasCover = c.CoverImagePath != null,
             HasSubmissions = await _db.Submissions.AnyAsync(s => s.CompetitionId == id),
+            Awards = await AwardRowsAsync(id),
         };
     }
+
+    /// <inheritdoc />
+    public Task<List<CompetitionAwardRowVm>> AwardRowsAsync(long competitionId)
+        => _db.CompetitionAwards.AsNoTracking()
+            .Where(a => a.CompetitionId == competitionId)
+            .OrderBy(a => a.Rank).ThenBy(a => a.Id)
+            .Select(a => new CompetitionAwardRowVm
+            {
+                Id = a.Id, AwardName = a.AwardName, Rank = a.Rank, PrizeValue = a.PrizeValue, Quantity = a.Quantity,
+                PrizeDescription = a.PrizeDescription, IssuedCount = a.IssuedAwards.Count,
+            })
+            .ToListAsync();
 
     /// <inheritdoc />
     public async Task<long> CreateAsync(CompetitionFormVm form, long staffProfileId)
@@ -216,6 +229,9 @@ public class CompetitionService : ICompetitionService
             throw new BusinessException(EndInPastMessage, nameof(CompetitionFormVm.EndDate));
         }
 
+        // Awards typed on the same form: checked before anything is saved, then inserted with the competition
+        var awards = CheckAwardRows(form.Awards, otherNames: []);
+
         var competition = new Competition
         {
             Code = await NextCodeAsync(start),
@@ -227,6 +243,13 @@ public class CompetitionService : ICompetitionService
             CreatedBy = staffProfileId,
         };
         competition.Status = CompetitionStatusResolver.Resolve(competition);
+        foreach (var a in awards)
+        {
+            competition.Awards.Add(new CompetitionAward
+            {
+                AwardName = a.Name, Rank = a.Rank, PrizeValue = a.Prize, Quantity = a.Quantity, PrizeDescription = a.Description,
+            });
+        }
         _db.Competitions.Add(competition);
         await _db.SaveChangesAsync();
 
@@ -256,7 +279,7 @@ public class CompetitionService : ICompetitionService
     }
 
     /// <inheritdoc />
-    public async Task UpdateAsync(long id, CompetitionFormVm form)
+    public async Task<IReadOnlyList<string>> UpdateAsync(long id, CompetitionFormVm form)
     {
         var c = await FindAsync(id);
         EnsureEditable(c);
@@ -290,12 +313,30 @@ public class CompetitionService : ICompetitionService
             throw new BusinessException(EndInPastMessage, nameof(CompetitionFormVm.EndDate));
         }
 
+        // What changed, for the competition's history (audit log): "End date: 20 Nov 2026 → 25 Nov 2026"
+        var changes = new List<string>();
+        void Changed(string field, string? before, string? after)
+        {
+            if (before != after)
+            {
+                changes.Add($"{field}: {Short(before)} → {Short(after)}");
+            }
+        }
+        Changed("Title", c.Title, form.Title.Trim());
+        Changed("Start date", c.StartDate.ToString(ChangeDate), start.ToString(ChangeDate));
+        Changed("End date", c.EndDate.ToString(ChangeDate), end.ToString(ChangeDate));
+        if (c.Description != Clean(form.Description)) changes.Add("Description changed");
+        if (c.Rules != Clean(form.Rules)) changes.Add("Rules changed");
+
         c.Title = form.Title.Trim();
         c.Description = Clean(form.Description);
         c.Rules = Clean(form.Rules);
         c.StartDate = start;
         c.EndDate = end;
         c.Status = CompetitionStatusResolver.Resolve(c);
+
+        // Awards of the form (added, changed, removed): checked first, saved in the same SaveChanges as the competition
+        changes.AddRange(await SyncAwardsAsync(c.Id, form.Awards));
 
         // Cover: a new file replaces the old one; "remove" clears it. Old files are deleted only after saving.
         var oldCover = c.CoverImagePath;
@@ -310,13 +351,24 @@ public class CompetitionService : ICompetitionService
             c.CoverImagePath = null;
         }
 
+        if (newCover != null) changes.Add(oldCover == null ? "Cover image added" : "Cover image replaced");
+        else if (oldCover != null && c.CoverImagePath == null) changes.Add("Cover image removed");
+
         await SaveOrDeleteFileAsync(newCover);
         if (oldCover != null && oldCover != c.CoverImagePath)
         {
             _files.Delete(oldCover);
         }
         _logger.LogInformation("Competition {Code} updated", c.Code);
+        return changes;
     }
+
+    /// <summary>Date format of the change list.</summary>
+    private const string ChangeDate = "dd MMM yyyy";
+
+    /// <summary>Value in the change list: "–" when empty, cut to 60 characters.</summary>
+    private static string Short(string? value)
+        => string.IsNullOrWhiteSpace(value) ? "–" : value.Length <= 60 ? value : value[..57] + "…";
 
     /// <inheritdoc />
     public async Task DeleteAsync(long id)
@@ -391,4 +443,116 @@ public class CompetitionService : ICompetitionService
 
     /// <summary>Trims text; blank becomes null.</summary>
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    /// <summary>A valid award row: position in the form (for the error key), id (0 = new) and the cleaned values.</summary>
+    private sealed record AwardRow(int Index, long Id, string Name, int Rank, decimal Prize, int Quantity, string? Description);
+
+    /// <summary>Error key of one field of an award row, e.g. "Awards[2].PrizeValue" (shown next to that cell).</summary>
+    private static string AwardField(int index, string? field) => $"{nameof(CompetitionFormVm.Awards)}[{index}].{field ?? nameof(CompetitionAwardRowVm.AwardName)}";
+
+    /// <summary>
+    /// Checks the award rows that are kept (not removed, not blank) with the rules of the award form and makes their
+    /// names unique, also against <paramref name="otherNames"/> (awards of the competition not on the form).
+    /// </summary>
+    private static List<AwardRow> CheckAwardRows(IReadOnlyList<CompetitionAwardRowVm> rows, IEnumerable<string> otherNames)
+    {
+        var result = new List<AwardRow>();
+        var names = new HashSet<string>(otherNames, StringComparer.OrdinalIgnoreCase);
+        for (var i = 0; i < rows.Count; i++)
+        {
+            var row = rows[i];
+            if (row.Remove || row.IsBlank) continue;
+            (string Name, int Rank, decimal Prize, int Quantity) v;
+            try
+            {
+                v = CompetitionAwardService.Validate(row.AwardName, row.Rank, row.PrizeValue, row.Quantity, row.PrizeDescription);
+            }
+            catch (BusinessException ex)
+            {
+                throw new BusinessException(ex.Message, AwardField(i, ex.Field));
+            }
+            if (!names.Add(v.Name))
+            {
+                throw new BusinessException(CompetitionAwardService.DuplicateNameMessage, AwardField(i, nameof(CompetitionAwardRowVm.AwardName)));
+            }
+            result.Add(new AwardRow(i, row.Id, v.Name, v.Rank, v.Prize, v.Quantity, Clean(row.PrizeDescription)));
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Applies the award rows of the edit form to the competition (saved by the caller's SaveChanges, so together with
+    /// the competition): new rows are added, rows of existing awards update them, removed rows delete them.
+    /// Awards that are not on the form at all are left as they are. An award already given cannot be removed and its
+    /// quantity cannot go below the number given (BR-31), like on the award form.
+    /// </summary>
+    /// <returns>The changes for the history: "Award added: Third Prize ($100)", "Award removed: …", "Award changed: …"</returns>
+    private async Task<List<string>> SyncAwardsAsync(long competitionId, List<CompetitionAwardRowVm> rows)
+    {
+        var changes = new List<string>();
+        var existing = await _db.CompetitionAwards.Where(a => a.CompetitionId == competitionId).ToListAsync();
+        var issued = await _db.AwardsIssued.Where(i => i.CompetitionAward.CompetitionId == competitionId)
+            .GroupBy(i => i.CompetitionAwardId).Select(g => new { g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.Key, x => x.Count);
+        var posted = rows.Where(r => r.Id != 0).Select(r => r.Id).ToHashSet();
+
+        // Rows of awards of another competition (tampered form) are refused
+        for (var i = 0; i < rows.Count; i++)
+        {
+            if (rows[i].Id != 0 && existing.All(a => a.Id != rows[i].Id))
+            {
+                throw new BusinessException("This award does not belong to the competition. Reload the page and try again.", AwardField(i, null));
+            }
+        }
+
+        var kept = CheckAwardRows(rows, otherNames: existing.Where(a => !posted.Contains(a.Id)).Select(a => a.AwardName));
+
+        // Removed rows
+        for (var i = 0; i < rows.Count; i++)
+        {
+            if (!rows[i].Remove || rows[i].Id == 0) continue;
+            var award = existing.Single(a => a.Id == rows[i].Id);
+            if (issued.GetValueOrDefault(award.Id) > 0)
+            {
+                throw new BusinessException(CompetitionAwardService.IssuedDeleteMessage, AwardField(i, null));
+            }
+            _db.CompetitionAwards.Remove(award);
+            changes.Add($"Award removed: {award.AwardName}");
+        }
+
+        // Changed and new rows
+        foreach (var row in kept)
+        {
+            if (row.Id == 0)
+            {
+                _db.CompetitionAwards.Add(new CompetitionAward
+                {
+                    CompetitionId = competitionId, AwardName = row.Name, Rank = row.Rank, PrizeValue = row.Prize,
+                    Quantity = row.Quantity, PrizeDescription = row.Description,
+                });
+                changes.Add($"Award added: {row.Name} (rank {row.Rank}, {row.Prize:$#,##0.##} × {row.Quantity})");
+                continue;
+            }
+            var award = existing.Single(a => a.Id == row.Id);
+            var given = issued.GetValueOrDefault(award.Id);
+            if (row.Quantity < given)
+            {
+                throw new BusinessException(
+                    $"This award has already been given {given} time(s), so the quantity cannot be less than {given}.",
+                    AwardField(row.Index, nameof(CompetitionAwardRowVm.Quantity)));
+            }
+            var before = $"{award.AwardName}, rank {award.Rank}, {award.PrizeValue:$#,##0.##} × {award.Quantity}";
+            var after = $"{row.Name}, rank {row.Rank}, {row.Prize:$#,##0.##} × {row.Quantity}";
+            if (before != after || award.PrizeDescription != row.Description)
+            {
+                changes.Add(before == after ? $"Award changed: {row.Name} (description)" : $"Award changed: {before} → {after}");
+            }
+            award.AwardName = row.Name;
+            award.Rank = row.Rank;
+            award.PrizeValue = row.Prize;
+            award.Quantity = row.Quantity;
+            award.PrizeDescription = row.Description;
+        }
+        return changes;
+    }
 }

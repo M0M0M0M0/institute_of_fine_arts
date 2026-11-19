@@ -164,7 +164,7 @@ public class AuthServiceTests
     /// <summary>Each role goes to its own home page (TC-M01-02).</summary>
     [Theory]
     [InlineData("ADMIN", "/admin")]
-    [InlineData("MANAGER", "/manager")]
+    [InlineData("TEACHER", "/teacher")]
     [InlineData("STAFF", "/staff")]
     [InlineData("STUDENT", "/student")]
     public void GetHomePath_ByRole(string role, string expected)

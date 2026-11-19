@@ -37,7 +37,7 @@ public class AdminDashboardService : IAdminDashboardService
             .Select(g => new { g.Key.Role, g.Key.Active, Count = g.Count() })
             .ToListAsync();
         var staff = accounts.Where(a => a.Role != Role.STUDENT).ToList();
-        vm.StaffByRole = new[] { Role.STAFF, Role.MANAGER, Role.ADMIN }
+        vm.StaffByRole = new[] { Role.STAFF, Role.TEACHER, Role.ADMIN }
             .ToDictionary(r => r, r => staff.Where(a => a.Role == r).Sum(a => a.Count));
         vm.StaffActive = staff.Where(a => a.Active).Sum(a => a.Count);
         vm.StaffLocked = staff.Where(a => !a.Active).Sum(a => a.Count);

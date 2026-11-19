@@ -19,13 +19,18 @@ public interface ICompetitionService
     /// <summary>Current values for the edit form. Throws BusinessException when results are published (read only).</summary>
     Task<CompetitionFormVm> GetForEditAsync(long id);
 
+    /// <summary>Award rows of a competition for its edit form (by rank), with how many times each one was given.</summary>
+    /// <param name="competitionId">Competition id</param>
+    Task<List<CompetitionAwardRowVm>> AwardRowsAsync(long competitionId);
+
     /// <summary>Creates a competition with a generated code (CTyyyy-nn) and optional cover; returns its id.</summary>
     /// <param name="form">Form data</param>
     /// <param name="staffProfileId">staff_profile.id of the creator</param>
     Task<long> CreateAsync(CompetitionFormVm form, long staffProfileId);
 
     /// <summary>Saves changes within BR-10 (entries exist → only extend the end date, description, rules, cover).</summary>
-    Task UpdateAsync(long id, CompetitionFormVm form);
+    /// <returns>What changed (fields with old → new value, awards added / changed / removed), for the history</returns>
+    Task<IReadOnlyList<string>> UpdateAsync(long id, CompetitionFormVm form);
 
     /// <summary>Deletes a competition without entries, with its awards and cover (BR-11).</summary>
     Task DeleteAsync(long id);

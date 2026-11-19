@@ -27,7 +27,7 @@ public class StaffServiceTests
         var staff = new Dictionary<string, StaffProfile>
         {
             ["admin01"] = New("admin01", "Nguyen Van An", Role.ADMIN, "NV0001"),
-            ["manager01"] = New("manager01", "Tran Bich Ngoc", Role.MANAGER, "NV0002"),
+            ["manager01"] = New("manager01", "Tran Bich Ngoc", Role.TEACHER, "NV0002"),
             ["staff01"] = New("staff01", "Le Minh Hoang", Role.STAFF, "NV0003", "Oil Painting, Watercolor", "PT01, PT02"),
             ["staff02"] = New("staff02", "Pham Thu Ha", Role.STAFF, "NV0004", "2D Animation", "AN01"),
         };
@@ -193,7 +193,7 @@ public class StaffServiceTests
 
         // Now manager01 is the only active admin, so nobody can change their role
         var last = await EditForm(service, staff["manager01"]);
-        last.Role = Role.MANAGER;
+        last.Role = Role.TEACHER;
         Assert.Equal(StaffService.LastAdminMessage,
             (await Assert.ThrowsAsync<BusinessException>(() => service.UpdateAsync(staff["manager01"].Id, last, staff["staff01"].AccountId))).Message);
     }

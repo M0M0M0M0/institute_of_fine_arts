@@ -35,9 +35,11 @@ public static partial class DbSeeder
         var staff = await db.StaffProfiles.Include(s => s.Account).ToDictionaryAsync(s => s.Account.Username);
         var students = await db.StudentProfiles.Include(s => s.Account).ToDictionaryAsync(s => s.Account.Username);
         StudentProfile Student(int n) => students[$"student{n:D2}"];
+        // Staff run competitions, awards and exhibitions; teachers grade
         var staff01 = staff["staff01"].Id;
         var staff02 = staff["staff02"].Id;
-        var staff03 = staff["staff03"].Id;
+        var teacher01 = staff["teacher01"].Id;
+        var teacher02 = staff["teacher02"].Id;
 
         // ------------------------------------------------------------ (1) competitions + awards
         var hometown = NewCompetition("Hometown Landscapes", -60, -30, staff01,
@@ -53,7 +55,7 @@ public static partial class DbSeeder
             ("Second Prize", 2, 200m, 1, "Certificate"),
             ("Third Prize", 3, 100m, 1, "Certificate"),
             ("Honorable Mention", 4, 50m, 2, "Certificate"));
-        var cityAtNight = NewCompetition("City at Night", -25, -1, staff03,
+        var cityAtNight = NewCompetition("City at Night", -25, -1, staff02,
             "Lights, streets and buildings after sunset.",
             "One painting per student. Evaluation starts after the deadline.",
             ("First Prize", 1, 250m, 1, "Certificate and voucher"),
@@ -74,7 +76,7 @@ public static partial class DbSeeder
             ("First Prize", 1, 300m, 1, "Certificate and lucky money envelope"),
             ("Second Prize", 2, 200m, 1, "Certificate"),
             ("Third Prize", 3, 100m, 1, "Certificate"));
-        var familyPortrait = NewCompetition("Family Portrait", 15, 45, staff03,
+        var familyPortrait = NewCompetition("Family Portrait", 15, 45, staff02,
             "A portrait of your family or of someone you love.",
             "One painting per student. Do not use photos of real faces as the final work.",
             ("First Prize", 1, 200m, 1, "Certificate"));
@@ -239,7 +241,7 @@ public static partial class DbSeeder
             foreach (var e in entries.Where(x => x.Rating != null))
             {
                 db.Evaluations.Add(NewEvaluation(created[(competition, e.Student)], e.Rating!.Value,
-                    e.Student % 3 == 0 ? staff02 : staff01, competition.EndDate.AddDays(1 + e.Student % 3)));
+                    e.Student % 3 == 0 ? teacher02 : teacher01, competition.EndDate.AddDays(1 + e.Student % 3)));
             }
         }
         await db.SaveChangesAsync();

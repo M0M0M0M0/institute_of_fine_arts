@@ -146,7 +146,13 @@ public class EvaluationServiceTests
         Assert.Null(ex.Field);
         Assert.Equal(0, await db.Evaluations.CountAsync());
 
-        // The page is still shown, read only with the same reason
+        // Before the deadline the grading page does not show the entry at all (no painting leaks to the jury);
+        // a GRADED entry is still shown, read only with the same reason
+        if (status is CompetitionStatus.UPCOMING or CompetitionStatus.ONGOING)
+        {
+            await Assert.ThrowsAsync<NotFoundException>(() => Service(db).GetPageAsync(s.Id));
+            return;
+        }
         var page = await Service(db).GetPageAsync(s.Id);
         Assert.False(page.CanEvaluate);
         Assert.Equal(message, page.ReadOnlyReason);

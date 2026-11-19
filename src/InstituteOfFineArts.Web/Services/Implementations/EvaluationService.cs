@@ -84,6 +84,12 @@ public class EvaluationService : IEvaluationService
             ?? throw new NotFoundException($"Submission {submissionId} was not found.");
 
         var status = CompetitionStatusResolver.Resolve(data.Competition);
+        // Graders see an entry only once the submission period is over, so a painting cannot leak before the
+        // deadline: an entry of an open competition is reported as not found
+        if (status is CompetitionStatus.UPCOMING or CompetitionStatus.ONGOING)
+        {
+            throw new NotFoundException($"Submission {submissionId} was not found.");
+        }
         var isLate = CompetitionStatusResolver.IsLateSubmission(data.SubmittedAt, data.Competition.EndDate);
         var page = new EvaluationPageVm
         {

@@ -1,0 +1,13 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.Exhibitions.ExhibitionDetailsVm
+@*
+    Teacher – exhibition details, read only (/teacher/exhibitions/{id}, SCR-56): information, status, artworks by status.
+    The markup is shared with the other area (Views/Shared/Exhibitions/_ExhibitionDetails.cshtml).
+    Created by BE2-09; styled by FE2-07.
+*@
+@{
+    ViewData["Title"] = Model.Name;
+    // No artwork list and no edit / delete buttons in the Teacher area
+    ViewData["ReadOnly"] = true;
+}
+
+<partial name="~/Views/Shared/Exhibitions/_ExhibitionDetails.cshtml" model="Model" />

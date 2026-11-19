@@ -1,0 +1,12 @@
+@model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Staff.Exhibitions.ExhibitionListItemVm>
+@*
+    Teacher – exhibition list & search, read only (/teacher/exhibitions, SCR-56). The markup is shared with the Staff area
+    (Views/Shared/Exhibitions/_ExhibitionList.cshtml).
+    Created by BE2-09; styled by FE2-07.
+*@
+@{
+    ViewData["Title"] = "Exhibitions";
+    ViewData["ReadOnly"] = true;
+}
+
+<partial name="~/Views/Shared/Exhibitions/_ExhibitionList.cshtml" model="Model" />

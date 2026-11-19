@@ -34,7 +34,7 @@ public class StaffService : IStaffService
     public const string LastAdminMessage = "The last active administrator cannot be locked, deleted or given another role.";
 
     /// <summary>Only staff roles are managed here.</summary>
-    public const string RoleMessage = "Choose STAFF, MANAGER or ADMIN.";
+    public const string RoleMessage = "Choose STAFF, TEACHER or ADMIN.";
 
     /// <summary>Database access.</summary>
     private readonly AppDbContext _db;
@@ -295,9 +295,9 @@ public class StaffService : IStaffService
         return $"NV{max + 1:D4}";
     }
 
-    /// <summary>Only STAFF, MANAGER and ADMIN are allowed here.</summary>
+    /// <summary>Only STAFF, TEACHER and ADMIN are allowed here.</summary>
     private static Role CheckRole(Role? role)
-        => role is Role.STAFF or Role.MANAGER or Role.ADMIN
+        => role is Role.STAFF or Role.TEACHER or Role.ADMIN
             ? role.Value
             : throw new BusinessException(RoleMessage, nameof(StaffFormVm.Role));
 

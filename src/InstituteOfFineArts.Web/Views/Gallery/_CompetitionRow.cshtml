@@ -1,0 +1,63 @@
+@model (InstituteOfFineArts.Web.ViewModels.Public.CompetitionShowcaseVm Competition, bool Reverse)
+@using InstituteOfFineArts.Web.Models.Enums
+@*
+    One competition of /gallery/competitions (FE101 Commissions design): cover image and text side by side,
+    the side alternating row by row. The button depends on the status.
+*@
+@{
+    var c = Model.Competition;
+}
+<div class="row align-items-center mb-5 pb-4 competition-row @(Model.Reverse ? "flex-lg-row-reverse" : "")">
+    <div class="col-lg-6 mb-4 mb-lg-0">
+        <a class="competition-img-wrapper" href="/gallery/competitions/@c.Id" tabindex="-1" aria-hidden="true">
+            @if (c.HasCover)
+            {
+                <img src="/files/competitions/@c.Id/cover" alt="" class="img-fluid w-100 shadow-sm" style="height: 400px; object-fit: cover; background-color: #eee;" loading="lazy">
+            }
+            else
+            {
+                <span class="d-flex align-items-center justify-content-center w-100 shadow-sm text-muted art-title fs-3" style="height: 400px; background-color: #f1efe9;">@c.Title</span>
+            }
+        </a>
+    </div>
+    <div class="col-lg-5 @(Model.Reverse ? "" : "offset-lg-1")">
+        <div class="d-flex align-items-center gap-2 mb-3">
+            @switch (c.Status)
+            {
+                case CompetitionStatus.ONGOING:
+                    <span class="badge bg-success fw-normal px-2 py-1" style="letter-spacing: 1px; font-size: 0.7rem;">OPEN</span>
+                    <span class="text-muted small"><i class="bi bi-clock me-1" aria-hidden="true"></i> Deadline: @c.EndDate.ToString("MMM d, yyyy")</span>
+                    break;
+                case CompetitionStatus.UPCOMING:
+                    <span class="badge bg-secondary fw-normal px-2 py-1" style="letter-spacing: 1px; font-size: 0.7rem;">UPCOMING</span>
+                    <span class="text-muted small"><i class="bi bi-calendar me-1" aria-hidden="true"></i> Opens: @c.StartDate.ToString("MMM d, yyyy")</span>
+                    break;
+                case CompetitionStatus.CLOSED:
+                    <span class="badge bg-warning text-dark fw-normal px-2 py-1" style="letter-spacing: 1px; font-size: 0.7rem;">CLOSED</span>
+                    <span class="text-muted small">@c.SubmissionCount entries · results coming soon</span>
+                    break;
+                default:
+                    <span class="badge bg-dark fw-normal px-2 py-1" style="letter-spacing: 1px; font-size: 0.7rem;">RESULTS</span>
+                    <span class="text-muted small">@c.SubmissionCount entries · ended @c.EndDate.ToString("MMM d, yyyy")</span>
+                    break;
+            }
+        </div>
+        <h2 class="art-title fs-2 mb-3"><a href="/gallery/competitions/@c.Id" class="text-reset text-decoration-none">@c.Title</a></h2>
+        @if (!string.IsNullOrWhiteSpace(c.Description))
+        {
+            <p class="text-muted lh-lg mb-4">@c.Description</p>
+        }
+        @switch (c.Status)
+        {
+            case CompetitionStatus.GRADED:
+                <a href="/gallery/competitions/@c.Id/artworks" class="btn btn-outline-dark rounded-0 px-4 py-2 fw-bold" style="letter-spacing: 0.5px;">View Artworks</a>
+                break;
+            case CompetitionStatus.CLOSED:
+                <a href="/gallery/competitions/@c.Id" class="btn btn-outline-dark rounded-0 px-4 py-2 fw-bold" style="letter-spacing: 0.5px;">View Details</a>
+                break;
+            default:
+                <a href="/gallery/competitions/@c.Id" class="btn btn-outline-dark rounded-0 px-4 py-2 fw-bold" style="letter-spacing: 0.5px;">View Details &amp; Submit</a>
+                break;
+        }
+    </div>
+</div>

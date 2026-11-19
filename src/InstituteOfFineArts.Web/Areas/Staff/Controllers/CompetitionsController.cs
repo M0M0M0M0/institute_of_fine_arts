@@ -1,3 +1,6 @@
+using InstituteOfFineArts.Web.Models.Enums;
+using InstituteOfFineArts.Web.ViewModels.Admin.AuditLog;
+using InstituteOfFineArts.Web.Infrastructure.Audit;
 using InstituteOfFineArts.Web.Exceptions;
 using InstituteOfFineArts.Web.Infrastructure.Security;
 using InstituteOfFineArts.Web.Services.Interfaces;
@@ -17,10 +20,14 @@ public class CompetitionsController : StaffBaseController
     /// <summary>Competition service.</summary>
     private readonly ICompetitionService _competitions;
 
+    /// <summary>History of the competition (audit log).</summary>
+    private readonly IAuditLogService _audit;
+
     /// <summary>Receives the competition service through Dependency Injection.</summary>
-    public CompetitionsController(ICompetitionService competitions)
+    public CompetitionsController(ICompetitionService competitions, IAuditLogService audit)
     {
         _competitions = competitions;
+        _audit = audit;
     }
 
     /// <summary>List with filters (keyword, status, date range) and paging.</summary>
@@ -32,11 +39,11 @@ public class CompetitionsController : StaffBaseController
         return View(await _competitions.SearchAsync(search));
     }
 
-    /// <summary>Empty create form.</summary>
+    /// <summary>Empty create form, with one empty award row to start with (rank 1, one winner).</summary>
     [HttpGet("new")]
-    public IActionResult Create() => View(new CompetitionFormVm());
+    public IActionResult Create() => View(new CompetitionFormVm { Awards = [new CompetitionAwardRowVm { Rank = 1, Quantity = 1 }] });
 
-    /// <summary>Creates the competition, then opens its details (to add the awards next).</summary>
+    /// <summary>Creates the competition with the awards typed on the form, then opens its details.</summary>
     /// <param name="form">Form data</param>
     [HttpPost("new")]
     [RequestSizeLimit(6 * 1024 * 1024)]
@@ -49,7 +56,11 @@ public class CompetitionsController : StaffBaseController
         try
         {
             var id = await _competitions.CreateAsync(form, User.GetProfileId());
-            TempData["Success"] = "Competition created. Next, add its awards.";
+            var awards = form.Awards.Count(a => !a.Remove && !a.IsBlank);
+            // BR-09: a competition should have at least one award before it opens (a warning, not a block)
+            TempData["Success"] = awards == 0
+                ? "Competition created. It has no awards yet: add them before the competition opens."
+                : $"Competition created with {awards} award{(awards == 1 ? "" : "s")}.";
             return RedirectToAction(nameof(Details), new { id });
         }
         catch (BusinessException ex)
@@ -66,7 +77,40 @@ public class CompetitionsController : StaffBaseController
     {
         try
         {
-            return View(await _competitions.GetDetailsAsync(id));
+            var details = await _competitions.GetDetailsAsync(id);
+            ViewBag.History = new HistoryVm(
+                await _audit.GetHistoryAsync(new AuditHistoryQuery { CompetitionId = id, PageSize = 8 }),
+                "History", $"/staff/competitions/{id}/history");
+            return View(details);
+        }
+        catch (NotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    /// <summary>
+    /// Full history of the competition: everything done to it, its awards, its entries (submitted, opened, graded),
+    /// awards given and the results – filtered by kind of work and user.
+    /// </summary>
+    /// <param name="id">Competition id</param>
+    /// <param name="category">Kind of work (null = all)</param>
+    /// <param name="user">Part of the user name</param>
+    /// <param name="page">Page number</param>
+    [HttpGet("{id:long}/history")]
+    public async Task<IActionResult> History(long id, [FromQuery] AuditCategory? category, [FromQuery] string? user, [FromQuery] int page = 1)
+    {
+        try
+        {
+            var details = await _competitions.GetDetailsAsync(id);
+            var rows = await _audit.GetHistoryAsync(new AuditHistoryQuery { CompetitionId = id, Category = category, User = user, Page = page });
+            return View("~/Views/Shared/HistoryPage.cshtml", new HistoryPageVm
+            {
+                Title = $"History of {details.Title}", BackUrl = $"/staff/competitions/{id}", BackText = details.Title,
+                Category = category, User = user,
+                Categories = [AuditCategory.COMPETITION, AuditCategory.SUBMISSION, AuditCategory.GRADING, AuditCategory.AWARD, AuditCategory.EXHIBITION, AuditCategory.SALE],
+                History = new HistoryVm(rows, "History"),
+            });
         }
         catch (NotFoundException)
         {
@@ -106,7 +150,8 @@ public class CompetitionsController : StaffBaseController
         {
             if (ModelState.IsValid)
             {
-                await _competitions.UpdateAsync(id, form);
+                // The changed fields go into the competition's history (AuditActionFilter)
+                HttpContext.Items[AuditItems.Changes] = await _competitions.UpdateAsync(id, form);
                 TempData["Success"] = "Competition updated.";
                 return RedirectToAction(nameof(Details), new { id });
             }
@@ -128,6 +173,12 @@ public class CompetitionsController : StaffBaseController
             form.Code = current.Code;
             form.HasCover = current.HasCover;
             form.HasSubmissions = current.HasSubmissions;
+            // How many times each award was given comes from the database, never from the browser
+            var given = current.Awards.ToDictionary(a => a.Id, a => a.IssuedCount);
+            foreach (var row in form.Awards)
+            {
+                row.IssuedCount = given.GetValueOrDefault(row.Id);
+            }
         }
         catch (BusinessException ex)
         {

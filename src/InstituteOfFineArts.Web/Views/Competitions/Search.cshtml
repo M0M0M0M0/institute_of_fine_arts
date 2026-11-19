@@ -1,0 +1,88 @@
+@model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Public.PublicCompetitionListItemVm>
+@*
+    Competition search (/competitions/search, SCR-02, F-M02-05, TC-M02-05): results of the header search box.
+    Search by title / code and status (calculated for today), summary only (no images, many per page), paged.
+    Open to guests and every role. The image-rich main page is /gallery/competitions.
+    Created by BE2 (BE2-11); styled by FE2-08: filters on the mist bar, one calm row per competition with its status tag.
+    Each competition is linked exactly once (the e2e scripts count the links).
+*@
+@using InstituteOfFineArts.Web.Models.Enums
+@{
+    ViewData["Title"] = "Search competitions";
+    var search = (InstituteOfFineArts.Web.ViewModels.Public.PublicCompetitionSearchVm)ViewBag.Search;
+    // Keeps the filters when moving between pages
+    object PageRoute(int page) => new { search.Keyword, search.Status, page };
+}
+
+<div class="page-head">
+    <div>
+        <h1>Search competitions</h1>
+        <p class="page-sub">Every painting competition of the institute in a short list. <a href="/gallery/competitions">Browse them with pictures</a>.</p>
+    </div>
+</div>
+
+<partial name="_Alerts" />
+
+<form method="get" action="/competitions/search" class="filters" role="search">
+    <div class="filter">
+        <label class="form-label" for="Keyword">Title</label>
+        <input class="form-control" id="Keyword" name="Keyword" value="@search.Keyword" />
+    </div>
+    <div class="filter">
+        <label class="form-label" for="Status">Status</label>
+        <select class="form-select" id="Status" name="Status">
+            <option value="">All</option>
+            @foreach (var s in Enum.GetValues<CompetitionStatus>())
+            {
+                <option value="@s" selected="@(search.Status == s)">@InstituteOfFineArts.Web.Helpers.EnumText.Of(s)</option>
+            }
+        </select>
+    </div>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>Search</button>
+        <a href="/competitions/search" class="btn btn-link">Clear</a>
+    </div>
+</form>
+
+@if (Model.TotalCount == 0)
+{
+    <div class="empty">
+        <i class="bi bi-search" aria-hidden="true"></i>
+        <p>No results found.</p>
+        <a href="/competitions/search" class="btn btn-outline-primary">Show all competitions</a>
+    </div>
+}
+else
+{
+    <ul class="calm-list">
+        @foreach (var c in Model.Items)
+        {
+            <li>
+                <div>
+                    <h2 class="cl-title"><a asp-action="Details" asp-route-id="@c.Id">@c.Title</a></h2>
+                    <div class="cl-meta">
+                        <span>@c.Code</span>
+                        <span><i class="bi bi-calendar3" aria-hidden="true"></i>@c.StartDate.ToString("dd MMM yyyy") – @c.EndDate.ToString("dd MMM yyyy")</span>
+                        <span><i class="bi bi-award" aria-hidden="true"></i>@c.AwardCount award@(c.AwardCount == 1 ? "" : "s")@if (c.TopPrize > 0)
+                            {<text>, top prize <span class="num">@c.TopPrize.ToString("$#,##0.00")</span></text>}</span>
+                    </div>
+                </div>
+                <div class="cl-action"><partial name="_Status" model="c.Status" /></div>
+            </li>
+        }
+    </ul>
+
+    <nav class="pager" aria-label="Competition pages">
+        <span>@Model.TotalCount competition@(Model.TotalCount == 1 ? "" : "s"), page @Model.Page of @Model.TotalPages</span>
+        <div class="pager-links">
+            @if (Model.HasPrevious)
+            {
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Search", PageRoute(Model.Page - 1))"><i class="bi bi-arrow-left" aria-hidden="true"></i>Previous</a>
+            }
+            @if (Model.HasNext)
+            {
+                <a class="btn btn-sm btn-outline-primary" href="@Url.Action("Search", PageRoute(Model.Page + 1))">Next<i class="bi bi-arrow-right ms-1 me-0" aria-hidden="true"></i></a>
+            }
+        </div>
+    </nav>
+}

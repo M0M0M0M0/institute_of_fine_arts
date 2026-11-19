@@ -1,3 +1,4 @@
+using InstituteOfFineArts.Web.Infrastructure.Audit;
 using InstituteOfFineArts.Web.Infrastructure.Api;
 using InstituteOfFineArts.Web.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -14,7 +15,7 @@ namespace InstituteOfFineArts.Web.Controllers;
 /// GET /files/submissions/{id}/thumb         – small version for lists and galleries
 /// GET /files/competitions/{id}/cover        – competition cover (public)
 /// A missing image and an image the user may not see both return 404, so ids of private entries are not revealed.
-/// Viewers other than the owner, STAFF, MANAGER and ADMIN receive a copy watermarked in memory (F-M13-02);
+/// Viewers other than the owner, STAFF, TEACHER and ADMIN receive a copy watermarked in memory (F-M13-02);
 /// the stored file never changes.
 /// </summary>
 [AllowAnonymous]
@@ -48,6 +49,7 @@ public class FilesController : Controller
     /// <param name="id">Submission id</param>
     /// <param name="download">True to download the original file</param>
     [HttpGet("submissions/{id:long}")]
+    [AuditView]
     public async Task<IActionResult> Submission(long id, bool download = false)
         => await ServeAsync(await _access.GetSubmissionImageAsync(id, User, thumbnail: false, download));
 

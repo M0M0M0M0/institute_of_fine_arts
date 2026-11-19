@@ -183,6 +183,32 @@ public class PublicSiteService : IPublicSiteService
         }
 
         latest.Winners = await GetWinnersAsync(latest.CompetitionId);
+
+        // Fill the grid with the winners of the earlier published competitions (newest results first)
+        var missing = LatestResultsVm.FeaturedCount - latest.Winners.Count(w => w.HasThumbnail);
+        if (missing > 0)
+        {
+            latest.EarlierWinners = (await _db.AwardsIssued.AsNoTracking()
+                .Where(a => a.Submission.Competition.Status == CompetitionStatus.GRADED
+                    && a.Submission.CompetitionId != latest.CompetitionId
+                    && a.Submission.ThumbnailPath != null)
+                .OrderByDescending(a => a.Submission.Competition.PublishedAt).ThenByDescending(a => a.Submission.Competition.EndDate)
+                .ThenBy(a => a.CompetitionAward.Rank).ThenBy(a => a.Id)
+                .Take(missing)
+                .Select(a => new
+                {
+                    a.SubmissionId,
+                    a.Submission.Student.Account.FullName,
+                    a.CompetitionAward.AwardName,
+                    a.CompetitionAward.Rank,
+                    a.Submission.Title,
+                    a.Submission.CompetitionId,
+                    CompetitionTitle = a.Submission.Competition.Title,
+                })
+                .ToListAsync())
+                .Select(a => new FeaturedWinnerVm(new WinnerVm(a.SubmissionId, a.FullName, a.AwardName, a.Rank, a.Title, true), a.CompetitionId, a.CompetitionTitle))
+                .ToList();
+        }
         return latest;
     }
 

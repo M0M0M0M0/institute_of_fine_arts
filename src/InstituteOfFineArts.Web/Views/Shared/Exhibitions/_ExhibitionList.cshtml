@@ -16,9 +16,12 @@
         <h1>Exhibitions</h1>
         <p class="page-sub">Where the students' paintings are hung, shown and sold.</p>
     </div>
-    <div class="page-actions">
-        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i>New exhibition</a>
-    </div>
+    @if (ViewData["ReadOnly"] is not true)
+    {
+        <div class="page-actions">
+            <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i>New exhibition</a>
+        </div>
+    }
 </div>
 
 <partial name="_Alerts" />
@@ -68,7 +71,7 @@
         {
             <a asp-action="Index" class="btn btn-outline-primary">Clear the filters</a>
         }
-        else
+        else if (ViewData["ReadOnly"] is not true)
         {
             <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i>New exhibition</a>
         }

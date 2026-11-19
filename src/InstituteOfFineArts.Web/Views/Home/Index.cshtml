@@ -124,31 +124,40 @@
                     <span class="small text-muted">· published @published.ToString("dd MMM yyyy")</span>
                 }
             </p>
-            @if (latest.Winners.Count == 0)
+            @if (latest.Winners.Count == 0 && latest.EarlierWinners.Count == 0)
             {
                 <p class="text-muted text-center">No awards were issued in this competition.</p>
             }
             else
             {
+                @* Latest competition's winners first, then winners of earlier competitions so the grid has two full rows *@
+                var cards = latest.Winners.Select(w => (Winner: w, CompetitionId: (long?)null, CompetitionTitle: (string?)null))
+                    .Concat(latest.EarlierWinners.Select(e => (Winner: e.Winner, CompetitionId: (long?)e.CompetitionId, CompetitionTitle: (string?)e.CompetitionTitle)))
+                    .Take(Math.Max(latest.Winners.Count, InstituteOfFineArts.Web.ViewModels.Public.LatestResultsVm.FeaturedCount));
                 <div class="row g-4">
-                    @foreach (var w in latest.Winners)
+                    @foreach (var (w, competitionId, competitionTitle) in cards)
                     {
-                        <div class="col-md-4">
+                        <div class="col-sm-6 col-md-4">
                             <div class="artwork-card">
                                 <div class="card-img-wrapper">
                                     @if (w.HasThumbnail)
                                     {
-                                        <img src="/files/submissions/@w.SubmissionId" alt="@w.ArtworkTitle – @w.StudentName" />
+                                        <img src="/files/submissions/@w.SubmissionId" alt="@w.ArtworkTitle – @w.StudentName" loading="lazy" />
                                     }
                                 </div>
                                 <div class="card-body">
                                     <div class="artist-name">@w.StudentName</div>
                                     <div class="artwork-title small"><span class="badge bg-success">@w.AwardName</span> “@w.ArtworkTitle”</div>
+                                    @if (competitionTitle != null)
+                                    {
+                                        <div class="small text-muted mt-1"><a href="/competitions/@competitionId" class="text-muted">@competitionTitle</a></div>
+                                    }
                                 </div>
                             </div>
                         </div>
                     }
                 </div>
+                <p class="text-center mt-4"><a href="/gallery" class="btn btn-outline-dark">See all award-winning works</a></p>
             }
         }
     </section>

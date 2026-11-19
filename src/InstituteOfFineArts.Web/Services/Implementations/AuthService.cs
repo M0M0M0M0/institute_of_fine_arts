@@ -68,7 +68,7 @@ public class AuthService : IAuthService
         account.LastLoginAt = DateTimeHelper.Now;
         await _db.SaveChangesAsync();
 
-        // Profile id: staff_profile for ADMIN/MANAGER/STAFF, student_profile for STUDENT
+        // Profile id: staff_profile for ADMIN/STAFF/TEACHER, student_profile for STUDENT
         long? profileId = account.Role == Role.STUDENT ? account.StudentProfile?.Id : account.StaffProfile?.Id;
 
         // Claims stored in the cookie (convention in Infrastructure/Security/ClaimsPrincipalExtensions)
@@ -94,7 +94,7 @@ public class AuthService : IAuthService
     {
         // Each role has its own Area; unknown roles go to the home page
         if (user.IsInRole(RoleNames.Admin)) return "/admin";
-        if (user.IsInRole(RoleNames.Manager)) return "/manager";
+        if (user.IsInRole(RoleNames.Teacher)) return "/teacher";
         if (user.IsInRole(RoleNames.Staff)) return "/staff";
         if (user.IsInRole(RoleNames.Student)) return "/student";
         return "/";

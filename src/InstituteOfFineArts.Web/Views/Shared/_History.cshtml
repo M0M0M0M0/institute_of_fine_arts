@@ -1,0 +1,121 @@
+@model InstituteOfFineArts.Web.ViewModels.Admin.AuditLog.HistoryVm
+@using InstituteOfFineArts.Web.Helpers
+@using InstituteOfFineArts.Web.Models.Enums
+@*
+    History of one object (competition, exhibition, entry) or one account, from audit_log (F-M17-01): rows grouped by
+    day, newest first; each row = time, who (name + role), what (readable sentence), the fields that changed, and a
+    "refused" mark when the action did not go through.
+    - Model.MoreUrl: link to the full, filterable history (the details pages show the latest rows only).
+    - Model.ShowObject: account pages, where rows are about many objects → link to the competition / exhibition.
+    Paging keeps the other query values (kind of work, user) of the current page.
+*@
+@{
+    var rows = Model.Rows;
+    var isAdmin = User.IsInRole(RoleNames.Admin);
+    string CategoryText(AuditCategory c) => c switch
+    {
+        AuditCategory.LOGIN => "Sign-in",
+        AuditCategory.ACCOUNT => "Account",
+        AuditCategory.COMPETITION => "Competition",
+        AuditCategory.SUBMISSION => "Entry",
+        AuditCategory.GRADING => "Grading",
+        AuditCategory.AWARD => "Award",
+        AuditCategory.EXHIBITION => "Exhibition",
+        AuditCategory.SALE => "Sale",
+        _ => "Other",
+    };
+    // Link of the page with another page number, the other filters kept
+    string PageUrl(int page)
+    {
+        var query = Context.Request.Query
+            .Where(q => !string.Equals(q.Key, "page", StringComparison.OrdinalIgnoreCase))
+            .Select(q => $"{Uri.EscapeDataString(q.Key)}={Uri.EscapeDataString(q.Value.ToString())}")
+            .Append($"page={page}");
+        return $"{Context.Request.Path}?{string.Join("&", query)}";
+    }
+}
+<section class="section history" aria-labelledby="history-title-@Model.Title.GetHashCode()">
+    <div class="section-head">
+        <h2 id="history-title-@Model.Title.GetHashCode()">@Model.Title</h2>
+        @if (Model.MoreUrl != null && rows.TotalCount > rows.Items.Count)
+        {
+            <a href="@Model.MoreUrl" class="btn btn-sm btn-outline-primary">Full history (@rows.TotalCount)</a>
+        }
+    </div>
+    @if (rows.TotalCount == 0)
+    {
+        <p class="text-muted">Nothing recorded yet.</p>
+    }
+    else
+    {
+        @foreach (var day in rows.Items.GroupBy(r => r.CreatedAt.Date))
+        {
+            <h3 class="audit-day">@day.Key.ToString("dddd, dd MMM yyyy")</h3>
+            <ol class="audit-list">
+                @foreach (var r in day)
+                {
+                    <li class="audit-row @(r.Failed ? "is-failed" : "")">
+                        <span class="audit-time num">@r.CreatedAt.ToString("HH:mm")</span>
+                        <div class="audit-body">
+                            <p class="audit-text">
+                                <strong>@(r.FullName ?? r.Username ?? "Someone")</strong>
+                                @if (r.Role is { } role)
+                                {
+                                    <span class="audit-role">@EnumText.Of(role)</span>
+                                }
+                                <span>@r.Text</span>
+                                @if (r.Failed)
+                                {
+                                    <span class="tag tag-REJECTED tag-plain">Refused</span>
+                                }
+                            </p>
+                            @if (r.Changes.Count > 0)
+                            {
+                                <ul class="audit-changes">
+                                    @foreach (var change in r.Changes)
+                                    {
+                                        <li>@change</li>
+                                    }
+                                </ul>
+                            }
+                            <p class="audit-meta">
+                                <span class="audit-kind">@CategoryText(r.Category)</span>
+                                @if (Model.ShowObject)
+                                {
+                                    if (r.CompetitionId is { } cid)
+                                    {
+                                        <a href="@(isAdmin ? $"/admin/audit-log?CompetitionId={cid}" : $"/staff/competitions/{cid}")">Competition #@cid</a>
+                                    }
+                                    if (r.ExhibitionId is { } eid)
+                                    {
+                                        <a href="@(isAdmin ? $"/admin/audit-log?ExhibitionId={eid}" : $"/staff/exhibitions/{eid}")">Exhibition #@eid</a>
+                                    }
+                                }
+                                @if (isAdmin && r.IpAddress != null)
+                                {
+                                    <span>IP @r.IpAddress</span>
+                                }
+                            </p>
+                        </div>
+                    </li>
+                }
+            </ol>
+        }
+        @if (Model.MoreUrl == null && rows.TotalPages > 1)
+        {
+            <nav class="pager" aria-label="History pages">
+                <span>@rows.TotalCount entr@(rows.TotalCount == 1 ? "y" : "ies"). Page @rows.Page of @rows.TotalPages</span>
+                <div class="pager-links">
+                    @if (rows.HasPrevious)
+                    {
+                        <a class="btn btn-sm btn-outline-primary" href="@PageUrl(rows.Page - 1)"><i class="bi bi-chevron-left" aria-hidden="true"></i>Newer</a>
+                    }
+                    @if (rows.HasNext)
+                    {
+                        <a class="btn btn-sm btn-outline-primary" href="@PageUrl(rows.Page + 1)">Older<i class="bi bi-chevron-right ms-1 me-0" aria-hidden="true"></i></a>
+                    }
+                </div>
+            </nav>
+        }
+    }
+</section>

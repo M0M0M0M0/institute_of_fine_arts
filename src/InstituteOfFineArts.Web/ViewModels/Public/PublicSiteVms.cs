@@ -61,7 +61,23 @@ public class LatestResultsVm
 
     /// <summary>Winners ordered by award rank.</summary>
     public List<WinnerVm> Winners { get; set; } = new();
+
+    /// <summary>
+    /// Award winners of the earlier GRADED competitions (most recently published first) that fill the "Featured
+    /// Artworks" grid up to <see cref="FeaturedCount"/> cards when the latest competition has only a few winners.
+    /// Only awarded paintings with an image, so BR-20 (public = BEST or awarded in a GRADED competition) holds.
+    /// </summary>
+    public List<FeaturedWinnerVm> EarlierWinners { get; set; } = new();
+
+    /// <summary>Number of cards the home page shows in "Featured Artworks" (two rows of three).</summary>
+    public const int FeaturedCount = 6;
 }
+
+/// <summary>An award winner of an earlier competition shown in "Featured Artworks", with its competition.</summary>
+/// <param name="Winner">Winner data (same as the latest competition's cards)</param>
+/// <param name="CompetitionId">Competition id</param>
+/// <param name="CompetitionTitle">Competition title</param>
+public record FeaturedWinnerVm(WinnerVm Winner, long CompetitionId, string CompetitionTitle);
 
 /// <summary>One award winner (public data only: student, award, painting title, thumbnail).</summary>
 /// <param name="SubmissionId">Winning submission id (its image is public once GRADED, BR-20)</param>

@@ -186,6 +186,8 @@ public static partial class DbSeeder
         try
         {
             var staffIds = await db.StaffProfiles.Where(s => s.Account.Role == Role.STAFF).OrderBy(s => s.Id).Select(s => s.Id).ToListAsync();
+            // Entries are graded by teachers (staff run the competitions but do not grade)
+            var teacherIds = await db.StaffProfiles.Where(s => s.Account.Role == Role.TEACHER).OrderBy(s => s.Id).Select(s => s.Id).ToListAsync();
             var students = await AddArchiveStudentsAsync(db, today);
 
             // ---- (1) competitions: 30 days each, one ending every 4 weeks, the newest ended 10 weeks ago
@@ -243,7 +245,7 @@ public static partial class DbSeeder
                 {
                     var share = (double)i / submissions.Count;
                     var rating = i < 5 ? Rating.BEST : share < 0.3 ? Rating.BETTER : share < 0.6 ? Rating.GOOD : share < 0.85 ? Rating.MODERATE : Rating.NORMAL;
-                    db.Evaluations.Add(NewEvaluation(submissions[i], rating, staffIds[(k + i) % staffIds.Count], end.AddDays(1 + i % 5)));
+                    db.Evaluations.Add(NewEvaluation(submissions[i], rating, teacherIds[(k + i) % teacherIds.Count], end.AddDays(1 + i % 5)));
                 }
 
                 // ---- (4) awards to the 5 BEST, then results published

@@ -6,7 +6,7 @@ namespace InstituteOfFineArts.Web.ViewModels.Admin.Staff;
 
 /// <summary>
 /// Edit form of a staff member (F-M03-02): every field except the username and the password.
-/// Used for STAFF, MANAGER and ADMIN accounts (all have a staff_profile).
+/// Used for STAFF, TEACHER and ADMIN accounts (all have a staff_profile).
 /// </summary>
 public class StaffFormVm : IValidatableObject
 {
@@ -29,7 +29,7 @@ public class StaffFormVm : IValidatableObject
     [Display(Name = "Email")]
     public string Email { get; set; } = string.Empty;
 
-    /// <summary>Role: STAFF, MANAGER or ADMIN.</summary>
+    /// <summary>Role: STAFF, TEACHER or ADMIN.</summary>
     [Required(ErrorMessage = "Please choose the role")]
     [Display(Name = "Role")]
     public Role? Role { get; set; } = Models.Enums.Role.STAFF;

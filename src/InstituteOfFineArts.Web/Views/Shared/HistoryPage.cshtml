@@ -1,0 +1,49 @@
+@model InstituteOfFineArts.Web.ViewModels.Admin.AuditLog.HistoryPageVm
+@using InstituteOfFineArts.Web.Helpers
+@*
+    Full history of one object (/staff/competitions/{id}/history, /staff/exhibitions/{id}/history): every row of
+    audit_log that belongs to it, filtered by kind of work and user, 20 per page (Views/Shared/_History.cshtml).
+*@
+@{
+    ViewData["Title"] = Model.Title;
+    // Opened from the Staff area, but the view lives in Views/Shared: use the working-screen layout explicitly
+    Layout = "_LayoutDashboard";
+}
+<div class="page-head">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="@Model.BackUrl">@Model.BackText</a></li>
+                <li class="breadcrumb-item active" aria-current="page">History</li>
+            </ol>
+        </nav>
+        <h1>@Model.Title</h1>
+        <p class="page-sub">Everything done to it, by whom and when, newest first. Nothing here can be changed.</p>
+    </div>
+</div>
+<partial name="_Alerts" />
+
+<form method="get" class="filters">
+    <div class="filter">
+        <label class="form-label" for="Category">Kind</label>
+        <select class="form-select" id="Category" name="Category">
+            <option value="">All</option>
+            @foreach (var c in Model.Categories)
+            {
+                <option value="@c" selected="@(Model.Category == c)">@EnumText.Of(c)</option>
+            }
+        </select>
+    </div>
+    <div class="filter">
+        <label class="form-label" for="User">User</label>
+        <input class="form-control" id="User" name="User" value="@Model.User" />
+    </div>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-search" aria-hidden="true"></i>Filter</button>
+        <a href="@Context.Request.Path" class="btn btn-link">Clear</a>
+    </div>
+</form>
+
+<partial name="_History" model="Model.History" />
+
+<p class="mt-4"><a href="@Model.BackUrl" class="btn btn-link px-0"><i class="bi bi-arrow-left" aria-hidden="true"></i>Back</a></p>

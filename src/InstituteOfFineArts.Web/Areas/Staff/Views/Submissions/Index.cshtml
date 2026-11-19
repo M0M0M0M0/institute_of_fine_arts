@@ -12,10 +12,10 @@
     // Keeps the filters when moving between pages
     object PageRoute(int page) => new
     {
-        search.CompetitionId, search.Evaluated, search.Rating, search.Student,
+        search.CompetitionId, search.CompetitionStatus, search.Evaluated, search.Rating, search.Student,
         From = search.From?.ToString("yyyy-MM-dd"), To = search.To?.ToString("yyyy-MM-dd"), page,
     };
-    var filtered = search.CompetitionId != null || search.Evaluated != null || search.Rating != null
+    var filtered = search.CompetitionId != null || search.CompetitionStatus != null || search.Evaluated != null || search.Rating != null
         || !string.IsNullOrEmpty(search.Student) || search.From != null || search.To != null;
 }
 
@@ -38,6 +38,16 @@
             @foreach (var c in competitions)
             {
                 <option value="@c.Id" selected="@(search.CompetitionId == c.Id)">@c.Code – @c.Title</option>
+            }
+        </select>
+    </div>
+    <div class="filter">
+        <label class="form-label" for="CompetitionStatus">Competition status</label>
+        <select class="form-select" id="CompetitionStatus" name="CompetitionStatus">
+            <option value="">All</option>
+            @foreach (var st in Enum.GetValues<CompetitionStatus>())
+            {
+                <option value="@st" selected="@(search.CompetitionStatus == st)">@InstituteOfFineArts.Web.Helpers.EnumText.Of(st)</option>
             }
         </select>
     </div>

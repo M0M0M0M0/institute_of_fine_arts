@@ -4,7 +4,7 @@ using InstituteOfFineArts.Web.ViewModels.Common;
 namespace InstituteOfFineArts.Web.Services.Interfaces;
 
 /// <summary>
-/// Admin – staff accounts (M03, task BE2-02): STAFF, MANAGER and ADMIN accounts with their staff_profile.
+/// Admin – staff accounts (M03, task BE2-02): STAFF, TEACHER and ADMIN accounts with their staff_profile.
 /// Ids are staff_profile ids. Rule violations throw BusinessException (with the form field when there is one);
 /// unknown ids throw NotFoundException.
 /// </summary>

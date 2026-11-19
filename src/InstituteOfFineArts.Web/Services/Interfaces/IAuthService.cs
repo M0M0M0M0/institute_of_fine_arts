@@ -40,7 +40,7 @@ public interface IAuthService
 
     /// <summary>
     /// Home page path of each role after login
-    /// (ADMIN → /admin, MANAGER → /manager, STAFF → /staff, STUDENT → /student).
+    /// (ADMIN → /admin, STAFF → /staff, TEACHER → /teacher, STUDENT → /student).
     /// </summary>
     /// <param name="user">Signed-in user</param>
     string GetHomePath(ClaimsPrincipal user);

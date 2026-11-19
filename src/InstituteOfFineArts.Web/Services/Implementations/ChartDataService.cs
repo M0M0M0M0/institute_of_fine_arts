@@ -31,24 +31,41 @@ public class ChartDataService : IChartDataService
     }
 
     /// <inheritdoc />
-    public async Task<ChartDataVm> GetSubmissionsByCompetitionAsync(CompetitionStatus? status = null, DateOnly? today = null)
+    public async Task<ChartDataVm> GetSubmissionsByCompetitionAsync(CompetitionStatus? status = null, DateOnly? today = null, int? year = null, int take = 12)
     {
         var day = today ?? DateTimeHelper.Today;
 
-        // One row per competition (also those without entries, so the chart shows a 0 bar)
-        var rows = await _db.Competitions.AsNoTracking()
-            .WhereStatus(status, day)
-            .OrderBy(c => c.StartDate).ThenBy(c => c.Id)
+        var competitions = _db.Competitions.AsNoTracking().WhereStatus(status, day);
+        if (year is { } y)
+        {
+            competitions = competitions.Where(c => c.StartDate.Year == y);
+        }
+
+        // One row per competition (also those without entries, so the chart shows a 0 bar): the latest ones, then
+        // put back in date order so the X axis always reads oldest → newest
+        var rows = (await competitions
+            .OrderByDescending(c => c.StartDate).ThenByDescending(c => c.Id)
+            .Take(Math.Clamp(take, 1, 100))
             .Select(c => new
             {
+                c.Id,
                 c.Code,
+                c.Title,
+                c.StartDate,
+                c.EndDate,
                 Submissions = c.Submissions.Count(),
                 Evaluated = c.Submissions.Count(s => s.Evaluation != null),
             })
-            .ToListAsync();
+            .ToListAsync())
+            .OrderBy(r => r.StartDate).ThenBy(r => r.Id)
+            .ToList();
 
         return new ChartDataVm
         {
+            Ids = rows.Select(r => r.Id).ToList(),
+            Details = rows.Select(r => $"{r.Title} ({r.StartDate:dd MMM yyyy} – {r.EndDate:dd MMM yyyy})").ToList(),
+            // Axis text: the start date "dd/MM" (the code and full dates are in the tooltip)
+            SubLabels = rows.Select(r => r.StartDate.ToString("dd/MM", System.Globalization.CultureInfo.InvariantCulture)).ToList(),
             Labels = rows.Select(r => r.Code).ToList(),
             Datasets =
             {
@@ -106,6 +123,7 @@ public class ChartDataService : IChartDataService
                 e.Name,
                 Revenue = e.Entries.Where(x => x.Status == EntryStatus.SOLD).Sum(x => x.SoldPrice ?? 0m),
                 Sold = e.Entries.Count(x => x.Status == EntryStatus.SOLD),
+                Shown = e.Entries.Count(x => x.Status == EntryStatus.ACCEPTED || x.Status == EntryStatus.SOLD || x.Status == EntryStatus.UNSOLD),
             })
             .ToListAsync();
 
@@ -116,6 +134,7 @@ public class ChartDataService : IChartDataService
             {
                 new ChartDatasetVm { Label = "Revenue (USD)", Data = rows.Select(r => r.Revenue).ToList() },
                 new ChartDatasetVm { Label = "Paintings sold", Data = rows.Select(r => (decimal)r.Sold).ToList() },
+                new ChartDatasetVm { Label = "Paintings shown", Data = rows.Select(r => (decimal)r.Shown).ToList() },
             },
         };
     }

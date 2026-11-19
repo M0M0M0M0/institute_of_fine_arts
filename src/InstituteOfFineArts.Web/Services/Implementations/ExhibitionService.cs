@@ -212,7 +212,7 @@ public class ExhibitionService : IExhibitionService
     }
 
     /// <inheritdoc />
-    public async Task UpdateAsync(long id, ExhibitionFormVm form)
+    public async Task<IReadOnlyList<string>> UpdateAsync(long id, ExhibitionFormVm form)
     {
         var e = await FindAsync(id);
         CheckText(form);
@@ -224,6 +224,23 @@ public class ExhibitionService : IExhibitionService
             await CheckNewDatesAsync(e, start, end);
         }
 
+        // What changed, for the exhibition's history (audit log)
+        var changes = new List<string>();
+        void Changed(string field, string? before, string? after)
+        {
+            if ((before ?? "") != (after ?? ""))
+            {
+                changes.Add($"{field}: {(string.IsNullOrWhiteSpace(before) ? "–" : before)} → {(string.IsNullOrWhiteSpace(after) ? "–" : after)}");
+            }
+        }
+        Changed("Name", e.Name, form.Name.Trim());
+        Changed("Venue", e.Venue, form.Venue.Trim());
+        Changed("City", e.City, form.City.Trim());
+        Changed("Organizer", e.Organizer, Clean(form.Organizer));
+        Changed("Start date", e.StartDate.ToString("dd MMM yyyy"), start.ToString("dd MMM yyyy"));
+        Changed("End date", e.EndDate.ToString("dd MMM yyyy"), end.ToString("dd MMM yyyy"));
+        if (e.Description != Clean(form.Description)) changes.Add("Description changed");
+
         e.Name = form.Name.Trim();
         e.Description = Clean(form.Description);
         e.Venue = form.Venue.Trim();
@@ -234,6 +251,7 @@ public class ExhibitionService : IExhibitionService
         e.Status = CompetitionStatusResolver.Resolve(e);
         await _db.SaveChangesAsync();
         _logger.LogInformation("Exhibition {ExhibitionId} updated", e.Id);
+        return changes;
     }
 
     /// <inheritdoc />

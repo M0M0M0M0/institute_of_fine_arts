@@ -18,7 +18,7 @@ public class AppDbContext : DbContext
     /// <summary>Login accounts.</summary>
     public DbSet<Account> Accounts => Set<Account>();
 
-    /// <summary>Staff profiles (ADMIN, MANAGER, STAFF).</summary>
+    /// <summary>Staff profiles (ADMIN, STAFF, TEACHER).</summary>
     public DbSet<StaffProfile> StaffProfiles => Set<StaffProfile>();
 
     /// <summary>Student profiles.</summary>

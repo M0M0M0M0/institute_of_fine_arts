@@ -38,7 +38,7 @@ public class ExhibitionServiceTests
         var manager = new StaffProfile
         {
             StaffCode = "NV0002", JoinedDate = new DateOnly(2024, 1, 1),
-            Account = new Account { Username = "manager01", FullName = "Tran Bich Ngoc", Email = "m@ifa.local", Role = Role.MANAGER, PasswordHash = "x" },
+            Account = new Account { Username = "manager01", FullName = "Tran Bich Ngoc", Email = "m@ifa.local", Role = Role.STAFF, PasswordHash = "x" },
         };
         db.StaffProfiles.AddRange(staff, manager);
         db.SaveChanges();

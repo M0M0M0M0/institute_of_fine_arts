@@ -58,7 +58,7 @@ public class HomeAndCompetitionsApiController : ApiControllerBase
 
     /// <summary>This system has no "result adjustment": adjustedAt is always null.</summary>
     [HttpGet("competitions/{id:long}/result-adjustment")]
-    [Authorize(Roles = $"{RoleNames.Student},{RoleNames.Staff},{RoleNames.Manager},{RoleNames.Admin}")]
+    [Authorize(Roles = $"{RoleNames.Student},{RoleNames.Staff},{RoleNames.Teacher},{RoleNames.Admin}")]
     public async Task<IActionResult> ResultAdjustment(long id)
     {
         if (!await _db.Competitions.AnyAsync(c => c.Id == id))

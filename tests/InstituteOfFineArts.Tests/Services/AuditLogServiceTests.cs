@@ -77,18 +77,18 @@ public class AuditLogServiceTests
         Assert.Equal(AuditLogService.LoginFailedAction, row.Action);
     }
 
-    /// <summary>Texts longer than the columns are cut (user name 50, details 500) instead of failing.</summary>
+    /// <summary>Texts longer than the columns are cut (user name 50, details 1000) instead of failing.</summary>
     [Fact]
     public async Task Log_LongTexts_Cut()
     {
         var options = NewOptions();
         using var db = new AppDbContext(options);
 
-        await CreateService(options, db, null).LogAsAsync(null, new string('u', 80), "LOGIN_FAILED", new string('d', 900));
+        await CreateService(options, db, null).LogAsAsync(null, new string('u', 80), "LOGIN_FAILED", new string('d', 1200));
 
         var row = Assert.Single(db.AuditLogs.AsNoTracking());
         Assert.Equal(50, row.Username!.Length);
-        Assert.Equal(500, row.Details!.Length);
+        Assert.Equal(1000, row.Details!.Length);
         Assert.Null(row.IpAddress);
     }
 

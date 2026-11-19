@@ -1,16 +1,37 @@
-@model InstituteOfFineArts.Web.ViewModels.Public.CompetitionShowcaseListVm
+@model InstituteOfFineArts.Web.ViewModels.Public.GalleryCompetitionsPageVm
+@using InstituteOfFineArts.Web.Helpers
 @using InstituteOfFineArts.Web.Models.Enums
+@using InstituteOfFineArts.Web.ViewModels.Public
 @*
-    "Open Art Competitions" (/gallery/competitions, FE101 Commissions design, real data): ongoing and upcoming
-    competitions in alternating image / text rows, then the latest published results with a link to their paintings.
+    "Open Art Competitions" (/gallery/competitions): the main competition page (promo bar, header menu), FE101 Commissions
+    design with real data.
+    - Filters: search by title or code, status (calculated for today), tabs Open now / Past / All (?Tab=open|past|all).
+    - No filter: ongoing and upcoming competitions, then the 4 latest results with a link to every past competition.
+    - With a filter: the competitions of the tab, paged (6 per page).
+    The header search box goes to the compact search page /competitions/search instead (no images, many per page).
 *@
 @{
     ViewData["Title"] = "Open Art Competitions";
+    var search = Model.Search;
+    var tabs = new (GalleryCompetitionTab Tab, string Text)[]
+    {
+        (GalleryCompetitionTab.Open, "Open now"), (GalleryCompetitionTab.Past, "Past"), (GalleryCompetitionTab.All, "All"),
+    };
+    // Query string of a link that keeps the keyword (and the status when it fits the tab)
+    string Link(GalleryCompetitionTab tab, int page = 1, bool keepStatus = false)
+    {
+        var parts = new List<string> { "Tab=" + tab.ToString().ToLowerInvariant() };
+        if (!string.IsNullOrWhiteSpace(search.Keyword)) parts.Add("Keyword=" + Uri.EscapeDataString(search.Keyword.Trim()));
+        if (keepStatus && search.Status is { } st) parts.Add("Status=" + st);
+        if (page > 1) parts.Add("Page=" + page);
+        return "/gallery/competitions?" + string.Join("&", parts);
+    }
+    var filtered = !search.IsDefault;
     var index = 0;
 }
 
 <!-- KHỐI HERO GIỚI THIỆU -->
-<div class="gallery-hero bg-cream py-5 mb-5 text-center">
+<div class="gallery-hero bg-cream py-5 mb-4 text-center">
     <div class="container" style="max-width: 850px;">
         <h1 class="art-title display-5 mb-4">Open Art Competitions</h1>
         <p class="text-muted lh-lg mb-0" style="font-size: 0.95rem;">
@@ -21,64 +42,101 @@
 </div>
 
 <div class="container px-lg-5 mb-5 pb-5">
-    @if (Model.Open.Count == 0)
-    {
-        <p class="text-center text-muted mb-5">No competition is open right now. New competitions are announced here – see the latest results below.</p>
-    }
+    @* Tabs + search: GET form, the tab travels as a hidden field *@
+    <nav class="competition-tabs d-flex flex-wrap justify-content-center gap-2 mb-4" aria-label="Competitions to show">
+        @foreach (var (tab, text) in tabs)
+        {
+            var current = search.Tab == tab;
+            <a href="@Link(tab)" class="btn rounded-0 px-4 @(current ? "btn-dark" : "btn-outline-dark")" aria-current="@(current ? "page" : null)">@text</a>
+        }
+    </nav>
+    <form method="get" action="/gallery/competitions" class="row g-2 justify-content-center align-items-end mb-5" role="search">
+        <input type="hidden" name="Tab" value="@search.Tab.ToString().ToLowerInvariant()" />
+        <div class="col-sm-6 col-lg-4">
+            <label class="form-label small text-muted mb-1" for="gc-keyword">Title or code</label>
+            <input class="form-control rounded-0" id="gc-keyword" name="Keyword" value="@search.Keyword" maxlength="100" placeholder="e.g. Landscapes" />
+        </div>
+        <div class="col-sm-4 col-lg-3">
+            <label class="form-label small text-muted mb-1" for="gc-status">Status</label>
+            <select class="form-select rounded-0" id="gc-status" name="Status">
+                <option value="">Any in this tab</option>
+                @foreach (var st in GalleryCompetitionSearchVm.StatusesOf(search.Tab))
+                {
+                    <option value="@st" selected="@(search.Status == st)">@EnumText.Of(st)</option>
+                }
+            </select>
+        </div>
+        <div class="col-auto d-flex gap-2">
+            <button type="submit" class="btn btn-dark rounded-0 px-4"><i class="bi bi-search me-1" aria-hidden="true"></i>Search</button>
+            @if (filtered)
+            {
+                <a href="/gallery/competitions" class="btn btn-link text-dark">Clear</a>
+            }
+        </div>
+    </form>
 
-    @foreach (var c in Model.Open.Concat(Model.Results))
+    @if (Model.Highlights is { } highlights)
     {
-        var reverse = index++ % 2 == 1;
-        var graded = c.Status == CompetitionStatus.GRADED;
-        if (graded && c == Model.Results.First())
+        @* No filter: open competitions, then the latest results and the way to every past competition *@
+        @if (highlights.Open.Count == 0)
+        {
+            <p class="text-center text-muted mb-5 mx-auto">No competition is open right now. New competitions are announced here – see the latest results below.</p>
+        }
+        @foreach (var c in highlights.Open)
+        {
+            <partial name="_CompetitionRow" model="(c, index++ % 2 == 1)" />
+        }
+        @if (highlights.Results.Count > 0)
         {
             <h2 class="art-title text-center fs-2 mb-5 mt-4">Recent Results</h2>
+            @foreach (var c in highlights.Results)
+            {
+                <partial name="_CompetitionRow" model="(c, index++ % 2 == 1)" />
+            }
         }
-        <div class="row align-items-center mb-5 pb-4 competition-row @(reverse ? "flex-lg-row-reverse" : "")">
-            <div class="col-lg-6 mb-4 mb-lg-0">
-                <a class="competition-img-wrapper" href="/gallery/competitions/@c.Id">
-                    @if (c.HasCover)
-                    {
-                        <img src="/files/competitions/@c.Id/cover" alt="@c.Title" class="img-fluid w-100 shadow-sm" style="height: 400px; object-fit: cover; background-color: #eee;" loading="lazy">
-                    }
-                    else
-                    {
-                        <span class="d-flex align-items-center justify-content-center w-100 shadow-sm text-muted art-title fs-3" style="height: 400px; background-color: #f1efe9;">@c.Title</span>
-                    }
-                </a>
+        <div class="text-center mt-2">
+            <a href="@Link(GalleryCompetitionTab.Past)" class="btn btn-outline-dark rounded-0 px-4 py-2 fw-bold" style="letter-spacing: 0.5px;">See all past competitions</a>
+        </div>
+    }
+    else if (Model.Results is { } results)
+    {
+        <p class="text-center text-muted small mb-5 mx-auto">
+            @results.TotalCount competition@(results.TotalCount == 1 ? "" : "s")
+            @if (!string.IsNullOrWhiteSpace(search.Keyword))
+            {
+                <text>matching “@search.Keyword”</text>
+            }
+            @if (search.Status is { } shownStatus)
+            {
+                <text>· @EnumText.Of(shownStatus)</text>
+            }
+        </p>
+        @if (results.TotalCount == 0)
+        {
+            <div class="text-center py-5">
+                <p class="text-muted mb-4 mx-auto">No competition matches your search.</p>
+                <a href="/gallery/competitions?Tab=all" class="btn btn-outline-dark rounded-0 px-4">Show every competition</a>
             </div>
-            <div class="col-lg-5 @(reverse ? "" : "offset-lg-1")">
-                <div class="d-flex align-items-center gap-2 mb-3">
-                    @switch (c.Status)
+        }
+        @foreach (var c in results.Items)
+        {
+            <partial name="_CompetitionRow" model="(c, index++ % 2 == 1)" />
+        }
+        @if (results.TotalPages > 1)
+        {
+            <nav class="d-flex justify-content-between align-items-center border-top pt-4" aria-label="Competition pages">
+                <span class="text-muted small">Page @results.Page of @results.TotalPages</span>
+                <div class="d-flex gap-2">
+                    @if (results.HasPrevious)
                     {
-                        case CompetitionStatus.ONGOING:
-                            <span class="badge bg-success fw-normal px-2 py-1" style="letter-spacing: 1px; font-size: 0.7rem;">OPEN</span>
-                            <span class="text-muted small"><i class="bi bi-clock me-1" aria-hidden="true"></i> Deadline: @c.EndDate.ToString("MMM d, yyyy")</span>
-                            break;
-                        case CompetitionStatus.UPCOMING:
-                            <span class="badge bg-secondary fw-normal px-2 py-1" style="letter-spacing: 1px; font-size: 0.7rem;">UPCOMING</span>
-                            <span class="text-muted small"><i class="bi bi-calendar me-1" aria-hidden="true"></i> Opens: @c.StartDate.ToString("MMM d, yyyy")</span>
-                            break;
-                        default:
-                            <span class="badge bg-dark fw-normal px-2 py-1" style="letter-spacing: 1px; font-size: 0.7rem;">RESULTS</span>
-                            <span class="text-muted small">@c.SubmissionCount entries · ended @c.EndDate.ToString("MMM d, yyyy")</span>
-                            break;
+                        <a class="btn btn-outline-dark rounded-0" href="@Link(search.Tab, results.Page - 1, keepStatus: true)"><i class="bi bi-arrow-left me-1" aria-hidden="true"></i>Previous</a>
+                    }
+                    @if (results.HasNext)
+                    {
+                        <a class="btn btn-outline-dark rounded-0" href="@Link(search.Tab, results.Page + 1, keepStatus: true)">Next<i class="bi bi-arrow-right ms-1" aria-hidden="true"></i></a>
                     }
                 </div>
-                <h2 class="art-title fs-2 mb-3">@c.Title</h2>
-                @if (!string.IsNullOrWhiteSpace(c.Description))
-                {
-                    <p class="text-muted lh-lg mb-4">@c.Description</p>
-                }
-                @if (graded)
-                {
-                    <a href="/gallery/competitions/@c.Id/artworks" class="btn btn-outline-dark rounded-0 px-4 py-2 fw-bold" style="letter-spacing: 0.5px;">View Artworks</a>
-                }
-                else
-                {
-                    <a href="/gallery/competitions/@c.Id" class="btn btn-outline-dark rounded-0 px-4 py-2 fw-bold" style="letter-spacing: 0.5px;">View Details &amp; Submit</a>
-                }
-            </div>
-        </div>
+            </nav>
+        }
     }
 </div>

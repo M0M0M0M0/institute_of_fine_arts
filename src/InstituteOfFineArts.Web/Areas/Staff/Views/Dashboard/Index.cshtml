@@ -1,54 +1,188 @@
-@using InstituteOfFineArts.Web.Infrastructure.Security
+@model InstituteOfFineArts.Web.ViewModels.Staff.StaffDashboardVm
+@using InstituteOfFineArts.Web.Helpers
+@using InstituteOfFineArts.Web.ViewModels.Staff
 @*
-    Home page of the Staff area (/staff): where staff start their work.
-    Created by BE1 (login flow); styled by FE1-03 as a work start with quick links.
-    The controller passes no data yet, so per-competition grading progress and pending exhibition proposals
-    are not listed here (they live on /staff/competitions/{id} and /staff/exhibition-entries).
-    Log out is in the account menu of the top bar.
+    Staff – dashboard (/staff, SCR-50; F-M11-01, US-15 AC3): the overview of the former Manager area, now the Staff home.
+    1. Needs attention: work waiting, each card opens the filtered list.
+    2. Key figures: one ledger strip, every card links to its list. People and competitions = the state today;
+       submissions, awards and sales = activity of the chosen period (?period=month|year|all) with the change against the
+       previous period. Zero values are left out of the breakdowns.
+    3. Three Chart.js charts fed by /charts/* (wwwroot/js/charts.js, each with a visually hidden data table).
+    Reports are reached from the button in the page head and the rail.
 *@
 @{
     ViewData["Title"] = "Staff";
-    var links = new (string Href, string Icon, string Title, string Text)[]
+    string Money(decimal v) => v.ToString("$#,##0.00");
+    var periods = new (DashboardPeriod Value, string Text)[]
     {
-        ("/staff/submissions", "bi-pencil-square", "Submissions", "Review the entries of each competition and grade them."),
-        ("/staff/competitions", "bi-easel", "Competitions", "Create competitions, define their awards and publish results."),
-        ("/staff/awards", "bi-trophy", "Issued awards", "Issue, edit or revoke awards for BEST entries."),
-        ("/staff/submissions/by-rating", "bi-funnel", "Search by rating", "Find graded paintings, for example the BEST ones for an exhibition."),
-        ("/staff/students", "bi-people", "Students", "Look up a student and their study history."),
-        ("/staff/exhibitions", "bi-bank", "Exhibitions", "Plan exhibitions and send paintings to them."),
-        ("/staff/exhibition-entries", "bi-easel2", "Artworks", "Follow paintings on show: proposed, accepted, sold and paid."),
-        ("/staff/customers", "bi-person-vcard", "Customers", "Keep the buyers of exhibited paintings."),
+        (DashboardPeriod.Month, "This month"), (DashboardPeriod.Year, "This year"), (DashboardPeriod.All, "All time"),
     };
+    var periodText = Model.Period switch
+    {
+        DashboardPeriod.Month => "this month",
+        DashboardPeriod.Year => "this year",
+        _ => "all time",
+    };
+
+    // "+3 vs last month" / "−2 vs last year" / "Same as last month"; nothing when there is no comparison
+    string? Change(decimal current, decimal? previous, bool money = false)
+    {
+        if (previous is not { } p || Model.PreviousLabel is null) return null;
+        var diff = current - p;
+        if (diff == 0) return $"Same as {Model.PreviousLabel}";
+        var amount = money ? Money(Math.Abs(diff)) : Math.Abs(diff).ToString("#,##0");
+        return $"{(diff > 0 ? "+" : "−")}{amount} vs {Model.PreviousLabel}";
+    }
 }
 
 <div class="page-head">
     <div>
         <h1>Welcome, @User.GetFullName()</h1>
-        <p class="page-sub">You are on the home page of the Staff area (role STAFF). Pick up where the work is.</p>
+        <p class="page-sub">The institute today: people, competitions, awards and sales.</p>
     </div>
     <div class="page-actions">
-        <a class="btn btn-primary" href="/staff/submissions?evaluated=false"><i class="bi bi-pencil-square" aria-hidden="true"></i>Entries to grade</a>
-        <a class="btn btn-outline-primary" href="/staff/competitions/new"><i class="bi bi-plus-lg" aria-hidden="true"></i>New competition</a>
+        <a class="btn btn-primary" href="/staff/competitions/new"><i class="bi bi-plus-lg" aria-hidden="true"></i>New competition</a>
+        <a href="/reports" class="btn btn-outline-primary"><i class="bi bi-file-earmark-bar-graph" aria-hidden="true"></i>Reports</a>
     </div>
 </div>
+
 <partial name="_Alerts" />
 
-<section aria-labelledby="work-title">
-    <div class="section-head"><h2 id="work-title">Your work</h2></div>
-    <ul class="quick-links">
-        @foreach (var l in links)
+<partial name="_Attention" model="Model.Attention" />
+
+<div class="section-head">
+    <h2 id="figures-heading">Key figures</h2>
+    @* Period of the activity figures: plain links, the current one marked *@
+    <nav class="segmented" aria-label="Period of submissions, awards and sales">
+        @foreach (var (value, text) in periods)
         {
-            <li>
-                <a href="@l.Href">
-                    <i class="bi @l.Icon" aria-hidden="true"></i>
-                    <span class="ql-title">@l.Title</span>
-                    <span class="ql-text">@l.Text</span>
-                </a>
-            </li>
+            <a href="/staff?period=@value.ToString().ToLowerInvariant()" aria-current="@(Model.Period == value ? "page" : null)">@text</a>
         }
-    </ul>
+    </nav>
+</div>
+
+@* Key figures: one ledger strip; the whole card links to its list, the breakdown sits under the number *@
+<dl class="ledger is-dense is-linked" aria-labelledby="figures-heading">
+    <div id="card-students">
+        <dt><a href="/staff/students" class="stretched-link">Students</a></dt>
+        <dd data-stat="students-total">@Model.StudentsTotal</dd>
+        <dd class="ledger-sub">Active accounts: <strong data-stat="students-active">@Model.StudentsActive</strong></dd>
+        @foreach (var (status, count) in Model.StudentsByEnrollment.Where(x => x.Value > 0))
+        {
+            <dd class="ledger-sub">@EnumText.Of(status): <strong data-stat="enrollment-@status">@count</strong></dd>
+        }
+    </div>
+    <div id="card-staff">
+        <dt><a href="/staff/team" class="stretched-link">Staff &amp; teachers</a></dt>
+        <dd data-stat="staff-total">@Model.StaffTotal</dd>
+        @foreach (var (role, count) in Model.StaffByRole.Where(x => x.Value > 0))
+        {
+            <dd class="ledger-sub">@EnumText.Of(role): <strong data-stat="staff-@role">@count</strong></dd>
+        }
+    </div>
+    <div id="card-competitions">
+        <dt><a href="/staff/competitions" class="stretched-link">Competitions</a></dt>
+        <dd data-stat="competitions-total">@Model.CompetitionsTotal</dd>
+        @foreach (var (status, count) in Model.CompetitionsByStatus.Where(x => x.Value > 0))
+        {
+            <dd class="ledger-sub">@EnumText.Of(status): <strong data-stat="competition-@status">@count</strong></dd>
+        }
+    </div>
+    <div id="card-submissions">
+        <dt><a href="/staff/submissions" class="stretched-link">Submissions</a> <span class="ledger-period">@periodText</span></dt>
+        <dd data-stat="submissions-total">@Model.SubmissionsTotal</dd>
+        @if (Change(Model.SubmissionsTotal, Model.SubmissionsPrevious) is { } c1)
+        {
+            <dd class="ledger-sub ledger-change">@c1</dd>
+        }
+        @if (Model.SubmissionsTotal > 0)
+        {
+            <dd class="ledger-sub">Evaluated: <strong data-stat="submissions-evaluated">@Model.SubmissionsEvaluated</strong></dd>
+        }
+    </div>
+    <div id="card-awards">
+        <dt><a href="/staff/awards" class="stretched-link">Awards issued</a> <span class="ledger-period">@periodText</span></dt>
+        <dd data-stat="awards-issued">@Model.AwardsIssued</dd>
+        @if (Change(Model.AwardsIssued, Model.AwardsPrevious) is { } c2)
+        {
+            <dd class="ledger-sub ledger-change">@c2</dd>
+        }
+        @if (Model.AwardsPrizeTotal > 0)
+        {
+            <dd class="ledger-sub">Prize value: <strong data-stat="awards-prize-total">@Money(Model.AwardsPrizeTotal)</strong></dd>
+        }
+    </div>
+    <div id="card-sales">
+        <dt><a href="/staff/exhibition-entries?Status=@EntryStatus.SOLD" class="stretched-link">Paintings sold</a> <span class="ledger-period">@periodText</span></dt>
+        <dd data-stat="paintings-sold">@Model.PaintingsSold</dd>
+        @if (Change(Model.TotalSales, Model.SalesPrevious, money: true) is { } c3)
+        {
+            <dd class="ledger-sub ledger-change">Sales @c3</dd>
+        }
+        @if (Model.TotalSales > 0)
+        {
+            <dd class="ledger-sub">Total sales: <strong data-stat="total-sales">@Money(Model.TotalSales)</strong></dd>
+            <dd class="ledger-sub">Paid to students: <strong data-stat="paid-to-students">@Money(Model.PaidToStudents)</strong></dd>
+            @if (Model.UnpaidToStudents > 0)
+            {
+                @* No commission (BR-45): what is not paid yet is still owed to the students *@
+                <dd class="ledger-sub is-owed">Still owed to students: <strong data-stat="unpaid-to-students">@Money(Model.UnpaidToStudents)</strong></dd>
+            }
+        }
+    </div>
+</dl>
+
+@* Charts (F-M15-01): JSON from ChartsController, drawn by wwwroot/js/charts.js *@
+<section class="section" aria-labelledby="charts-heading">
+    <div class="section-head">
+        <h2 id="charts-heading">Competitions and sales</h2>
+    </div>
+    <div class="chart-grid">
+        <figure class="chart-figure is-wide" data-chart="submissions" data-chart-url="/charts/submissions-by-competition" data-chart-link="/staff/competitions/{id}">
+            <figcaption>
+                <div class="chart-caption-row">
+                    <div>
+                        <h3>Submissions by competition</h3>
+                        <p>The 12 latest competitions by start date (shown under each bar), oldest on the left. Click a bar to open the competition.</p>
+                    </div>
+                    <div class="chart-filter">
+                        <label class="form-label" for="chart-year">Year</label>
+                        <select class="form-select form-select-sm" id="chart-year" data-chart-param="year">
+                            <option value="">Latest</option>
+                            @foreach (var year in Model.CompetitionYears)
+                            {
+                                <option value="@year">@year</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+            </figcaption>
+            <div class="chart-box"><canvas role="img" aria-label="Submissions by competition"></canvas></div>
+            <p class="chart-status" data-chart-status aria-live="polite">Loading the chart…</p>
+            <div class="visually-hidden" data-chart-table></div>
+        </figure>
+        <figure class="chart-figure" data-chart="rating" data-chart-url="/charts/ratings">
+            <figcaption>
+                <h3>Ratings</h3>
+                <p>How the teachers rated every submission so far.</p>
+            </figcaption>
+            <div class="chart-box"><canvas role="img" aria-label="Ratings"></canvas></div>
+            <p class="chart-status" data-chart-status aria-live="polite">Loading the chart…</p>
+            <div class="visually-hidden" data-chart-table></div>
+        </figure>
+        <figure class="chart-figure is-wide" data-chart="revenue" data-chart-url="/charts/sales-by-exhibition">
+            <figcaption>
+                <h3>Sales by exhibition</h3>
+                <p>Revenue of each exhibition, highest first, with the paintings sold out of those shown.</p>
+            </figcaption>
+            <div class="chart-box"><canvas role="img" aria-label="Sales by exhibition"></canvas></div>
+            <p class="chart-status" data-chart-status aria-live="polite">Loading the chart…</p>
+            <div class="visually-hidden" data-chart-table></div>
+        </figure>
+    </div>
 </section>
 
-<p class="text-muted mt-4">
-    <a href="/profile">My profile</a> or <a href="/profile/change-password">change password</a>.
-</p>
+@section Scripts {
+    <script src="~/lib/chart.js/chart.umd.js"></script>
+    <script src="~/js/charts.js" asp-append-version="true"></script>
+}

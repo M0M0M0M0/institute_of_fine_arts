@@ -1,0 +1,139 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.Competitions.CompetitionDetailsVm
+@*
+    Teacher – competition details, read only (/teacher/competitions/{id}, SCR-52): information,
+    rules, awards defined with their winners, number of entries and grading progress. No edit / delete / award / publish
+    controls: the action flags of the shared view model are ignored here.
+    Created by BE (BE2-13); styled by FE2-10 (cover on the stage, facts in dl.details, grading progress bar, awards ledger).
+*@
+@{
+    ViewData["Title"] = Model.Title;
+    var gradedPercent = Model.SubmissionCount == 0 ? 0 : (int)Math.Round(100.0 * Model.EvaluatedCount / Model.SubmissionCount);
+    // Teachers see the entries only once the submission period is over (CLOSED or GRADED)
+    var entriesVisible = Model.Status is CompetitionStatus.CLOSED or CompetitionStatus.GRADED;
+}
+
+<div class="page-head">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a asp-action="Index">Competitions</a></li>
+                <li class="breadcrumb-item active" aria-current="page">@Model.Code</li>
+            </ol>
+        </nav>
+        <h1>@Model.Title</h1>
+        <p class="page-sub"><partial name="~/Areas/Staff/Views/Competitions/_Status.cshtml" model="Model.Status" /> <span class="ms-1 num">@Model.Code</span></p>
+    </div>
+    <div class="page-actions">
+        @* Entries open to teachers only once the competition is closed for entries *@
+        @if (entriesVisible)
+        {
+            <a asp-controller="Submissions" asp-action="Index" asp-route-competitionId="@Model.Id" class="btn btn-primary"><i class="bi bi-images" aria-hidden="true"></i>@(Model.Status == CompetitionStatus.CLOSED ? "Grade the entries" : "View entries")</a>
+        }
+    </div>
+</div>
+
+<partial name="_Alerts" />
+
+<div class="@(Model.HasCover ? "artwork-stage" : "")">
+    @if (Model.HasCover)
+    {
+        <figure class="artwork m-0">
+            <div class="artwork-frame">
+                <img src="/files/competitions/@Model.Id/cover" alt="Cover of @Model.Title" />
+            </div>
+        </figure>
+    }
+    <div>
+        <dl class="details">
+            <dt>Start date</dt>
+            <dd class="num">@Model.StartDate.ToString("dd MMM yyyy")</dd>
+            <dt>End date (deadline)</dt>
+            <dd class="num">@Model.EndDate.ToString("dd MMM yyyy"), 23:59:59</dd>
+            <dt>Entries</dt>
+            <dd>
+                <span id="entry-count" class="num">@Model.SubmissionCount</span>
+                @if (entriesVisible)
+                {
+                    <a asp-controller="Submissions" asp-action="Index" asp-route-competitionId="@Model.Id" class="ms-2">View entries</a>
+                }
+                else
+                {
+                    <span class="text-muted small ms-2">Entries are shown once the competition closes, on @Model.EndDate.AddDays(1).ToString("dd MMM yyyy").</span>
+                }
+            </dd>
+            @* Grading progress (F-M07-09): shown for every status, so the teachers can follow it at any time *@
+            <dt>Grading progress</dt>
+            <dd>
+                <span id="grading-progress" class="num">@Model.EvaluatedCount/@Model.SubmissionCount graded</span>
+                <progress class="meter mt-2" max="100" value="@gradedPercent" aria-label="Grading progress">@gradedPercent%</progress>
+            </dd>
+            <dt>Created by</dt>
+            <dd>@Model.CreatedByName, @Model.CreatedAt.ToString("dd MMM yyyy HH:mm")</dd>
+            @if (Model.PublishedAt is { } published)
+            {
+                <dt>Results published</dt>
+                <dd>@published.ToString("dd MMM yyyy HH:mm")@(Model.PublishedByName != null ? $" by {Model.PublishedByName}" : "")</dd>
+                <dt>Result remarks</dt>
+                <dd class="pre-line">@(Model.ResultRemarks ?? "–")</dd>
+            }
+        </dl>
+    </div>
+</div>
+
+@* .pre-line keeps the line breaks typed by staff; Razor still encodes the text (no HTML/XSS) *@
+<section class="section" aria-labelledby="about-heading">
+    <div class="section-head"><h2 id="about-heading">Description</h2></div>
+    <p class="pre-line">@(Model.Description ?? "–")</p>
+    <h3>Rules &amp; conditions</h3>
+    <p class="pre-line">@(Model.Rules ?? "–")</p>
+</section>
+
+@* Awards defined and their winners, read only *@
+<section class="section" aria-labelledby="awards-heading">
+    <div class="section-head"><h2 id="awards-heading">Awards</h2></div>
+    @if (Model.Awards.Count == 0)
+    {
+        <div class="empty">
+            <i class="bi bi-trophy" aria-hidden="true"></i>
+            <p>No awards defined yet.</p>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table" id="awards">
+                <thead>
+                    <tr><th scope="col" class="text-end">Rank</th><th scope="col">Award</th><th scope="col" class="text-end">Prize</th><th scope="col" class="text-end">Quantity</th><th scope="col" class="text-end">Given</th><th scope="col">Description</th><th scope="col">Winners</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var a in Model.Awards)
+                    {
+                        <tr>
+                            <td class="text-end">@a.Rank</td>
+                            <td class="row-title">@a.Name</td>
+                            <td class="text-end">@a.PrizeValue.ToString("$#,##0.00")</td>
+                            <td class="text-end">@a.Quantity</td>
+                            <td class="text-end">@a.IssuedCount</td>
+                            <td>@a.Description</td>
+                            <td>
+                                @foreach (var w in a.Winners)
+                                {
+                                    <div>
+                                        <a asp-controller="Submissions" asp-action="Details" asp-route-id="@w.SubmissionId">@w.SubmissionTitle</a>
+                                        – @w.StudentName <span class="text-muted small">@w.StudentCode, @w.IssuedDate.ToString("dd MMM yyyy")</span>
+                                    </div>
+                                }
+                                @if (a.Winners.Count == 0)
+                                {
+                                    <span class="text-muted">–</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+<p class="mt-4"><a asp-action="Index" class="btn btn-link px-0"><i class="bi bi-arrow-left" aria-hidden="true"></i>Back to competitions</a></p>

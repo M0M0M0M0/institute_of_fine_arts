@@ -9,7 +9,7 @@
     var report = ReportCatalog.All.First(r => r.Code == "RPT-03");
     var filter = Model.Filter;
     var result = Model.Result;
-    var detailsBase = User.IsInRole(RoleNames.Manager) ? "/manager/submissions/" : "/staff/submissions/";
+    var detailsBase = "/staff/submissions/";
     var competition = Model.Competitions.FirstOrDefault(c => c.Id == filter.CompetitionId);
 }
 

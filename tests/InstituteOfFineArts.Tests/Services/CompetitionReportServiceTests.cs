@@ -547,11 +547,12 @@ public class CompetitionReportServiceTests
         Assert.Equal(7, ReportCatalog.All.Count);
         var staff = ReportCatalog.All.Where(r => r.Roles.Contains(RoleNames.Staff)).Select(r => r.Code);
         var admin = ReportCatalog.All.Where(r => r.Roles.Contains(RoleNames.Admin)).Select(r => r.Code);
-        var manager = ReportCatalog.All.Where(r => r.Roles.Contains(RoleNames.Manager)).Select(r => r.Code);
 
-        Assert.Equal(new[] { "RPT-01", "RPT-02", "RPT-03", "RPT-04", "RPT-05", "RPT-06" }, staff);
+        // Staff took over the former Manager overview: every report; the admin only the account statistics;
+        // teachers grade and have no report
+        Assert.Equal(new[] { "RPT-01", "RPT-02", "RPT-03", "RPT-04", "RPT-05", "RPT-06", "RPT-07" }, staff);
         Assert.Equal(new[] { "RPT-07" }, admin);
-        Assert.Equal(7, manager.Count());
+        Assert.DoesNotContain(ReportCatalog.All, r => r.Roles.Contains(RoleNames.Teacher));
         Assert.DoesNotContain(ReportCatalog.All, r => r.Roles.Contains(RoleNames.Student));
     }
 }

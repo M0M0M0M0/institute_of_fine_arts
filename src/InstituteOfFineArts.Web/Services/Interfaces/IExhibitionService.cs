@@ -25,7 +25,8 @@ public interface IExhibitionService
     Task<long> CreateAsync(ExhibitionFormVm form, long staffProfileId);
 
     /// <summary>Saves changes; dates are limited once artworks have been sent (see ExhibitionService).</summary>
-    Task UpdateAsync(long id, ExhibitionFormVm form);
+    /// <returns>What changed (field: old → new), for the exhibition's history</returns>
+    Task<IReadOnlyList<string>> UpdateAsync(long id, ExhibitionFormVm form);
 
     /// <summary>Deletes an exhibition without entries (BR-42, US-12 AC2).</summary>
     Task DeleteAsync(long id);

@@ -7,7 +7,9 @@ namespace InstituteOfFineArts.Web.Helpers;
 
 /// <summary>
 /// Who may see or download the image of a submission (BR-20, role matrix in docs/plan/01 section 3):
-/// STAFF and MANAGER: every image, view + download.
+/// STAFF: every image, view + download (they run the competitions and help the students, also while it is open).
+/// TEACHER: every image of a competition whose submission period is over (CLOSED or GRADED), view + download;
+/// before the deadline only what is public, so no painting leaks to the jury early.
 /// STUDENT: own images, view + download.
 /// Everyone else (GUEST, other students, ADMIN): only public images – BEST or awarded entries of a GRADED
 /// competition – view only.
@@ -20,24 +22,33 @@ public static class SubmissionImagePolicy
         => submission.Competition?.Status == CompetitionStatus.GRADED
            && (submission.Evaluation?.Rating == Rating.BEST || submission.AwardIssued != null);
 
+    /// <summary>True when the submission period of the entry's competition is over: CLOSED or GRADED (today's date).</summary>
+    public static bool IsClosedForEntries(Submission submission)
+        => submission.Competition is { } c
+           && CompetitionStatusResolver.Resolve(c) is CompetitionStatus.CLOSED or CompetitionStatus.GRADED;
+
     /// <summary>True when <paramref name="user"/> may view the image (inline in the page).</summary>
     public static bool CanView(Submission submission, ClaimsPrincipal user)
         => HasFullAccess(submission, user) || IsPublic(submission);
 
-    /// <summary>True when <paramref name="user"/> may download the original file (staff, manager, owner).</summary>
+    /// <summary>True when <paramref name="user"/> may download the original file (staff, teacher after the deadline, owner).</summary>
     public static bool CanDownload(Submission submission, ClaimsPrincipal user)
         => HasFullAccess(submission, user);
 
-    /// <summary>Staff and managers see everything; a student sees their own submissions.</summary>
+    /// <summary>Staff see everything, teachers everything once the competition is closed, a student their own submissions.</summary>
     private static bool HasFullAccess(Submission submission, ClaimsPrincipal user)
     {
         if (user.Identity?.IsAuthenticated != true)
         {
             return false;
         }
-        if (user.IsInRole(RoleNames.Staff) || user.IsInRole(RoleNames.Manager))
+        if (user.IsInRole(RoleNames.Staff))
         {
             return true;
+        }
+        if (user.IsInRole(RoleNames.Teacher))
+        {
+            return IsClosedForEntries(submission);
         }
         return user.IsInRole(RoleNames.Student)
                && long.TryParse(user.FindFirstValue(ClaimsPrincipalExtensions.ProfileIdClaim), out var profileId)

@@ -123,7 +123,7 @@ public class ImageAccessServiceTests
 
     /// <summary>F-M13-02 turned on: owner, staff, manager and admin still get the original, downloads included.</summary>
     [Fact]
-    public async Task Watermark_NotForOwnerStaffManagerAdmin()
+    public async Task Watermark_NotForOwnerStaffAdmin()
     {
         var (db, privateId, publicId, _) = CreateDb();
         using var _ = db;
@@ -132,7 +132,7 @@ public class ImageAccessServiceTests
         Assert.False((await service.GetSubmissionImageAsync(publicId, Owner, false, false))!.Watermark);
         Assert.False((await service.GetSubmissionImageAsync(privateId, Owner, false, true))!.Watermark);
         Assert.False((await service.GetSubmissionImageAsync(privateId, UserWith(RoleNames.Staff), false, true))!.Watermark);
-        Assert.False((await service.GetSubmissionImageAsync(privateId, UserWith(RoleNames.Manager), true, false))!.Watermark);
+        Assert.False((await service.GetSubmissionImageAsync(privateId, UserWith(RoleNames.Staff), true, false))!.Watermark);
         Assert.False((await service.GetSubmissionImageAsync(publicId, UserWith(RoleNames.Admin), false, false))!.Watermark);
     }
 

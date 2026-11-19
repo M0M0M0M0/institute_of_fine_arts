@@ -24,7 +24,7 @@ public class AccountReportServiceTests : IDisposable
     {
         _db.Accounts.AddRange(
             NewAccount("admin01", Role.ADMIN),
-            NewAccount("manager01", Role.MANAGER),
+            NewAccount("teacher01", Role.TEACHER),
             NewAccount("staff01", Role.STAFF),
             NewAccount("staff02", Role.STAFF, active: false));
         _db.StudentProfiles.AddRange(
@@ -48,7 +48,7 @@ public class AccountReportServiceTests : IDisposable
     {
         var report = await Service.GetAccountStatisticsAsync(new AccountStatisticsSearchVm());
 
-        Assert.Equal(new[] { Role.ADMIN, Role.MANAGER, Role.STAFF, Role.STUDENT }, report.Roles.Select(r => r.Role));
+        Assert.Equal(new[] { Role.ADMIN, Role.STAFF, Role.TEACHER, Role.STUDENT }, report.Roles.Select(r => r.Role));
         var staff = report.Roles.Single(r => r.Role == Role.STAFF);
         Assert.Equal((1, 1), (staff.Active, staff.Inactive));
         var students = report.Roles.Single(r => r.Role == Role.STUDENT);

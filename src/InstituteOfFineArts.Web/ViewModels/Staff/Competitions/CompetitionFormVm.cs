@@ -58,6 +58,12 @@ public class CompetitionFormVm : IValidatableObject
     /// <summary>Edit only: true when entries exist, so only the end date (extend), description, rules and cover can change (BR-10).</summary>
     public bool HasSubmissions { get; set; }
 
+    /// <summary>
+    /// Awards of the competition, entered on the same form (one row each). Rows left completely empty are ignored;
+    /// rows of existing awards carry their id, and Remove = true deletes them (refused when already given).
+    /// </summary>
+    public List<CompetitionAwardRowVm> Awards { get; set; } = new();
+
     /// <summary>Checks rules that involve two fields.</summary>
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

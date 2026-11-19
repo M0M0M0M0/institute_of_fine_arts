@@ -48,14 +48,28 @@ public class StaffSubmissionService : IStaffSubmissionService
     }
 
     /// <inheritdoc />
-    public async Task<PagedResult<SubmissionListItemVm>> SearchAsync(SubmissionSearchVm search, int pageSize = 10)
+    public async Task<PagedResult<SubmissionListItemVm>> SearchAsync(SubmissionSearchVm search, int pageSize = 10, bool closedOnly = false)
     {
         var query = _db.Submissions.AsNoTracking().AsQueryable();
+
+        // Teacher view: entries only once the submission period is over (no leak before the deadline)
+        if (closedOnly)
+        {
+            var today = DateTimeHelper.Today;
+            query = query.Where(s => s.Competition.Status == CompetitionStatus.GRADED || s.Competition.EndDate < today);
+        }
 
         // Competition
         if (search.CompetitionId is { } competitionId)
         {
             query = query.Where(s => s.CompetitionId == competitionId);
+        }
+
+        // Status of the competition (same date rule as everywhere else, evaluated by SQL Server)
+        if (search.CompetitionStatus is { } competitionStatus)
+        {
+            var competitions = _db.Competitions.WhereStatus(competitionStatus, DateTimeHelper.Today);
+            query = query.Where(s => competitions.Any(c => c.Id == s.CompetitionId));
         }
 
         // Evaluated / not evaluated
@@ -94,11 +108,15 @@ public class StaffSubmissionService : IStaffSubmissionService
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<CompetitionOptionVm>> GetCompetitionOptionsAsync()
-        => await _db.Competitions.AsNoTracking()
+    public async Task<IReadOnlyList<CompetitionOptionVm>> GetCompetitionOptionsAsync(bool closedOnly = false)
+    {
+        var today = DateTimeHelper.Today;
+        return await _db.Competitions.AsNoTracking()
+            .Where(c => !closedOnly || c.Status == CompetitionStatus.GRADED || c.EndDate < today)
             .OrderByDescending(c => c.StartDate).ThenByDescending(c => c.Id)
             .Select(c => new CompetitionOptionVm(c.Id, c.Code, c.Title))
             .ToListAsync();
+    }
 
     /// <inheritdoc />
     public async Task<EvaluationProgressVm?> GetProgressAsync(long competitionId)
@@ -122,7 +140,7 @@ public class StaffSubmissionService : IStaffSubmissionService
     }
 
     /// <inheritdoc />
-    public async Task<SubmissionDetailsVm> GetDetailsAsync(long id)
+    public async Task<SubmissionDetailsVm> GetDetailsAsync(long id, bool closedOnly = false)
     {
         var row = await _db.Submissions.AsNoTracking()
             .Where(s => s.Id == id)
@@ -189,6 +207,12 @@ public class StaffSubmissionService : IStaffSubmissionService
         vm.CompetitionStatus = CompetitionStatusResolver.Resolve(
             new Competition { Status = row.Status, StartDate = row.StartDate, EndDate = vm.CompetitionEndDate });
         vm.IsLate = CompetitionStatusResolver.IsLateSubmission(vm.SubmittedAt, vm.CompetitionEndDate);
+
+        // Teacher view: an entry of a competition that still takes entries is not shown at all
+        if (closedOnly && vm.CompetitionStatus is CompetitionStatus.UPCOMING or CompetitionStatus.ONGOING)
+        {
+            throw new NotFoundException($"Submission {id} was not found.");
+        }
         return vm;
     }
 

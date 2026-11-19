@@ -1,0 +1,88 @@
+@model InstituteOfFineArts.Web.ViewModels.Teacher.TeacherDashboardVm
+@*
+    Teacher – home page (/teacher): the closed competitions with their grading progress (most entries left first),
+    then the competitions that close soon. Entries of an open competition are never shown, only its closing date.
+*@
+@{
+    ViewData["Title"] = "Teacher";
+}
+
+<div class="page-head">
+    <div>
+        <h1>Welcome, @User.GetFullName()</h1>
+        <p class="page-sub">
+            @if (Model.EntriesLeft > 0)
+            {
+                <text><strong class="num">@Model.EntriesLeft</strong> @(Model.EntriesLeft == 1 ? "entry is" : "entries are") waiting for your grade.</text>
+            }
+            else
+            {
+                <text>Nothing is waiting to be graded right now.</text>
+            }
+        </p>
+    </div>
+    <div class="page-actions">
+        <a class="btn btn-primary" href="/teacher/submissions?Evaluated=false&CompetitionStatus=CLOSED"><i class="bi bi-pencil-square" aria-hidden="true"></i>Entries to grade</a>
+    </div>
+</div>
+<partial name="_Alerts" />
+
+<section class="section" aria-labelledby="grade-title">
+    <div class="section-head"><h2 id="grade-title">Closed competitions</h2></div>
+    @if (Model.ToGrade.Count == 0)
+    {
+        <p class="text-muted">No competition is closed and waiting for its results.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr><th scope="col">Competition</th><th scope="col">Closed on</th><th scope="col">Graded</th><th scope="col"><span class="visually-hidden">Action</span></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.ToGrade)
+                    {
+                        var percent = c.Total == 0 ? 100 : (int)Math.Round(100.0 * c.Evaluated / c.Total);
+                        <tr>
+                            <td class="row-title"><a href="/teacher/competitions/@c.Id">@c.Title</a> <span class="text-muted small num">@c.Code</span></td>
+                            <td class="num">@c.EndDate.ToString("dd MMM yyyy")</td>
+                            <td>
+                                <span class="num">@c.Evaluated / @c.Total</span>
+                                <progress class="meter mt-1" max="100" value="@percent" aria-label="Graded @percent%">@percent%</progress>
+                            </td>
+                            <td class="text-end">
+                                @if (c.Left > 0)
+                                {
+                                    <a class="btn btn-sm btn-primary" href="/teacher/submissions?CompetitionId=@c.Id&Evaluated=false">Grade @c.Left left</a>
+                                }
+                                else
+                                {
+                                    <a class="btn btn-sm btn-outline-primary" href="/teacher/submissions?CompetitionId=@c.Id">All graded</a>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+<section class="section" aria-labelledby="closing-title">
+    <div class="section-head"><h2 id="closing-title">Closing soon</h2></div>
+    @if (Model.ClosingSoon.Count == 0)
+    {
+        <p class="text-muted">No competition is taking entries right now.</p>
+    }
+    else
+    {
+        <p class="text-muted small">Entries become visible the day after the deadline, so no painting is seen before the competition closes.</p>
+        <ul class="list-unstyled">
+            @foreach (var c in Model.ClosingSoon)
+            {
+                <li class="mb-2"><a href="/teacher/competitions/@c.Id">@c.Title</a> <span class="text-muted small">closes <span class="num">@c.EndDate.ToString("dd MMM yyyy")</span></span></li>
+            }
+        </ul>
+    }
+</section>

@@ -1,5 +1,6 @@
 using InstituteOfFineArts.Web.Exceptions;
 using InstituteOfFineArts.Web.Services.Interfaces;
+using InstituteOfFineArts.Web.ViewModels.Public;
 using Microsoft.AspNetCore.Mvc;
 
 namespace InstituteOfFineArts.Web.Controllers;
@@ -53,10 +54,28 @@ public class GalleryController : Controller
         return View("Artworks", await _catalog.GetCategoryAsync(found, page));
     }
 
-    /// <summary>"Open Art Competitions": ongoing and upcoming competitions, then the latest results.</summary>
+    /// <summary>
+    /// "Open Art Competitions", the main competition page: tabs Open / Past / All, search by title or code, status filter.
+    /// With no filter: ongoing and upcoming competitions, then the latest results (highlights).
+    /// </summary>
     [HttpGet("competitions")]
-    public async Task<IActionResult> Competitions()
-        => View(await _catalog.GetShowcaseAsync());
+    public async Task<IActionResult> Competitions([FromQuery] GalleryCompetitionSearchVm search)
+    {
+        if (!ModelState.IsValid)
+        {
+            search = new GalleryCompetitionSearchVm();
+        }
+        var vm = new GalleryCompetitionsPageVm { Search = search };
+        if (search.IsDefault)
+        {
+            vm.Highlights = await _catalog.GetShowcaseAsync();
+        }
+        else
+        {
+            vm.Results = await _catalog.SearchShowcaseAsync(search);
+        }
+        return View(vm);
+    }
 
     /// <summary>One competition: overview, rules, prizes, deadline and the way to enter.</summary>
     [HttpGet("competitions/{id:long}")]

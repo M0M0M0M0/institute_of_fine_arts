@@ -5,7 +5,7 @@ using InstituteOfFineArts.Web.Models.Enums;
 namespace InstituteOfFineArts.Web.Data.Seed;
 
 /// <summary>
-/// Sample data part: 15 accounts for the 4 roles (task BE1-01).
+/// Sample data part: 16 accounts for the 4 roles (task BE1-01): ADMIN, STAFF (operations), TEACHER (grading), STUDENT.
 /// Accounts and passwords follow docs/plan/04 sections 4.1 and 4.5 – for development / demo ONLY.
 /// Data is in English; person names are Vietnamese without diacritics.
 /// </summary>
@@ -14,17 +14,17 @@ public static partial class DbSeeder
     /// <summary>Demo password of the administrator account.</summary>
     private const string AdminPassword = "Admin@123";
 
-    /// <summary>Demo password of the manager account.</summary>
-    private const string ManagerPassword = "Manager@123";
-
     /// <summary>Shared demo password of the staff accounts.</summary>
     private const string StaffPassword = "Staff@123";
+
+    /// <summary>Shared demo password of the teacher accounts.</summary>
+    private const string TeacherPassword = "Teacher@123";
 
     /// <summary>Shared demo password of the student accounts.</summary>
     private const string StudentPassword = "Student@123";
 
     /// <summary>
-    /// Inserts sample accounts with profiles: 1 ADMIN, 1 MANAGER, 3 STAFF (with staff_profile)
+    /// Inserts sample accounts with profiles: 1 ADMIN, 2 STAFF, 3 TEACHER (all with a staff_profile)
     /// and 10 STUDENT (with student_profile); student10 is locked to test login of a locked account.
     /// </summary>
     /// <param name="db">DbContext used to insert the data</param>
@@ -32,24 +32,27 @@ public static partial class DbSeeder
     {
         var today = DateTimeHelper.Today;
 
-        // Hash each password once and reuse it (BCrypt is slow on purpose; hashing 15 times would slow down startup)
+        // Hash each password once and reuse it (BCrypt is slow on purpose; hashing 16 times would slow down startup)
         var adminHash = BCrypt.Net.BCrypt.HashPassword(AdminPassword);
-        var managerHash = BCrypt.Net.BCrypt.HashPassword(ManagerPassword);
         var staffHash = BCrypt.Net.BCrypt.HashPassword(StaffPassword);
+        var teacherHash = BCrypt.Net.BCrypt.HashPassword(TeacherPassword);
         var studentHash = BCrypt.Net.BCrypt.HashPassword(StudentPassword);
 
-        // ---- (1) Staff: administrator, manager and 3 teachers (all have a staff_profile)
+        // ---- (1) Employees (all have a staff_profile): the administrator, 2 staff who run the institute and
+        // 3 teachers who grade. One person who does both jobs gets two accounts (decided 19/11/2026).
         var staffMembers = new[]
         {
             NewStaff("admin01", adminHash, "Nguyen Van An", Role.ADMIN, Gender.M, "NV0001",
                 "System Administrator", today.AddYears(-4), classes: null, subjects: null),
-            NewStaff("manager01", managerHash, "Tran Bich Ngoc", Role.MANAGER, Gender.F, "NV0002",
+            NewStaff("staff01", staffHash, "Tran Bich Ngoc", Role.STAFF, Gender.F, "NV0002",
                 "Academy Director", today.AddYears(-5), classes: null, subjects: null),
-            NewStaff("staff01", staffHash, "Le Minh Hoang", Role.STAFF, Gender.M, "NV0003",
+            NewStaff("staff02", staffHash, "Dang Quynh Mai", Role.STAFF, Gender.F, "NV0006",
+                "Exhibitions Coordinator", today.AddYears(-3), classes: null, subjects: null),
+            NewStaff("teacher01", teacherHash, "Le Minh Hoang", Role.TEACHER, Gender.M, "NV0003",
                 "Lecturer", today.AddYears(-3), classes: "PT01, PT02", subjects: "Oil Painting, Watercolor"),
-            NewStaff("staff02", staffHash, "Pham Thu Ha", Role.STAFF, Gender.F, "NV0004",
+            NewStaff("teacher02", teacherHash, "Pham Thu Ha", Role.TEACHER, Gender.F, "NV0004",
                 "Lecturer", today.AddYears(-2), classes: "AN01", subjects: "2D Animation, Character Design"),
-            NewStaff("staff03", staffHash, "Vo Quoc Bao", Role.STAFF, Gender.M, "NV0005",
+            NewStaff("teacher03", teacherHash, "Vo Quoc Bao", Role.TEACHER, Gender.M, "NV0005",
                 "Head of Digital Art", today.AddYears(-6), classes: "DA01", subjects: "Digital Art, Color Theory"),
         };
         db.StaffProfiles.AddRange(staffMembers);
@@ -106,7 +109,7 @@ public static partial class DbSeeder
     /// <param name="username">Login name</param>
     /// <param name="passwordHash">BCrypt password hash</param>
     /// <param name="fullName">Full name</param>
-    /// <param name="role">Role: ADMIN, MANAGER or STAFF</param>
+    /// <param name="role">Role: ADMIN, STAFF or TEACHER</param>
     /// <param name="gender">Gender</param>
     /// <param name="staffCode">Staff code</param>
     /// <param name="position">Position</param>

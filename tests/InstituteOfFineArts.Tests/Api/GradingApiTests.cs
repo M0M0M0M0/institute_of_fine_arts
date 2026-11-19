@@ -48,13 +48,15 @@ public class GradingApiTests
         return db;
     }
 
-    private GradingApiController Api(AppDbContext db)
+    /// <summary>The API as a teacher (grades) or, with <paramref name="role"/> = STAFF, as staff (published results, read only).</summary>
+    private GradingApiController Api(AppDbContext db, string role = RoleNames.Teacher)
     {
         var controller = new GradingApiController(db, new EvaluationService(db, NullLogger<EvaluationService>.Instance));
         var identity = new ClaimsIdentity(
         [
             new Claim(ClaimTypes.NameIdentifier, "1"),
             new Claim(ClaimsPrincipalExtensions.ProfileIdClaim, _staff1.ToString()),
+            new Claim(ClaimTypes.Role, role),
         ], "test");
         controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) } };
         return controller;
@@ -95,11 +97,53 @@ public class GradingApiTests
 
     private static T Value<T>(ActionResult<T> result) => Assert.IsType<T>(result.Value);
 
+    /// <summary>Teachers and staff may read; only teachers may save or delete an evaluation (staff do not grade).</summary>
     [Fact]
-    public void Controller_IsStaffOnly()
+    public void Controller_TeachersGrade_StaffRead()
     {
         var auth = typeof(GradingApiController).GetCustomAttributes<AuthorizeAttribute>(false).Single();
-        Assert.Equal(RoleNames.Staff, auth!.Roles);
+        Assert.Equal(RoleNames.Teacher + "," + RoleNames.Staff, auth!.Roles);
+        foreach (var name in new[] { nameof(GradingApiController.Save), nameof(GradingApiController.DeleteEvaluation) })
+        {
+            var write = typeof(GradingApiController).GetMethod(name)!.GetCustomAttributes<AuthorizeAttribute>(false).Single();
+            Assert.Equal(RoleNames.Teacher, write.Roles);
+        }
+    }
+
+    /// <summary>
+    /// Staff see published (GRADED) competitions only, read only: a CLOSED one (being graded) is not listed and its
+    /// entries answer 404; a GRADED entry is shown without the grading buttons.
+    /// </summary>
+    [Fact]
+    public async Task Staff_OnlyPublishedResults_ReadOnly()
+    {
+        using var db = CreateDb();
+        var closed = AddCompetition(db);
+        var closedEntry = AddEntry(db, closed);
+        var graded = AddCompetition(db, CompetitionStatus.GRADED);
+        var gradedEntry = AddEntry(db, graded, "Published");
+
+        var list = Value(await Api(db, RoleNames.Staff).Competitions());
+        Assert.Equal(graded.Id, Assert.Single(list).Id);
+        await Assert.ThrowsAsync<NotFoundException>(() => Api(db, RoleNames.Staff).Detail(closedEntry.Id));
+        await Assert.ThrowsAsync<NotFoundException>(() => Api(db, RoleNames.Staff).Submissions(closed.Id, null, null, null));
+
+        var detail = Value(await Api(db, RoleNames.Staff).Detail(gradedEntry.Id));
+        Assert.False(detail.CanEvaluate);
+        Assert.False(detail.CanDeleteEvaluation);
+    }
+
+    /// <summary>A teacher never sees an entry of a competition that still takes entries (404 through the API too).</summary>
+    [Fact]
+    public async Task Teacher_OpenCompetition_NotFound()
+    {
+        using var db = CreateDb();
+        var open = AddCompetition(db, CompetitionStatus.ONGOING);
+        var entry = AddEntry(db, open);
+
+        Assert.DoesNotContain(Value(await Api(db).Competitions()), c => c.Id == open.Id);
+        await Assert.ThrowsAsync<NotFoundException>(() => Api(db).Detail(entry.Id));
+        await Assert.ThrowsAsync<NotFoundException>(() => Api(db).Submissions(open.Id, null, null, null));
     }
 
     [Fact]
@@ -172,16 +216,17 @@ public class GradingApiTests
     }
 
     [Fact]
-    public async Task Detail_NotClosed_LockedWithReason()
+    public async Task Detail_Graded_LockedWithReason()
     {
+        // An open competition is not shown at all (Teacher_OpenCompetition_NotFound); a published one is read only
         using var db = CreateDb();
-        var c = AddCompetition(db, CompetitionStatus.ONGOING);
+        var c = AddCompetition(db, CompetitionStatus.GRADED);
         var e = AddEntry(db, c);
 
         var d = Value(await Api(db).Detail(e.Id));
 
         Assert.False(d.CanEvaluate);
-        Assert.Equal(EvaluationService.NotClosedMessage, d.LockReason);
+        Assert.Equal(EvaluationService.GradedReadOnlyMessage, d.LockReason);
     }
 
     [Fact]
@@ -249,7 +294,8 @@ public class GradingApiTests
         var open = AddEntry(db, AddCompetition(db, CompetitionStatus.ONGOING));
         var closed = AddEntry(db, AddCompetition(db));
 
-        await Assert.ThrowsAsync<BusinessException>(() => Api(db).Save(open.Id, Request()));
+        // Open competition: the entry is not visible to the jury yet, so saving answers 404 like an unknown entry
+        await Assert.ThrowsAsync<NotFoundException>(() => Api(db).Save(open.Id, Request()));
         await Assert.ThrowsAsync<BusinessException>(() => Api(db).Save(closed.Id, Request(Rating.GOOD, "  ")));
         await Assert.ThrowsAsync<BusinessException>(() => Api(db).Save(closed.Id, Request(null)));
         await Assert.ThrowsAsync<NotFoundException>(() => Api(db).Save(404, Request()));
