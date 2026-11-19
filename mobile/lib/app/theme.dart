@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'tokens.dart';
 
-/// App theme: web palette (navy ink, stone, brass), Bodoni Moda for headings,
-/// General Sans for body text. The colour scheme is built from explicit hex values.
+/// App theme: web palette (navy ink, stone, brass) and General Sans for every text style (headings use a heavier weight).
+/// The colour scheme is built from explicit hex values.
 ThemeData buildTheme() {
   const scheme = ColorScheme(
     brightness: Brightness.light,
@@ -73,16 +73,22 @@ ThemeData buildTheme() {
       indicatorColor: AppColors.brassText,
       height: 68,
       elevation: 0,
-      labelTextStyle: WidgetStateProperty.resolveWith((states) => TextStyle(
-            fontFamily: AppFonts.body,
-            fontSize: 12,
-            fontWeight: states.contains(WidgetState.selected) ? FontWeight.w600 : FontWeight.w500,
-            color: states.contains(WidgetState.selected) ? Colors.white : const Color(0xFFC9D3D6),
-          )),
-      iconTheme: WidgetStateProperty.resolveWith((states) => IconThemeData(
-            size: 24,
-            color: states.contains(WidgetState.selected) ? Colors.white : const Color(0xFFC9D3D6),
-          )),
+      labelTextStyle: WidgetStateProperty.resolveWith(
+        (states) => TextStyle(
+          fontFamily: AppFonts.body,
+          // 11 with tight tracking (about 67 dp): the longest label ("Competitions") fits a 5-tab bar on a 360 dp phone
+          fontSize: 11,
+          letterSpacing: -0.3,
+          fontWeight: states.contains(WidgetState.selected) ? FontWeight.w600 : FontWeight.w500,
+          color: states.contains(WidgetState.selected) ? Colors.white : const Color(0xFFC9D3D6),
+        ),
+      ),
+      iconTheme: WidgetStateProperty.resolveWith(
+        (states) => IconThemeData(
+          size: 24,
+          color: states.contains(WidgetState.selected) ? Colors.white : const Color(0xFFC9D3D6),
+        ),
+      ),
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
@@ -152,15 +158,26 @@ ThemeData buildTheme() {
       filled: true,
       fillColor: AppColors.wall,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      border: OutlineInputBorder(borderRadius: AppRadius.smAll, borderSide: const BorderSide(color: AppColors.muted)),
-      enabledBorder:
-          OutlineInputBorder(borderRadius: AppRadius.smAll, borderSide: const BorderSide(color: AppColors.muted)),
-      focusedBorder:
-          OutlineInputBorder(borderRadius: AppRadius.smAll, borderSide: const BorderSide(color: AppColors.ink, width: 2)),
-      errorBorder:
-          OutlineInputBorder(borderRadius: AppRadius.smAll, borderSide: const BorderSide(color: AppColors.danger)),
-      focusedErrorBorder:
-          OutlineInputBorder(borderRadius: AppRadius.smAll, borderSide: const BorderSide(color: AppColors.danger, width: 2)),
+      border: OutlineInputBorder(
+        borderRadius: AppRadius.smAll,
+        borderSide: const BorderSide(color: AppColors.muted),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: AppRadius.smAll,
+        borderSide: const BorderSide(color: AppColors.muted),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: AppRadius.smAll,
+        borderSide: const BorderSide(color: AppColors.ink, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: AppRadius.smAll,
+        borderSide: const BorderSide(color: AppColors.danger),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: AppRadius.smAll,
+        borderSide: const BorderSide(color: AppColors.danger, width: 2),
+      ),
       labelStyle: text.bodyMedium!.copyWith(color: AppColors.muted),
       floatingLabelStyle: text.bodyMedium!.copyWith(color: AppColors.ink),
       hintStyle: text.bodyMedium!.copyWith(color: AppColors.muted),
@@ -210,36 +227,35 @@ ThemeData buildTheme() {
   );
 }
 
-/// Bodoni Moda for display / headline / title, General Sans for body / label.
-/// Display sizes request the high optical size of the variable font.
+/// General Sans everywhere (same as the web's menus): titles use a heavier weight, body / label a regular one.
+/// Bodoni Moda titles were dropped because they were hard to read on a phone.
 TextTheme _textTheme() {
-  TextStyle serif(double size, FontWeight weight, {double? height, double opsz = 28}) => TextStyle(
-        fontFamily: AppFonts.display,
-        fontSize: size,
-        fontWeight: weight,
-        height: height,
-        color: AppColors.graphite,
-        fontVariations: [FontVariation('opsz', opsz.clamp(6, 96).toDouble())],
-      );
+  TextStyle title(double size, FontWeight weight, {double? height}) => TextStyle(
+    fontFamily: AppFonts.display,
+    fontSize: size,
+    fontWeight: weight,
+    height: height,
+    color: AppColors.graphite,
+  );
   TextStyle sans(double size, FontWeight weight, {double? height, double letter = 0, Color? color}) => TextStyle(
-        fontFamily: AppFonts.body,
-        fontSize: size,
-        fontWeight: weight,
-        height: height,
-        letterSpacing: letter,
-        color: color ?? AppColors.graphite,
-      );
+    fontFamily: AppFonts.body,
+    fontSize: size,
+    fontWeight: weight,
+    height: height,
+    letterSpacing: letter,
+    color: color ?? AppColors.graphite,
+  );
 
   return TextTheme(
-    displayLarge: serif(44, FontWeight.w500, height: 1.1, opsz: 72),
-    displayMedium: serif(36, FontWeight.w500, height: 1.15, opsz: 60),
-    displaySmall: serif(30, FontWeight.w500, height: 1.2, opsz: 48),
-    headlineLarge: serif(28, FontWeight.w500, height: 1.2, opsz: 40),
-    headlineMedium: serif(24, FontWeight.w500, height: 1.25, opsz: 32),
-    headlineSmall: serif(21, FontWeight.w500, height: 1.25, opsz: 28),
-    titleLarge: serif(20, FontWeight.w600, height: 1.3, opsz: 24),
-    titleMedium: serif(17, FontWeight.w600, height: 1.3, opsz: 18),
-    titleSmall: serif(15, FontWeight.w600, height: 1.3, opsz: 14),
+    displayLarge: title(44, FontWeight.w600, height: 1.1),
+    displayMedium: title(36, FontWeight.w600, height: 1.15),
+    displaySmall: title(30, FontWeight.w600, height: 1.2),
+    headlineLarge: title(28, FontWeight.w600, height: 1.2),
+    headlineMedium: title(24, FontWeight.w600, height: 1.25),
+    headlineSmall: title(21, FontWeight.w600, height: 1.25),
+    titleLarge: title(20, FontWeight.w600, height: 1.3),
+    titleMedium: title(17, FontWeight.w600, height: 1.3),
+    titleSmall: title(15, FontWeight.w600, height: 1.3),
     bodyLarge: sans(16, FontWeight.w400, height: 1.5),
     bodyMedium: sans(14, FontWeight.w400, height: 1.5),
     bodySmall: sans(14, FontWeight.w400, height: 1.4, color: AppColors.muted),

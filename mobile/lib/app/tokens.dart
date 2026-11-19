@@ -65,6 +65,7 @@ abstract final class AppRadius {
 
 /// Font family names registered in pubspec.yaml.
 abstract final class AppFonts {
-  static const display = 'BodoniModa';
+  /// Titles: same family as the body (Bodoni Moda was hard to read), heavier weight set in the theme
+  static const display = 'GeneralSans';
   static const body = 'GeneralSans';
 }

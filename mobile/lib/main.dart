@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'app/router.dart';
+import 'app/splash_screen.dart';
 import 'app/theme.dart';
 
 /// Điểm khởi chạy app. ProviderScope bọc toàn bộ để dùng Riverpod.
@@ -17,10 +18,12 @@ class FineArtsApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
-      title: 'Institute of Fine Arts',
+      title: 'IFA',
       debugShowCheckedModeBanner: false,
       theme: buildTheme(),
       routerConfig: router,
+      // Animated splash over the first page (after the native splash), then fades away
+      builder: (context, child) => ArtSplashScreen(child: child ?? const SizedBox.shrink()),
     );
   }
 }

@@ -1,0 +1,16 @@
+# Native splash (shown by Android while Flutter starts): same black as the animated splash in lib/app/splash_screen.dart,
+# so the hand-over is seamless. Regenerate after a change with:  dart run flutter_native_splash:create
+flutter_native_splash:
+  color: "#0D0D0D"
+  image: assets/images/logo_ifa_transparent.png
+
+  # Android 12+ draws the icon inside a circle covering 2/3 of the image: this copy keeps the letters inside it
+  android_12:
+    color: "#0D0D0D"
+    image: assets/images/splash_android12.png
+    icon_background_color: "#0D0D0D"   # same as the background: no visible circle behind the logo
+
+  android: true
+  ios: false        # no iOS project in this repository
+  web: false        # the web build keeps its own index.html
+  fullscreen: false
