@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../app/motion.dart';
 import '../app/tokens.dart';
 import 'api_urls.dart';
 import 'auth_image.dart';
@@ -118,10 +119,14 @@ class ArtworkTile extends StatelessWidget {
     this.awarded = false,
     this.onTap,
     this.aspectRatio = 4 / 5,
+    this.heroSubmissionId,
   });
 
   /// Public artwork (published results, gallery): thumbnail from `/files/submissions/{id}/thumb`.
   /// [awarded] defaults to `awardName != null`.
+  ///
+  /// With [hero] the picture flies to the artwork screen. Only turn it on where the submission appears once on the
+  /// screen (the gallery grid): two heroes with the same tag on one screen throw an error.
   ArtworkTile.public({
     super.key,
     required int submissionId,
@@ -132,8 +137,10 @@ class ArtworkTile extends StatelessWidget {
     bool? awarded,
     this.onTap,
     this.aspectRatio = 4 / 5,
+    bool hero = false,
   })  : image = PublicImage(url: ApiUrls.submissionThumb(submissionId), semanticLabel: title),
-        awarded = awarded ?? awardName != null;
+        awarded = awarded ?? awardName != null,
+        heroSubmissionId = hero ? submissionId : null;
 
   /// Private artwork (own entries, staff views): thumbnail through the API with the JWT.
   ArtworkTile.private({
@@ -146,7 +153,8 @@ class ArtworkTile extends StatelessWidget {
     this.awarded = false,
     this.onTap,
     this.aspectRatio = 4 / 5,
-  }) : image = AuthImage(submissionId: submissionId, semanticLabel: title);
+  })  : image = AuthImage(submissionId: submissionId, semanticLabel: title),
+        heroSubmissionId = null;
 
   final Widget image;
   final String title;
@@ -157,13 +165,19 @@ class ArtworkTile extends StatelessWidget {
   final VoidCallback? onTap;
   final double? aspectRatio;
 
+  /// Submission id used for the hero tag, or null for no hero.
+  final int? heroSubmissionId;
+
   @override
   Widget build(BuildContext context) {
+    // The hero wraps the picture only, so the stone mat stays put while the picture flies
+    final heroId = heroSubmissionId;
+    final picture = heroId == null ? image : ArtworkHero(submissionId: heroId, child: image);
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        ArtworkFrame(awarded: awarded, aspectRatio: aspectRatio, child: image),
+        ArtworkFrame(awarded: awarded, aspectRatio: aspectRatio, child: picture),
         const SizedBox(height: AppSpacing.sm),
         WallLabel(title: title, artist: artist, meta: meta, awardName: awardName),
       ],

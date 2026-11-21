@@ -69,3 +69,16 @@ abstract final class AppFonts {
   static const display = 'GeneralSans';
   static const body = 'GeneralSans';
 }
+
+/// Motion tokens: how long and how fast things move. Use through `motionDuration` (app/motion.dart),
+/// which returns zero when the OS asks to reduce motion.
+abstract final class AppMotion {
+  /// Small effects (zoom, fades inside a screen).
+  static const fast = Duration(milliseconds: 200);
+
+  /// Screen transitions (artwork opens from the gallery).
+  static const med = Duration(milliseconds: 320);
+
+  /// Starts quick, settles softly.
+  static const curve = Curves.easeOutCubic;
+}

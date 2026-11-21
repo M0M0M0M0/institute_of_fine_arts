@@ -93,7 +93,8 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     }
 
     final tiles = [
-      for (final a in state.items) galleryTile(a, onTap: () => context.push('/gallery/artworks/${a.submissionId}')),
+      for (final a in state.items)
+        galleryTile(a, hero: true, onTap: () => context.push('/gallery/artworks/${a.submissionId}')),
     ];
     final rows = twoColumnRowCount(tiles.length);
     return RefreshIndicator(

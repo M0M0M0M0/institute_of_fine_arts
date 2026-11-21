@@ -5,7 +5,15 @@ import '../../shared/shared.dart';
 import 'gallery.dart';
 
 /// Tile for one public artwork (framed picture + museum wall label).
-ArtworkTile galleryTile(GalleryArtwork a, {required VoidCallback onTap, bool showCompetition = true}) =>
+///
+/// [hero] makes the picture fly to the artwork screen; use it only where the artwork shows once on the screen
+/// (the gallery grid), because hero tags must be unique.
+ArtworkTile galleryTile(
+  GalleryArtwork a, {
+  required VoidCallback onTap,
+  bool showCompetition = true,
+  bool hero = false,
+}) =>
     ArtworkTile.public(
       submissionId: a.submissionId,
       title: a.title,
@@ -13,6 +21,7 @@ ArtworkTile galleryTile(GalleryArtwork a, {required VoidCallback onTap, bool sho
       meta: showCompetition ? a.competitionTitle : null,
       awardName: a.isAwarded ? a.awardName : null,
       onTap: onTap,
+      hero: hero,
     );
 
 /// Builds a row of two tiles. Rows (not a fixed-height grid) keep the labels free from overflow at any text size.

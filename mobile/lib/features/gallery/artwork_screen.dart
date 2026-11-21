@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/motion.dart';
 import '../../app/tokens.dart';
 import '../../core/async_view.dart';
 import '../../core/format.dart';
@@ -66,7 +67,11 @@ class _ArtworkBody extends StatelessWidget {
                     matWidth: 16,
                     child: Stack(
                       children: [
-                        NaturalArtworkImage.public(submissionId: a.submissionId, semanticLabel: a.title),
+                        // Same tag as the tile in the gallery grid, so the picture flies in from there
+                        ArtworkHero(
+                          submissionId: a.submissionId,
+                          child: NaturalArtworkImage.public(submissionId: a.submissionId, semanticLabel: a.title),
+                        ),
                         const Positioned(
                           right: AppSpacing.sm,
                           bottom: AppSpacing.sm,
