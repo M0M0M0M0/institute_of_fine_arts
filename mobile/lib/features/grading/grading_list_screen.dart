@@ -38,7 +38,12 @@ class _GradingListScreenState extends ConsumerState<GradingListScreen> {
     final list = ref.watch(gradingListProvider(key));
 
     return Scaffold(
-      appBar: AppBar(title: Text(list.value?.competitionTitle ?? 'Entries')),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        leadingWidth: 48,
+        titleSpacing: 0,
+        title: Text(list.value?.competitionTitle ?? 'Entries'),
+      ),
       body: Column(
         children: [
           // Progress only shows once data exists; it hides while a new filter loads (the provider key changes)
@@ -58,15 +63,20 @@ class _GradingListScreenState extends ConsumerState<GradingListScreen> {
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: const [
                           SizedBox(height: AppSpacing.xl),
-                          EmptyState(title: 'No matching entries', message: 'Try another filter or search.'),
+                          EmptyState(
+                            title: 'No matching entries',
+                            message: 'Try another filter or search.',
+                          ),
                         ],
                       )
                     : ListView.separated(
                         physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.all(AppSpacing.gutter),
+                        padding: readingPadding(context, maxWidth: 900),
                         itemCount: data.items.length,
-                        separatorBuilder: (context, i) => const Divider(height: AppSpacing.lg),
-                        itemBuilder: (context, i) => _ItemTile(item: data.items[i]),
+                        separatorBuilder: (context, i) =>
+                            const Divider(height: AppSpacing.lg),
+                        itemBuilder: (context, i) =>
+                            _ItemTile(item: data.items[i]),
                       ),
               ),
             ),
@@ -86,7 +96,7 @@ class _Progress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, AppSpacing.md, AppSpacing.gutter, 0),
+      padding: readingPadding(context, maxWidth: 900, bottom: 0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -107,7 +117,11 @@ class _Progress extends StatelessWidget {
 }
 
 class _Filters extends StatelessWidget {
-  const _Filters({required this.filter, required this.search, required this.onChanged});
+  const _Filters({
+    required this.filter,
+    required this.search,
+    required this.onChanged,
+  });
 
   final GradingFilter filter;
   final TextEditingController search;
@@ -115,17 +129,29 @@ class _Filters extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    GradingFilter with_({bool? graded, bool clearGraded = false, SubmissionRating? rating, bool clearRating = false, String? q}) =>
-        GradingFilter(
-          graded: clearGraded ? null : (graded ?? filter.graded),
-          rating: clearRating ? null : (rating ?? filter.rating),
-          q: q ?? filter.q,
-        );
+    GradingFilter with_({
+      bool? graded,
+      bool clearGraded = false,
+      SubmissionRating? rating,
+      bool clearRating = false,
+      String? q,
+    }) => GradingFilter(
+      graded: clearGraded ? null : (graded ?? filter.graded),
+      rating: clearRating ? null : (rating ?? filter.rating),
+      q: q ?? filter.q,
+    );
 
+    // Graded state as 0 = all, 1 = to grade, 2 = graded
+    final gradedIndex = filter.graded == null ? 0 : (filter.graded! ? 2 : 1);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, AppSpacing.sm, AppSpacing.gutter, 0),
+      padding: readingPadding(
+        context,
+        maxWidth: 900,
+        top: AppSpacing.md,
+        bottom: 0,
+      ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           TextField(
             controller: search,
@@ -137,36 +163,27 @@ class _Filters extends StatelessWidget {
             textInputAction: TextInputAction.search,
             onSubmitted: (v) => onChanged(with_(q: v)),
           ),
-          const SizedBox(height: AppSpacing.xs),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _chip('All', filter.graded == null, () => onChanged(with_(clearGraded: true))),
-                _chip('To grade', filter.graded == false, () => onChanged(with_(graded: false))),
-                _chip('Graded', filter.graded == true, () => onChanged(with_(graded: true))),
-              ],
+          const SizedBox(height: AppSpacing.md),
+          FilterTabs<int>(
+            values: const [0, 1, 2],
+            selected: gradedIndex,
+            labelOf: (i) => const ['All', 'To grade', 'Graded'][i],
+            onSelected: (i) => onChanged(
+              i == 0 ? with_(clearGraded: true) : with_(graded: i == 2),
             ),
           ),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                _chip('Any rating', filter.rating == null, () => onChanged(with_(clearRating: true))),
-                for (final r in SubmissionRating.values)
-                  _chip(ratingName(r), filter.rating == r, () => onChanged(with_(rating: r))),
-              ],
+          FilterTabs<SubmissionRating?>(
+            values: [null, ...SubmissionRating.values],
+            selected: filter.rating,
+            labelOf: (r) => r == null ? 'Any rating' : ratingName(r),
+            onSelected: (r) => onChanged(
+              r == null ? with_(clearRating: true) : with_(rating: r),
             ),
           ),
         ],
       ),
     );
   }
-
-  Widget _chip(String label, bool selected, VoidCallback onTap) => Padding(
-        padding: const EdgeInsets.only(right: AppSpacing.sm),
-        child: ChoiceChip(label: Text(label), selected: selected, onSelected: (_) => onTap()),
-      );
 }
 
 class _ItemTile extends StatelessWidget {
@@ -178,7 +195,9 @@ class _ItemTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     return InkWell(
-      onTap: () => context.push('${gradingBase(context)}/submissions/${item.id}/evaluate'),
+      onTap: () => context.push(
+        '${gradingBase(context)}/submissions/${item.id}/evaluate',
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
         child: Row(
@@ -190,7 +209,10 @@ class _ItemTile extends StatelessWidget {
                 aspectRatio: 1,
                 matWidth: 5,
                 child: item.hasThumbnail
-                    ? AuthImage(submissionId: item.id, semanticLabel: item.title)
+                    ? AuthImage(
+                        submissionId: item.id,
+                        semanticLabel: item.title,
+                      )
                     : const ImagePlaceholder(),
               ),
             ),
@@ -203,13 +225,25 @@ class _ItemTile extends StatelessWidget {
                     item.title,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: text.titleSmall!.copyWith(fontStyle: FontStyle.italic, fontWeight: FontWeight.w500),
+                    style: text.titleSmall!.copyWith(
+                      fontStyle: FontStyle.italic,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                  Text('${item.studentName} (${item.studentCode})', style: text.bodyMedium),
-                  Text('Submitted ${formatDateTime(item.submittedAt)}', style: text.bodySmall),
+                  Text(
+                    '${item.studentName} (${item.studentCode})',
+                    style: text.bodyMedium,
+                  ),
+                  Text(
+                    'Submitted ${formatDateTime(item.submittedAt)}',
+                    style: text.bodySmall,
+                  ),
                   const SizedBox(height: AppSpacing.xs),
                   item.rating == null
-                      ? const StatusChip.custom(label: 'To grade', color: AppColors.statusUpcoming)
+                      ? const StatusChip.custom(
+                          label: 'To grade',
+                          color: AppColors.statusUpcoming,
+                        )
                       : StatusChip.rating(item.rating!),
                 ],
               ),

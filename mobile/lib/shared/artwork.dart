@@ -17,12 +17,16 @@ class ArtworkFrame extends StatelessWidget {
     super.key,
     required this.child,
     this.awarded = false,
+    this.awardRank,
     this.aspectRatio = 4 / 5,
-    this.matWidth = 10,
+    this.matWidth = 12,
   });
 
   final Widget child;
   final bool awarded;
+
+  /// Prize rank (1, 2, 3 …): colours the awarded frame gold, silver or bronze. Without it an awarded frame is brass.
+  final int? awardRank;
   final double? aspectRatio;
 
   /// Width of the stone mat on each side.
@@ -32,13 +36,15 @@ class ArtworkFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget art = child;
     if (aspectRatio != null) art = AspectRatio(aspectRatio: aspectRatio!, child: art);
+    final medal = AppColors.medalFor(awardRank);
     return DecoratedBox(
       decoration: BoxDecoration(
         color: AppColors.stone,
-        border: Border.all(color: awarded ? AppColors.brass : AppColors.line, width: awarded ? 3 : 1),
+        border: Border.all(color: awarded ? medal : AppColors.line, width: awarded ? 3 : 1),
+        // A soft shadow lifts the frame off the wall
         boxShadow: awarded
-            ? const [BoxShadow(color: Color(0x33A8814A), blurRadius: 8, offset: Offset(0, 2))]
-            : const [BoxShadow(color: Color(0x14000000), blurRadius: 4, offset: Offset(0, 1))],
+            ? [BoxShadow(color: medal.withValues(alpha: 0.25), blurRadius: 18, offset: const Offset(0, 6))]
+            : const [BoxShadow(color: Color(0x1A000000), blurRadius: 14, offset: Offset(0, 5))],
       ),
       child: Padding(
         padding: EdgeInsets.all(matWidth),
@@ -59,6 +65,7 @@ class WallLabel extends StatelessWidget {
     this.artist,
     this.meta,
     this.awardName,
+    this.awardRank,
     this.centered = false,
     this.maxTitleLines = 2,
   });
@@ -69,8 +76,9 @@ class WallLabel extends StatelessWidget {
   /// Third line, e.g. the competition title or a year.
   final String? meta;
 
-  /// Shown in brass above the meta line when the work is awarded.
+  /// Shown above the meta line when the work is awarded, in the medal colour of [awardRank] (brass by default).
   final String? awardName;
+  final int? awardRank;
   final bool centered;
   final int maxTitleLines;
 
@@ -86,16 +94,24 @@ class WallLabel extends StatelessWidget {
           maxLines: maxTitleLines,
           overflow: TextOverflow.ellipsis,
           textAlign: centered ? TextAlign.center : TextAlign.start,
-          style: text.titleSmall!.copyWith(fontStyle: FontStyle.italic, fontWeight: FontWeight.w500),
+          style: text.titleSmall!.copyWith(fontStyle: FontStyle.italic, fontWeight: FontWeight.w400),
         ),
-        if (artist != null && artist!.isNotEmpty)
-          Text(artist!, maxLines: 1, overflow: TextOverflow.ellipsis, style: text.bodyMedium),
+        if (artist != null && artist!.isNotEmpty) ...[
+          const SizedBox(height: 2),
+          Text(
+            artist!.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: centered ? TextAlign.center : TextAlign.start,
+            style: text.labelSmall!.copyWith(color: AppColors.muted, letterSpacing: 1.2),
+          ),
+        ],
         if (awardName != null && awardName!.isNotEmpty)
           Text(
             awardName!,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: text.labelMedium!.copyWith(color: AppColors.brassText, fontWeight: FontWeight.w600),
+            style: text.labelMedium!.copyWith(color: AppColors.medalText(awardRank), fontWeight: FontWeight.w600),
           ),
         if (meta != null && meta!.isNotEmpty)
           Text(meta!, maxLines: 1, overflow: TextOverflow.ellipsis, style: text.bodySmall),
@@ -108,7 +124,7 @@ class WallLabel extends StatelessWidget {
 ///
 /// Use the [ArtworkTile.public] / [ArtworkTile.private] constructors with a submission id,
 /// or the default constructor with any [image] widget.
-class ArtworkTile extends StatelessWidget {
+class ArtworkTile extends StatefulWidget {
   const ArtworkTile({
     super.key,
     required this.image,
@@ -116,6 +132,7 @@ class ArtworkTile extends StatelessWidget {
     this.artist,
     this.meta,
     this.awardName,
+    this.awardRank,
     this.awarded = false,
     this.onTap,
     this.aspectRatio = 4 / 5,
@@ -134,11 +151,14 @@ class ArtworkTile extends StatelessWidget {
     this.artist,
     this.meta,
     this.awardName,
+    this.awardRank,
     bool? awarded,
     this.onTap,
-    this.aspectRatio = 4 / 5,
+    // Square mat: landscape and portrait paintings both sit in it whole, without wide empty bands
+    this.aspectRatio = 1,
     bool hero = false,
-  })  : image = PublicImage(url: ApiUrls.submissionThumb(submissionId), semanticLabel: title),
+  })  // `contain`: the whole painting sits inside the mat at its own proportions (thumbnails keep them), never cropped
+      : image = PublicImage(url: ApiUrls.submissionThumb(submissionId), semanticLabel: title, fit: BoxFit.contain),
         awarded = awarded ?? awardName != null,
         heroSubmissionId = hero ? submissionId : null;
 
@@ -150,6 +170,7 @@ class ArtworkTile extends StatelessWidget {
     this.artist,
     this.meta,
     this.awardName,
+    this.awardRank,
     this.awarded = false,
     this.onTap,
     this.aspectRatio = 4 / 5,
@@ -161,6 +182,9 @@ class ArtworkTile extends StatelessWidget {
   final String? artist;
   final String? meta;
   final String? awardName;
+
+  /// Prize rank (1 gold, 2 silver, 3 bronze) for the frame and the award line.
+  final int? awardRank;
   final bool awarded;
   final VoidCallback? onTap;
   final double? aspectRatio;
@@ -169,20 +193,50 @@ class ArtworkTile extends StatelessWidget {
   final int? heroSubmissionId;
 
   @override
+  State<ArtworkTile> createState() => _ArtworkTileState();
+}
+
+class _ArtworkTileState extends State<ArtworkTile> {
+  bool _hover = false;
+
+  @override
   Widget build(BuildContext context) {
     // The hero wraps the picture only, so the stone mat stays put while the picture flies
-    final heroId = heroSubmissionId;
-    final picture = heroId == null ? image : ArtworkHero(submissionId: heroId, child: image);
+    final heroId = widget.heroSubmissionId;
+    final picture = heroId == null ? widget.image : ArtworkHero(submissionId: heroId, child: widget.image);
     final content = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        ArtworkFrame(awarded: awarded, aspectRatio: aspectRatio, child: picture),
-        const SizedBox(height: AppSpacing.sm),
-        WallLabel(title: title, artist: artist, meta: meta, awardName: awardName),
+        // With a mouse the frame rises a little off the wall
+        AnimatedSlide(
+          offset: _hover ? const Offset(0, -0.012) : Offset.zero,
+          duration: motionDuration(context, AppMotion.fast),
+          curve: AppMotion.curve,
+          child: ArtworkFrame(
+            awarded: widget.awarded,
+            awardRank: widget.awardRank,
+            aspectRatio: widget.aspectRatio,
+            child: picture,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        WallLabel(
+          title: widget.title,
+          artist: widget.artist,
+          meta: widget.meta,
+          awardName: widget.awardName,
+          awardRank: widget.awardRank,
+        ),
       ],
     );
-    if (onTap == null) return content;
-    return InkWell(onTap: onTap, borderRadius: AppRadius.smAll, child: content);
+    if (widget.onTap == null) return content;
+    return InkWell(
+      onTap: widget.onTap,
+      onHover: (hover) => setState(() => _hover = hover),
+      hoverColor: Colors.transparent,
+      borderRadius: AppRadius.smAll,
+      child: content,
+    );
   }
 }

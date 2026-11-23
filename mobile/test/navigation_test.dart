@@ -43,7 +43,7 @@ void main() {
 
     await tester.tap(find.descendant(of: bar, matching: find.text('Sign in')));
     await tester.pumpAndSettle();
-    expect(find.text('Sign in to enter competitions and follow your entries.'), findsOneWidget); // login screen
+    expect(find.text('Enter competitions and follow your entries.'), findsOneWidget); // login screen
   });
 
   testWidgets('student bottom bar has five tabs and the account tab shows the profile', (tester) async {
@@ -55,7 +55,7 @@ void main() {
     await tester.tap(find.descendant(of: bar, matching: find.text('Account')));
     await tester.pumpAndSettle();
     expect(find.text('Nguyen Van An'), findsOneWidget);
-    expect(find.text('Sign out'), findsOneWidget);
+    expect(find.text('SIGN OUT'), findsOneWidget);
   });
 
   testWidgets('staff bottom bar: Home, Grading, Awards, Exhibitions, Account', (tester) async {

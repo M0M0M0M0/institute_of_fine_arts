@@ -131,12 +131,15 @@ void main() {
       expect(find.text('Good morning, An'), findsOneWidget);
       expect(find.text('Open for entries'), findsOneWidget);
       expect(find.text('Autumn Light'), findsOneWidget);
-      expect(find.text('Submit'), findsOneWidget);
+      // Buttons and chips are written in capitals
+      expect(find.text('SUBMIT'), findsOneWidget);
+      // A lone open competition fills the width, so the next section is below the fold: scroll to it
+      await tester.scrollUntilVisible(find.text('Still editable'), 200, scrollable: find.byType(Scrollable).first);
       expect(find.text('Still editable'), findsOneWidget);
-      expect(find.text('Sunset'), findsOneWidget);
-      expect(find.text('Closes 20 Dec 2026'), findsOneWidget);
+      expect(find.text('Sunset', skipOffstage: false), findsOneWidget);
+      expect(find.text('Closes 20 Dec 2026', skipOffstage: false), findsOneWidget);
       await tester.scrollUntilVisible(find.text('New results'), 200, scrollable: find.byType(Scrollable).first);
-      expect(find.text('Best'), findsOneWidget);
+      expect(find.text('BEST'), findsOneWidget);
       await tester.scrollUntilVisible(find.text('2 proposals waiting for review'), 200, scrollable: find.byType(Scrollable).first);
       expect(find.text('1 sold work, payment not received yet'), findsOneWidget);
     });
@@ -178,16 +181,17 @@ void main() {
       );
       expect(find.text('Entered One'), findsOneWidget);
       expect(find.text('Fresh One'), findsOneWidget);
-      expect(find.text('Submit'), findsOneWidget);
-      expect(find.text('View my entry'), findsOneWidget);
+      expect(find.text('SUBMIT'), findsOneWidget);
+      expect(find.text('VIEW MY ENTRY'), findsOneWidget);
       expect(find.text('Later One'), findsNothing);
 
-      await tester.tap(find.text('Upcoming'));
+      // The tabs are written in capitals
+      await tester.tap(find.text('UPCOMING'));
       await tester.pumpAndSettle();
       expect(find.text('Later One'), findsOneWidget);
       expect(find.text('Fresh One'), findsNothing);
 
-      await tester.tap(find.text('Results'));
+      await tester.tap(find.text('RESULTS'));
       await tester.pumpAndSettle();
       expect(find.text('Done One'), findsOneWidget);
     });
@@ -214,9 +218,10 @@ void main() {
               ]),
         ],
       );
-      expect(find.text('Submitted'), findsOneWidget);
-      expect(find.text('Waiting for results'), findsOneWidget);
-      expect(find.text('Best'), findsWidgets);
+      // The state chips are written in capitals
+      expect(find.text('SUBMITTED'), findsOneWidget);
+      expect(find.text('WAITING FOR RESULTS'), findsOneWidget);
+      expect(find.text('BEST'), findsWidgets);
       expect(find.text('First Prize'), findsWidgets);
       expect(find.text('Competition'), findsOneWidget); // filter label
       expect(find.text('Rating'), findsOneWidget);
@@ -247,7 +252,7 @@ void main() {
       expect(find.text('Edit'), findsOneWidget);
       expect(find.text('Delete'), findsOneWidget);
       expect(find.text('Evaluation'), findsNothing);
-      expect(find.text('Submitted'), findsWidgets);
+      expect(find.text('SUBMITTED'), findsWidgets);
     });
 
     testWidgets('published: evaluation card, award, no Edit / Delete', (tester) async {
@@ -350,12 +355,13 @@ void main() {
         ],
       );
       expect(find.text('Winter Salon'), findsOneWidget);
-      expect(find.text('Upcoming'), findsOneWidget);
+      // The status chip is written in capitals
+      expect(find.text('UPCOMING'), findsOneWidget);
       expect(find.text('Starts in 16 days'), findsOneWidget);
-      await tester.tap(find.text('My proposals'));
+      await tester.tap(find.text('MY PROPOSALS'));
       await tester.pumpAndSettle();
       expect(find.text('Harbor'), findsOneWidget);
-      expect(find.text('Sold · paid'), findsOneWidget);
+      expect(find.text('SOLD · PAID'), findsOneWidget);
       expect(find.text('Asking price \$2,000,000'), findsOneWidget);
       expect(find.text('Sold for \$2,500,000'), findsOneWidget);
     });
@@ -372,11 +378,12 @@ void main() {
       await _pump(tester, const AccountScreen());
       expect(find.text('NA'), findsOneWidget);
       expect(find.text('Nguyen Van An'), findsOneWidget);
-      expect(find.text('Student code'), findsOneWidget);
+      // The names of the facts are small capitals
+      expect(find.text('STUDENT CODE'), findsOneWidget);
       expect(find.text('HV001'), findsOneWidget);
       expect(find.text('an@example.com'), findsOneWidget);
       expect(find.text('Class 10A'), findsOneWidget);
-      expect(find.text('Sign out'), findsOneWidget);
+      expect(find.text('SIGN OUT'), findsOneWidget);
     });
   });
 }

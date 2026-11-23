@@ -50,6 +50,52 @@ class _MySubmissionsScreenState extends ConsumerState<MySubmissionsScreen> {
     final notifier = ref.read(submissionFilterProvider.notifier);
     final competitions = ref.watch(competitionListProvider).value ?? const <CompetitionSummary>[];
     final list = ref.watch(mySubmissionsProvider);
+    final width = MediaQuery.sizeOf(context).width;
+    final wide = width >= AppLayout.wide;
+    final gutter = AppLayout.gutterFor(width);
+
+    final searchField = TextField(
+      controller: _search,
+      textInputAction: TextInputAction.search,
+      decoration: InputDecoration(
+        labelText: 'Search by title',
+        prefixIcon: const Icon(Icons.search),
+        suffixIcon: filter.q.isEmpty && _search.text.isEmpty
+            ? null
+            : IconButton(
+                tooltip: 'Clear search',
+                icon: const Icon(Icons.clear),
+                onPressed: () {
+                  _search.clear();
+                  notifier.set(filter.copyWith(q: ''));
+                },
+              ),
+        isDense: true,
+      ),
+      onSubmitted: (v) => notifier.set(filter.copyWith(q: v)),
+    );
+    final competitionField = DropdownButtonFormField<int?>(
+      isExpanded: true,
+      initialValue: filter.competitionId,
+      decoration: const InputDecoration(labelText: 'Competition', isDense: true),
+      items: [
+        const DropdownMenuItem<int?>(value: null, child: Text('All')),
+        for (final c in competitions)
+          DropdownMenuItem<int?>(value: c.id, child: Text(c.title, overflow: TextOverflow.ellipsis)),
+      ],
+      onChanged: (v) => notifier.set(filter.copyWith(competitionId: () => v)),
+    );
+    final ratingField = DropdownButtonFormField<SubmissionRating?>(
+      isExpanded: true,
+      initialValue: filter.rating,
+      decoration: const InputDecoration(labelText: 'Rating', isDense: true),
+      items: [
+        const DropdownMenuItem<SubmissionRating?>(value: null, child: Text('All')),
+        for (final r in SubmissionRating.values)
+          DropdownMenuItem<SubmissionRating?>(value: r, child: Text(r.label, overflow: TextOverflow.ellipsis)),
+      ],
+      onChanged: (v) => notifier.set(filter.copyWith(rating: () => v)),
+    );
 
     return TabScaffold(
       title: 'My entries',
@@ -66,62 +112,32 @@ class _MySubmissionsScreenState extends ConsumerState<MySubmissionsScreen> {
             onRefresh: _refresh,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, AppSpacing.md, AppSpacing.gutter, AppSpacing.xl),
+              padding: EdgeInsets.fromLTRB(gutter, AppSpacing.md, gutter, AppSpacing.xl),
               children: [
-                TextField(
-                  controller: _search,
-                  textInputAction: TextInputAction.search,
-                  decoration: InputDecoration(
-                    labelText: 'Search by title',
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: filter.q.isEmpty && _search.text.isEmpty
-                        ? null
-                        : IconButton(
-                            tooltip: 'Clear search',
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              _search.clear();
-                              notifier.set(filter.copyWith(q: ''));
-                            },
-                          ),
-                    isDense: true,
+                // One row of filters on wide screens; on a phone the search sits above the two selectors
+                if (wide)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(flex: 3, child: searchField),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(flex: 2, child: competitionField),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(flex: 2, child: ratingField),
+                    ],
+                  )
+                else ...[
+                  searchField,
+                  const SizedBox(height: AppSpacing.md),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(child: competitionField),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(child: ratingField),
+                    ],
                   ),
-                  onSubmitted: (v) => notifier.set(filter.copyWith(q: v)),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<int?>(
-                        isExpanded: true,
-                        initialValue: filter.competitionId,
-                        decoration: const InputDecoration(labelText: 'Competition', isDense: true),
-                        items: [
-                          const DropdownMenuItem<int?>(value: null, child: Text('All')),
-                          for (final c in competitions)
-                            DropdownMenuItem<int?>(value: c.id, child: Text(c.title, overflow: TextOverflow.ellipsis)),
-                        ],
-                        onChanged: (v) => notifier.set(filter.copyWith(competitionId: () => v)),
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: DropdownButtonFormField<SubmissionRating?>(
-                        isExpanded: true,
-                        initialValue: filter.rating,
-                        decoration: const InputDecoration(labelText: 'Rating', isDense: true),
-                        items: [
-                          const DropdownMenuItem<SubmissionRating?>(value: null, child: Text('All')),
-                          for (final r in SubmissionRating.values)
-                            DropdownMenuItem<SubmissionRating?>(
-                                value: r, child: Text(r.label, overflow: TextOverflow.ellipsis)),
-                        ],
-                        onChanged: (v) => notifier.set(filter.copyWith(rating: () => v)),
-                      ),
-                    ),
-                  ],
-                ),
+                ],
                 if (filter.isActive)
                   Align(
                     alignment: Alignment.centerLeft,
@@ -143,15 +159,31 @@ class _MySubmissionsScreenState extends ConsumerState<MySubmissionsScreen> {
                       onAction: filter.isActive ? null : () => context.go('/student/competitions'),
                     ),
                   )
-                else
+                else if (wide)
+                  // Two columns of entries (the grid has no side padding of its own here: the list already has it)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.lg),
+                    child: AdaptiveTileGrid(
+                      minTileWidth: 440,
+                      maxColumns: 2,
+                      spacing: AppSpacing.xl,
+                      padding: EdgeInsets.zero,
+                      children: [for (final item in items) EntryTile(item: item)],
+                    ),
+                  )
+                else ...[
+                  // Room between the filters and the first entry, like a wall label under the frame
+                  const SizedBox(height: AppSpacing.lg),
+                  const Divider(height: 1),
                   for (final item in items) ...[
                     EntryTile(item: item),
                     const Divider(height: 1),
                   ],
+                ],
                 if (graded.isNotEmpty) ...[
                   const SectionHeader('Awards',
                       subtitle: 'Prizes of the competitions you entered',
-                      padding: EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.sm)),
+                      padding: EdgeInsets.fromLTRB(0, AppSpacing.xl, 0, AppSpacing.md)),
                   for (final e in graded.entries) ...[
                     Text(e.value, style: Theme.of(context).textTheme.titleSmall),
                     AwardResultsList(competitionId: e.key),

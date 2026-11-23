@@ -16,6 +16,8 @@ class GradingCompetitionsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final competitions = ref.watch(gradingCompetitionsProvider);
+    final width = MediaQuery.sizeOf(context).width;
+    final gutter = AppLayout.gutterFor(width);
     return AsyncValueView(
       value: competitions,
       onRetry: () => ref.invalidate(gradingCompetitionsProvider),
@@ -36,10 +38,36 @@ class GradingCompetitionsTab extends ConsumerWidget {
                   ),
                 ],
               )
-            : ListView.builder(
+            : width >= AppLayout.wide
+            // Columns on wide screens
+            ? ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(AppSpacing.gutter),
+                padding: const EdgeInsets.only(
+                  top: AppSpacing.sm,
+                  bottom: AppSpacing.xl,
+                ),
+                children: [
+                  AdaptiveTileGrid(
+                    minTileWidth: 300,
+                    maxColumns: 3,
+                    spacing: AppSpacing.xl,
+                    children: [
+                      for (final item in items) _CompetitionTile(item: item),
+                    ],
+                  ),
+                ],
+              )
+            : ListView.separated(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: EdgeInsets.fromLTRB(
+                  gutter,
+                  AppSpacing.md,
+                  gutter,
+                  AppSpacing.xl,
+                ),
                 itemCount: items.length,
+                separatorBuilder: (_, _) =>
+                    const SizedBox(height: AppSpacing.xl),
                 itemBuilder: (context, i) => _CompetitionTile(item: items[i]),
               ),
       ),
@@ -54,49 +82,19 @@ class _CompetitionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
     final ongoing = item.status == CompetitionStatus.ongoing;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: InkWell(
-        onTap: () => context.push('${gradingBase(context)}/competitions/${item.id}/submissions'),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AspectRatio(
-              aspectRatio: 16 / 7,
-              child: item.hasCover
-                  ? PublicImage(url: ApiUrls.competitionCover(item.id), semanticLabel: 'Cover of ${item.title}')
-                  : const ImagePlaceholder(icon: Icons.palette_outlined),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(child: Text(item.title, style: text.titleMedium)),
-                      const SizedBox(width: AppSpacing.sm),
-                      StatusChip(item.status),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text('${ongoing ? 'Closes' : 'Closed'} ${formatDate(item.endDate)}', style: text.bodySmall),
-                  const SizedBox(height: AppSpacing.sm),
-                  ProgressBarRow(
-                    label: 'Graded',
-                    value: item.evaluatedCount,
-                    total: item.submissionCount,
-                    color: AppColors.statusOngoing,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+    return CompetitionProgressCard(
+      competitionId: item.id,
+      title: item.title,
+      hasCover: item.hasCover,
+      status: item.status,
+      dateLine: '${ongoing ? 'Closes' : 'Closed'} ${formatDate(item.endDate)}',
+      progressLabel: 'Graded',
+      progressValue: item.evaluatedCount,
+      progressTotal: item.submissionCount,
+      progressColor: AppColors.statusOngoing,
+      onTap: () => context.push(
+        '${gradingBase(context)}/competitions/${item.id}/submissions',
       ),
     );
   }

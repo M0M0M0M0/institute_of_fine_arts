@@ -20,7 +20,7 @@ class StaffEntryDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(entryDetailProvider(id));
     return Scaffold(
-      appBar: AppBar(title: const Text('Exhibition artwork')),
+      appBar: AppBar(leading: const AppBackButton(), leadingWidth: 48, titleSpacing: 0, title: const Text('Exhibition artwork')),
       body: AsyncValueView(
         value: detail,
         onRetry: () => ref.invalidate(entryDetailProvider(id)),
@@ -115,7 +115,7 @@ class _BodyState extends ConsumerState<_Body> {
     final scheme = Theme.of(context).colorScheme;
     const sectionPad = EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.xs);
     return ListView(
-      padding: const EdgeInsets.all(AppSpacing.gutter),
+      padding: readingPadding(context, top: AppSpacing.gutter, bottom: AppSpacing.gutter),
       children: [
         // Framed picture; tap to zoom (only when the API tells which entry the artwork belongs to)
         if (e.submissionId != null)
@@ -311,7 +311,7 @@ class _SaleDialogState extends ConsumerState<_SaleDialog> {
   @override
   Widget build(BuildContext context) {
     final customers = ref.watch(_customersProvider);
-    return AlertDialog(
+    return ArtDialog(
       title: Text(widget.adjust ? 'Adjust sale' : (e.isLateSale ? 'Record late sale' : 'Record sale')),
       content: SizedBox(
         width: 420,
@@ -391,8 +391,8 @@ class _SaleDialogState extends ConsumerState<_SaleDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        FilledButton(onPressed: _submit, child: const Text('Save')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
+        FilledButton(onPressed: _submit, child: const Text('SAVE')),
       ],
     );
   }
@@ -439,7 +439,7 @@ class _PaymentNoteDialogState extends State<_PaymentNoteDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
+    return ArtDialog(
       title: const Text('Edit payment details'),
       content: SizedBox(
         width: 420,
@@ -460,8 +460,8 @@ class _PaymentNoteDialogState extends State<_PaymentNoteDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        FilledButton(onPressed: _submit, child: const Text('Save')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
+        FilledButton(onPressed: _submit, child: const Text('SAVE')),
       ],
     );
   }
@@ -518,7 +518,7 @@ class _PayDialogState extends State<_PayDialog> {
   @override
   Widget build(BuildContext context) {
     final sold = widget.entry.soldDate ?? DateTime(todayDate().year - 1);
-    return AlertDialog(
+    return ArtDialog(
       title: const Text('Record payout to the student'),
       content: SizedBox(
         width: 420,
@@ -552,7 +552,7 @@ class _PayDialogState extends State<_PayDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
         FilledButton(onPressed: _submit, child: const Text('Record')),
       ],
     );

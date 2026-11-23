@@ -26,7 +26,7 @@ class SubmissionFormScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final editing = submissionId != null;
     return Scaffold(
-      appBar: AppBar(title: Text(editing ? 'Edit entry' : 'Submit entry')),
+      appBar: AppBar(leading: const AppBackButton(), leadingWidth: 48, titleSpacing: 0, title: Text(editing ? 'Edit entry' : 'Submit entry')),
       body: editing
           // Sửa: tải chi tiết bài trước để điền sẵn form
           ? AsyncValueView(
@@ -56,7 +56,7 @@ class _SubmissionForm extends ConsumerStatefulWidget {
 class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _title;
-  late final TextEditingController _description;
+  late final RichTextController _description;
   late final TextEditingController _textContent;
   late TextType _textType;
   late bool _publicConsent;
@@ -76,7 +76,8 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
     final i = widget.initial;
     // Điền sẵn khi sửa; nộp mới thì để trống, đồng ý công khai mặc định false
     _title = TextEditingController(text: i?.title ?? '');
-    _description = TextEditingController(text: i?.description ?? '');
+    // The description is rich text: HTML, or plain text if the entry was written before the editor existed
+    _description = RichTextController(stored: i?.description);
     _textContent = TextEditingController(text: i?.textContent ?? '');
     _textType = i?.textType ?? TextType.poem;
     // The institute does not record a publishing consent (BR-20 decides what is public), so it is always sent as true
@@ -142,7 +143,7 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
 
     final input = SubmissionInput(
       title: _title.text.trim(),
-      description: _description.text.trim(),
+      description: _description.html,
       textType: _textType,
       textContent: _textContent.text.trim(),
       publicConsent: _publicConsent,
@@ -199,12 +200,7 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
       key: _formKey,
       // Column in a scroll view (not a lazy ListView) so every field exists and gets validated
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.gutter,
-          AppSpacing.md,
-          AppSpacing.gutter,
-          AppSpacing.xl,
-        ),
+        padding: readingPadding(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -320,18 +316,13 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
                   : null,
             ),
             const SizedBox(height: AppSpacing.sm),
-            TextFormField(
+            // Rich text (bold, italic, underline, lists); sent to the server as HTML, up to 2000 characters
+            RichTextFormField(
               controller: _description,
-              maxLength: 2000,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                labelText:
-                    'Description (why you made it, why it deserves to win) *',
-                alignLabelWithHint: true,
-              ),
-              validator: (v) => (v == null || v.trim().isEmpty)
-                  ? 'Please enter a description'
-                  : null,
+              label: 'Description *',
+              placeholder: 'Why you made it, why it deserves to win…',
+              compact: true,
+              requiredMessage: 'Please enter a description',
             ),
             const SizedBox(height: AppSpacing.md),
             Text('Accompanying text', style: text.titleSmall),

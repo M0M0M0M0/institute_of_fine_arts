@@ -22,12 +22,20 @@ class GradingDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(gradingDetailProvider(id));
     return Scaffold(
-      appBar: AppBar(title: const Text('Grade entry')),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        leadingWidth: 48,
+        titleSpacing: 0,
+        title: const Text('Grade entry'),
+      ),
       body: AsyncValueView(
         value: detail,
         onRetry: () => ref.invalidate(gradingDetailProvider(id)),
         // Keyed by RowVersion: after a conflict reload / delete the form is rebuilt with fresh data
-        data: (d) => _Body(key: ValueKey('${d.id}-${d.evaluation?.rowVersion}'), detail: d),
+        data: (d) => _Body(
+          key: ValueKey('${d.id}-${d.evaluation?.rowVersion}'),
+          detail: d,
+        ),
       ),
     );
   }
@@ -43,9 +51,9 @@ class _Body extends ConsumerStatefulWidget {
 }
 
 class _BodyState extends ConsumerState<_Body> {
-  late final TextEditingController _positive;
-  late final TextEditingController _negative;
-  late final TextEditingController _improvement;
+  late final RichTextController _positive;
+  late final RichTextController _negative;
+  late final RichTextController _improvement;
   SubmissionRating? _rating;
   bool _busy = false;
 
@@ -55,9 +63,9 @@ class _BodyState extends ConsumerState<_Body> {
   void initState() {
     super.initState();
     final ev = _d.evaluation;
-    _positive = TextEditingController(text: ev?.positivePoints ?? '');
-    _negative = TextEditingController(text: ev?.negativePoints ?? '');
-    _improvement = TextEditingController(text: ev?.improvementAreas ?? '');
+    _positive = RichTextController(stored: ev?.positivePoints);
+    _negative = RichTextController(stored: ev?.negativePoints);
+    _improvement = RichTextController(stored: ev?.improvementAreas);
     _rating = ev?.rating;
   }
 
@@ -69,19 +77,28 @@ class _BodyState extends ConsumerState<_Body> {
     super.dispose();
   }
 
-  void _toast(String text) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  void _toast(String text) =>
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
 
   // 409 = somebody else changed the data (BR-52): say so and reload the latest version
   void _handleError(Object e) {
     final err = ApiException.from(e);
-    _toast(err.statusCode == 409 ? '${err.message} The entry was reloaded with the latest version.' : err.message);
+    _toast(
+      err.statusCode == 409
+          ? '${err.message} The entry was reloaded with the latest version.'
+          : err.message,
+    );
     if (err.statusCode == 409) ref.invalidate(gradingDetailProvider(_d.id));
     setState(() => _busy = false);
   }
 
   /// Saves the evaluation (create, or update with RowVersion). [goNext] moves on to the next ungraded entry.
   Future<void> _save({required bool goNext}) async {
-    final error = validateEvaluation(_rating, _positive.text, _negative.text);
+    final error = validateEvaluation(
+      _rating,
+      _positive.plainText,
+      _negative.plainText,
+    );
     if (error != null) {
       _toast(error);
       return;
@@ -91,13 +108,15 @@ class _BodyState extends ConsumerState<_Body> {
     final id = _d.id;
     setState(() => _busy = true);
     try {
-      await ref.read(gradingRepositoryProvider).save(
+      await ref
+          .read(gradingRepositoryProvider)
+          .save(
             _d.id,
             EvaluationInput(
               rating: _rating!,
-              positivePoints: _positive.text.trim(),
-              negativePoints: _negative.text.trim(),
-              improvementAreas: _improvement.text.trim(),
+              positivePoints: _positive.html,
+              negativePoints: _negative.html,
+              improvementAreas: _improvement.html,
               rowVersion: _d.evaluation?.rowVersion,
             ),
           );
@@ -107,7 +126,9 @@ class _BodyState extends ConsumerState<_Body> {
       final nextId = goNext ? await _nextAfterSave() : null;
       if (!mounted) return;
       if (nextId != null) {
-        context.pushReplacement('${gradingBase(context)}/submissions/$nextId/evaluate');
+        context.pushReplacement(
+          '${gradingBase(context)}/submissions/$nextId/evaluate',
+        );
       } else {
         if (goNext) _toast('Every entry of this competition is graded.');
         context.pop();
@@ -138,12 +159,20 @@ class _BodyState extends ConsumerState<_Body> {
     final ev = _d.evaluation!;
     final ok = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => ArtDialog(
         title: const Text('Delete evaluation?'),
-        content: const Text('The evaluation of this entry will be removed and the entry goes back to "To grade".'),
+        content: const Text(
+          'The evaluation of this entry will be removed and the entry goes back to "To grade".',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('CANCEL'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('DELETE'),
+          ),
         ],
       ),
     );
@@ -151,7 +180,9 @@ class _BodyState extends ConsumerState<_Body> {
 
     setState(() => _busy = true);
     try {
-      await ref.read(gradingRepositoryProvider).deleteEvaluation(_d.id, ev.rowVersion);
+      await ref
+          .read(gradingRepositoryProvider)
+          .deleteEvaluation(_d.id, ev.rowVersion);
       if (!mounted) return;
       _toast('Evaluation deleted.');
       _invalidateAfterChange(ProviderScope.containerOf(context), _d.id);
@@ -163,9 +194,17 @@ class _BodyState extends ConsumerState<_Body> {
   Future<void> _download() async {
     setState(() => _busy = true);
     try {
-      final bytes = await ref.read(submissionRepositoryProvider).imageBytes(_d.id, download: true);
+      final bytes = await ref
+          .read(submissionRepositoryProvider)
+          .imageBytes(_d.id, download: true);
       final saved = await saveBytesAsFile(bytes, 'submission-${_d.id}.jpg');
-      if (mounted) _toast(saved ? 'Picture downloaded.' : 'Downloading is not supported on this platform (use Chrome).');
+      if (mounted) {
+        _toast(
+          saved
+              ? 'Picture downloaded.'
+              : 'Downloading is not supported on this platform (use Chrome).',
+        );
+      }
     } catch (e) {
       if (mounted) _toast(ApiException.from(e).message);
     } finally {
@@ -181,143 +220,211 @@ class _BodyState extends ConsumerState<_Body> {
     final disqualified = _rating == SubmissionRating.disqualified;
     final awarded = _rating == SubmissionRating.best;
 
-    return ListView(
-      padding: const EdgeInsets.all(AppSpacing.gutter),
-      children: [
-        // Large framed picture; tap to zoom
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
-            child: Semantics(
-              button: true,
-              label: 'Open ${d.title} full screen',
-              child: InkWell(
-                onTap: () => ArtworkViewer.open(
-                  context,
-                  ArtworkViewer.private(
-                    submissionId: d.id,
-                    title: d.title,
-                    subtitle: '${d.studentName} (${d.studentCode})',
-                  ),
+    final wide = MediaQuery.sizeOf(context).width >= AppLayout.wide;
+
+    // Left: the painting and what is known about it. Right: the evaluation. On a wide screen they sit side by
+    // side, so the teacher keeps the painting in view while writing; on a phone they follow each other.
+    final left = <Widget>[
+      // Large framed picture; tap to zoom
+      Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 440),
+          child: Semantics(
+            button: true,
+            label: 'Open ${d.title} full screen',
+            child: InkWell(
+              onTap: () => ArtworkViewer.open(
+                context,
+                ArtworkViewer.private(
+                  submissionId: d.id,
+                  title: d.title,
+                  subtitle: '${d.studentName} (${d.studentCode})',
                 ),
-                // The frame hugs the painting at its own proportions (portrait or landscape)
-                child: ArtworkFrame(
-                  awarded: awarded,
-                  aspectRatio: null,
-                  child: NaturalArtworkImage.private(submissionId: d.id, semanticLabel: d.title),
+              ),
+              // The frame hugs the painting at its own proportions (portrait or landscape)
+              child: ArtworkFrame(
+                awarded: awarded,
+                aspectRatio: null,
+                child: NaturalArtworkImage.private(
+                  submissionId: d.id,
+                  semanticLabel: d.title,
                 ),
               ),
             ),
           ),
         ),
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton.icon(
-            onPressed: _busy ? null : _download,
-            icon: const Icon(Icons.download, size: 18),
-            label: const Text('Download original'),
+      ),
+      Align(
+        alignment: Alignment.centerRight,
+        child: TextButton.icon(
+          onPressed: _busy ? null : _download,
+          icon: const Icon(Icons.download, size: 18),
+          label: const Text('DOWNLOAD ORIGINAL'),
+        ),
+      ),
+      Text(
+        d.title,
+        style: text.headlineSmall!.copyWith(fontStyle: FontStyle.italic),
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: StatusChip(d.competitionStatus),
+      ),
+      const SizedBox(height: AppSpacing.xs),
+      Text('${d.studentName} (${d.studentCode})', style: text.bodyLarge),
+      Text(d.competitionTitle, style: text.bodyMedium),
+      Text(
+        'Submitted ${formatDateTime(d.submittedAt)}'
+        '${d.updatedAt != null ? ' · edited ${formatDateTime(d.updatedAt!)}' : ''}',
+        style: text.bodySmall,
+      ),
+      const SizedBox(height: AppSpacing.xs),
+      ProgressBarRow(
+        label: 'Graded in this competition',
+        value: d.evaluated,
+        total: d.total,
+      ),
+      const SectionHeader(
+        'Description',
+        padding: EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.xs),
+      ),
+      RichTextView(d.description, style: text.bodyMedium),
+      SectionHeader(
+        textTypeName(d.textType),
+        padding: const EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.xs),
+      ),
+      Text(d.textContent),
+    ];
+    final right = <Widget>[
+      if (!wide) const Divider(height: AppSpacing.xxl),
+      SectionHeader(
+        'Evaluation',
+        padding: EdgeInsets.fromLTRB(
+          0,
+          wide ? 0 : AppSpacing.sm,
+          0,
+          AppSpacing.sm,
+        ),
+      ),
+      if (d.evaluation case final ev?)
+        Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+          child: Text(
+            'Graded by ${ev.evaluatedByName} on ${formatDateTime(ev.evaluatedAt)}',
+            style: text.bodySmall,
           ),
         ),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Text(d.title, style: text.headlineSmall!.copyWith(fontStyle: FontStyle.italic)),
+      // Not open for grading (competition still running, or results published): no form, just the result
+      if (!d.canEvaluate && d.evaluation != null)
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                StatusChip.rating(d.evaluation!.rating),
+                for (final (label, value) in [
+                  ('Strengths', d.evaluation!.positivePoints),
+                  ('Weaknesses', d.evaluation!.negativePoints),
+                  ('To improve', d.evaluation!.improvementAreas),
+                ])
+                  if (value != null && value.trim().isNotEmpty) ...[
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(label, style: text.titleSmall),
+                    RichTextView(value, style: text.bodyMedium),
+                  ],
+              ],
             ),
-            const SizedBox(width: AppSpacing.sm),
-            StatusChip(d.competitionStatus),
+          ),
+        ),
+      if (!d.canEvaluate && d.evaluation == null)
+        Text(
+          'Not graded yet.',
+          style: text.bodyMedium!.copyWith(color: AppColors.muted),
+        ),
+      if (d.canEvaluate) ...[
+        const SizedBox(height: AppSpacing.sm),
+        Text('Rating *', style: text.labelLarge),
+        const SizedBox(height: AppSpacing.xs),
+        RatingChips(
+          value: _rating,
+          onChanged: editable ? (v) => setState(() => _rating = v) : null,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        EvaluationTextFields(
+          positive: _positive,
+          negative: _negative,
+          improvement: _improvement,
+          disqualified: disqualified,
+          enabled: editable,
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Wrap(
+          spacing: AppSpacing.md,
+          runSpacing: AppSpacing.sm,
+          children: [
+            FilledButton.icon(
+              onPressed: editable ? () => _save(goNext: true) : null,
+              icon: _busy
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.skip_next),
+              label: const Text('SAVE & NEXT'),
+            ),
+            OutlinedButton.icon(
+              onPressed: editable ? () => _save(goNext: false) : null,
+              icon: const Icon(Icons.save_outlined),
+              label: const Text('SAVE'),
+            ),
+            // Only offered when it is allowed (no award, not sent to an exhibition)
+            if (d.evaluation != null && d.canDeleteEvaluation)
+              TextButton.icon(
+                onPressed: _busy ? null : _delete,
+                icon: const Icon(Icons.delete_outline),
+                label: const Text('DELETE EVALUATION'),
+                style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+              ),
           ],
         ),
-        const SizedBox(height: AppSpacing.xs),
-        Text('${d.studentName} (${d.studentCode})', style: text.bodyLarge),
-        Text(d.competitionTitle, style: text.bodyMedium),
-        Text(
-          'Submitted ${formatDateTime(d.submittedAt)}'
-          '${d.updatedAt != null ? ' · edited ${formatDateTime(d.updatedAt!)}' : ''}',
-          style: text.bodySmall,
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        ProgressBarRow(label: 'Graded in this competition', value: d.evaluated, total: d.total),
-        const SectionHeader('Description', padding: EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.xs)),
-        Text(d.description),
-        SectionHeader(textTypeName(d.textType), padding: const EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.xs)),
-        Text(d.textContent),
-        const Divider(height: AppSpacing.xxl),
-        Semantics(header: true, child: Text('Evaluation', style: text.titleLarge)),
-        const SizedBox(height: AppSpacing.sm),
-        if (d.evaluation case final ev?)
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-            child: Text('Graded by ${ev.evaluatedByName} on ${formatDateTime(ev.evaluatedAt)}', style: text.bodySmall),
-          ),
-        // Not open for grading (competition still running, or results published): no form, just the result
-        if (!d.canEvaluate && d.evaluation != null)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    StatusChip.rating(d.evaluation!.rating),
-                    for (final (label, value) in [
-                      ('Strengths', d.evaluation!.positivePoints),
-                      ('Weaknesses', d.evaluation!.negativePoints),
-                      ('To improve', d.evaluation!.improvementAreas),
-                    ])
-                      if (value != null && value.trim().isNotEmpty) ...[
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(label, style: text.titleSmall),
-                        Text(value),
-                      ],
-                  ],
-                ),
-              ),
-            ),
-        if (!d.canEvaluate && d.evaluation == null)
-          Text('Not graded yet.', style: text.bodyMedium!.copyWith(color: AppColors.muted)),
-        if (d.canEvaluate) ...[
-          const SizedBox(height: AppSpacing.sm),
-          Text('Rating *', style: text.labelLarge),
-          const SizedBox(height: AppSpacing.xs),
-          RatingChips(value: _rating, onChanged: editable ? (v) => setState(() => _rating = v) : null),
-          const SizedBox(height: AppSpacing.md),
-          EvaluationTextFields(
-            positive: _positive,
-            negative: _negative,
-            improvement: _improvement,
-            disqualified: disqualified,
-            enabled: editable,
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Wrap(
-            spacing: AppSpacing.md,
-            runSpacing: AppSpacing.sm,
-            children: [
-              FilledButton.icon(
-                onPressed: editable ? () => _save(goNext: true) : null,
-                icon: _busy
-                    ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
-                    : const Icon(Icons.skip_next),
-                label: const Text('Save & next'),
-              ),
-              OutlinedButton.icon(
-                onPressed: editable ? () => _save(goNext: false) : null,
-                icon: const Icon(Icons.save_outlined),
-                label: const Text('Save'),
-              ),
-              // Only offered when it is allowed (no award, not sent to an exhibition)
-              if (d.evaluation != null && d.canDeleteEvaluation)
-                TextButton.icon(
-                  onPressed: _busy ? null : _delete,
-                  icon: const Icon(Icons.delete_outline),
-                  label: const Text('Delete evaluation'),
-                  style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-                ),
-            ],
-          ),
-        ],
-        const SizedBox(height: AppSpacing.lg),
       ],
+      const SizedBox(height: AppSpacing.lg),
+    ];
+
+    return ListView(
+      padding: readingPadding(
+        context,
+        maxWidth: wide ? 1040 : 720,
+        top: AppSpacing.gutter,
+        bottom: AppSpacing.gutter,
+      ),
+      children: wide
+          ? [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    flex: 5,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: left,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.xxl),
+                  Expanded(
+                    flex: 5,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: right,
+                    ),
+                  ),
+                ],
+              ),
+            ]
+          : [...left, ...right],
     );
   }
 }

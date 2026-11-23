@@ -13,33 +13,54 @@ import 'exhibitions.dart';
 /// Staff "Exhibitions" tab: exhibitions + submitted artworks (F-M09-01, 02, 09).
 /// [initialView] comes from the Home cards: `pending` (proposals to review) or `unpaid`
 /// (sales to pay out) opens the artworks list with that filter.
-class StaffExhibitionsTab extends StatelessWidget {
+class StaffExhibitionsTab extends StatefulWidget {
   const StaffExhibitionsTab({super.key, this.initialView});
 
   final String? initialView;
 
   @override
+  State<StaffExhibitionsTab> createState() => _StaffExhibitionsTabState();
+}
+
+enum _StaffTab { exhibitions, artworks }
+
+class _StaffExhibitionsTabState extends State<StaffExhibitionsTab> {
+  // The Home cards open the artworks list straight away
+  late _StaffTab _tab = (widget.initialView == 'pending' || widget.initialView == 'unpaid')
+      ? _StaffTab.artworks
+      : _StaffTab.exhibitions;
+
+  @override
   Widget build(BuildContext context) {
-    final entries = initialView == 'pending' || initialView == 'unpaid';
-    return DefaultTabController(
-      length: 2,
-      initialIndex: entries ? 1 : 0,
-      child: Column(
-        children: [
-          const TabBar(tabs: [Tab(text: 'Exhibitions'), Tab(text: 'Artworks')]),
-          Expanded(
-            child: TabBarView(children: [
-              const _StaffExhibitionList(),
-              _StaffEntriesList(
+    final width = MediaQuery.sizeOf(context).width;
+    final initialView = widget.initialView;
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: AppLayout.gutterFor(width)),
+          child: SegmentTabs<_StaffTab>(
+            values: _StaffTab.values,
+            selected: _tab,
+            expand: width < AppLayout.wide,
+            labelOf: (t) => switch (t) {
+              _StaffTab.exhibitions => 'Exhibitions',
+              _StaffTab.artworks => 'Artworks',
+            },
+            onSelected: (t) => setState(() => _tab = t),
+          ),
+        ),
+        Expanded(
+          child: switch (_tab) {
+            _StaffTab.exhibitions => const _StaffExhibitionList(),
+            _StaffTab.artworks => _StaffEntriesList(
                 initialStatus: initialView == 'pending'
                     ? EntryStatus.pending
                     : (initialView == 'unpaid' ? EntryStatus.sold : null),
                 initialPaid: initialView == 'unpaid' ? false : null,
               ),
-            ]),
-          ),
-        ],
-      ),
+          },
+        ),
+      ],
     );
   }
 }
@@ -65,11 +86,12 @@ class _StaffExhibitionListState extends ConsumerState<_StaffExhibitionList> {
   @override
   Widget build(BuildContext context) {
     final list = ref.watch(staffExhibitionsProvider);
-    final text = Theme.of(context).textTheme;
+    final width = MediaQuery.sizeOf(context).width;
+    final gutter = AppLayout.gutterFor(width);
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, AppSpacing.md, AppSpacing.gutter, 0),
+          padding: EdgeInsets.fromLTRB(gutter, AppSpacing.lg, gutter, AppSpacing.md),
           child: Row(children: [
             Expanded(
               child: TextField(
@@ -78,30 +100,26 @@ class _StaffExhibitionListState extends ConsumerState<_StaffExhibitionList> {
                 onChanged: (v) => setState(() => _q = v.trim().toLowerCase()),
               ),
             ),
-            const SizedBox(width: AppSpacing.sm),
+            const SizedBox(width: AppSpacing.md),
             FilledButton.icon(
+              style: FilledButton.styleFrom(minimumSize: const Size(0, 46)),
               onPressed: () => context.push('/staff/exhibitions/new'),
-              icon: const Icon(Icons.add),
-              label: const Text('New'),
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('NEW'),
             ),
           ]),
         ),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-          child: Row(children: [
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.xs),
-              child: ChoiceChip(label: const Text('All'), selected: _status == null, onSelected: (_) => setState(() => _status = null)),
-            ),
-            // No "Cancelled" filter: this system has no cancelled exhibitions
-            for (final s in ExhibitionStatus.values.where((s) => s != ExhibitionStatus.cancelled))
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.xs),
-                child: ChoiceChip(label: Text(s.label), selected: _status == s, onSelected: (_) => setState(() => _status = s)),
-              ),
-          ]),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: gutter),
+          // No "Cancelled" filter: this system has no cancelled exhibitions
+          child: FilterTabs<ExhibitionStatus?>(
+            values: [null, ...ExhibitionStatus.values.where((s) => s != ExhibitionStatus.cancelled)],
+            selected: _status,
+            labelOf: (s) => s?.label ?? 'All',
+            onSelected: (s) => setState(() => _status = s),
+          ),
         ),
+        const SizedBox(height: AppSpacing.lg),
         Expanded(
           child: AsyncValueView(
             value: list,
@@ -119,52 +137,71 @@ class _StaffExhibitionListState extends ConsumerState<_StaffExhibitionList> {
                 },
                 child: items.isEmpty
                     ? _emptyList('No matching exhibitions')
-                    : ListView.builder(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.all(AppSpacing.gutter),
-                        itemCount: items.length,
-                        itemBuilder: (context, i) {
-                          final e = items[i];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: AppSpacing.md),
-                            child: InkWell(
-                              onTap: () => context.push('/staff/exhibitions/${e.id}'),
-                              child: Padding(
-                                padding: const EdgeInsets.all(AppSpacing.md),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                      Expanded(child: Text(e.name, style: text.titleMedium)),
-                                      const SizedBox(width: AppSpacing.sm),
-                                      StatusChip.exhibition(e.status),
-                                    ]),
-                                    const SizedBox(height: AppSpacing.xs),
-                                    Row(children: [
-                                      const Icon(Icons.place_outlined, size: 16, color: AppColors.muted),
-                                      const SizedBox(width: 4),
-                                      Expanded(child: Text('${e.venue}, ${e.city}', style: text.bodyMedium)),
-                                    ]),
-                                    Text(dateRange(e.startDate, e.endDate), style: text.bodySmall),
-                                    const SizedBox(height: AppSpacing.xs),
-                                    Text(
-                                      '${e.entryCount} ${e.entryCount == 1 ? 'artwork' : 'artworks'}'
-                                      '${e.pendingCount > 0 ? ' · ${e.pendingCount} to review' : ''}',
-                                      style: text.labelMedium!.copyWith(
-                                          color: e.pendingCount > 0 ? AppColors.brassText : AppColors.muted),
-                                    ),
-                                  ],
-                                ),
+                    : width >= AppLayout.wide
+                        // Columns on wide screens
+                        ? ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+                            children: [
+                              AdaptiveTileGrid(
+                                minTileWidth: 300,
+                                maxColumns: 3,
+                                spacing: AppSpacing.xl,
+                                children: [for (final e in items) _StaffExhibitionCard(exhibition: e)],
                               ),
-                            ),
-                          );
-                        },
-                      ),
+                            ],
+                          )
+                        : ListView.separated(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: EdgeInsets.fromLTRB(gutter, 0, gutter, AppSpacing.xl),
+                            itemCount: items.length,
+                            separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
+                            itemBuilder: (context, i) => _StaffExhibitionCard(exhibition: items[i]),
+                          ),
               );
             },
           ),
         ),
       ],
+    );
+  }
+}
+
+/// One exhibition of the staff list as a wall label: a hairline above, then name, status, venue, dates and counts.
+class _StaffExhibitionCard extends StatelessWidget {
+  const _StaffExhibitionCard({required this.exhibition});
+
+  final ExhibitionSummary exhibition;
+
+  @override
+  Widget build(BuildContext context) {
+    final e = exhibition;
+    final text = Theme.of(context).textTheme;
+    return InkWell(
+      onTap: () => context.push('/staff/exhibitions/${e.id}'),
+      child: DecoratedBox(
+        decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.line))),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              StatusChip.exhibition(e.status),
+              const SizedBox(height: AppSpacing.sm),
+              Text(e.name, style: text.titleMedium),
+              const SizedBox(height: 2),
+              Text('${e.venue}, ${e.city}', style: text.bodyMedium),
+              Text(dateRange(e.startDate, e.endDate), style: text.bodySmall),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                '${e.entryCount} ${e.entryCount == 1 ? 'artwork' : 'artworks'}'
+                '${e.pendingCount > 0 ? ' · ${e.pendingCount} to review' : ''}',
+                style: text.labelMedium!.copyWith(color: e.pendingCount > 0 ? AppColors.brassText : AppColors.muted),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -200,10 +237,14 @@ class _StaffEntriesListState extends ConsumerState<_StaffEntriesList> {
   Widget build(BuildContext context) {
     final filter = EntryFilter(status: _status, paid: _paid, q: _q);
     final list = ref.watch(entriesProvider(filter));
+    final width = MediaQuery.sizeOf(context).width;
+    final gutter = AppLayout.gutterFor(width);
+    // Index of the quick filter that matches the current status / paid pair (-1 when none does)
+    final current = _quick.indexWhere((q) => q.$2 == _status && q.$3 == _paid);
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, AppSpacing.md, AppSpacing.gutter, 0),
+          padding: EdgeInsets.fromLTRB(gutter, AppSpacing.lg, gutter, AppSpacing.md),
           child: TextField(
             decoration: const InputDecoration(
                 hintText: 'Search student, code or title', prefixIcon: Icon(Icons.search), isDense: true),
@@ -213,24 +254,19 @@ class _StaffEntriesListState extends ConsumerState<_StaffEntriesList> {
             },
           ),
         ),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm),
-          child: Row(children: [
-            for (final (label, status, paid) in _quick)
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.xs),
-                child: ChoiceChip(
-                  label: Text(label),
-                  selected: _status == status && _paid == paid,
-                  onSelected: (_) => setState(() {
-                    _status = status;
-                    _paid = paid;
-                  }),
-                ),
-              ),
-          ]),
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: gutter),
+          child: FilterTabs<int>(
+            values: List.generate(_quick.length, (i) => i),
+            selected: current,
+            labelOf: (i) => _quick[i].$1,
+            onSelected: (i) => setState(() {
+              _status = _quick[i].$2;
+              _paid = _quick[i].$3;
+            }),
+          ),
         ),
+        const SizedBox(height: AppSpacing.lg),
         Expanded(
           child: AsyncValueView(
             value: list,
@@ -242,12 +278,26 @@ class _StaffEntriesListState extends ConsumerState<_StaffEntriesList> {
               },
               child: items.isEmpty
                   ? _emptyList('No matching artworks')
-                  : ListView.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.all(AppSpacing.gutter),
-                      itemCount: items.length,
-                      itemBuilder: (context, i) => EntryListCard(item: items[i]),
-                    ),
+                  : width >= AppLayout.wide
+                      // Two columns of artworks on wide screens
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+                          children: [
+                            AdaptiveTileGrid(
+                              minTileWidth: 440,
+                              maxColumns: 2,
+                              spacing: AppSpacing.xl,
+                              children: [for (final e in items) EntryListCard(item: e)],
+                            ),
+                          ],
+                        )
+                      : ListView.builder(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: EdgeInsets.fromLTRB(gutter, 0, gutter, AppSpacing.xl),
+                          itemCount: items.length,
+                          itemBuilder: (context, i) => EntryListCard(item: items[i]),
+                        ),
             ),
           ),
         ),
@@ -267,12 +317,13 @@ class EntryListCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final e = item;
     final text = Theme.of(context).textTheme;
-    return Card(
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: InkWell(
-        onTap: () => context.push('/staff/exhibition-entries/${e.id}'),
+    // No card chrome: a hairline above each artwork, like the rows of the student's own entries
+    return InkWell(
+      onTap: () => context.push('/staff/exhibition-entries/${e.id}'),
+      child: DecoratedBox(
+        decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.line))),
         child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -361,12 +412,12 @@ class _StaffExhibitionDetailScreenState extends ConsumerState<StaffExhibitionDet
   Future<bool> _confirm(String title, String message, String ok) async =>
       await showDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (context) => ArtDialog(
           title: Text(title),
           content: Text(message),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Close')),
-            FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(ok)),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CLOSE')),
+            FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(ok.toUpperCase())),
           ],
         ),
       ) ??
@@ -409,12 +460,12 @@ class _StaffExhibitionDetailScreenState extends ConsumerState<StaffExhibitionDet
     final entries = ref.watch(entriesProvider(EntryFilter(exhibitionId: widget.id)));
     final text = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Exhibition')),
+      appBar: AppBar(leading: const AppBackButton(), leadingWidth: 48, titleSpacing: 0, title: const Text('Exhibition')),
       body: AsyncValueView(
         value: detail,
         onRetry: () => ref.invalidate(staffExhibitionProvider(widget.id)),
         data: (e) => ListView(
-          padding: const EdgeInsets.all(AppSpacing.gutter),
+          padding: readingPadding(context, top: AppSpacing.gutter, bottom: AppSpacing.gutter),
           children: [
             Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Expanded(child: Text(e.name, style: text.headlineSmall)),
@@ -493,7 +544,7 @@ class ExhibitionFormScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: Text(id == null ? 'New exhibition' : 'Edit exhibition')),
+      appBar: AppBar(leading: const AppBackButton(), leadingWidth: 48, titleSpacing: 0, title: Text(id == null ? 'New exhibition' : 'Edit exhibition')),
       body: id == null
           ? const _ExhibitionForm()
           : AsyncValueView(
@@ -588,7 +639,7 @@ class _ExhibitionFormState extends ConsumerState<_ExhibitionForm> {
   Widget build(BuildContext context) {
     final today = todayDate();
     return ListView(
-      padding: const EdgeInsets.all(AppSpacing.gutter),
+      padding: readingPadding(context, top: AppSpacing.gutter, bottom: AppSpacing.gutter),
       children: [
         TextField(controller: _name, maxLength: 200, decoration: const InputDecoration(labelText: 'Exhibition name *')),
         const SizedBox(height: AppSpacing.sm),
@@ -690,9 +741,9 @@ class _DirectEntryScreenState extends ConsumerState<DirectEntryScreen> {
     // The list depends on the search text; a plain FutureBuilder is enough since only this screen uses it
     final repo = ref.read(exhibitionRepositoryProvider);
     return Scaffold(
-      appBar: AppBar(title: const Text('Add artwork')),
+      appBar: AppBar(leading: const AppBackButton(), leadingWidth: 48, titleSpacing: 0, title: const Text('Add artwork')),
       body: ListView(
-        padding: const EdgeInsets.all(AppSpacing.gutter),
+        padding: readingPadding(context, top: AppSpacing.gutter, bottom: AppSpacing.gutter),
         children: [
           TextField(
             controller: _search,
@@ -769,7 +820,7 @@ Future<String?> askReason(BuildContext context, {required String title, required
     builder: (context) {
       String? error;
       return StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
+        builder: (context, setState) => ArtDialog(
           title: Text(title),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -785,7 +836,7 @@ Future<String?> askReason(BuildContext context, {required String title, required
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+            TextButton(onPressed: () => Navigator.pop(context), child: const Text('CLOSE')),
             FilledButton(
               onPressed: () {
                 final text = controller.text.trim();
@@ -795,7 +846,7 @@ Future<String?> askReason(BuildContext context, {required String title, required
                 }
                 Navigator.pop(context, text);
               },
-              child: const Text('Confirm'),
+              child: const Text('CONFIRM'),
             ),
           ],
         ),

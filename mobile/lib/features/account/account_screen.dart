@@ -37,52 +37,88 @@ class AccountScreen extends ConsumerWidget {
     final user = ref.watch(accountProfileProvider).value ?? signedIn;
     final isStudent = (user ?? signedIn)?.role == Role.student;
     final text = Theme.of(context).textTheme;
+    final gutter = AppLayout.gutterFor(MediaQuery.sizeOf(context).width);
 
-    Widget row(IconData icon, String label, String? value) => value == null || value.isEmpty
+    // One fact: small-caps name on the left, value on the right, a hairline above (like the competition details)
+    Widget row(String label, String? value) => value == null || value.isEmpty
         ? const SizedBox.shrink()
-        : ListTile(
-            leading: Icon(icon, color: AppColors.muted),
-            title: Text(label, style: text.bodySmall),
-            subtitle: Text(value, style: text.bodyLarge),
+        : DecoratedBox(
+            decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.line))),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  SizedBox(
+                    width: 150,
+                    child: Text(
+                      label.toUpperCase(),
+                      style: text.labelSmall!.copyWith(color: AppColors.muted, letterSpacing: 1.4),
+                    ),
+                  ),
+                  Expanded(child: Text(value, style: text.bodyLarge!.copyWith(fontWeight: FontWeight.w500))),
+                ],
+              ),
+            ),
           );
 
     return TabScaffold(
       title: 'Account',
       body: ListView(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg),
+        padding: EdgeInsets.fromLTRB(gutter, AppSpacing.lg, gutter, AppSpacing.xl),
         children: [
-          if (user != null) ...[
-            Center(
-              child: Semantics(
-                label: 'Avatar of ${user.fullName}',
-                excludeSemantics: true,
-                child: CircleAvatar(
-                  radius: 40,
-                  backgroundColor: AppColors.ink,
-                  foregroundColor: Colors.white,
-                  child: Text(initialsOf(user.fullName), style: text.headlineSmall!.copyWith(color: Colors.white)),
-                ),
+          // The page stays a readable column even on a wide screen
+          Align(
+            alignment: Alignment.topLeft,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 560),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (user != null) ...[
+                    Row(
+                      children: [
+                        Semantics(
+                          label: 'Avatar of ${user.fullName}',
+                          excludeSemantics: true,
+                          child: Container(
+                            width: 72,
+                            height: 72,
+                            alignment: Alignment.center,
+                            color: AppColors.ink,
+                            child: Text(
+                              initialsOf(user.fullName),
+                              style: text.headlineSmall!.copyWith(color: AppColors.stone, letterSpacing: 1),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Semantics(header: true, child: Text(user.fullName, style: text.headlineMedium)),
+                              Text('@${user.username}', style: text.bodyMedium!.copyWith(color: AppColors.muted)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.xl),
+                    row(isStudent ? 'Student code' : 'Staff code', user.code),
+                    row('Email', user.email),
+                    if (isStudent) row('Class', user.className) else row('Position', user.position),
+                    const Divider(height: 1),
+                  ],
+                  const SizedBox(height: AppSpacing.xl),
+                  OutlinedButton.icon(
+                    onPressed: () => ref.read(authControllerProvider.notifier).logout(),
+                    icon: const Icon(Icons.logout, size: 18),
+                    label: const Text('SIGN OUT'),
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(user.fullName, style: text.headlineSmall, textAlign: TextAlign.center),
-            Text('@${user.username}', style: text.bodyMedium, textAlign: TextAlign.center),
-            const SizedBox(height: AppSpacing.lg),
-            const Divider(height: 1),
-            row(Icons.badge_outlined, isStudent ? 'Student code' : 'Staff code', user.code),
-            row(Icons.mail_outline, 'Email', user.email),
-            if (isStudent)
-              row(Icons.school_outlined, 'Class', user.className)
-            else
-              row(Icons.work_outline, 'Position', user.position),
-          ],
-          const Divider(height: AppSpacing.xl),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
-            child: OutlinedButton.icon(
-              onPressed: () => ref.read(authControllerProvider.notifier).logout(),
-              icon: const Icon(Icons.logout),
-              label: const Text('Sign out'),
             ),
           ),
         ],

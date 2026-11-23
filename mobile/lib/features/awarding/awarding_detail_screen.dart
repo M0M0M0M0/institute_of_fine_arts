@@ -22,7 +22,7 @@ class AwardingDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(awardingDetailProvider(competitionId));
     return Scaffold(
-      appBar: AppBar(title: const Text('Awards')),
+      appBar: AppBar(leading: const AppBackButton(), leadingWidth: 48, titleSpacing: 0, title: const Text('Awards')),
       body: AsyncValueView(
         value: detail,
         onRetry: () => ref.invalidate(awardingDetailProvider(competitionId)),
@@ -151,12 +151,12 @@ class _BodyState extends ConsumerState<_Body> {
 
   Future<bool?> _confirm(String title, String text, String action) => showDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (context) => ArtDialog(
           title: Text(title),
           content: Text(text),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-            FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(action)),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
+            FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(action.toUpperCase())),
           ],
         ),
       );
@@ -180,16 +180,13 @@ class _BodyState extends ConsumerState<_Body> {
       },
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(AppSpacing.gutter),
+        padding: readingPadding(context, top: AppSpacing.gutter, bottom: AppSpacing.gutter),
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: Text(d.title, style: text.headlineSmall)),
-              const SizedBox(width: AppSpacing.sm),
-              StatusChip(d.status),
-            ],
-          ),
+          // The status sits under the title (a chip beside it squeezed long titles onto two lines)
+          Text(d.title, style: text.headlineSmall),
+          const SizedBox(height: AppSpacing.sm),
+          Align(alignment: Alignment.centerLeft, child: StatusChip(d.status)),
+          const SizedBox(height: AppSpacing.xs),
           if (d.publishedAt != null)
             Text('Published ${formatDateTime(d.publishedAt!)}', style: text.bodySmall),
           if (d.adjustedAt != null) AdjustedLabel(d.adjustedAt!),
@@ -356,10 +353,12 @@ class _SlotCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 14,
-                  backgroundColor: AppColors.brass,
-                  foregroundColor: Colors.white,
+                // Gold, silver or bronze square with the rank, like the frames in the gallery
+                Container(
+                  width: 28,
+                  height: 28,
+                  alignment: Alignment.center,
+                  color: AppColors.medalFor(slot.rank),
                   child: Text('${slot.rank}', style: text.labelMedium!.copyWith(color: Colors.white)),
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -375,6 +374,7 @@ class _SlotCard extends StatelessWidget {
             for (final a in slot.issued)
               _IssuedTile(
                 award: a,
+                rank: slot.rank,
                 published: published,
                 canMarkDelivered: canMarkDelivered,
                 canAdjustEvaluation: canAdjustEvaluation,
@@ -414,9 +414,13 @@ class _IssuedTile extends StatelessWidget {
     required this.onRevoke,
     required this.onDelivery,
     required this.onAdjust,
+    this.rank,
   });
 
   final IssuedAward award;
+
+  /// Rank of the prize slot (1 gold, 2 silver, 3 bronze) for the frame.
+  final int? rank;
   final bool published;
   final bool canMarkDelivered;
   final bool canAdjustEvaluation;
@@ -458,6 +462,7 @@ class _IssuedTile extends StatelessWidget {
             width: 84,
             child: ArtworkFrame(
               awarded: a.isActive,
+              awardRank: rank,
               aspectRatio: 1,
               matWidth: 5,
               child: a.hasThumbnail
@@ -579,12 +584,17 @@ class _IssueDialogState extends ConsumerState<_IssueDialog> {
     );
   }
 
+  void _choose(int submissionId) => setState(() {
+        _selected = submissionId;
+        _error = null;
+      });
+
   Widget _thumb(int submissionId, bool hasThumbnail, String title) => SizedBox(
-        width: 56,
-        height: 56,
+        width: 64,
+        height: 64,
         child: ArtworkFrame(
           aspectRatio: null,
-          matWidth: 3,
+          matWidth: 4,
           child: hasThumbnail
               ? AuthImage(submissionId: submissionId, semanticLabel: title)
               : const ImagePlaceholder(),
@@ -595,7 +605,7 @@ class _IssueDialogState extends ConsumerState<_IssueDialog> {
   Widget build(BuildContext context) {
     final candidates = ref.watch(awardCandidatesProvider(widget.competitionId));
     final current = widget.current;
-    return AlertDialog(
+    return ArtDialog(
       title: Text(widget.title),
       content: SizedBox(
         width: double.maxFinite,
@@ -605,38 +615,32 @@ class _IssueDialogState extends ConsumerState<_IssueDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               switch (candidates) {
-                AsyncData(:final value) => RadioGroup<int>(
-                    groupValue: _selected,
-                    onChanged: (v) => setState(() {
-                      _selected = v;
-                      _error = null;
-                    }),
-                    child: Column(
-                      children: [
-                        // When editing, the current winner is no longer a candidate, so list it first
-                        if (current != null)
-                          RadioListTile<int>(
-                            contentPadding: EdgeInsets.zero,
-                            value: current.submissionId,
-                            title: Text(current.submissionTitle, maxLines: 2, overflow: TextOverflow.ellipsis),
-                            subtitle: Text('${current.studentName} (${current.studentCode}) · current'),
-                            secondary: _thumb(current.submissionId, current.hasThumbnail, current.submissionTitle),
-                          ),
-                        for (final c in value)
-                          RadioListTile<int>(
-                            contentPadding: EdgeInsets.zero,
-                            value: c.submissionId,
-                            title: Text(c.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-                            subtitle: Text('${c.studentName} (${c.studentCode}) · ${ratingName(c.rating)}'),
-                            secondary: _thumb(c.submissionId, c.hasThumbnail, c.title),
-                          ),
-                        if (value.isEmpty && current == null)
-                          const Padding(
-                            padding: EdgeInsets.all(AppSpacing.sm),
-                            child: Text('No eligible entries left (graded, not disqualified and without an award).'),
-                          ),
-                      ],
-                    ),
+                AsyncData(:final value) => Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // When editing, the current winner is no longer a candidate, so list it first
+                      if (current != null)
+                        _CandidateTile(
+                          selected: _selected == current.submissionId,
+                          onTap: () => _choose(current.submissionId),
+                          thumb: _thumb(current.submissionId, current.hasThumbnail, current.submissionTitle),
+                          title: current.submissionTitle,
+                          subtitle: '${current.studentName} (${current.studentCode}) · current',
+                        ),
+                      for (final c in value)
+                        _CandidateTile(
+                          selected: _selected == c.submissionId,
+                          onTap: () => _choose(c.submissionId),
+                          thumb: _thumb(c.submissionId, c.hasThumbnail, c.title),
+                          title: c.title,
+                          subtitle: '${c.studentName} (${c.studentCode}) · ${ratingName(c.rating)}',
+                        ),
+                      if (value.isEmpty && current == null)
+                        const Padding(
+                          padding: EdgeInsets.all(AppSpacing.sm),
+                          child: Text('No eligible entries left (graded, not disqualified and without an award).'),
+                        ),
+                    ],
                   ),
                 AsyncError(:final error) => Text(ApiException.from(error).message),
                 _ => const Padding(
@@ -664,9 +668,71 @@ class _IssueDialogState extends ConsumerState<_IssueDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        FilledButton(onPressed: _submit, child: const Text('Save')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
+        FilledButton(onPressed: _submit, child: const Text('SAVE')),
       ],
+    );
+  }
+}
+
+/// One entry the award can go to: its picture, title and student. The chosen one has a brass border and a tick.
+/// (Replaces a list of radio buttons: the picture is what the choice is about.)
+class _CandidateTile extends StatelessWidget {
+  const _CandidateTile({
+    required this.selected,
+    required this.onTap,
+    required this.thumb,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final bool selected;
+  final VoidCallback onTap;
+  final Widget thumb;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Semantics(
+      inMutuallyExclusiveGroup: true,
+      selected: selected,
+      button: true,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.all(AppSpacing.sm),
+            decoration: BoxDecoration(
+              color: selected ? AppColors.mist : null,
+              border: Border.all(color: selected ? AppColors.brass : AppColors.line, width: selected ? 2 : 1),
+            ),
+            child: Row(
+              children: [
+                thumb,
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: text.titleSmall!.copyWith(fontStyle: FontStyle.italic, fontWeight: FontWeight.w500),
+                      ),
+                      Text(subtitle, style: text.bodySmall, maxLines: 2, overflow: TextOverflow.ellipsis),
+                    ],
+                  ),
+                ),
+                if (selected) const Icon(Icons.check, color: AppColors.brassText),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -688,7 +754,7 @@ class _PublishDialogState extends State<_PublishDialog> {
   Widget build(BuildContext context) {
     final empty = widget.detail.emptySlots;
     final canConfirm = empty == 0 || _confirmEmpty;
-    return AlertDialog(
+    return ArtDialog(
       title: const Text('Publish results?'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -710,8 +776,8 @@ class _PublishDialogState extends State<_PublishDialog> {
         ],
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        FilledButton(onPressed: canConfirm ? () => Navigator.pop(context, _confirmEmpty) : null, child: const Text('Publish')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
+        FilledButton(onPressed: canConfirm ? () => Navigator.pop(context, _confirmEmpty) : null, child: const Text('PUBLISH')),
       ],
     );
   }
@@ -740,7 +806,7 @@ class _ReasonDialogState extends State<_ReasonDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
+    return ArtDialog(
       title: Text(widget.title),
       content: TextField(
         controller: _controller,
@@ -749,7 +815,7 @@ class _ReasonDialogState extends State<_ReasonDialog> {
         decoration: InputDecoration(labelText: widget.label, errorText: _error),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
         FilledButton(
           onPressed: () {
             final error = validateReason(_controller.text);
@@ -759,7 +825,7 @@ class _ReasonDialogState extends State<_ReasonDialog> {
             }
             Navigator.pop(context, _controller.text.trim());
           },
-          child: const Text('Confirm'),
+          child: const Text('CONFIRM'),
         ),
       ],
     );

@@ -10,7 +10,9 @@ import '../submissions/submissions.dart';
 /// Route prefix of the grading screens: `/teacher` for a teacher (who grades), `/staff` for staff (published
 /// results, read only). Taken from the current location, so the same screens serve both shells.
 String gradingBase(BuildContext context) =>
-    GoRouterState.of(context).matchedLocation.startsWith('/teacher') ? '/teacher' : '/staff';
+    GoRouterState.of(context).matchedLocation.startsWith('/teacher')
+    ? '/teacher'
+    : '/staff';
 
 // ---------------- Model (khớp DTO của API chấm bài) ----------------
 
@@ -35,7 +37,8 @@ class GradingCompetition {
   final int submissionCount;
   final int evaluatedCount;
 
-  factory GradingCompetition.fromJson(Map<String, dynamic> json) => GradingCompetition(
+  factory GradingCompetition.fromJson(Map<String, dynamic> json) =>
+      GradingCompetition(
         id: json['id'] as int,
         title: json['title'] as String,
         endDate: DateTime.parse(json['endDate'] as String),
@@ -70,14 +73,16 @@ class GradingItem {
   bool get isEvaluated => rating != null;
 
   factory GradingItem.fromJson(Map<String, dynamic> json) => GradingItem(
-        id: json['id'] as int,
-        title: json['title'] as String,
-        studentName: json['studentName'] as String,
-        studentCode: json['studentCode'] as String,
-        submittedAt: DateTime.parse(json['submittedAt'] as String),
-        rating: json['rating'] == null ? null : ratingFromJson(json['rating'] as String),
-        hasThumbnail: (json['hasThumbnail'] as bool?) ?? true,
-      );
+    id: json['id'] as int,
+    title: json['title'] as String,
+    studentName: json['studentName'] as String,
+    studentCode: json['studentCode'] as String,
+    submittedAt: DateTime.parse(json['submittedAt'] as String),
+    rating: json['rating'] == null
+        ? null
+        : ratingFromJson(json['rating'] as String),
+    hasThumbnail: (json['hasThumbnail'] as bool?) ?? true,
+  );
 }
 
 /// Danh sách bài của một cuộc thi; [total]/[evaluated] là tiến độ cả cuộc thi, không phụ thuộc bộ lọc.
@@ -99,13 +104,15 @@ class GradingList {
   final List<GradingItem> items;
 
   factory GradingList.fromJson(Map<String, dynamic> json) => GradingList(
-        competitionId: json['competitionId'] as int,
-        competitionTitle: json['competitionTitle'] as String,
-        status: statusFromJson(json['status'] as String),
-        total: json['total'] as int,
-        evaluated: json['evaluated'] as int,
-        items: (json['items'] as List).map((e) => GradingItem.fromJson(e as Map<String, dynamic>)).toList(),
-      );
+    competitionId: json['competitionId'] as int,
+    competitionTitle: json['competitionTitle'] as String,
+    status: statusFromJson(json['status'] as String),
+    total: json['total'] as int,
+    evaluated: json['evaluated'] as int,
+    items: (json['items'] as List)
+        .map((e) => GradingItem.fromJson(e as Map<String, dynamic>))
+        .toList(),
+  );
 }
 
 /// Đánh giá hiện có; [rowVersion] gửi lại khi sửa/xóa để server phát hiện xung đột (BR-52).
@@ -128,7 +135,8 @@ class StaffEvaluation {
   final DateTime evaluatedAt;
   final String rowVersion;
 
-  factory StaffEvaluation.fromJson(Map<String, dynamic> json) => StaffEvaluation(
+  factory StaffEvaluation.fromJson(Map<String, dynamic> json) =>
+      StaffEvaluation(
         rating: ratingFromJson(json['rating'] as String),
         positivePoints: json['positivePoints'] as String?,
         negativePoints: json['negativePoints'] as String?,
@@ -188,28 +196,30 @@ class GradingDetail {
   final int evaluated;
 
   factory GradingDetail.fromJson(Map<String, dynamic> json) => GradingDetail(
-        id: json['id'] as int,
-        competitionId: json['competitionId'] as int,
-        competitionTitle: json['competitionTitle'] as String,
-        competitionStatus: statusFromJson(json['competitionStatus'] as String),
-        title: json['title'] as String,
-        description: json['description'] as String,
-        textType: textTypeFromJson(json['textType'] as String),
-        textContent: json['textContent'] as String,
-        studentName: json['studentName'] as String,
-        studentCode: json['studentCode'] as String,
-        submittedAt: DateTime.parse(json['submittedAt'] as String),
-        updatedAt: json['updatedAt'] == null ? null : DateTime.parse(json['updatedAt'] as String),
-        canEvaluate: json['canEvaluate'] as bool,
-        canDeleteEvaluation: json['canDeleteEvaluation'] as bool,
-        lockReason: json['lockReason'] as String?,
-        evaluation: json['evaluation'] == null
-            ? null
-            : StaffEvaluation.fromJson(json['evaluation'] as Map<String, dynamic>),
-        nextUnevaluatedId: json['nextUnevaluatedId'] as int?,
-        total: json['total'] as int,
-        evaluated: json['evaluated'] as int,
-      );
+    id: json['id'] as int,
+    competitionId: json['competitionId'] as int,
+    competitionTitle: json['competitionTitle'] as String,
+    competitionStatus: statusFromJson(json['competitionStatus'] as String),
+    title: json['title'] as String,
+    description: json['description'] as String,
+    textType: textTypeFromJson(json['textType'] as String),
+    textContent: json['textContent'] as String,
+    studentName: json['studentName'] as String,
+    studentCode: json['studentCode'] as String,
+    submittedAt: DateTime.parse(json['submittedAt'] as String),
+    updatedAt: json['updatedAt'] == null
+        ? null
+        : DateTime.parse(json['updatedAt'] as String),
+    canEvaluate: json['canEvaluate'] as bool,
+    canDeleteEvaluation: json['canDeleteEvaluation'] as bool,
+    lockReason: json['lockReason'] as String?,
+    evaluation: json['evaluation'] == null
+        ? null
+        : StaffEvaluation.fromJson(json['evaluation'] as Map<String, dynamic>),
+    nextUnevaluatedId: json['nextUnevaluatedId'] as int?,
+    total: json['total'] as int,
+    evaluated: json['evaluated'] as int,
+  );
 }
 
 /// Dữ liệu chấm bài gửi lên; [rowVersion] bắt buộc khi bài đã có đánh giá.
@@ -229,43 +239,49 @@ class EvaluationInput {
   final String? rowVersion;
 
   Map<String, dynamic> toJson() => {
-        'rating': rating.apiValue,
-        'positivePoints': positivePoints,
-        'negativePoints': negativePoints,
-        'improvementAreas': improvementAreas,
-        if (rowVersion != null) 'rowVersion': rowVersion,
-      };
+    'rating': rating.apiValue,
+    'positivePoints': positivePoints,
+    'negativePoints': negativePoints,
+    'improvementAreas': improvementAreas,
+    if (rowVersion != null) 'rowVersion': rowVersion,
+  };
 }
 
 // ---------------- Hàm thuần ----------------
 
 /// Kiểm tra phía client theo BR-23; server vẫn là nơi quyết định cuối cùng.
 /// DISQUALIFIED bắt buộc lý do (ở ô "điểm yếu"); xếp loại khác bắt buộc điểm mạnh.
-String? validateEvaluation(SubmissionRating? rating, String positive, String negative) {
+String? validateEvaluation(
+  SubmissionRating? rating,
+  String positive,
+  String negative,
+) {
   if (rating == null) return 'Please choose a rating';
   if (rating == SubmissionRating.disqualified) {
-    return negative.trim().isEmpty ? 'The Disqualified rating needs a reason' : null;
+    return negative.trim().isEmpty
+        ? 'The Disqualified rating needs a reason'
+        : null;
   }
   return positive.trim().isEmpty ? 'Please enter the strengths' : null;
 }
 
 /// Staff-facing rating name ("Best", "Better", ...), the same wording as the chips.
 String ratingName(SubmissionRating rating) => switch (rating) {
-      SubmissionRating.best => 'Best',
-      SubmissionRating.better => 'Better',
-      SubmissionRating.good => 'Good',
-      SubmissionRating.moderate => 'Moderate',
-      SubmissionRating.normal => 'Normal',
-      SubmissionRating.disqualified => 'Disqualified',
-    };
+  SubmissionRating.best => 'Best',
+  SubmissionRating.better => 'Better',
+  SubmissionRating.good => 'Good',
+  SubmissionRating.moderate => 'Moderate',
+  SubmissionRating.normal => 'Normal',
+  SubmissionRating.disqualified => 'Disqualified',
+};
 
 /// Staff-facing name of the text that goes with an artwork.
 String textTypeName(TextType type) => switch (type) {
-      TextType.poem => 'Poem',
-      TextType.quotation => 'Quotation',
-      TextType.story => 'Story',
-      TextType.other => 'Other',
-    };
+  TextType.poem => 'Poem',
+  TextType.quotation => 'Quotation',
+  TextType.story => 'Story',
+  TextType.other => 'Other',
+};
 
 /// Tiến độ dạng "x/y" (UC-05 bước 5).
 String progressLabel(int evaluated, int total) => '$evaluated/$total';
@@ -279,14 +295,17 @@ class GradingFilter {
   final String q;
 
   Map<String, dynamic> toQuery() => {
-        if (graded != null) 'graded': graded,
-        if (rating != null) 'rating': rating!.apiValue,
-        if (q.trim().isNotEmpty) 'q': q.trim(),
-      };
+    if (graded != null) 'graded': graded,
+    if (rating != null) 'rating': rating!.apiValue,
+    if (q.trim().isNotEmpty) 'q': q.trim(),
+  };
 
   @override
   bool operator ==(Object other) =>
-      other is GradingFilter && other.graded == graded && other.rating == rating && other.q == q;
+      other is GradingFilter &&
+      other.graded == graded &&
+      other.rating == rating &&
+      other.q == q;
 
   @override
   int get hashCode => Object.hash(graded, rating, q);
@@ -301,12 +320,15 @@ class GradingRepository {
 
   /// GET /api/staff/competitions
   Future<List<GradingCompetition>> competitions() => guardApi(() async {
-        final res = await _dio.get<List<dynamic>>('/api/staff/competitions');
-        return res.data!.map((e) => GradingCompetition.fromJson(e as Map<String, dynamic>)).toList();
-      });
+    final res = await _dio.get<List<dynamic>>('/api/staff/competitions');
+    return res.data!
+        .map((e) => GradingCompetition.fromJson(e as Map<String, dynamic>))
+        .toList();
+  });
 
   /// GET /api/staff/competitions/{id}/submissions
-  Future<GradingList> list(int competitionId, GradingFilter filter) => guardApi(() async {
+  Future<GradingList> list(int competitionId, GradingFilter filter) =>
+      guardApi(() async {
         final res = await _dio.get<Map<String, dynamic>>(
           '/api/staff/competitions/$competitionId/submissions',
           queryParameters: filter.toQuery(),
@@ -316,25 +338,37 @@ class GradingRepository {
 
   /// GET /api/staff/submissions/{id}
   Future<GradingDetail> detail(int id) => guardApi(() async {
-        final res = await _dio.get<Map<String, dynamic>>('/api/staff/submissions/$id');
-        return GradingDetail.fromJson(res.data!);
-      });
+    final res = await _dio.get<Map<String, dynamic>>(
+      '/api/staff/submissions/$id',
+    );
+    return GradingDetail.fromJson(res.data!);
+  });
 
   /// PUT /api/staff/submissions/{id}/evaluation → chi tiết mới (tạo hoặc sửa).
-  Future<GradingDetail> save(int id, EvaluationInput input) => guardApi(() async {
-        final res = await _dio.put<Map<String, dynamic>>('/api/staff/submissions/$id/evaluation', data: input.toJson());
+  Future<GradingDetail> save(int id, EvaluationInput input) =>
+      guardApi(() async {
+        final res = await _dio.put<Map<String, dynamic>>(
+          '/api/staff/submissions/$id/evaluation',
+          data: input.toJson(),
+        );
         return GradingDetail.fromJson(res.data!);
       });
 
   /// DELETE /api/staff/submissions/{id}/evaluation?rowVersion=...
-  Future<void> deleteEvaluation(int id, String rowVersion) => guardApi(() async {
-        await _dio.delete<void>('/api/staff/submissions/$id/evaluation', queryParameters: {'rowVersion': rowVersion});
+  Future<void> deleteEvaluation(int id, String rowVersion) =>
+      guardApi(() async {
+        await _dio.delete<void>(
+          '/api/staff/submissions/$id/evaluation',
+          queryParameters: {'rowVersion': rowVersion},
+        );
       });
 }
 
 // ---------------- Provider ----------------
 
-final gradingRepositoryProvider = Provider<GradingRepository>((ref) => GradingRepository(ref.watch(dioProvider)));
+final gradingRepositoryProvider = Provider<GradingRepository>(
+  (ref) => GradingRepository(ref.watch(dioProvider)),
+);
 
 /// Cuộc thi + tiến độ chấm.
 final gradingCompetitionsProvider = FutureProvider<List<GradingCompetition>>(
@@ -342,9 +376,15 @@ final gradingCompetitionsProvider = FutureProvider<List<GradingCompetition>>(
 );
 
 /// Danh sách bài theo cuộc thi và bộ lọc (record có so sánh theo giá trị nên làm khóa family được).
-final gradingListProvider = FutureProvider.family<GradingList, ({int competitionId, GradingFilter filter})>(
-  (ref, key) => ref.watch(gradingRepositoryProvider).list(key.competitionId, key.filter),
-);
+final gradingListProvider =
+    FutureProvider.family<
+      GradingList,
+      ({int competitionId, GradingFilter filter})
+    >(
+      (ref, key) => ref
+          .watch(gradingRepositoryProvider)
+          .list(key.competitionId, key.filter),
+    );
 
 /// Chi tiết một bài để chấm.
 final gradingDetailProvider = FutureProvider.family<GradingDetail, int>(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../app/tokens.dart';
 
-/// Section title in the display serif, with an optional action on the right
+/// Section title with a short brass rule above it, and an optional action on the right
 /// (e.g. "See all"). Put it between blocks of a scrolling page.
 class SectionHeader extends StatelessWidget {
   const SectionHeader(
@@ -11,7 +11,7 @@ class SectionHeader extends StatelessWidget {
     this.actionLabel,
     this.onAction,
     this.subtitle,
-    this.padding = const EdgeInsets.fromLTRB(AppSpacing.gutter, AppSpacing.lg, AppSpacing.gutter, AppSpacing.sm),
+    this.padding,
   });
 
   final String title;
@@ -20,13 +20,17 @@ class SectionHeader extends StatelessWidget {
   final String? actionLabel;
   final VoidCallback? onAction;
   final String? subtitle;
-  final EdgeInsetsGeometry padding;
+
+  /// Defaults to the page gutter on the sides and generous space above (a pause between rooms).
+  final EdgeInsetsGeometry? padding;
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final width = MediaQuery.sizeOf(context).width;
+    final gutter = AppLayout.gutterFor(width);
     return Padding(
-      padding: padding,
+      padding: padding ?? EdgeInsets.fromLTRB(gutter, width >= AppLayout.wide ? AppSpacing.xxl : AppSpacing.xl, gutter, AppSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -34,14 +38,77 @@ class SectionHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                const SizedBox(width: 28, height: 2, child: ColoredBox(color: AppColors.brass)),
+                const SizedBox(height: AppSpacing.sm),
                 Semantics(header: true, child: Text(title, style: text.headlineSmall)),
-                if (subtitle != null) Text(subtitle!, style: text.bodySmall),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 2),
+                  Text(subtitle!, style: text.bodySmall),
+                ],
               ],
             ),
           ),
           if (actionLabel != null && onAction != null)
-            TextButton(onPressed: onAction, child: Text(actionLabel!)),
+            TextButton(
+              onPressed: onAction,
+              child: Text('${actionLabel!.toUpperCase()}  →', style: text.labelSmall!.copyWith(letterSpacing: 1.4)),
+            ),
         ],
+      ),
+    );
+  }
+}
+
+/// Padding for a scrolling page of text and forms: on wide screens the content stays in a column of [maxWidth]
+/// (instead of running 1000 px wide) while the scroll area itself still spans the page, so the mouse wheel works
+/// over the margins too. On a phone it is the plain page gutter.
+EdgeInsets readingPadding(
+  BuildContext context, {
+  double maxWidth = 720,
+  double top = AppSpacing.md,
+  double bottom = AppSpacing.xl,
+}) {
+  final width = MediaQuery.sizeOf(context).width;
+  final side = ((width - maxWidth) / 2).clamp(AppLayout.gutterFor(width), double.infinity).toDouble();
+  return EdgeInsets.fromLTRB(side, top, side, bottom);
+}
+
+/// Lays [children] out in as many equal columns as fit ([minTileWidth] wide at least), top aligned.
+/// Unlike a fixed-height grid it lets every tile keep its own height, so wall labels never overflow.
+class AdaptiveTileGrid extends StatelessWidget {
+  const AdaptiveTileGrid({
+    super.key,
+    required this.children,
+    this.minTileWidth = 260,
+    this.maxColumns = 4,
+    this.spacing = AppSpacing.lg,
+    this.padding,
+  });
+
+  final List<Widget> children;
+  final double minTileWidth;
+  final int maxColumns;
+  final double spacing;
+
+  /// Defaults to the page gutter on the sides.
+  final EdgeInsetsGeometry? padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final gutter = AppLayout.gutterFor(MediaQuery.sizeOf(context).width);
+    final pad = (padding ?? EdgeInsets.symmetric(horizontal: gutter)).resolve(Directionality.of(context));
+    return Padding(
+      padding: pad,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = ((constraints.maxWidth + spacing) / (minTileWidth + spacing)).floor().clamp(1, maxColumns);
+          final tileWidth = (constraints.maxWidth - spacing * (columns - 1)) / columns;
+          return Wrap(
+            spacing: spacing,
+            runSpacing: spacing,
+            children: [for (final c in children) SizedBox(width: tileWidth, child: c)],
+          );
+        },
       ),
     );
   }
@@ -73,7 +140,7 @@ class EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 44, color: AppColors.brass),
+            Icon(icon, size: 40, color: AppColors.brass, weight: 200),
             const SizedBox(height: AppSpacing.md),
             Text(title, style: text.titleMedium, textAlign: TextAlign.center),
             if (message != null) ...[

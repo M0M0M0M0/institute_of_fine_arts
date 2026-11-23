@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'app/router.dart';
 import 'app/splash_screen.dart';
 import 'app/theme.dart';
+import 'app/wide_canvas.dart';
 
 /// Điểm khởi chạy app. ProviderScope bọc toàn bộ để dùng Riverpod.
 void main() {
@@ -23,7 +24,7 @@ class FineArtsApp extends ConsumerWidget {
       theme: buildTheme(),
       routerConfig: router,
       // Animated splash over the first page (after the native splash), then fades away
-      builder: (context, child) => ArtSplashScreen(child: child ?? const SizedBox.shrink()),
+      builder: (context, child) => WideCanvas(child: ArtSplashScreen(child: child ?? const SizedBox.shrink())),
     );
   }
 }

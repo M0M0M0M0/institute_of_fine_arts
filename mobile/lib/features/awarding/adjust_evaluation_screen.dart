@@ -25,12 +25,20 @@ class AdjustEvaluationScreen extends ConsumerWidget {
     // Dùng lại chi tiết chấm bài của 4a: có sẵn đánh giá hiện tại và RowVersion
     final detail = ref.watch(gradingDetailProvider(id));
     return Scaffold(
-      appBar: AppBar(title: const Text('Adjust result')),
+      appBar: AppBar(
+        leading: const AppBackButton(),
+        leadingWidth: 48,
+        titleSpacing: 0,
+        title: const Text('Adjust result'),
+      ),
       body: AsyncValueView(
         value: detail,
         onRetry: () => ref.invalidate(gradingDetailProvider(id)),
         // Key theo RowVersion: tải lại sau xung đột thì form dựng lại với dữ liệu mới
-        data: (d) => _Body(key: ValueKey('${d.id}-${d.evaluation?.rowVersion}'), detail: d),
+        data: (d) => _Body(
+          key: ValueKey('${d.id}-${d.evaluation?.rowVersion}'),
+          detail: d,
+        ),
       ),
     );
   }
@@ -46,9 +54,9 @@ class _Body extends ConsumerStatefulWidget {
 }
 
 class _BodyState extends ConsumerState<_Body> {
-  late final TextEditingController _positive;
-  late final TextEditingController _negative;
-  late final TextEditingController _improvement;
+  late final RichTextController _positive;
+  late final RichTextController _negative;
+  late final RichTextController _improvement;
   final _reason = TextEditingController();
   SubmissionRating? _rating;
   bool _busy = false;
@@ -59,9 +67,9 @@ class _BodyState extends ConsumerState<_Body> {
   void initState() {
     super.initState();
     final ev = _d.evaluation;
-    _positive = TextEditingController(text: ev?.positivePoints ?? '');
-    _negative = TextEditingController(text: ev?.negativePoints ?? '');
-    _improvement = TextEditingController(text: ev?.improvementAreas ?? '');
+    _positive = RichTextController(stored: ev?.positivePoints);
+    _negative = RichTextController(stored: ev?.negativePoints);
+    _improvement = RichTextController(stored: ev?.improvementAreas);
     _rating = ev?.rating;
   }
 
@@ -74,13 +82,16 @@ class _BodyState extends ConsumerState<_Body> {
     super.dispose();
   }
 
-  void _toast(String text) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+  void _toast(String text) =>
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
 
   Future<void> _save() async {
     final ev = _d.evaluation;
     if (ev == null) return;
     // Kiểm tra nhanh phía client; server vẫn là nơi quyết định (BR-23, BR-34)
-    final error = validateEvaluation(_rating, _positive.text, _negative.text) ?? validateReason(_reason.text);
+    final error =
+        validateEvaluation(_rating, _positive.plainText, _negative.plainText) ??
+        validateReason(_reason.text);
     if (error != null) {
       _toast(error);
       return;
@@ -88,13 +99,15 @@ class _BodyState extends ConsumerState<_Body> {
     final container = ProviderScope.containerOf(context);
     setState(() => _busy = true);
     try {
-      await ref.read(awardingRepositoryProvider).adjustEvaluation(
+      await ref
+          .read(awardingRepositoryProvider)
+          .adjustEvaluation(
             _d.id,
             EvaluationInput(
               rating: _rating!,
-              positivePoints: _positive.text.trim(),
-              negativePoints: _negative.text.trim(),
-              improvementAreas: _improvement.text.trim(),
+              positivePoints: _positive.html,
+              negativePoints: _negative.html,
+              improvementAreas: _improvement.html,
               rowVersion: ev.rowVersion,
             ),
             _reason.text.trim(),
@@ -118,10 +131,17 @@ class _BodyState extends ConsumerState<_Body> {
     final d = _d;
     final text = Theme.of(context).textTheme;
     final disqualified = _rating == SubmissionRating.disqualified;
-    final canAdjust = d.evaluation != null && d.competitionStatus == CompetitionStatus.graded && !_busy;
+    final canAdjust =
+        d.evaluation != null &&
+        d.competitionStatus == CompetitionStatus.graded &&
+        !_busy;
 
     return ListView(
-      padding: const EdgeInsets.all(AppSpacing.gutter),
+      padding: readingPadding(
+        context,
+        top: AppSpacing.gutter,
+        bottom: AppSpacing.gutter,
+      ),
       children: [
         Center(
           child: ConstrainedBox(
@@ -139,24 +159,34 @@ class _BodyState extends ConsumerState<_Body> {
                 aspectRatio: 4 / 5,
                 child: ColoredBox(
                   color: AppColors.stone,
-                  child: AuthImage(submissionId: d.id, thumb: false, fit: BoxFit.contain, semanticLabel: d.title),
+                  child: AuthImage(
+                    submissionId: d.id,
+                    thumb: false,
+                    fit: BoxFit.contain,
+                    semanticLabel: d.title,
+                  ),
                 ),
               ),
             ),
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: Text(d.title, style: text.headlineSmall!.copyWith(fontStyle: FontStyle.italic))),
-            const SizedBox(width: AppSpacing.sm),
-            StatusChip(d.competitionStatus),
-          ],
+        Text(
+          d.title,
+          style: text.headlineSmall!.copyWith(fontStyle: FontStyle.italic),
         ),
+        const SizedBox(height: AppSpacing.sm),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: StatusChip(d.competitionStatus),
+        ),
+        const SizedBox(height: AppSpacing.xs),
         Text('${d.studentName} (${d.studentCode}) · ${d.competitionTitle}'),
         if (d.evaluation case final ev?)
-          Text('Graded by ${ev.evaluatedByName} on ${formatDateTime(ev.evaluatedAt)}', style: text.bodySmall),
+          Text(
+            'Graded by ${ev.evaluatedByName} on ${formatDateTime(ev.evaluatedAt)}',
+            style: text.bodySmall,
+          ),
         const SizedBox(height: AppSpacing.sm),
         if (!canAdjust && !_busy)
           Container(
@@ -164,17 +194,27 @@ class _BodyState extends ConsumerState<_Body> {
             decoration: BoxDecoration(
               color: AppColors.danger.withValues(alpha: 0.08),
               borderRadius: AppRadius.mdAll,
-              border: Border.all(color: AppColors.danger.withValues(alpha: 0.4)),
+              border: Border.all(
+                color: AppColors.danger.withValues(alpha: 0.4),
+              ),
             ),
-            child: const Text('Only graded entries of a published competition can be adjusted here. '
-                'For an unpublished competition, change the evaluation under Grading.'),
+            child: const Text(
+              'Only graded entries of a published competition can be adjusted here. '
+              'For an unpublished competition, change the evaluation under Grading.',
+            ),
           ),
         const Divider(height: AppSpacing.xl),
-        Semantics(header: true, child: Text('Adjusted evaluation', style: text.titleLarge)),
+        Semantics(
+          header: true,
+          child: Text('Adjusted evaluation', style: text.titleLarge),
+        ),
         const SizedBox(height: AppSpacing.sm),
         Text('Rating *', style: text.labelLarge),
         const SizedBox(height: AppSpacing.xs),
-        RatingChips(value: _rating, onChanged: canAdjust ? (v) => setState(() => _rating = v) : null),
+        RatingChips(
+          value: _rating,
+          onChanged: canAdjust ? (v) => setState(() => _rating = v) : null,
+        ),
         const SizedBox(height: AppSpacing.md),
         EvaluationTextFields(
           positive: _positive,
@@ -189,13 +229,20 @@ class _BodyState extends ConsumerState<_Body> {
           enabled: canAdjust,
           maxLength: 1000,
           maxLines: 2,
-          decoration: const InputDecoration(labelText: 'Reason for the adjustment *', alignLabelWithHint: true),
+          decoration: const InputDecoration(
+            labelText: 'Reason for the adjustment *',
+            alignLabelWithHint: true,
+          ),
         ),
         const SizedBox(height: AppSpacing.sm),
         FilledButton.icon(
           onPressed: canAdjust ? _save : null,
           icon: _busy
-              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
               : const Icon(Icons.save),
           label: const Text('Save adjustment'),
         ),

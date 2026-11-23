@@ -1,29 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../app/tokens.dart';
 import '../../core/format.dart';
+import '../../shared/status_chip.dart';
 import 'exhibitions.dart';
 
-/// Nhãn trạng thái triển lãm có màu.
+/// Exhibition status chip: the shared square, small-caps status chip (same look as the competition status).
 class ExhibitionStatusChip extends StatelessWidget {
   const ExhibitionStatusChip(this.status, {super.key});
 
   final ExhibitionStatus status;
 
   @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final color = switch (status) {
-      ExhibitionStatus.upcoming => scheme.primary,
-      ExhibitionStatus.ongoing => scheme.tertiary,
-      ExhibitionStatus.finished => scheme.outline,
-      ExhibitionStatus.cancelled => scheme.error,
-    };
-    return _Pill(text: status.label, color: color);
-  }
+  Widget build(BuildContext context) => StatusChip.exhibition(status);
 }
 
-/// Nhãn trạng thái tranh gửi triển lãm có màu; SOLD + đã trả hiện "Đã bán – đã trả tiền".
+/// Exhibition entry status chip (a sold and paid work reads "Sold · paid"); same shared chip.
 class EntryStatusChip extends StatelessWidget {
   const EntryStatusChip(this.status, {super.key, this.paid = false});
 
@@ -31,33 +24,7 @@ class EntryStatusChip extends StatelessWidget {
   final bool paid;
 
   @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    final color = switch (status) {
-      EntryStatus.pending => scheme.secondary,
-      EntryStatus.accepted => scheme.primary,
-      EntryStatus.sold => scheme.tertiary,
-      EntryStatus.rejected || EntryStatus.withdrawn => scheme.error,
-      EntryStatus.unsold => scheme.outline,
-    };
-    return _Pill(text: entryStatusText(status, paid), color: color);
-  }
-}
-
-class _Pill extends StatelessWidget {
-  const _Pill({required this.text, required this.color});
-
-  final String text;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
-      child: Text(text, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
-    );
-  }
+  Widget build(BuildContext context) => StatusChip.entry(status, paid: paid);
 }
 
 /// Một dòng "nhãn: giá trị" trong màn chi tiết.
@@ -69,13 +36,24 @@ class InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.baseline,
+        textBaseline: TextBaseline.alphabetic,
         children: [
-          SizedBox(width: 130, child: Text(label, style: Theme.of(context).textTheme.bodySmall)),
-          Expanded(child: Text(value)),
+          // Small-caps name, like the labels of the competition details
+          SizedBox(
+            width: 132,
+            child: Text(
+              label.toUpperCase(),
+              style: text.labelSmall!.copyWith(color: AppColors.muted, letterSpacing: 1.2),
+            ),
+          ),
+          // A long label wraps inside its column instead of touching the value
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(child: Text(value, style: text.bodyMedium)),
         ],
       ),
     );

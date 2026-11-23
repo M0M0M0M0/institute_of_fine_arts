@@ -23,7 +23,7 @@ class SubmissionDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(submissionDetailProvider(id));
     return Scaffold(
-      appBar: AppBar(title: const Text('Entry')),
+      appBar: AppBar(leading: const AppBackButton(), leadingWidth: 48, titleSpacing: 0, title: const Text('Entry')),
       body: AsyncValueView(
         value: detail,
         onRetry: () => ref.invalidate(submissionDetailProvider(id)),
@@ -52,15 +52,15 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
     final d = widget.detail;
     final ok = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => ArtDialog(
         title: const Text('Delete this entry?'),
         content: Text('"${d.title}" and its picture will be deleted permanently.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: const Text('DELETE'),
           ),
         ],
       ),
@@ -105,7 +105,7 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
     final awarded = d.awards.isNotEmpty;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, AppSpacing.md, AppSpacing.gutter, AppSpacing.xl),
+      padding: readingPadding(context),
       children: [
         // The picture, framed; tap to zoom
         Semantics(
@@ -118,6 +118,8 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
             ),
             child: ArtworkFrame(
               awarded: awarded,
+              // Gold, silver or bronze by the best prize of the entry
+              awardRank: awarded ? d.awards.map((a) => a.rank).reduce((a, b) => a < b ? a : b) : null,
               aspectRatio: null,
               // The frame hugs the painting at its own proportions
               child: Stack(
@@ -152,7 +154,11 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
                     : AppColors.statusClosed,
               ),
             for (final a in d.awards)
-              StatusChip.custom(label: a.awardName, color: AppColors.brassText, icon: Icons.emoji_events_outlined),
+              StatusChip.custom(
+                label: a.awardName,
+                color: AppColors.medalText(a.rank),
+                icon: Icons.emoji_events_outlined,
+              ),
           ],
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -162,7 +168,7 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
           style: text.bodySmall,
         ),
         const SectionHeader('Description', padding: EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.xs)),
-        Text(d.description, style: text.bodyLarge),
+        RichTextView(d.description, style: text.bodyLarge),
         SectionHeader(d.textType.label, padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.xs)),
         Container(
           width: double.infinity,
@@ -257,7 +263,7 @@ class _Feedback extends StatelessWidget {
         children: [
           Text(label, style: Theme.of(context).textTheme.titleSmall),
           const SizedBox(height: 2),
-          Text(text!),
+          RichTextView(text!),
         ],
       ),
     );

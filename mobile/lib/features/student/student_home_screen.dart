@@ -34,9 +34,30 @@ class StudentHomeScreen extends ConsumerWidget {
     final user = currentUserOf(ref.watch(authControllerProvider));
     final dashboard = ref.watch(studentDashboardProvider);
     final text = Theme.of(context).textTheme;
+    final width = MediaQuery.sizeOf(context).width;
+    final wide = width >= AppLayout.wide;
+    final gutter = AppLayout.gutterFor(width);
+    final today = now ?? DateTime.now();
+
+    // A competition card with the "Submit" button under it
+    Widget openCard(CompetitionSummary c, {double? cardWidth}) => SizedBox(
+          width: cardWidth,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              CompetitionCard(competition: c, onTap: () => context.push('/competitions/${c.id}')),
+              const SizedBox(height: AppSpacing.md),
+              FilledButton(
+                onPressed: () => context.push('/student/submissions/new?competitionId=${c.id}'),
+                child: const Text('SUBMIT'),
+              ),
+            ],
+          ),
+        );
 
     return TabScaffold(
       title: 'Home',
+      showHeading: false,
       body: AsyncValueView(
         value: dashboard,
         onRetry: () => ref.invalidate(studentDashboardProvider),
@@ -50,12 +71,27 @@ class StudentHomeScreen extends ConsumerWidget {
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.only(bottom: AppSpacing.xl),
             children: [
+              // The greeting is the title of the page: today's date as the small line, the greeting large and light
               Padding(
-                padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, AppSpacing.lg, AppSpacing.gutter, 0),
-                child: Semantics(
-                  header: true,
-                  child: Text('${greetingFor(now ?? DateTime.now())}, ${user?.firstName ?? 'student'}',
-                      style: text.headlineMedium),
+                padding: EdgeInsets.fromLTRB(gutter, wide ? AppSpacing.xl : AppSpacing.lg, gutter, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(width: 28, height: 2, child: ColoredBox(color: AppColors.brass)),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      formatDate(today).toUpperCase(),
+                      style: text.labelSmall!.copyWith(color: AppColors.muted, letterSpacing: 1.8),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Semantics(
+                      header: true,
+                      child: Text(
+                        '${greetingFor(today)}, ${user?.firstName ?? 'student'}',
+                        style: wide ? text.displaySmall : text.headlineLarge,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               if (d.isEmpty)
@@ -69,32 +105,29 @@ class StudentHomeScreen extends ConsumerWidget {
                 ),
               if (d.openToEnter.isNotEmpty) ...[
                 const SectionHeader('Open for entries', subtitle: 'You have not submitted to these yet'),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gutter),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      for (final c in d.openToEnter)
-                        Padding(
-                          padding: const EdgeInsets.only(right: AppSpacing.md),
-                          child: SizedBox(
-                            width: 280,
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                CompetitionCard(competition: c, onTap: () => context.push('/competitions/${c.id}')),
-                                FilledButton(
-                                  onPressed: () => context.push('/student/submissions/new?competitionId=${c.id}'),
-                                  child: const Text('Submit'),
-                                ),
-                              ],
-                            ),
+                if (wide)
+                  AdaptiveTileGrid(
+                    minTileWidth: 300,
+                    maxColumns: 3,
+                    spacing: AppSpacing.xl,
+                    children: [for (final c in d.openToEnter) openCard(c)],
+                  )
+                else
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    padding: EdgeInsets.symmetric(horizontal: gutter),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        for (final c in d.openToEnter)
+                          Padding(
+                            padding: const EdgeInsets.only(right: AppSpacing.md),
+                            // A lone card fills the screen; with several, the next one peeks out to invite a swipe
+                            child: openCard(c, cardWidth: d.openToEnter.length == 1 ? width - 2 * gutter : 280),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
               ],
               if (d.editable.isNotEmpty) ...[
                 const SectionHeader('Still editable', subtitle: 'Change your entry until the deadline'),
@@ -106,13 +139,17 @@ class StudentHomeScreen extends ConsumerWidget {
               ],
               if (d.pendingProposals > 0 || d.unpaidSales > 0) ...[
                 const SectionHeader('Exhibitions'),
+                // No card chrome: two hairlines frame the notice, like a line on a wall label
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gutter),
-                  child: Card(
-                    child: InkWell(
-                      onTap: () => context.go('/student/exhibitions'),
+                  padding: EdgeInsets.symmetric(horizontal: gutter),
+                  child: InkWell(
+                    onTap: () => context.go('/student/exhibitions'),
+                    child: DecoratedBox(
+                      decoration: const BoxDecoration(
+                        border: Border.symmetric(horizontal: BorderSide(color: AppColors.line)),
+                      ),
                       child: Padding(
-                        padding: const EdgeInsets.all(AppSpacing.md),
+                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
                         child: Row(
                           children: [
                             const Icon(Icons.museum_outlined, color: AppColors.brass),
@@ -138,7 +175,7 @@ class StudentHomeScreen extends ConsumerWidget {
                                 ],
                               ),
                             ),
-                            const Icon(Icons.chevron_right, color: AppColors.muted),
+                            const Icon(Icons.arrow_forward, size: 18, color: AppColors.brassText),
                           ],
                         ),
                       ),
@@ -171,19 +208,22 @@ class _EntryList extends ConsumerWidget {
       return null;
     }
 
+    final rows = [
+      for (final s in items)
+        SubmissionRow(
+          item: s,
+          showState: !editable,
+          note: editable ? closes(s) : null,
+          onTap: () => context.push('/student/submissions/${s.id}'),
+        ),
+    ];
+    // Two columns of rows on wide screens, a plain list on a phone
+    if (MediaQuery.sizeOf(context).width >= AppLayout.wide) {
+      return AdaptiveTileGrid(minTileWidth: 440, maxColumns: 2, spacing: AppSpacing.xl, children: rows);
+    }
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gutter),
-      child: Column(
-        children: [
-          for (final s in items)
-            SubmissionRow(
-              item: s,
-              showState: !editable,
-              note: editable ? closes(s) : null,
-              onTap: () => context.push('/student/submissions/${s.id}'),
-            ),
-        ],
-      ),
+      padding: EdgeInsets.symmetric(horizontal: AppLayout.gutterFor(MediaQuery.sizeOf(context).width)),
+      child: Column(children: rows),
     );
   }
 }
