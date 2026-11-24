@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -37,6 +37,8 @@ import '../features/submissions/my_submissions_screen.dart';
 import '../features/submissions/submissions.dart';
 import '../shared/auth_image.dart';
 import '../shared/tab_scaffold.dart';
+import 'motion.dart';
+import 'tokens.dart';
 
 /// App navigation. `/student/**` and `/staff/**` are only open to the matching role (US-01 AC4, AC5).
 ///
@@ -120,7 +122,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/gallery/artworks/:id',
-        builder: (context, state) => ArtworkScreen(id: int.parse(state.pathParameters['id']!)),
+        // A soft fade; the picture itself flies in from the gallery grid (Hero). Both stop with reduced motion.
+        pageBuilder: (context, state) {
+          final duration = motionDuration(context, AppMotion.med);
+          return CustomTransitionPage<void>(
+            key: state.pageKey,
+            child: ArtworkScreen(id: int.parse(state.pathParameters['id']!)),
+            transitionDuration: duration,
+            reverseTransitionDuration: duration,
+            transitionsBuilder: (context, animation, secondaryAnimation, child) => FadeTransition(
+              opacity: CurvedAnimation(parent: animation, curve: AppMotion.curve),
+              child: child,
+            ),
+          );
+        },
       ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       // Student shell: Home, Competitions, My entries, Exhibitions, Account

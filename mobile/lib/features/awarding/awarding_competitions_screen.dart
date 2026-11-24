@@ -16,6 +16,8 @@ class AwardingCompetitionsTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final competitions = ref.watch(awardingCompetitionsProvider);
+    final width = MediaQuery.sizeOf(context).width;
+    final gutter = AppLayout.gutterFor(width);
     return AsyncValueView(
       value: competitions,
       onRetry: () => ref.invalidate(awardingCompetitionsProvider),
@@ -36,12 +38,27 @@ class AwardingCompetitionsTab extends ConsumerWidget {
                   ),
                 ],
               )
-            : ListView.builder(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(AppSpacing.gutter),
-                itemCount: items.length,
-                itemBuilder: (context, i) => _CompetitionTile(item: items[i]),
-              ),
+            : width >= AppLayout.wide
+                // Columns on wide screens
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.xl),
+                    children: [
+                      AdaptiveTileGrid(
+                        minTileWidth: 300,
+                        maxColumns: 3,
+                        spacing: AppSpacing.xl,
+                        children: [for (final item in items) _CompetitionTile(item: item)],
+                      ),
+                    ],
+                  )
+                : ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(gutter, AppSpacing.md, gutter, AppSpacing.xl),
+                    itemCount: items.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.xl),
+                    itemBuilder: (context, i) => _CompetitionTile(item: items[i]),
+                  ),
       ),
     );
   }
@@ -54,50 +71,18 @@ class _CompetitionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: InkWell(
-        onTap: () => context.push('/staff/awarding/${item.id}'),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AspectRatio(
-              aspectRatio: 16 / 7,
-              child: item.hasCover
-                  ? PublicImage(url: ApiUrls.competitionCover(item.id), semanticLabel: 'Cover of ${item.title}')
-                  : const ImagePlaceholder(icon: Icons.palette_outlined),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(child: Text(item.title, style: text.titleMedium)),
-                      const SizedBox(width: AppSpacing.sm),
-                      StatusChip(item.status),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text('Closed ${formatDate(item.endDate)}', style: text.bodySmall),
-                  const SizedBox(height: AppSpacing.sm),
-                  ProgressBarRow(
-                    label: 'Award slots filled',
-                    value: item.issuedSlots,
-                    total: item.totalSlots,
-                    color: AppColors.brass,
-                  ),
-                  if (item.adjustedAt != null) AdjustedLabel(item.adjustedAt!),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+    return CompetitionProgressCard(
+      competitionId: item.id,
+      title: item.title,
+      hasCover: item.hasCover,
+      status: item.status,
+      dateLine: 'Closed ${formatDate(item.endDate)}',
+      progressLabel: 'Award slots filled',
+      progressValue: item.issuedSlots,
+      progressTotal: item.totalSlots,
+      progressColor: AppColors.brass,
+      onTap: () => context.push('/staff/awarding/${item.id}'),
+      footer: item.adjustedAt == null ? null : AdjustedLabel(item.adjustedAt!),
     );
   }
 }

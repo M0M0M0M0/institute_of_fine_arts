@@ -11,6 +11,20 @@ import '../submissions/submissions.dart';
 
 enum _Segment { open, upcoming, results }
 
+extension on _Segment {
+  String get label => switch (this) {
+        _Segment.open => 'Open',
+        _Segment.upcoming => 'Upcoming',
+        _Segment.results => 'Results',
+      };
+
+  bool includes(CompetitionStatus status) => switch (this) {
+        _Segment.open => status == CompetitionStatus.ongoing,
+        _Segment.upcoming => status == CompetitionStatus.upcoming,
+        _Segment.results => status == CompetitionStatus.closed || status == CompetitionStatus.graded,
+      };
+}
+
 /// M-S2 Competitions tab for students: Open · Upcoming · Results, as competition cards.
 /// Open competitions the student has not entered get a "Submit" button; entered ones "View my entry".
 class StudentCompetitionsScreen extends ConsumerStatefulWidget {
@@ -23,11 +37,33 @@ class StudentCompetitionsScreen extends ConsumerStatefulWidget {
 class _StudentCompetitionsScreenState extends ConsumerState<StudentCompetitionsScreen> {
   _Segment _segment = _Segment.open;
 
-  bool _matches(CompetitionSummary c) => switch (_segment) {
-        _Segment.open => c.status == CompetitionStatus.ongoing,
-        _Segment.upcoming => c.status == CompetitionStatus.upcoming,
-        _Segment.results => c.status == CompetitionStatus.closed || c.status == CompetitionStatus.graded,
-      };
+  /// The card and, under it, what the student can do with this competition.
+  Widget _entry(BuildContext context, CompetitionSummary c, Map<int, int> entryOf) {
+    final entryId = entryOf[c.id];
+    final Widget? action = c.status == CompetitionStatus.ongoing
+        ? (entryId == null
+            ? FilledButton(
+                onPressed: () => context.push('/student/submissions/new?competitionId=${c.id}'),
+                child: const Text('SUBMIT'),
+              )
+            : OutlinedButton(
+                onPressed: () => context.push('/student/submissions/$entryId'),
+                child: const Text('VIEW MY ENTRY'),
+              ))
+        : (entryId != null
+            ? OutlinedButton(
+                onPressed: () => context.push('/student/submissions/$entryId'),
+                child: const Text('VIEW MY ENTRY'),
+              )
+            : null);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        CompetitionCard(competition: c, onTap: () => context.push('/competitions/${c.id}')),
+        if (action != null) ...[const SizedBox(height: AppSpacing.md), action],
+      ],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,33 +71,33 @@ class _StudentCompetitionsScreenState extends ConsumerState<StudentCompetitionsS
     // Entries of the student, to tell "Submit" from "View my entry" with one request
     final mine = ref.watch(allMySubmissionsProvider).value ?? const <SubmissionListItem>[];
     final entryOf = {for (final s in mine) s.competitionId: s.id};
+    final width = MediaQuery.sizeOf(context).width;
+    final wide = width >= AppLayout.wide;
+    final gutter = AppLayout.gutterFor(width);
+    final all = list.value;
 
     return TabScaffold(
       title: 'Competitions',
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, AppSpacing.md, AppSpacing.gutter, AppSpacing.sm),
-            child: SizedBox(
-              width: double.infinity,
-              child: SegmentedButton<_Segment>(
-                showSelectedIcon: false,
-                segments: const [
-                  ButtonSegment(value: _Segment.open, label: Text('Open')),
-                  ButtonSegment(value: _Segment.upcoming, label: Text('Upcoming')),
-                  ButtonSegment(value: _Segment.results, label: Text('Results')),
-                ],
-                selected: {_segment},
-                onSelectionChanged: (s) => setState(() => _segment = s.first),
-              ),
+            padding: EdgeInsets.symmetric(horizontal: gutter),
+            child: SegmentTabs<_Segment>(
+              values: _Segment.values,
+              selected: _segment,
+              expand: !wide,
+              labelOf: (s) => s.label,
+              countOf: all == null ? null : (s) => all.where((c) => s.includes(c.status)).length,
+              onSelected: (s) => setState(() => _segment = s),
             ),
           ),
+          const SizedBox(height: AppSpacing.lg),
           Expanded(
             child: AsyncValueView(
               value: list,
               onRetry: () => ref.invalidate(competitionListProvider),
               data: (all) {
-                final items = all.where(_matches).toList()
+                final items = all.where((c) => _segment.includes(c.status)).toList()
                   ..sort((a, b) => _segment == _Segment.results
                       ? b.endDate.compareTo(a.endDate)
                       : a.startDate.compareTo(b.startDate));
@@ -86,39 +122,27 @@ class _StudentCompetitionsScreenState extends ConsumerState<StudentCompetitionsS
                             ),
                           ],
                         )
-                      : ListView.separated(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(
-                              AppSpacing.gutter, AppSpacing.sm, AppSpacing.gutter, AppSpacing.xl),
-                          itemCount: items.length,
-                          separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
-                          itemBuilder: (context, i) {
-                            final c = items[i];
-                            final entryId = entryOf[c.id];
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                      : wide
+                          // Columns on wide screens: a single card would otherwise stretch across the page
+                          ? ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.only(bottom: AppSpacing.xl),
                               children: [
-                                CompetitionCard(competition: c, onTap: () => context.push('/competitions/${c.id}')),
-                                if (c.status == CompetitionStatus.ongoing)
-                                  entryId == null
-                                      ? FilledButton(
-                                          onPressed: () =>
-                                              context.push('/student/submissions/new?competitionId=${c.id}'),
-                                          child: const Text('Submit'),
-                                        )
-                                      : OutlinedButton(
-                                          onPressed: () => context.push('/student/submissions/$entryId'),
-                                          child: const Text('View my entry'),
-                                        )
-                                else if (entryId != null)
-                                  OutlinedButton(
-                                    onPressed: () => context.push('/student/submissions/$entryId'),
-                                    child: const Text('View my entry'),
-                                  ),
+                                AdaptiveTileGrid(
+                                  minTileWidth: 300,
+                                  maxColumns: 3,
+                                  spacing: AppSpacing.xl,
+                                  children: [for (final c in items) _entry(context, c, entryOf)],
+                                ),
                               ],
-                            );
-                          },
-                        ),
+                            )
+                          : ListView.separated(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: EdgeInsets.fromLTRB(gutter, AppSpacing.sm, gutter, AppSpacing.xl),
+                              itemCount: items.length,
+                              separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.xl),
+                              itemBuilder: (context, i) => _entry(context, items[i], entryOf),
+                            ),
                 );
               },
             ),

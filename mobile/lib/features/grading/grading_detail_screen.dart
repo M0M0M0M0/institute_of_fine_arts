@@ -24,7 +24,7 @@ class GradingDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(gradingDetailProvider(id));
     return Scaffold(
-      appBar: AppBar(title: const Text('Grade entry')),
+      appBar: AppBar(leading: const AppBackButton(), leadingWidth: 48, titleSpacing: 0, title: const Text('Grade entry')),
       body: AsyncValueView(
         value: detail,
         onRetry: () => ref.invalidate(gradingDetailProvider(id)),
@@ -211,10 +211,10 @@ class _BodyState extends ConsumerState<_Body> {
     final text = Theme.of(context).textTheme;
     final editable = d.canEvaluate && !_busy;
     final total = _liveTotal;
+    // Wide screens: the artwork on the left, the jury and the grade on the right
+    final wide = MediaQuery.sizeOf(context).width >= AppLayout.wide;
 
-    return ListView(
-      padding: const EdgeInsets.all(AppSpacing.gutter),
-      children: [
+    final left = <Widget>[
         EntryPictures(
           submissionId: d.id,
           imageIds: d.imageIds,
@@ -250,17 +250,18 @@ class _BodyState extends ConsumerState<_Body> {
           style: text.bodySmall,
         ),
         const SizedBox(height: AppSpacing.xs),
-        ProgressBarRow(label: 'Graded by the whole jury', value: d.evaluated, total: d.total),
+        ProgressBarRow(label: 'Graded by you in this competition', value: d.evaluated, total: d.total),
         const SectionHeader('Description', padding: EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.xs)),
         Text(d.description),
         SectionHeader(textTypeName(d.textType), padding: const EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.xs)),
         Text(d.textContent),
-        const Divider(height: AppSpacing.xxl),
+    ];
+    final right = <Widget>[
+        if (!wide) const Divider(height: AppSpacing.xxl),
 
         // Jury progress: who graded this entry (never their scores before publishing)
         if (d.jury.isNotEmpty) ...[
-          Semantics(header: true, child: Text('Jury', style: text.titleLarge)),
-          const SizedBox(height: AppSpacing.xs),
+          SectionHeader('Jury', padding: EdgeInsets.fromLTRB(0, wide ? 0 : AppSpacing.sm, 0, AppSpacing.xs)),
           for (final j in d.jury)
             Row(
               children: [
@@ -284,14 +285,12 @@ class _BodyState extends ConsumerState<_Body> {
 
         // Published: the whole score sheet
         if (d.scoreSheet case final sheet?) ...[
-          Semantics(header: true, child: Text('Score sheet', style: text.titleLarge)),
-          const SizedBox(height: AppSpacing.sm),
+          const SectionHeader('Score sheet', padding: EdgeInsets.only(bottom: AppSpacing.sm)),
           ScoreSheetView(sheet: sheet),
           const SizedBox(height: AppSpacing.lg),
         ],
 
-        Semantics(header: true, child: Text('Your grade', style: text.titleLarge)),
-        const SizedBox(height: AppSpacing.sm),
+        const SectionHeader('Your grade', padding: EdgeInsets.only(bottom: AppSpacing.sm)),
         if (d.evaluation case final ev?)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -347,25 +346,40 @@ class _BodyState extends ConsumerState<_Body> {
                 icon: _busy
                     ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                     : const Icon(Icons.skip_next),
-                label: const Text('Save & next'),
+                label: const Text('SAVE & NEXT'),
               ),
               OutlinedButton.icon(
                 onPressed: editable ? () => _save(goNext: false) : null,
                 icon: const Icon(Icons.save_outlined),
-                label: const Text('Save'),
+                label: const Text('SAVE'),
               ),
               if (d.evaluation != null && d.canDeleteEvaluation)
                 TextButton.icon(
                   onPressed: _busy ? null : _delete,
                   icon: const Icon(Icons.delete_outline),
-                  label: const Text('Delete my grade'),
+                  label: const Text('DELETE MY GRADE'),
                   style: TextButton.styleFrom(foregroundColor: AppColors.danger),
                 ),
             ],
           ),
         ],
         const SizedBox(height: AppSpacing.lg),
-      ],
+    ];
+
+    return ListView(
+      padding: readingPadding(context, maxWidth: wide ? 1040 : 720, top: AppSpacing.gutter, bottom: AppSpacing.gutter),
+      children: wide
+          ? [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 5, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: left)),
+                  const SizedBox(width: AppSpacing.xxl),
+                  Expanded(flex: 5, child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: right)),
+                ],
+              ),
+            ]
+          : [...left, ...right],
     );
   }
 }

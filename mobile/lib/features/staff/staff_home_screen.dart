@@ -24,8 +24,19 @@ class StaffHomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = currentUserOf(ref.watch(authControllerProvider));
     final dashboard = ref.watch(staffDashboardProvider);
+    final wide = MediaQuery.sizeOf(context).width >= AppLayout.wide;
+
+    // The rows of one section: two columns on wide screens, a plain list on a phone
+    Widget rows(List<Widget> children) => wide
+        ? AdaptiveTileGrid(minTileWidth: 440, maxColumns: 2, spacing: AppSpacing.xl, children: children)
+        : Padding(
+            padding: EdgeInsets.symmetric(horizontal: AppLayout.gutterFor(MediaQuery.sizeOf(context).width)),
+            child: Column(children: children),
+          );
+
     return TabScaffold(
       title: 'Home',
+      showHeading: false,
       body: AsyncValueView(
         value: dashboard,
         onRetry: () => ref.invalidate(staffDashboardProvider),
@@ -50,28 +61,30 @@ class StaffHomeScreen extends ConsumerWidget {
                 ),
               if (d.toGrade.isNotEmpty) ...[
                 const SectionHeader('Being graded', subtitle: 'Closed competitions the teachers are grading'),
-                for (final item in d.toGrade) _ToGradeCard(item: item),
+                rows([for (final item in d.toGrade) _ToGradeRow(item: item)]),
               ],
               if (d.toPublish.isNotEmpty) ...[
                 const SectionHeader('Ready to publish', subtitle: 'Every entry is graded'),
-                for (final item in d.toPublish) _ToPublishCard(item: item),
+                rows([for (final item in d.toPublish) _ToPublishRow(item: item)]),
               ],
               if (d.pendingProposals > 0 || d.unpaidSales > 0) ...[
                 const SectionHeader('Exhibitions'),
-                if (d.pendingProposals > 0)
-                  _CountCard(
-                    icon: Icons.hourglass_top_outlined,
-                    count: d.pendingProposals,
-                    title: d.pendingProposals == 1 ? 'Proposal waiting for review' : 'Proposals waiting for review',
-                    onTap: () => context.go('/staff/exhibitions?show=pending'),
-                  ),
-                if (d.unpaidSales > 0)
-                  _CountCard(
-                    icon: Icons.payments_outlined,
-                    count: d.unpaidSales,
-                    title: d.unpaidSales == 1 ? 'Sale to pay out to the student' : 'Sales to pay out to students',
-                    onTap: () => context.go('/staff/exhibitions?show=unpaid'),
-                  ),
+                rows([
+                  if (d.pendingProposals > 0)
+                    _CountRow(
+                      icon: Icons.hourglass_top_outlined,
+                      count: d.pendingProposals,
+                      title: d.pendingProposals == 1 ? 'Proposal waiting for review' : 'Proposals waiting for review',
+                      onTap: () => context.go('/staff/exhibitions?show=pending'),
+                    ),
+                  if (d.unpaidSales > 0)
+                    _CountRow(
+                      icon: Icons.payments_outlined,
+                      count: d.unpaidSales,
+                      title: d.unpaidSales == 1 ? 'Sale to pay out to the student' : 'Sales to pay out to students',
+                      onTap: () => context.go('/staff/exhibitions?show=unpaid'),
+                    ),
+                ]),
               ],
             ],
           ),
@@ -81,6 +94,8 @@ class StaffHomeScreen extends ConsumerWidget {
   }
 }
 
+/// The greeting is the title of the page: the date as the small line, the greeting large and light, then a
+/// sentence about what needs attention.
 class _Greeting extends StatelessWidget {
   const _Greeting({required this.name, required this.data});
 
@@ -90,21 +105,31 @@ class _Greeting extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final width = MediaQuery.sizeOf(context).width;
+    final wide = width >= AppLayout.wide;
     // Grading is the teachers' work, so it is not counted as a task of the staff member
     final tasks = data.toPublish.length +
         (data.pendingProposals > 0 ? 1 : 0) +
         (data.unpaidSales > 0 ? 1 : 0);
-    return Container(
-      color: AppColors.mist,
-      padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, AppSpacing.lg, AppSpacing.gutter, AppSpacing.lg),
+    final now = DateTime.now();
+    return Padding(
+      padding: EdgeInsets.fromLTRB(AppLayout.gutterFor(width), wide ? AppSpacing.xl : AppSpacing.lg,
+          AppLayout.gutterFor(width), 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const SizedBox(width: 28, height: 2, child: ColoredBox(color: AppColors.brass)),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            formatDate(now).toUpperCase(),
+            style: text.labelSmall!.copyWith(color: AppColors.muted, letterSpacing: 1.8),
+          ),
+          const SizedBox(height: AppSpacing.xs),
           Semantics(
             header: true,
             child: Text(
-              '${StaffHomeScreen.greeting(DateTime.now())}${name == null ? '' : ', $name'}',
-              style: text.headlineSmall,
+              '${StaffHomeScreen.greeting(now)}${name == null ? '' : ', $name'}',
+              style: wide ? text.displaySmall : text.headlineLarge,
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -112,7 +137,7 @@ class _Greeting extends StatelessWidget {
             tasks == 0
                 ? 'You are all caught up.'
                 : (tasks == 1 ? '1 thing needs your attention.' : '$tasks things need your attention.'),
-            style: text.bodyMedium!.copyWith(color: AppColors.muted),
+            style: text.bodyLarge!.copyWith(color: AppColors.muted),
           ),
         ],
       ),
@@ -120,6 +145,7 @@ class _Greeting extends StatelessWidget {
   }
 }
 
+/// Small square cover of a competition with a hairline round it.
 class _CoverThumb extends StatelessWidget {
   const _CoverThumb({required this.competitionId, required this.hasCover, required this.label});
 
@@ -129,60 +155,75 @@ class _CoverThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Container(
       width: 72,
       height: 72,
-      child: ClipRRect(
-        borderRadius: AppRadius.smAll,
-        child: hasCover
-            ? PublicImage(url: ApiUrls.competitionCover(competitionId), semanticLabel: 'Cover of $label')
-            : const ImagePlaceholder(icon: Icons.palette_outlined),
-      ),
+      decoration: BoxDecoration(border: Border.all(color: AppColors.line)),
+      child: hasCover
+          ? PublicImage(url: ApiUrls.competitionCover(competitionId), semanticLabel: 'Cover of $label')
+          : const ImagePlaceholder(icon: Icons.palette_outlined),
     );
   }
 }
 
-class _ToGradeCard extends StatelessWidget {
-  const _ToGradeCard({required this.item});
+/// One line of the to-do list: a hairline above, the content, and an arrow when it leads somewhere.
+class _TodoRow extends StatelessWidget {
+  const _TodoRow({required this.leading, required this.child, this.onTap});
+
+  final Widget leading;
+  final Widget child;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final row = DecoratedBox(
+      decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.line))),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            leading,
+            const SizedBox(width: AppSpacing.md),
+            Expanded(child: child),
+            if (onTap != null) const Icon(Icons.arrow_forward, size: 18, color: AppColors.brassText),
+          ],
+        ),
+      ),
+    );
+    return onTap == null ? row : InkWell(onTap: onTap, child: row);
+  }
+}
+
+class _ToGradeRow extends StatelessWidget {
+  const _ToGradeRow({required this.item});
 
   final ToGradeItem item;
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.gutter, vertical: AppSpacing.xs),
-      // Information only: staff follow the progress, teachers grade (the entries open once the results are published)
-      child: Semantics(
-        container: true,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _CoverThumb(competitionId: item.competitionId, hasCover: item.hasCover, label: item.title),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item.title, style: text.titleMedium, maxLines: 2, overflow: TextOverflow.ellipsis),
-                    if (item.endDate != null) Text('Closed ${formatDate(item.endDate!)}', style: text.bodySmall),
-                    const SizedBox(height: AppSpacing.sm),
-                    ProgressBarRow(label: '${item.remaining} left to grade', value: item.evaluated, total: item.total),
-                  ],
-                ),
-              ),
-            ],
-          ),
+    // Information only: staff follow the progress, teachers grade (the entries open once the results are published)
+    return Semantics(
+      container: true,
+      child: _TodoRow(
+        leading: _CoverThumb(competitionId: item.competitionId, hasCover: item.hasCover, label: item.title),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(item.title, style: text.titleMedium, maxLines: 2, overflow: TextOverflow.ellipsis),
+            if (item.endDate != null) Text('Closed ${formatDate(item.endDate!)}', style: text.bodySmall),
+            const SizedBox(height: AppSpacing.sm),
+            ProgressBarRow(label: '${item.remaining} left to grade', value: item.evaluated, total: item.total),
+          ],
         ),
       ),
     );
   }
 }
 
-class _ToPublishCard extends StatelessWidget {
-  const _ToPublishCard({required this.item});
+class _ToPublishRow extends StatelessWidget {
+  const _ToPublishRow({required this.item});
 
   final ToPublishItem item;
 
@@ -190,42 +231,26 @@ class _ToPublishCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final empty = item.emptySlots;
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.gutter, vertical: AppSpacing.xs),
-      child: InkWell(
-        onTap: () => context.push('/staff/awarding/${item.competitionId}'),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Row(
-            children: [
-              _CoverThumb(competitionId: item.competitionId, hasCover: item.hasCover, label: item.title),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(item.title, style: text.titleMedium, maxLines: 2, overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 2),
-                    Text(
-                      empty == 0
-                          ? 'All award slots are filled'
-                          : '$empty award ${empty == 1 ? 'slot' : 'slots'} still empty',
-                      style: text.bodySmall,
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.chevron_right, color: AppColors.muted),
-            ],
+    return _TodoRow(
+      onTap: () => context.push('/staff/awarding/${item.competitionId}'),
+      leading: _CoverThumb(competitionId: item.competitionId, hasCover: item.hasCover, label: item.title),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(item.title, style: text.titleMedium, maxLines: 2, overflow: TextOverflow.ellipsis),
+          const SizedBox(height: 2),
+          Text(
+            empty == 0 ? 'All award slots are filled' : '$empty award ${empty == 1 ? 'slot' : 'slots'} still empty',
+            style: text.bodySmall,
           ),
-        ),
+        ],
       ),
     );
   }
 }
 
-class _CountCard extends StatelessWidget {
-  const _CountCard({required this.icon, required this.count, required this.title, required this.onTap});
+class _CountRow extends StatelessWidget {
+  const _CountRow({required this.icon, required this.count, required this.title, required this.onTap});
 
   final IconData icon;
   final int count;
@@ -235,24 +260,24 @@ class _CountCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: AppSpacing.gutter, vertical: AppSpacing.xs),
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Row(
-            children: [
-              Icon(icon, color: AppColors.brassText),
-              const SizedBox(width: AppSpacing.md),
-              // Numbers in the body font: Bodoni's "1" reads like an "I"
-              Text('$count', style: text.headlineSmall!.copyWith(fontFamily: AppFonts.body, fontWeight: FontWeight.w600)),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(child: Text(title, style: text.bodyLarge)),
-              const Icon(Icons.chevron_right, color: AppColors.muted),
-            ],
+    return _TodoRow(
+      onTap: onTap,
+      leading: Icon(icon, color: AppColors.brassText),
+      child: Row(
+        children: [
+          // A large light numeral, like the prize ranks
+          // A fixed box and a regular weight: a hairline "1" next to the icon reads as a stray bar
+          SizedBox(
+            width: 36,
+            child: Text(
+              '$count',
+              textAlign: TextAlign.center,
+              style: text.headlineMedium!.copyWith(color: AppColors.brassText, fontWeight: FontWeight.w500),
+            ),
           ),
-        ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(child: Text(title, style: text.bodyLarge)),
+        ],
       ),
     );
   }

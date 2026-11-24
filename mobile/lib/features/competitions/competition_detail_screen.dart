@@ -12,7 +12,7 @@ import '../submissions/submissions.dart';
 import 'competitions.dart';
 
 /// M-G3: competition detail (shared by guest and student). Cover, dates, overview, rules, prizes,
-/// winners (when published) and one action at the bottom that depends on the state and the role.
+/// winners (when published) and one action that depends on the state and the role.
 class CompetitionDetailScreen extends ConsumerWidget {
   const CompetitionDetailScreen({super.key, required this.id});
 
@@ -26,7 +26,7 @@ class CompetitionDetailScreen extends ConsumerWidget {
     return switch (detail) {
       AsyncData(:final value) => _DetailView(detail: value, user: user),
       _ => Scaffold(
-          appBar: AppBar(title: const Text('Competition')),
+          appBar: AppBar(leading: const AppBackButton(), leadingWidth: 48, titleSpacing: 0, title: const Text('Competition')),
           body: AsyncValueView(
             value: detail,
             onRetry: () => ref.invalidate(competitionDetailProvider(id)),
@@ -61,98 +61,93 @@ class _DetailViewState extends ConsumerState<_DetailView> {
   Widget build(BuildContext context) {
     final d = widget.detail;
     final s = d.summary;
-    final text = Theme.of(context).textTheme;
+    final width = MediaQuery.sizeOf(context).width;
+    final wide = width >= AppLayout.wide;
+    final gutter = AppLayout.gutterFor(width);
     final countdown = s.countdownLabel;
+    final action = _actionButton(context);
+
+    // Text blocks (overview, rules) and the practical side (dates, prizes)
+    final story = <Widget>[
+      if ((d.description ?? '').isNotEmpty) _TextBlock(title: 'Overview', body: d.description!),
+      if ((d.conditions ?? '').isNotEmpty) _TextBlock(title: 'Rules', body: d.conditions!),
+    ];
+    final practical = <Widget>[
+      _DatesPanel(detail: d),
+      // Wide screens keep the action next to the facts; phones get it in a bar at the bottom
+      if (wide && action != null) ...[
+        const SizedBox(height: AppSpacing.lg),
+        SizedBox(width: double.infinity, child: action),
+      ],
+      if (d.awards.isNotEmpty) ...[
+        const SizedBox(height: AppSpacing.xl),
+        const _Eyebrow('Prizes'),
+        for (final a in d.awards) _PrizeRow(award: a),
+      ],
+    ];
 
     return Scaffold(
-      bottomNavigationBar: _actionBar(context),
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            pinned: true,
-            expandedHeight: 240,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (s.hasCover)
-                    PublicImage(url: ApiUrls.competitionCover(s.id), semanticLabel: 'Cover of ${s.title}')
-                  else
-                    const ColoredBox(color: AppColors.stone, child: ImagePlaceholder(icon: Icons.palette_outlined)),
-                  const DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [Color(0x990B2A33), Color(0x00000000)],
-                        stops: [0, 0.5],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+      appBar: AppBar(leading: const AppBackButton(), leadingWidth: 48, titleSpacing: 0, title: const Text('Competition')),
+      bottomNavigationBar: wide ? null : _actionBar(action),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            HeroHeader(
+              // Status and time left as the small line above the title
+              eyebrow: [competitionStatusLabel(s.status), ?countdown].join('  ·  '),
+              title: s.title,
+              subtitle: (s.topic ?? '').isEmpty ? null : s.topic,
+              background: s.hasCover
+                  ? PublicImage(url: ApiUrls.competitionCover(s.id), semanticLabel: 'Cover of ${s.title}')
+                  : null,
+              height: 280,
             ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.all(AppSpacing.gutter),
-            sliver: SliverList.list(children: [
-              Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.xs,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  StatusChip(s.status),
-                  if (countdown != null)
-                    Text(countdown,
-                        style: text.labelLarge!.copyWith(
-                            color: s.status == CompetitionStatus.ongoing ? AppColors.brassText : AppColors.muted)),
-                ],
+            Padding(
+              padding: EdgeInsets.fromLTRB(gutter, wide ? AppSpacing.xxl : AppSpacing.lg, gutter, 0),
+              child: wide
+                  ? Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 6, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: story)),
+                        const SizedBox(width: AppSpacing.xxl),
+                        Expanded(flex: 4, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: practical)),
+                      ],
+                    )
+                  // Phone: the facts first, then the story, then the prizes
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        practical.first,
+                        const SizedBox(height: AppSpacing.xl),
+                        ...story,
+                        ...practical.skip(1),
+                      ],
+                    ),
+            ),
+            if (s.status == CompetitionStatus.graded) ...[
+              KeyedSubtree(
+                key: _winnersKey,
+                child: const SectionHeader('Winners'),
               ),
-              const SizedBox(height: AppSpacing.sm),
-              Semantics(header: true, child: Text(s.title, style: text.headlineMedium)),
-              if (s.topic != null && s.topic!.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.xs),
-                Text(s.topic!, style: text.titleMedium!.copyWith(color: AppColors.muted)),
-              ],
-              const SizedBox(height: AppSpacing.md),
-              _DatesPanel(detail: d),
-              if ((d.description ?? '').isNotEmpty) ...[
-                _heading('Overview'),
-                Text(d.description!, style: text.bodyLarge),
-              ],
-              if ((d.conditions ?? '').isNotEmpty) ...[
-                _heading('Rules'),
-                Text(d.conditions!, style: text.bodyLarge),
-              ],
-              if (d.awards.isNotEmpty) ...[
-                _heading('Prizes'),
-                for (final a in d.awards) _PrizeCard(award: a),
-              ],
-              if (s.status == CompetitionStatus.graded) ...[
-                KeyedSubtree(key: _winnersKey, child: _heading('Winners')),
-                _Winners(competitionId: s.id),
-              ],
-              const SizedBox(height: AppSpacing.lg),
-            ]),
-          ),
-        ],
+              _Winners(competitionId: s.id),
+            ],
+            const SizedBox(height: AppSpacing.xxl),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _heading(String title) => Padding(
-        padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.sm),
-        child: Semantics(header: true, child: Text(title, style: Theme.of(context).textTheme.headlineSmall)),
-      );
+  // ---- action by state and role ----
 
-  // ---- bottom action by state and role ----
-
-  Widget? _actionBar(BuildContext context) {
-    final button = _actionButton(context);
+  Widget? _actionBar(Widget? button) {
     if (button == null) return null;
-    return Material(
-      color: AppColors.wall,
-      elevation: 8,
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        color: AppColors.wall,
+        border: Border(top: BorderSide(color: AppColors.line)),
+      ),
       child: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(AppSpacing.md),
@@ -193,6 +188,58 @@ class _DetailViewState extends ConsumerState<_DetailView> {
   }
 }
 
+/// Small caps heading with a short brass rule above it: the label of a block of facts.
+class _Eyebrow extends StatelessWidget {
+  const _Eyebrow(this.label);
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(width: 28, height: 2, child: ColoredBox(color: AppColors.brass)),
+          const SizedBox(height: AppSpacing.sm),
+          Semantics(
+            header: true,
+            child: Text(
+              label.toUpperCase(),
+              style: text.labelSmall!.copyWith(fontSize: 12.5, letterSpacing: 1.8, color: AppColors.ink),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A heading and a paragraph of the competition text (overview, rules).
+class _TextBlock extends StatelessWidget {
+  const _TextBlock({required this.title, required this.body});
+
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _Eyebrow(title),
+          Text(body, style: Theme.of(context).textTheme.bodyLarge),
+        ],
+      ),
+    );
+  }
+}
+
+/// Dates and entries as a wall label: small caps name, value, hairline between the rows.
 class _DatesPanel extends StatelessWidget {
   const _DatesPanel({required this.detail});
 
@@ -202,61 +249,70 @@ class _DatesPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = detail.summary;
     final text = Theme.of(context).textTheme;
-    Widget row(IconData icon, String label, String value) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 2),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(icon, size: 18, color: AppColors.muted),
-              const SizedBox(width: AppSpacing.sm),
-              Expanded(
-                child: Text.rich(TextSpan(children: [
-                  TextSpan(text: '$label  ', style: text.bodyMedium!.copyWith(color: AppColors.muted)),
-                  TextSpan(text: value, style: text.bodyMedium!.copyWith(fontWeight: FontWeight.w600)),
-                ])),
+    final rows = [
+      ('Runs', '${formatDate(s.startDate)} – ${formatDate(s.endDate)}'),
+      ('Deadline', formatDateTime(detail.deadline)),
+      if (s.status == CompetitionStatus.ongoing || s.status == CompetitionStatus.closed)
+        ('Entries', '${s.submissionCount}'),
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _Eyebrow('Details'),
+        for (var i = 0; i < rows.length; i++)
+          DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border(
+                top: const BorderSide(color: AppColors.line),
+                bottom: i == rows.length - 1 ? const BorderSide(color: AppColors.line) : BorderSide.none,
               ),
-            ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
+                children: [
+                  SizedBox(
+                    width: 96,
+                    child: Text(
+                      rows[i].$1.toUpperCase(),
+                      style: text.labelSmall!.copyWith(color: AppColors.muted, letterSpacing: 1.4),
+                    ),
+                  ),
+                  Expanded(child: Text(rows[i].$2, style: text.bodyLarge!.copyWith(fontWeight: FontWeight.w500))),
+                ],
+              ),
+            ),
           ),
-        );
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(color: AppColors.mist, borderRadius: AppRadius.mdAll),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          row(Icons.event_outlined, 'Runs', '${formatDate(s.startDate)} – ${formatDate(s.endDate)}'),
-          row(Icons.schedule, 'Deadline', formatDateTime(detail.deadline)),
-          if (s.status == CompetitionStatus.ongoing || s.status == CompetitionStatus.closed)
-            row(Icons.image_outlined, 'Entries', '${s.submissionCount}'),
-        ],
-      ),
+      ],
     );
   }
 }
 
-class _PrizeCard extends StatelessWidget {
-  const _PrizeCard({required this.award});
+/// One prize: a large brass numeral, the name, the value and a short description.
+class _PrizeRow extends StatelessWidget {
+  const _PrizeRow({required this.award});
 
   final CompetitionAward award;
 
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    return Card(
-      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
+    return DecoratedBox(
+      decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.line))),
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            CircleAvatar(
-              backgroundColor: AppColors.brass,
-              foregroundColor: Colors.white,
-              child: Text('${award.rank}', style: const TextStyle(fontWeight: FontWeight.w700)),
+            SizedBox(
+              width: 44,
+              child: Text(
+                '${award.rank}',
+                style: text.headlineMedium!.copyWith(color: AppColors.brass, fontWeight: FontWeight.w300),
+              ),
             ),
-            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -264,12 +320,12 @@ class _PrizeCard extends StatelessWidget {
                   Text(award.name, style: text.titleMedium),
                   Text(
                     '${formatMoney(award.prizeValue)}  ·  ${award.quantity} ${award.quantity == 1 ? 'award' : 'awards'}',
-                    style: text.bodyMedium!.copyWith(color: AppColors.brassText, fontWeight: FontWeight.w600),
+                    style: text.bodyMedium!.copyWith(color: AppColors.brassText, fontWeight: FontWeight.w500),
                   ),
                   if ((award.description ?? '').isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(top: AppSpacing.xs),
-                      child: Text(award.description!, style: text.bodyMedium),
+                      child: Text(award.description!, style: text.bodyMedium!.copyWith(color: AppColors.muted)),
                     ),
                 ],
               ),
@@ -289,9 +345,14 @@ class _Winners extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final awards = ref.watch(competitionAwardsProvider(competitionId));
+    final gutter = AppLayout.gutterFor(MediaQuery.sizeOf(context).width);
     return switch (awards) {
+      // The grid brings its own side gutter, so it sits outside the padded content
       AsyncData(:final value) => value.isEmpty
-          ? const Text('Results have not been published yet.')
+          ? Padding(
+              padding: EdgeInsets.symmetric(horizontal: gutter),
+              child: const Text('Results have not been published yet.'),
+            )
           : TwoColumnGrid(tiles: [
               for (final a in value)
                 if (a.submissionId != null)
@@ -300,6 +361,7 @@ class _Winners extends ConsumerWidget {
                     title: a.paintingTitle,
                     artist: a.studentName,
                     awardName: a.awardName,
+                    awardRank: a.rank,
                     awarded: true,
                     onTap: () => context.push('/gallery/artworks/${a.submissionId}'),
                   )
@@ -307,7 +369,7 @@ class _Winners extends ConsumerWidget {
                   _TextWinner(award: a),
             ]),
       AsyncError(:final error) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+          padding: EdgeInsets.symmetric(horizontal: gutter, vertical: AppSpacing.sm),
           child: Text('Could not load the winners. $error'),
         ),
       _ => const Padding(padding: EdgeInsets.all(AppSpacing.md), child: Center(child: CircularProgressIndicator())),
@@ -323,5 +385,10 @@ class _TextWinner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      WallLabel(title: award.paintingTitle, artist: award.studentName, awardName: award.awardName);
+      WallLabel(
+        title: award.paintingTitle,
+        artist: award.studentName,
+        awardName: award.awardName,
+        awardRank: award.rank,
+      );
 }

@@ -68,22 +68,24 @@ class _CompetitionsBodyState extends ConsumerState<CompetitionsBody> {
   @override
   Widget build(BuildContext context) {
     final competitions = ref.watch(competitionListProvider);
+    final width = MediaQuery.sizeOf(context).width;
+    final wide = width >= AppLayout.wide;
+    final gutter = AppLayout.gutterFor(width);
+    final all = competitions.value;
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, AppSpacing.md, AppSpacing.gutter, AppSpacing.sm),
-          child: SizedBox(
-            width: double.infinity,
-            child: SegmentedButton<CompetitionSection>(
-              showSelectedIcon: false,
-              segments: [
-                for (final s in CompetitionSection.values) ButtonSegment(value: s, label: Text(s.label)),
-              ],
-              selected: {_section},
-              onSelectionChanged: (v) => setState(() => _section = v.first),
-            ),
+          padding: EdgeInsets.symmetric(horizontal: gutter),
+          child: SegmentTabs<CompetitionSection>(
+            values: CompetitionSection.values,
+            selected: _section,
+            expand: !wide,
+            labelOf: (s) => s.label,
+            countOf: all == null ? null : (s) => all.where((c) => s.includes(c.status)).length,
+            onSelected: (s) => setState(() => _section = s),
           ),
         ),
+        const SizedBox(height: AppSpacing.lg),
         Expanded(
           child: AsyncValueView(
             value: competitions,
@@ -97,16 +99,33 @@ class _CompetitionsBodyState extends ConsumerState<CompetitionsBody> {
                         physics: const AlwaysScrollableScrollPhysics(),
                         children: [SizedBox(height: 320, child: EmptyState(title: _section.emptyTitle))],
                       )
-                    : ListView.separated(
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        padding: const EdgeInsets.all(AppSpacing.gutter),
-                        itemCount: items.length,
-                        separatorBuilder: (context, i) => const SizedBox(height: AppSpacing.md),
-                        itemBuilder: (context, i) => CompetitionCard(
-                          competition: items[i],
-                          onTap: () => context.push('/competitions/${items[i].id}'),
-                        ),
-                      ),
+                    : wide
+                        // A grid of columns: a single card would otherwise stretch across the whole page
+                        ? ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+                            children: [
+                              AdaptiveTileGrid(
+                                minTileWidth: 300,
+                                maxColumns: 3,
+                                spacing: AppSpacing.xl,
+                                children: [
+                                  for (final c in items)
+                                    CompetitionCard(competition: c, onTap: () => context.push('/competitions/${c.id}')),
+                                ],
+                              ),
+                            ],
+                          )
+                        : ListView.separated(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            padding: EdgeInsets.fromLTRB(gutter, AppSpacing.sm, gutter, AppSpacing.xl),
+                            itemCount: items.length,
+                            separatorBuilder: (context, i) => const SizedBox(height: AppSpacing.xl),
+                            itemBuilder: (context, i) => CompetitionCard(
+                              competition: items[i],
+                              onTap: () => context.push('/competitions/${items[i].id}'),
+                            ),
+                          ),
               );
             },
           ),

@@ -37,7 +37,7 @@ void main() {
       expect(theme.textTheme.bodyMedium!.fontSize, greaterThanOrEqualTo(14));
     });
 
-    testWidgets('app bar and navigation bar are navy', (tester) async {
+    testWidgets('app bar and navigation bar sit on the light wall with a hairline', (tester) async {
       await tester.pumpWidget(MaterialApp(
         theme: buildTheme(),
         home: Scaffold(
@@ -52,7 +52,8 @@ void main() {
         ),
       ));
       expect(tester.widget<Material>(find.descendant(of: find.byType(AppBar), matching: find.byType(Material)).first).color,
-          AppColors.ink);
+          AppColors.wall);
+      expect(buildTheme().navigationBarTheme.backgroundColor, AppColors.wall);
       expect(find.text('Competitions'), findsOneWidget);
     });
   });
@@ -65,10 +66,11 @@ void main() {
         StatusChip(CompetitionStatus.closed),
         StatusChip(CompetitionStatus.graded),
       ])));
-      expect(find.text('Upcoming'), findsOneWidget);
-      expect(find.text('Open'), findsOneWidget);
-      expect(find.text('Closed'), findsOneWidget);
-      expect(find.text('Results published'), findsOneWidget);
+      // The chip writes its label in capitals
+      expect(find.text('UPCOMING'), findsOneWidget);
+      expect(find.text('OPEN'), findsOneWidget);
+      expect(find.text('CLOSED'), findsOneWidget);
+      expect(find.text('RESULTS PUBLISHED'), findsOneWidget);
     });
 
     test('status colours match the plan', () {
@@ -79,7 +81,7 @@ void main() {
 
     testWidgets('custom chip', (tester) async {
       await tester.pumpWidget(_app(const StatusChip.custom(label: 'Sold', color: AppColors.brassText)));
-      expect(find.text('Sold'), findsOneWidget);
+      expect(find.text('SOLD'), findsOneWidget);
     });
   });
 
@@ -111,7 +113,8 @@ void main() {
         meta: 'Spring Colours',
       )));
       expect(tester.widget<Text>(find.text('Dawn')).style!.fontStyle, FontStyle.italic);
-      expect(find.text('An Nguyen'), findsOneWidget);
+      // The artist is written in capitals, like on a museum label
+      expect(find.text('AN NGUYEN'), findsOneWidget);
       expect(find.text('First Prize'), findsOneWidget);
       expect(find.text('Spring Colours'), findsOneWidget);
     });
@@ -148,10 +151,12 @@ void main() {
   group('CompetitionCard', () {
     testWidgets('shows status, dates, countdown and entries', (tester) async {
       var tapped = false;
-      await tester.pumpWidget(_app(CompetitionCard(competition: _competition(), onTap: () => tapped = true)));
+      // In the app a card always sits in a column of its own width (a grid cell or a strip)
+      await tester.pumpWidget(_app(SizedBox(width: 300, child: CompetitionCard(competition: _competition(), onTap: () => tapped = true))));
       expect(find.text('Spring Colours'), findsOneWidget);
-      expect(find.text('Open'), findsOneWidget);
-      expect(find.text('4 days left'), findsOneWidget);
+      expect(find.text('OPEN'), findsOneWidget);
+      // The facts form one line (dates · time left · entries); each one is its own piece of text
+      expect(find.textContaining('4 days left'), findsOneWidget);
       expect(find.text('12 entries'), findsOneWidget);
       expect(find.textContaining('01 Dec 2026'), findsOneWidget);
       await tester.tap(find.text('Spring Colours'));
@@ -184,8 +189,8 @@ void main() {
         const SectionHeader('Coming soon', actionLabel: 'See all'),
       ])));
       expect(find.text('Open now'), findsOneWidget);
-      expect(find.text('See all'), findsOneWidget);
-      await tester.tap(find.text('See all'));
+      expect(find.text('SEE ALL  →'), findsOneWidget);
+      await tester.tap(find.text('SEE ALL  →'));
       expect(tapped, isTrue);
     });
 
@@ -224,7 +229,7 @@ void main() {
       )));
       expect(find.text('Institute of Fine Arts'), findsOneWidget);
       expect(find.text('Where art begins'), findsOneWidget);
-      await tester.tap(find.text('Browse competitions'));
+      await tester.tap(find.text('BROWSE COMPETITIONS  →'));
       expect(tapped, isTrue);
     });
   });

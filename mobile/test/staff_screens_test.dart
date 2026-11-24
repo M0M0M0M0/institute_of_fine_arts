@@ -10,6 +10,7 @@ import 'package:fine_arts_mobile/features/competitions/competitions.dart';
 import 'package:fine_arts_mobile/features/exhibitions/exhibitions.dart';
 import 'package:fine_arts_mobile/features/exhibitions/staff_entry_screen.dart';
 import 'package:fine_arts_mobile/features/exhibitions/staff_exhibition_screens.dart';
+import 'package:fine_arts_mobile/features/grading/evaluation_fields.dart';
 import 'package:fine_arts_mobile/features/grading/grading.dart';
 import 'package:fine_arts_mobile/features/grading/grading_competitions_screen.dart';
 import 'package:fine_arts_mobile/features/grading/grading_detail_screen.dart';
@@ -21,6 +22,7 @@ import 'package:fine_arts_mobile/shared/auth_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/misc.dart' show Override;
+import 'package:flutter_quill/flutter_quill.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
@@ -295,8 +297,9 @@ void main() {
       ]);
       expect(find.text('Autumn Colours'), findsWidgets);
       expect(find.text('Still Sea'), findsOneWidget);
-      expect(find.text('To grade'), findsNWidgets(2)); // filter chip + the entry chip
-      expect(find.text('Best'), findsNWidgets(2)); // rating filter chip + the entry chip
+      // The filter words and the state chips are written in capitals
+      expect(find.text('TO GRADE'), findsNWidgets(2)); // filter word + the entry chip
+      expect(find.text('BEST'), findsNWidgets(2)); // rating filter word + the entry chip
       expect(find.text('Student name, code or title'), findsOneWidget);
     });
   });
@@ -316,8 +319,8 @@ void main() {
       expect(find.text('Strengths *'), findsOneWidget);
       expect(find.text('Weaknesses'), findsOneWidget);
       expect(find.text('Areas to improve'), findsOneWidget);
-      expect(find.text('Save & next'), findsOneWidget);
-      expect(find.text('Delete my grade'), findsNothing);
+      expect(find.text('SAVE & NEXT'), findsOneWidget);
+      expect(find.text('DELETE MY GRADE'), findsNothing);
     });
 
     testWidgets('the weighted total updates as the scores are typed', (tester) async {
@@ -352,7 +355,7 @@ void main() {
             (ref, id) async => GradingDetail.fromJson(_gradingDetail(canEvaluate: false, lockReason: 'Submissions are still open'))),
       ]);
       expect(find.text('Submissions are still open'), findsNothing);
-      expect(find.text('Save & next'), findsNothing);
+      expect(find.text('SAVE & NEXT'), findsNothing);
       await tester.ensureVisible(find.text('Not graded yet.'));
       expect(find.text('Not graded yet.'), findsOneWidget);
     });
@@ -380,8 +383,8 @@ void main() {
       expect(find.text('85.5'), findsOneWidget);
       expect(find.text('Fresh'), findsOneWidget);
       expect(find.textContaining('total 88.20'), findsOneWidget);
-      await tester.ensureVisible(find.text('Delete my grade'));
-      expect(find.text('Delete my grade'), findsOneWidget);
+      await tester.ensureVisible(find.text('DELETE MY GRADE'));
+      expect(find.text('DELETE MY GRADE'), findsOneWidget);
     });
   });
 
@@ -463,7 +466,8 @@ void main() {
       expect(find.text('Winter Show'), findsOneWidget);
       expect(find.text('Hall A, Hanoi'), findsOneWidget);
       expect(find.text('4 artworks · 2 to review'), findsOneWidget);
-      expect(find.text('Upcoming'), findsWidgets);
+      // The status chip is written in capitals
+      expect(find.text('UPCOMING'), findsWidgets);
     });
 
     testWidgets('initialView=unpaid opens the artworks tab filtered to sales to pay out', (tester) async {
@@ -479,9 +483,11 @@ void main() {
       expect(seen?.status, EntryStatus.sold);
       expect(seen?.paid, false);
       expect(find.text('Still Sea'), findsOneWidget);
-      expect(find.text('Sold'), findsWidgets);
-      final chip = tester.widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'To pay out'));
-      expect(chip.selected, isTrue);
+      expect(find.text('SOLD'), findsWidgets);
+      // The "To pay out" filter word is the selected one
+      final semantics = tester.ensureSemantics();
+      expect(tester.getSemantics(find.text('TO PAY OUT')), isSemantics(isSelected: true));
+      semantics.dispose();
     });
 
     testWidgets('entry detail shows the framed picture area and review buttons', (tester) async {
@@ -489,8 +495,8 @@ void main() {
         entryDetailProvider.overrideWith((ref, id) async => EntryDetail.fromJson(_entryDetail())),
       ]);
       expect(find.text('Still Sea'), findsOneWidget);
-      expect(find.text('Pending review'), findsOneWidget);
-      expect(find.text('Asking price'), findsOneWidget);
+      expect(find.text('PENDING REVIEW'), findsOneWidget);
+      expect(find.text('ASKING PRICE'), findsOneWidget);
       expect(find.text('Accept'), findsOneWidget);
       expect(find.text('Reject'), findsOneWidget);
     });

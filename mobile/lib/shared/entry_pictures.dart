@@ -70,6 +70,7 @@ class EntryPictures extends StatefulWidget {
     required this.title,
     this.subtitle,
     this.awarded = false,
+    this.awardRank,
     this.onSelected,
   });
 
@@ -78,6 +79,9 @@ class EntryPictures extends StatefulWidget {
   final String title;
   final String? subtitle;
   final bool awarded;
+
+  /// Rank of the best prize (1 gold, 2 silver, 3 bronze frame), null when none.
+  final int? awardRank;
 
   /// Called with the picture id shown large (e.g. so "Download original" follows it).
   final ValueChanged<int>? onSelected;
@@ -119,7 +123,7 @@ class _EntryPicturesState extends State<EntryPictures> {
               label: 'Open ${widget.title} full screen',
               child: InkWell(
                 onTap: () => ArtworkViewer.open(context, viewer),
-                child: ArtworkFrame(awarded: widget.awarded, aspectRatio: null, child: large),
+                child: ArtworkFrame(awarded: widget.awarded, awardRank: widget.awardRank, aspectRatio: null, child: large),
               ),
             ),
           ),

@@ -26,7 +26,7 @@ class SubmissionFormScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final editing = submissionId != null;
     return Scaffold(
-      appBar: AppBar(title: Text(editing ? 'Edit entry' : 'Submit entry')),
+      appBar: AppBar(leading: const AppBackButton(), leadingWidth: 48, titleSpacing: 0, title: Text(editing ? 'Edit entry' : 'Submit entry')),
       body: editing
           // Sửa: tải chi tiết bài trước để điền sẵn form
           ? AsyncValueView(
@@ -78,6 +78,7 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
     final i = widget.initial;
     // Điền sẵn khi sửa; nộp mới thì để trống, đồng ý công khai mặc định false
     _title = TextEditingController(text: i?.title ?? '');
+    // Plain text: the web shows the description as text (rich text comes later for web and app together)
     _description = TextEditingController(text: i?.description ?? '');
     _textContent = TextEditingController(text: i?.textContent ?? '');
     _textType = i?.textType ?? TextType.poem;
@@ -217,12 +218,7 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
       key: _formKey,
       // Column in a scroll view (not a lazy ListView) so every field exists and gets validated
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.gutter,
-          AppSpacing.md,
-          AppSpacing.gutter,
-          AppSpacing.xl,
-        ),
+        padding: readingPadding(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -342,13 +338,11 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
               maxLength: 2000,
               maxLines: 4,
               decoration: const InputDecoration(
-                labelText:
-                    'Description (why you made it, why it deserves to win) *',
+                labelText: 'Description *',
+                hintText: 'Why you made it, why it deserves to win…',
                 alignLabelWithHint: true,
               ),
-              validator: (v) => (v == null || v.trim().isEmpty)
-                  ? 'Please enter a description'
-                  : null,
+              validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter a description' : null,
             ),
             const SizedBox(height: AppSpacing.md),
             Text('Accompanying text', style: text.titleSmall),

@@ -10,20 +10,45 @@ import '../../shared/shared.dart';
 import 'exhibition_widgets.dart';
 import 'exhibitions.dart';
 
+enum _ExhibitionTab { exhibitions, proposals }
+
 /// M-S6 Exhibitions tab for students: upcoming exhibitions + my proposals (F-M09-02, 03, 10).
-class StudentExhibitionsTab extends StatelessWidget {
+class StudentExhibitionsTab extends StatefulWidget {
   const StudentExhibitionsTab({super.key});
 
   @override
+  State<StudentExhibitionsTab> createState() => _StudentExhibitionsTabState();
+}
+
+class _StudentExhibitionsTabState extends State<StudentExhibitionsTab> {
+  _ExhibitionTab _tab = _ExhibitionTab.exhibitions;
+
+  @override
   Widget build(BuildContext context) {
-    return const DefaultTabController(
-      length: 2,
-      child: Column(
-        children: [
-          TabBar(tabs: [Tab(text: 'Exhibitions'), Tab(text: 'My proposals')]),
-          Expanded(child: TabBarView(children: [_ExhibitionList(), _MyEntriesList()])),
-        ],
-      ),
+    final width = MediaQuery.sizeOf(context).width;
+    return Column(
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: AppLayout.gutterFor(width)),
+          child: SegmentTabs<_ExhibitionTab>(
+            values: _ExhibitionTab.values,
+            selected: _tab,
+            expand: width < AppLayout.wide,
+            labelOf: (t) => switch (t) {
+              _ExhibitionTab.exhibitions => 'Exhibitions',
+              _ExhibitionTab.proposals => 'My proposals',
+            },
+            onSelected: (t) => setState(() => _tab = t),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Expanded(
+          child: switch (_tab) {
+            _ExhibitionTab.exhibitions => const _ExhibitionList(),
+            _ExhibitionTab.proposals => const _MyEntriesList(),
+          },
+        ),
+      ],
     );
   }
 }
@@ -43,7 +68,8 @@ class _ExhibitionList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final list = ref.watch(studentExhibitionsProvider);
-    final text = Theme.of(context).textTheme;
+    final width = MediaQuery.sizeOf(context).width;
+    final gutter = AppLayout.gutterFor(width);
     return AsyncValueView(
       value: list,
       onRetry: () => ref.invalidate(studentExhibitionsProvider),
@@ -54,44 +80,70 @@ class _ExhibitionList extends ConsumerWidget {
         },
         child: items.isEmpty
             ? _emptyList('No upcoming exhibitions', message: 'Check back soon.')
-            : ListView.separated(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(AppSpacing.gutter),
-                itemCount: items.length,
-                separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
-                itemBuilder: (context, i) {
-                  final e = items[i];
-                  return Card(
-                    child: InkWell(
-                      onTap: () => context.push('/student/exhibitions/${e.id}'),
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppSpacing.md),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            StatusChip.exhibition(e.status),
-                            const SizedBox(height: AppSpacing.sm),
-                            Text(e.name, style: text.titleMedium),
-                            const SizedBox(height: 2),
-                            Text('${e.venue} – ${e.city}', style: text.bodyMedium),
-                            Text(dateRange(e.startDate, e.endDate), style: text.bodySmall),
-                            if (e.status == ExhibitionStatus.upcoming)
-                              Padding(
-                                padding: const EdgeInsets.only(top: AppSpacing.xs),
-                                child: Text(
-                                  e.daysUntilStart <= 0
-                                      ? 'Starts today'
-                                      : 'Starts in ${e.daysUntilStart} ${e.daysUntilStart == 1 ? 'day' : 'days'}',
-                                  style: text.labelMedium!.copyWith(color: AppColors.brassText),
-                                ),
-                              ),
-                          ],
-                        ),
+            : width >= AppLayout.wide
+                // Columns on wide screens
+                ? ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+                    children: [
+                      AdaptiveTileGrid(
+                        minTileWidth: 300,
+                        maxColumns: 3,
+                        spacing: AppSpacing.xl,
+                        children: [for (final e in items) _ExhibitionCard(exhibition: e)],
                       ),
-                    ),
-                  );
-                },
-              ),
+                    ],
+                  )
+                : ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(gutter, 0, gutter, AppSpacing.xl),
+                    itemCount: items.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
+                    itemBuilder: (context, i) => _ExhibitionCard(exhibition: items[i]),
+                  ),
+      ),
+    );
+  }
+}
+
+/// One exhibition as a wall label: a hairline above, then status, name, venue, dates and the countdown.
+class _ExhibitionCard extends StatelessWidget {
+  const _ExhibitionCard({required this.exhibition});
+
+  final ExhibitionSummary exhibition;
+
+  @override
+  Widget build(BuildContext context) {
+    final e = exhibition;
+    final text = Theme.of(context).textTheme;
+    return InkWell(
+      onTap: () => context.push('/student/exhibitions/${e.id}'),
+      child: DecoratedBox(
+        decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.line))),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              StatusChip.exhibition(e.status),
+              const SizedBox(height: AppSpacing.sm),
+              Text(e.name, style: text.titleMedium),
+              const SizedBox(height: 2),
+              Text('${e.venue} – ${e.city}', style: text.bodyMedium),
+              Text(dateRange(e.startDate, e.endDate), style: text.bodySmall),
+              if (e.status == ExhibitionStatus.upcoming)
+                Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.xs),
+                  child: Text(
+                    e.daysUntilStart <= 0
+                        ? 'Starts today'
+                        : 'Starts in ${e.daysUntilStart} ${e.daysUntilStart == 1 ? 'day' : 'days'}',
+                    style: text.labelMedium!.copyWith(color: AppColors.brassText),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -119,7 +171,7 @@ class _MyEntriesList extends ConsumerWidget {
               )
             : ListView.separated(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(AppSpacing.gutter),
+                padding: EdgeInsets.all(AppLayout.gutterFor(MediaQuery.sizeOf(context).width)),
                 itemCount: items.length,
                 separatorBuilder: (_, _) => const Divider(height: 1),
                 itemBuilder: (context, i) => _EntryRow(entry: items[i]),
@@ -196,12 +248,12 @@ class StudentExhibitionDetailScreen extends ConsumerWidget {
     final detail = ref.watch(studentExhibitionProvider(id));
     final text = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Exhibition')),
+      appBar: AppBar(leading: const AppBackButton(), leadingWidth: 48, titleSpacing: 0, title: const Text('Exhibition')),
       body: AsyncValueView(
         value: detail,
         onRetry: () => ref.invalidate(studentExhibitionProvider(id)),
         data: (e) => ListView(
-          padding: const EdgeInsets.all(AppSpacing.gutter),
+          padding: readingPadding(context, top: AppSpacing.gutter, bottom: AppSpacing.gutter),
           children: [
             Align(alignment: Alignment.centerLeft, child: StatusChip.exhibition(e.status)),
             const SizedBox(height: AppSpacing.sm),
@@ -292,12 +344,12 @@ class _ProposeEntryScreenState extends ConsumerState<ProposeEntryScreen> {
     final eligible = ref.watch(studentEligibleProvider);
     final text = Theme.of(context).textTheme;
     return Scaffold(
-      appBar: AppBar(title: const Text('Propose a work')),
+      appBar: AppBar(leading: const AppBackButton(), leadingWidth: 48, titleSpacing: 0, title: const Text('Propose a work')),
       body: AsyncValueView(
         value: eligible,
         onRetry: () => ref.invalidate(studentEligibleProvider),
         data: (items) => ListView(
-          padding: const EdgeInsets.all(AppSpacing.gutter),
+          padding: readingPadding(context, top: AppSpacing.gutter, bottom: AppSpacing.gutter),
           children: [
             Text('Choose an entry', style: text.titleMedium),
             Text('Only entries rated Best in a published competition can be proposed.', style: text.bodySmall),
@@ -361,7 +413,7 @@ class StudentEntryDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(myEntryProvider(id));
     return Scaffold(
-      appBar: AppBar(title: const Text('Proposal')),
+      appBar: AppBar(leading: const AppBackButton(), leadingWidth: 48, titleSpacing: 0, title: const Text('Proposal')),
       body: AsyncValueView(
         value: detail,
         onRetry: () => ref.invalidate(myEntryProvider(id)),
@@ -425,12 +477,12 @@ class _EntryBodyState extends ConsumerState<_EntryBody> {
   Future<void> _withdraw() async {
     final ok = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (context) => ArtDialog(
         title: const Text('Withdraw this proposal?'),
         content: const Text('The proposal will be removed. You can propose the work again later.'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Keep it')),
-          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Withdraw')),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('KEEP IT')),
+          FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('WITHDRAW')),
         ],
       ),
     );

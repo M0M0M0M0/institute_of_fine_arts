@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart' show SystemUiOverlayStyle;
 
 import 'tokens.dart';
 
@@ -56,21 +57,24 @@ ThemeData buildTheme() {
     primaryTextTheme: text,
     dividerColor: AppColors.line,
     dividerTheme: const DividerThemeData(color: AppColors.line, thickness: 1, space: 1),
+    // Light bar with a hairline, like a museum wall label: the artworks carry the colour, not the chrome
     appBarTheme: AppBarTheme(
-      backgroundColor: AppColors.ink,
-      foregroundColor: Colors.white,
+      backgroundColor: AppColors.wall,
+      foregroundColor: AppColors.ink,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       scrolledUnderElevation: 0,
       centerTitle: false,
-      titleTextStyle: text.titleLarge!.copyWith(color: Colors.white),
-      iconTheme: const IconThemeData(color: Colors.white),
-      actionsIconTheme: const IconThemeData(color: Colors.white),
+      shape: const Border(bottom: BorderSide(color: AppColors.line)),
+      systemOverlayStyle: SystemUiOverlayStyle.dark,
+      titleTextStyle: text.titleLarge!.copyWith(color: AppColors.ink, letterSpacing: 0.6),
+      iconTheme: const IconThemeData(color: AppColors.ink),
+      actionsIconTheme: const IconThemeData(color: AppColors.ink),
     ),
     navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: AppColors.ink,
+      backgroundColor: AppColors.wall,
       surfaceTintColor: Colors.transparent,
-      indicatorColor: AppColors.brassText,
+      indicatorColor: Colors.transparent,
       height: 68,
       elevation: 0,
       labelTextStyle: WidgetStateProperty.resolveWith(
@@ -78,15 +82,15 @@ ThemeData buildTheme() {
           fontFamily: AppFonts.body,
           // 11 with tight tracking (about 67 dp): the longest label ("Competitions") fits a 5-tab bar on a 360 dp phone
           fontSize: 11,
-          letterSpacing: -0.3,
+          letterSpacing: -0.2,
           fontWeight: states.contains(WidgetState.selected) ? FontWeight.w600 : FontWeight.w500,
-          color: states.contains(WidgetState.selected) ? Colors.white : const Color(0xFFC9D3D6),
+          color: states.contains(WidgetState.selected) ? AppColors.ink : AppColors.muted,
         ),
       ),
       iconTheme: WidgetStateProperty.resolveWith(
         (states) => IconThemeData(
           size: 24,
-          color: states.contains(WidgetState.selected) ? Colors.white : const Color(0xFFC9D3D6),
+          color: states.contains(WidgetState.selected) ? AppColors.brassText : AppColors.muted,
         ),
       ),
     ),
@@ -198,8 +202,14 @@ ThemeData buildTheme() {
     dialogTheme: DialogThemeData(
       backgroundColor: AppColors.wall,
       surfaceTintColor: Colors.transparent,
-      shape: RoundedRectangleBorder(borderRadius: AppRadius.mdAll),
-      titleTextStyle: text.titleLarge,
+      elevation: 12,
+      shadowColor: const Color(0x33000000),
+      shape: const RoundedRectangleBorder(
+        borderRadius: AppRadius.mdAll,
+        side: BorderSide(color: AppColors.line),
+      ),
+      titleTextStyle: text.headlineSmall,
+      contentTextStyle: text.bodyMedium,
     ),
     bottomSheetTheme: const BottomSheetThemeData(
       backgroundColor: AppColors.wall,
@@ -246,21 +256,22 @@ TextTheme _textTheme() {
     color: color ?? AppColors.graphite,
   );
 
+  // Large titles are light with tight tracking (editorial); small titles stay medium so they read well on a phone
   return TextTheme(
-    displayLarge: title(44, FontWeight.w600, height: 1.1),
-    displayMedium: title(36, FontWeight.w600, height: 1.15),
-    displaySmall: title(30, FontWeight.w600, height: 1.2),
-    headlineLarge: title(28, FontWeight.w600, height: 1.2),
-    headlineMedium: title(24, FontWeight.w600, height: 1.25),
-    headlineSmall: title(21, FontWeight.w600, height: 1.25),
-    titleLarge: title(20, FontWeight.w600, height: 1.3),
-    titleMedium: title(17, FontWeight.w600, height: 1.3),
-    titleSmall: title(15, FontWeight.w600, height: 1.3),
-    bodyLarge: sans(16, FontWeight.w400, height: 1.5),
-    bodyMedium: sans(14, FontWeight.w400, height: 1.5),
-    bodySmall: sans(14, FontWeight.w400, height: 1.4, color: AppColors.muted),
-    labelLarge: sans(15, FontWeight.w600, height: 1.2, letter: 0.1),
-    labelMedium: sans(14, FontWeight.w500, height: 1.2, letter: 0.1),
-    labelSmall: sans(12, FontWeight.w600, height: 1.2, letter: 0.4),
+    displayLarge: title(52, FontWeight.w300, height: 1.05).copyWith(letterSpacing: -1.2),
+    displayMedium: title(42, FontWeight.w300, height: 1.1).copyWith(letterSpacing: -0.9),
+    displaySmall: title(34, FontWeight.w300, height: 1.15).copyWith(letterSpacing: -0.6),
+    headlineLarge: title(30, FontWeight.w300, height: 1.2).copyWith(letterSpacing: -0.4),
+    headlineMedium: title(26, FontWeight.w400, height: 1.25).copyWith(letterSpacing: -0.3),
+    headlineSmall: title(22, FontWeight.w400, height: 1.25).copyWith(letterSpacing: -0.2),
+    titleLarge: title(20, FontWeight.w500, height: 1.3),
+    titleMedium: title(17, FontWeight.w500, height: 1.3),
+    titleSmall: title(15, FontWeight.w500, height: 1.3),
+    bodyLarge: sans(16, FontWeight.w400, height: 1.6),
+    bodyMedium: sans(14, FontWeight.w400, height: 1.55),
+    bodySmall: sans(14, FontWeight.w400, height: 1.45, color: AppColors.muted),
+    labelLarge: sans(14, FontWeight.w600, height: 1.2, letter: 0.8),
+    labelMedium: sans(14, FontWeight.w500, height: 1.2, letter: 0.2),
+    labelSmall: sans(12, FontWeight.w600, height: 1.2, letter: 1.0),
   );
 }

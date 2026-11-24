@@ -15,6 +15,7 @@ class GalleryArtwork {
     required this.competitionId,
     required this.competitionTitle,
     this.awardName,
+    this.awardRank,
     this.hasThumbnail = false,
     this.competitionDescription,
     this.submittedAt,
@@ -28,6 +29,9 @@ class GalleryArtwork {
 
   /// Award of the work (e.g. "First Prize"), null when it won nothing.
   final String? awardName;
+
+  /// Rank of that award (1 first prize, 2 second …), null when it won nothing.
+  final int? awardRank;
   final bool hasThumbnail;
 
   /// Only sent by `GET /api/gallery/artworks/{id}`.
@@ -43,6 +47,7 @@ class GalleryArtwork {
         competitionId: (json['competitionId'] as int?) ?? 0,
         competitionTitle: (json['competitionTitle'] as String?) ?? '',
         awardName: json['awardName'] as String?,
+        awardRank: json['awardRank'] as int?,
         hasThumbnail: (json['hasThumbnail'] as bool?) ?? false,
         competitionDescription: json['competitionDescription'] as String?,
         submittedAt: DateTime.tryParse((json['submittedAt'] as String?) ?? ''),

@@ -22,7 +22,7 @@ class AwardingDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final detail = ref.watch(awardingDetailProvider(competitionId));
     return Scaffold(
-      appBar: AppBar(title: const Text('Awards')),
+      appBar: AppBar(leading: const AppBackButton(), leadingWidth: 48, titleSpacing: 0, title: const Text('Awards')),
       body: AsyncValueView(
         value: detail,
         onRetry: () => ref.invalidate(awardingDetailProvider(competitionId)),
@@ -122,12 +122,12 @@ class _BodyState extends ConsumerState<_Body> {
 
   Future<bool?> _confirm(String title, String text, String action) => showDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (context) => ArtDialog(
           title: Text(title),
           content: Text(text),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-            FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(action)),
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('CANCEL')),
+            FilledButton(onPressed: () => Navigator.pop(context, true), child: Text(action.toUpperCase())),
           ],
         ),
       );
@@ -149,16 +149,13 @@ class _BodyState extends ConsumerState<_Body> {
       },
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(AppSpacing.gutter),
+        padding: readingPadding(context, top: AppSpacing.gutter, bottom: AppSpacing.gutter),
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: Text(d.title, style: text.headlineSmall)),
-              const SizedBox(width: AppSpacing.sm),
-              StatusChip(d.status),
-            ],
-          ),
+          // The status sits under the title (a chip beside it squeezed long titles onto two lines)
+          Text(d.title, style: text.headlineSmall),
+          const SizedBox(height: AppSpacing.sm),
+          Align(alignment: Alignment.centerLeft, child: StatusChip(d.status)),
+          const SizedBox(height: AppSpacing.xs),
           if (d.publishedAt != null)
             Text('Published ${formatDateTime(d.publishedAt!)}', style: text.bodySmall),
           if (d.adjustedAt != null) AdjustedLabel(d.adjustedAt!),
@@ -323,10 +320,12 @@ class _SlotCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 14,
-                  backgroundColor: AppColors.brass,
-                  foregroundColor: Colors.white,
+                // Gold, silver or bronze square with the rank, like the frames in the gallery
+                Container(
+                  width: 28,
+                  height: 28,
+                  alignment: Alignment.center,
+                  color: AppColors.medalFor(slot.rank),
                   child: Text('${slot.rank}', style: text.labelMedium!.copyWith(color: Colors.white)),
                 ),
                 const SizedBox(width: AppSpacing.sm),
@@ -342,6 +341,7 @@ class _SlotCard extends StatelessWidget {
             for (final a in slot.issued)
               _IssuedTile(
                 award: a,
+                rank: slot.rank,
                 published: published,
                 canMarkDelivered: canMarkDelivered,
                 canAdjustEvaluation: canAdjustEvaluation,
@@ -381,9 +381,13 @@ class _IssuedTile extends StatelessWidget {
     required this.onRevoke,
     required this.onDelivery,
     required this.onAdjust,
+    this.rank,
   });
 
   final IssuedAward award;
+
+  /// Rank of the prize slot (1 gold, 2 silver, 3 bronze) for the frame.
+  final int? rank;
   final bool published;
   final bool canMarkDelivered;
   final bool canAdjustEvaluation;
@@ -425,6 +429,7 @@ class _IssuedTile extends StatelessWidget {
             width: 84,
             child: ArtworkFrame(
               awarded: a.isActive,
+              awardRank: rank,
               aspectRatio: 1,
               matWidth: 5,
               child: a.hasThumbnail
@@ -510,7 +515,7 @@ class _ReasonDialogState extends State<_ReasonDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
+    return ArtDialog(
       title: Text(widget.title),
       content: TextField(
         controller: _controller,
@@ -519,7 +524,7 @@ class _ReasonDialogState extends State<_ReasonDialog> {
         decoration: InputDecoration(labelText: widget.label, errorText: _error),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCEL')),
         FilledButton(
           onPressed: () {
             final error = validateReason(_controller.text);
@@ -529,7 +534,7 @@ class _ReasonDialogState extends State<_ReasonDialog> {
             }
             Navigator.pop(context, _controller.text.trim());
           },
-          child: const Text('Confirm'),
+          child: const Text('CONFIRM'),
         ),
       ],
     );

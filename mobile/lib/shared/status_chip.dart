@@ -84,9 +84,10 @@ class StatusChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
+        // Opaque (the tint is mixed into the wall colour beforehand): the chip stays readable on top of a picture
+        color: Color.alphaBlend(color.withValues(alpha: 0.10), AppColors.wall),
         borderRadius: AppRadius.smAll,
-        border: Border.all(color: color.withValues(alpha: 0.35)),
+        border: Border.all(color: color.withValues(alpha: 0.45)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -94,10 +95,10 @@ class StatusChip extends StatelessWidget {
           if (icon != null) ...[Icon(icon, size: 14, color: color), const SizedBox(width: 4)],
           Flexible(
             child: Text(
-              label,
+              label.toUpperCase(),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall!.copyWith(color: color),
+              style: Theme.of(context).textTheme.labelSmall!.copyWith(color: color, fontSize: 11, letterSpacing: 1.2),
             ),
           ),
         ],

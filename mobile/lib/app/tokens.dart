@@ -2,14 +2,17 @@ import 'package:flutter/material.dart';
 
 /// Colour tokens shared with the web app (see docs/plan/05 section 3).
 abstract final class AppColors {
-  /// Gallery wall.
-  static const wall = Color(0xFFFFFFFF);
+  /// Gallery wall: warm off-white, so the stone mats and the artworks stand out.
+  static const wall = Color(0xFFFBFAF7);
+
+  /// The floor around the page on wide screens.
+  static const floor = Color(0xFFEFECE4);
 
   /// Stone: the passe-partout mat around artworks.
   static const stone = Color(0xFFE6E3D9);
 
-  /// Mist: soft blue-grey panels.
-  static const mist = Color(0xFFEAF0F3);
+  /// Mist: soft panels (warm paper, to sit with the warm wall; it used to be blue-grey).
+  static const mist = Color(0xFFF3F0E8);
 
   /// Navy ink: primary colour, navigation bars.
   static const ink = Color(0xFF0B2A33);
@@ -28,6 +31,27 @@ abstract final class AppColors {
 
   /// Brass for small text (passes 4.5:1 on white).
   static const brassText = Color(0xFF7A5B2E);
+
+  // Medal colours: the frame of a prize-winning work follows its rank.
+  static const gold = Color(0xFFC9A03C);
+  static const silver = Color(0xFF9BA5AB);
+  static const bronze = Color(0xFFA8643A);
+
+  /// Frame colour for a prize rank: 1 gold, 2 silver, 3 bronze, any other prize the brass accent.
+  static Color medalFor(int? rank) => switch (rank) {
+        1 => gold,
+        2 => silver,
+        3 => bronze,
+        _ => brass,
+      };
+
+  /// Same hues darkened for small text on the wall (passes 4.5:1).
+  static Color medalText(int? rank) => switch (rank) {
+        1 => const Color(0xFF7A5B12),
+        2 => const Color(0xFF586166),
+        3 => const Color(0xFF86492A),
+        _ => brassText,
+      };
 
   /// Errors and destructive actions.
   static const danger = Color(0xFFA23B2A);
@@ -55,10 +79,25 @@ abstract final class AppSpacing {
   static const double touch = 44;
 }
 
-/// Corner radii: small, like the web.
+/// Layout on wide screens (web / tablet): the page is a centred column, like a catalogue page.
+abstract final class AppLayout {
+  /// Widest the content gets.
+  static const double maxWidth = 1120;
+
+  /// From this width on, navigation moves to a top bar and grids get more columns.
+  static const double wide = 840;
+
+  /// Side gutter: roomier on wide screens.
+  static double gutterFor(double width) => width >= 700 ? 40 : AppSpacing.gutter;
+
+  /// Columns of an artwork grid.
+  static int columnsFor(double width) => width >= 900 ? 4 : (width >= 600 ? 3 : 2);
+}
+
+/// Corner radii: square corners, like frames and wall labels.
 abstract final class AppRadius {
-  static const double sm = 4;
-  static const double md = 8;
+  static const double sm = 0;
+  static const double md = 2;
   static const BorderRadius smAll = BorderRadius.all(Radius.circular(sm));
   static const BorderRadius mdAll = BorderRadius.all(Radius.circular(md));
 }
@@ -68,4 +107,17 @@ abstract final class AppFonts {
   /// Titles: same family as the body (Bodoni Moda was hard to read), heavier weight set in the theme
   static const display = 'GeneralSans';
   static const body = 'GeneralSans';
+}
+
+/// Motion tokens: how long and how fast things move. Use through `motionDuration` (app/motion.dart),
+/// which returns zero when the OS asks to reduce motion.
+abstract final class AppMotion {
+  /// Small effects (zoom, fades inside a screen).
+  static const fast = Duration(milliseconds: 200);
+
+  /// Screen transitions (artwork opens from the gallery).
+  static const med = Duration(milliseconds: 320);
+
+  /// Starts quick, settles softly.
+  static const curve = Curves.easeOutCubic;
 }

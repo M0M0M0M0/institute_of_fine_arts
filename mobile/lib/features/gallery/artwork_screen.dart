@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/motion.dart';
 import '../../app/tokens.dart';
 import '../../core/async_view.dart';
 import '../../core/format.dart';
@@ -18,7 +19,7 @@ class ArtworkScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final artwork = ref.watch(galleryArtworkProvider(id));
     return Scaffold(
-      appBar: AppBar(title: const Text('Artwork')),
+      appBar: AppBar(leading: const AppBackButton(), leadingWidth: 48, titleSpacing: 0, title: const Text('Artwork')),
       body: AsyncValueView(
         value: artwork,
         onRetry: () => ref.invalidate(galleryArtworkProvider(id)),
@@ -42,84 +43,133 @@ class _ArtworkBody extends StatelessWidget {
         ),
       );
 
-  @override
-  Widget build(BuildContext context) {
+  /// The framed painting, tappable to zoom. The frame hugs the painting at its own proportions.
+  Widget _picture(BuildContext context) {
     final a = artwork;
-    final text = Theme.of(context).textTheme;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSpacing.gutter),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 560),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Semantics(
+      button: true,
+      label: 'Zoom in on ${a.title}',
+      child: InkWell(
+        onTap: () => _zoom(context),
+        child: ArtworkFrame(
+          awarded: a.isAwarded,
+          awardRank: a.awardRank,
+          aspectRatio: null,
+          matWidth: 16,
+          child: Stack(
             children: [
-              Semantics(
-                button: true,
-                label: 'Zoom in on ${a.title}',
-                child: InkWell(
-                  onTap: () => _zoom(context),
-                  // The frame hugs the painting at its own proportions (portrait or landscape)
-                  child: ArtworkFrame(
-                    awarded: a.isAwarded,
-                    aspectRatio: null,
-                    matWidth: 16,
-                    child: Stack(
-                      children: [
-                        NaturalArtworkImage.public(submissionId: a.submissionId, semanticLabel: a.title),
-                        const Positioned(
-                          right: AppSpacing.sm,
-                          bottom: AppSpacing.sm,
-                          child: CircleAvatar(
-                            radius: 18,
-                            backgroundColor: Colors.black54,
-                            child: Icon(Icons.zoom_in, color: Colors.white, size: 22),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+              // Same tag as the tile in the gallery grid, so the picture flies in from there
+              ArtworkHero(
+                submissionId: a.submissionId,
+                child: NaturalArtworkImage.public(submissionId: a.submissionId, semanticLabel: a.title),
+              ),
+              const Positioned(
+                right: AppSpacing.sm,
+                bottom: AppSpacing.sm,
+                child: CircleAvatar(
+                  radius: 18,
+                  backgroundColor: Colors.black54,
+                  child: Icon(Icons.zoom_in, color: Colors.white, size: 22),
                 ),
               ),
-              const SizedBox(height: AppSpacing.lg),
-              WallLabel(
-                title: a.title,
-                artist: a.studentName,
-                meta: a.submittedAt == null ? null : 'Submitted ${formatDate(a.submittedAt!)}',
-                maxTitleLines: 4,
-              ),
-              if (a.isAwarded) ...[
-                const SizedBox(height: AppSpacing.sm),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: StatusChip.custom(
-                    label: a.awardName!,
-                    color: AppColors.brassText,
-                    icon: Icons.emoji_events_outlined,
-                  ),
-                ),
-              ],
-              const SizedBox(height: AppSpacing.lg),
-              const Divider(),
-              Text('From the competition', style: text.labelMedium),
-              const SizedBox(height: AppSpacing.xs),
-              InkWell(
-                onTap: a.competitionId == 0 ? null : () => context.push('/competitions/${a.competitionId}'),
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(minHeight: AppSpacing.touch),
-                  child: Row(
-                    children: [
-                      Expanded(child: Text(a.competitionTitle, style: text.titleMedium)),
-                      const Icon(Icons.chevron_right),
-                    ],
-                  ),
-                ),
-              ),
-              if ((a.competitionDescription ?? '').isNotEmpty)
-                Text(a.competitionDescription!, style: text.bodyMedium!.copyWith(color: AppColors.muted)),
-              const SizedBox(height: AppSpacing.lg),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  /// The wall label: award, title, artist, date, and the competition the work belongs to.
+  Widget _label(BuildContext context, {required bool wide}) {
+    final a = artwork;
+    final text = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (a.isAwarded) ...[
+          StatusChip.custom(
+            label: a.awardName!,
+            color: AppColors.medalText(a.awardRank),
+            icon: Icons.emoji_events_outlined,
+          ),
+          const SizedBox(height: AppSpacing.md),
+        ],
+        const SizedBox(width: 28, height: 2, child: ColoredBox(color: AppColors.brass)),
+        const SizedBox(height: AppSpacing.md),
+        Semantics(
+          header: true,
+          child: Text(
+            a.title,
+            style: (wide ? text.displaySmall : text.headlineMedium)!.copyWith(fontStyle: FontStyle.italic),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          a.studentName.toUpperCase(),
+          style: text.labelLarge!.copyWith(letterSpacing: 1.8, color: AppColors.muted),
+        ),
+        if (a.submittedAt != null) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Text('Submitted ${formatDate(a.submittedAt!)}', style: text.bodySmall),
+        ],
+        const SizedBox(height: AppSpacing.xl),
+        const Divider(),
+        const SizedBox(height: AppSpacing.md),
+        Text(
+          'FROM THE COMPETITION',
+          style: text.labelSmall!.copyWith(color: AppColors.muted, letterSpacing: 1.8),
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        InkWell(
+          onTap: a.competitionId == 0 ? null : () => context.push('/competitions/${a.competitionId}'),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: AppSpacing.touch),
+            child: Row(
+              children: [
+                Expanded(child: Text(a.competitionTitle, style: text.titleMedium)),
+                if (a.competitionId != 0) const Icon(Icons.arrow_forward, size: 18, color: AppColors.brassText),
+              ],
+            ),
+          ),
+        ),
+        if ((a.competitionDescription ?? '').isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.xs),
+          Text(a.competitionDescription!, style: text.bodyMedium!.copyWith(color: AppColors.muted)),
+        ],
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final wide = width >= AppLayout.wide;
+    final gutter = AppLayout.gutterFor(width);
+
+    // Wide: the painting on the left and its label beside it, like a work on a gallery wall.
+    // Phone: the painting, then the label under it.
+    return SingleChildScrollView(
+      padding: EdgeInsets.fromLTRB(gutter, wide ? AppSpacing.xl : AppSpacing.md, gutter, AppSpacing.xxl),
+      child: Center(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: wide ? 1040 : 560),
+          child: wide
+              ? Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(flex: 6, child: _picture(context)),
+                    const SizedBox(width: AppSpacing.xxl),
+                    Expanded(flex: 4, child: _label(context, wide: true)),
+                  ],
+                )
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _picture(context),
+                    const SizedBox(height: AppSpacing.xl),
+                    _label(context, wide: false),
+                  ],
+                ),
         ),
       ),
     );

@@ -70,12 +70,13 @@ class _HomeBody extends ConsumerWidget {
       padding: EdgeInsets.zero,
       children: [
         HeroHeader(
+          eyebrow: 'Now showing',
           title: 'Institute of Fine Arts',
           subtitle: 'Where young painters compete, exhibit and are seen.',
           background: _heroBackground(),
           ctaLabel: 'Browse competitions',
           onCta: () => context.go('/competitions'),
-          height: 340,
+          height: 360,
         ),
         if (isEmpty)
           const SizedBox(
@@ -104,6 +105,7 @@ class _HomeBody extends ConsumerWidget {
                 title: w.paintingTitle,
                 artist: w.studentName,
                 awardName: w.awardName,
+                awardRank: w.rank,
                 awarded: true,
                 onTap: () => context.push('/gallery/artworks/${w.submissionId}'),
               ),
@@ -112,18 +114,18 @@ class _HomeBody extends ConsumerWidget {
         if (galleryItems.isNotEmpty) ...[
           SectionHeader('From the gallery', actionLabel: 'See the gallery', onAction: () => context.go('/gallery')),
           SizedBox(
-            height: 300,
+            height: MediaQuery.sizeOf(context).width >= AppLayout.wide ? 380 : 300,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gutter),
+              padding: EdgeInsets.symmetric(horizontal: AppLayout.gutterFor(MediaQuery.sizeOf(context).width)),
               itemCount: galleryItems.length,
-              separatorBuilder: (context, i) => const SizedBox(width: AppSpacing.md),
+              separatorBuilder: (context, i) => SizedBox(width: MediaQuery.sizeOf(context).width >= AppLayout.wide ? AppSpacing.lg : AppSpacing.md),
               itemBuilder: (context, i) {
                 final a = galleryItems[i];
                 return Align(
                   alignment: Alignment.topLeft,
                   child: SizedBox(
-                    width: 160,
+                    width: MediaQuery.sizeOf(context).width >= AppLayout.wide ? 220 : 160,
                     child: galleryTile(a,
                         showCompetition: false, onTap: () => context.push('/gallery/artworks/${a.submissionId}')),
                   ),
@@ -137,24 +139,38 @@ class _HomeBody extends ConsumerWidget {
     );
   }
 
-  /// Horizontal strip of competition cards, exactly as tall as the cards (no empty band below).
-  Widget _competitionStrip(BuildContext context, List<CompetitionSummary> items) => SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gutter),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (var i = 0; i < items.length; i++) ...[
-              if (i > 0) const SizedBox(width: AppSpacing.md),
-              CompetitionCard(
-                competition: items[i],
-                width: 280,
-                onTap: () => context.push('/competitions/${items[i].id}'),
-              ),
-            ],
-          ],
-        ),
+  /// Competition cards: a horizontal strip on a phone (exactly as tall as the cards, no empty band below),
+  /// a grid of columns on wide screens so the page does not end up with a few cards lost on the left.
+  Widget _competitionStrip(BuildContext context, List<CompetitionSummary> items) {
+    final width = MediaQuery.sizeOf(context).width;
+    if (width >= AppLayout.wide) {
+      return AdaptiveTileGrid(
+        minTileWidth: 300,
+        maxColumns: 3,
+        children: [
+          for (final c in items) CompetitionCard(competition: c, onTap: () => context.push('/competitions/${c.id}')),
+        ],
       );
+    }
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: EdgeInsets.symmetric(horizontal: AppLayout.gutterFor(width)),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (var i = 0; i < items.length; i++) ...[
+            if (i > 0) const SizedBox(width: AppSpacing.md),
+            CompetitionCard(
+              competition: items[i],
+              // A lone card fills the screen; with several, the next one peeks out to invite a swipe
+              width: items.length == 1 ? width - 2 * AppLayout.gutterFor(width) : 280,
+              onTap: () => context.push('/competitions/${items[i].id}'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 }
 
 /// Đường dẫn trang chính theo vai trò. Admin/Manager dùng bản web (app chỉ phục vụ Student + Staff).

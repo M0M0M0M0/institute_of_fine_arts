@@ -171,7 +171,8 @@ void main() {
         galleryRepositoryProvider.overrideWithValue(gallery),
       ]);
       expect(find.text('Institute of Fine Arts'), findsOneWidget);
-      expect(find.text('Browse competitions'), findsOneWidget);
+      // The button reads in capitals, with an arrow
+      expect(find.text('BROWSE COMPETITIONS  →'), findsOneWidget);
       expect(find.text('Open now'), findsOneWidget);
       expect(find.text('Autumn Light'), findsOneWidget);
       expect(find.text('Coming soon'), findsOneWidget);
@@ -192,12 +193,12 @@ void main() {
         homeProvider.overrideWith((ref) async => _homeData()),
         galleryRepositoryProvider.overrideWithValue(_FakeGallery()),
       ]);
-      await tester.tap(find.text('Browse competitions'));
+      await tester.tap(find.text('BROWSE COMPETITIONS  →'));
       await tester.pumpAndSettle();
       expect(router.state.uri.toString(), '/competitions');
       router.go('/');
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(find.text('See the gallery'), 300, scrollable: find.byType(Scrollable).first);
+      await tester.scrollUntilVisible(find.text('SEE THE GALLERY  →'), 300, scrollable: find.byType(Scrollable).first);
       expect(find.text('From the gallery'), findsOneWidget);
     });
 
@@ -232,12 +233,13 @@ void main() {
       expect(find.text('Open One'), findsOneWidget);
       expect(find.text('Soon One'), findsNothing);
 
-      await tester.tap(find.text('Upcoming'));
+      // The tabs are written in capitals
+      await tester.tap(find.text('UPCOMING'));
       await tester.pumpAndSettle();
       expect(find.text('Soon One'), findsOneWidget);
       expect(find.text('Open One'), findsNothing);
 
-      await tester.tap(find.text('Results'));
+      await tester.tap(find.text('RESULTS'));
       await tester.pumpAndSettle();
       expect(find.text('Done One'), findsOneWidget);
       expect(find.text('Closed One'), findsOneWidget); // closed (judging) also listed under Results
@@ -265,10 +267,11 @@ void main() {
     testWidgets('content: overview, rules, prizes', (tester) async {
       await _pump(tester, const CompetitionDetailScreen(id: 7), overrides: detailOverrides(CompetitionStatus.ongoing));
       expect(find.text('Spring Colours'), findsOneWidget);
-      expect(find.text('Overview'), findsOneWidget);
+      // The headings of the blocks are small capitals
+      expect(find.text('OVERVIEW'), findsOneWidget);
       expect(find.text('Paint the spring.'), findsOneWidget);
-      await tester.scrollUntilVisible(find.text('Prizes'), 300, scrollable: find.byType(Scrollable).first);
-      expect(find.text('Rules'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('PRIZES'), 300, scrollable: find.byType(Scrollable).first);
+      expect(find.text('RULES'), findsOneWidget);
       expect(find.text('First Prize'), findsOneWidget);
     });
 
@@ -333,8 +336,9 @@ void main() {
     testWidgets('chips, grid, load more on scroll, category filter', (tester) async {
       final gallery = _FakeGallery(total: 45);
       final router = await _pump(tester, const GalleryScreen(), overrides: [galleryRepositoryProvider.overrideWithValue(gallery)]);
-      expect(find.text('All'), findsOneWidget);
-      expect(find.text('Animals'), findsOneWidget);
+      // The category filters are small capitals
+      expect(find.text('ALL'), findsOneWidget);
+      expect(find.text('ANIMALS'), findsOneWidget);
       expect(find.text('Painting 1'), findsOneWidget);
       expect(gallery.requestedPages, [1]);
 
@@ -342,7 +346,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(gallery.requestedPages.contains(2), isTrue);
 
-      await tester.tap(find.text('Animals'));
+      await tester.tap(find.text('ANIMALS'));
       await tester.pumpAndSettle();
       expect(gallery.requestedCategories.last, 'subject/Animals');
 
@@ -363,8 +367,9 @@ void main() {
         galleryRepositoryProvider.overrideWithValue(_FakeGallery()),
       ]);
       expect(find.text('Painting 1'), findsOneWidget);
-      expect(find.text('Student 1'), findsOneWidget);
-      expect(find.text('First Prize'), findsWidgets);
+      // The artist and the award chip are written in capitals
+      expect(find.text('STUDENT 1'), findsOneWidget);
+      expect(find.text('FIRST PRIZE'), findsWidgets);
       await tester.tap(find.text('Hometown Landscapes'));
       await tester.pumpAndSettle();
       expect(router.state.uri.toString(), '/competitions/1');
@@ -383,7 +388,7 @@ void main() {
   group('Sign in (M-G6)', () {
     testWidgets('validates empty fields in English', (tester) async {
       await _pump(tester, const LoginScreen());
-      await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+      await tester.tap(find.widgetWithText(FilledButton, 'SIGN IN'));
       await tester.pump();
       expect(find.text('Enter your username'), findsOneWidget);
       expect(find.text('Enter your password'), findsOneWidget);
@@ -393,7 +398,7 @@ void main() {
       await _pump(tester, const LoginScreen(), loginError: 'This account is locked.');
       await tester.enterText(find.widgetWithText(TextFormField, 'Username'), 'linh');
       await tester.enterText(find.widgetWithText(TextFormField, 'Password'), 'secret');
-      await tester.tap(find.widgetWithText(FilledButton, 'Sign in'));
+      await tester.tap(find.widgetWithText(FilledButton, 'SIGN IN'));
       await tester.pumpAndSettle();
       expect(find.text('This account is locked.'), findsOneWidget);
     });
