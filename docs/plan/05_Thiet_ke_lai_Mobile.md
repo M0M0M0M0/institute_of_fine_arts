@@ -2,6 +2,8 @@
 
 > Phạm vi: thư mục `mobile/` + API `/api/...` trong `src/InstituteOfFineArts.Web` (nhánh `feature/mobile-api`).
 > Ngày lập: 15/11/2026. Người quản lý: BE1. Thực hiện: các agent theo mục 6.
+>
+> **Cập nhật 19–20/11/2026:** code đã gộp vào nhánh `develop`. Vai trò: bỏ Manager, thêm **Teacher** (giám khảo, app có Grading + Account); Staff không chấm nữa (tab Grading chỉ xem kết quả đã công bố). Chấm theo tiêu chí, bảng điểm, nộp 1–5 ảnh JPG/PNG/WebP ≤ 10 MB – xem mục 4.3b và BA (01).
 
 ## 1. Vấn đề của bản hiện tại
 
@@ -16,14 +18,14 @@
 
 ## 2. Phạm vi chức năng (chốt từ thảo luận trước)
 
-App phục vụ **Khách, Học viên, Staff**. Manager và Admin dùng web (app hiện màn hình "Please use the website").
+App phục vụ **Khách, Học viên, Staff, Teacher**. Admin dùng web (app hiện màn hình "Please use the website").
 Không thêm nghiệp vụ mới: mọi thao tác ghi đi qua API hiện có (PR #53), luật nghiệp vụ giữ nguyên như web.
 
 | Vai trò | Chức năng trên app |
 |---|---|
 | Khách | Xem trang chủ, danh sách và chi tiết cuộc thi, kết quả và người đạt giải, kho tranh công khai, xem tranh phóng to; đăng nhập. |
-| Học viên | Tổng quan cá nhân; xem cuộc thi; nộp / sửa / xoá bài (JPEG ≤ 5 MB + thơ / trích dẫn / câu chuyện); bài của tôi + kết quả chấm + giải; triển lãm: đề xuất tranh, sửa giá, rút đề xuất, theo dõi bán và trả tiền; tài khoản. |
-| Staff | Tổng quan việc cần làm; chấm bài (xem tranh phóng to, lưu / xoá đánh giá, sang bài kế tiếp); trao giải, công bố kết quả, thu hồi giải; triển lãm: tạo / sửa, duyệt đề xuất, ghi nhận bán, trả tiền học viên; tài khoản. |
+| Học viên | Tổng quan cá nhân; xem cuộc thi; nộp / sửa / xoá bài (1–5 ảnh JPG/PNG/WebP ≤ 10 MB + thơ / trích dẫn / câu chuyện); bài của tôi + bảng điểm + giải; triển lãm: đề xuất tranh, sửa giá, rút đề xuất, theo dõi bán và trả tiền; tài khoản. |
+| Staff | Tổng quan việc cần làm (theo dõi tiến độ chấm, không chấm); xem kết quả đã công bố; công bố kết quả (hệ thống tự trao giải), thu hồi giải; triển lãm: tạo / sửa, duyệt đề xuất, ghi nhận bán, trả tiền học viên; tài khoản. |
 
 ## 3. Hệ thiết kế (đồng bộ với web)
 
@@ -53,9 +55,9 @@ Không thêm nghiệp vụ mới: mọi thao tác ghi đi qua API hiện có (PR
 |---|---|---|
 | M-S1 | **Home** | "Good morning, {name}"; thẻ việc cần làm: cuộc thi đang mở **chưa nộp bài** (đếm ngược, nút Submit); bài đã nộp có thể sửa đến hạn; kết quả mới (xếp loại / giải); đề xuất triển lãm đang chờ duyệt / tranh đã bán chưa nhận tiền. |
 | M-S2 | Competitions | Như M-G2/M-G3; nút "Submit your entry" hoặc "View my entry" nếu đã nộp. |
-| M-S3 | **Submit / Edit entry** | Chọn ảnh (xem trước ngay), tiêu đề, mô tả, loại phần chữ (Poem / Quotation / Story / Other) dạng chip, nội dung chữ; báo trước giới hạn JPEG ≤ 5 MB; lỗi theo từng trường. |
+| M-S3 | **Submit / Edit entry** | Chọn 1–5 ảnh (xem trước ngay, chọn ảnh đại diện, xoá từng ảnh), tiêu đề, mô tả, loại phần chữ (Poem / Quotation / Story / Other) dạng chip, nội dung chữ; báo trước giới hạn JPG/PNG/WebP ≤ 10 MB; lỗi theo từng trường. |
 | M-S4 | **My entries** | Danh sách có ảnh thu nhỏ, cuộc thi, trạng thái (Submitted / Waiting for results / Rated BEST… / Award), lọc theo cuộc thi và xếp loại. Gộp tab "Results" cũ vào đây. |
-| M-S5 | **Entry detail** | Tranh phóng to được; phần chữ; đánh giá (khi đã công bố) dạng thẻ: xếp loại, điểm mạnh, điểm yếu, cần cải thiện; giải; nút Edit / Delete khi còn hạn. |
+| M-S5 | **Entry detail** | Các ảnh (lướt, phóng to); phần chữ; khi đã công bố: **bảng điểm** (tiêu chí × giám khảo, trung bình, tổng, xếp loại) và nhận xét từng giám khảo; giải; nút Edit / Delete khi còn hạn. |
 | M-S6 | **Exhibitions** | Triển lãm sắp tới có thể gửi tranh; đề xuất của tôi (trạng thái, giá, đã bán, đã nhận tiền); đề xuất / sửa giá / rút như hiện tại. |
 | M-S7 | **Account** | Tên, mã học viên, email, lớp; đăng xuất. |
 
@@ -63,11 +65,20 @@ Không thêm nghiệp vụ mới: mọi thao tác ghi đi qua API hiện có (PR
 
 | Mã | Màn hình | Nội dung |
 |---|---|---|
-| M-T1 | **Home** | Việc cần làm: cuộc thi đã đóng còn bài chưa chấm (thanh tiến độ), cuộc thi chấm xong chưa công bố, đề xuất triển lãm đang chờ duyệt, tranh đã bán chưa trả tiền học viên. Mỗi thẻ dẫn thẳng tới màn hình xử lý. |
+| M-T1 | **Home** | Việc cần làm: cuộc thi đã đóng đang được giám khảo chấm (thanh tiến độ, chỉ để theo dõi), cuộc thi chấm xong chưa công bố, đề xuất triển lãm đang chờ duyệt, tranh đã bán chưa trả tiền học viên. Mỗi thẻ dẫn thẳng tới màn hình xử lý. |
 | M-T2 | Grading | Danh sách cuộc thi + tiến độ; danh sách bài (lọc đã / chưa chấm, xếp loại, tìm kiếm) **có ảnh thu nhỏ**. |
-| M-T3 | **Grade entry** | Tranh lớn phóng to được ở đầu; thông tin bài + phần chữ; form đánh giá (chip xếp loại, ba ô nhận xét); Save / Save & next; xoá đánh giá. |
+| M-T3 | **Grade entry** | (Teacher) Tranh lớn phóng to được ở đầu; thông tin bài + phần chữ; form chấm: điểm 0–100 + nhận xét cho từng tiêu chí, tổng tính ngay, ba ô nhận xét chung, hoặc "Disqualify" + lý do; danh sách ban giám khảo đã chấm; Save / Save & next; xoá phần chấm. (Staff: chỉ xem bảng điểm đã công bố.) |
 | M-T4 | Awards | Như hiện tại (trao, sửa, xoá, công bố, thu hồi) nhưng **thẻ giải có ảnh tranh** của người nhận và ứng viên. |
 | M-T5 | Exhibitions | Như hiện tại, thêm ảnh tranh ở danh sách đề xuất và chi tiết. |
+
+### 4.3b Teacher – giám khảo (thanh dưới: Grading · Account) (cập nhật 11/2026)
+
+| Mã | Màn hình | Nội dung |
+|---|---|---|
+| M-J1 | **Grading** | Chỉ các cuộc thi mình là giám khảo, đã qua hạn nộp; tiến độ của chính mình. |
+| M-J2 | Entries | Bài của cuộc thi (lọc đã / chưa chấm bởi mình, tìm kiếm), có ảnh thu nhỏ. |
+| M-J3 | **Grade entry** | Như M-T3 (form theo tiêu chí); sau công bố hiện bảng điểm của cả ban. |
+| M-J4 | Account | Tên, mã nhân viên, email; đăng xuất. |
 | M-T6 | Account | Như M-S7 (mã nhân viên, chức vụ). |
 
 ## 5. API bổ sung (không đổi CSDL)

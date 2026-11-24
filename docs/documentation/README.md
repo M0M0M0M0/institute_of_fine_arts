@@ -15,7 +15,7 @@
 | `11_ProjectReviewAndMonitoringReport.docx` | Project Review and Monitoring Report | QA (số liệu từ Kanban & Phan_cong_task.xlsx) | BE1 | Day 9 (kỳ 1), Day 24 (kỳ 2) | Day 9, Day 25 |
 | `12_UnitTestingCheckList.docx` | Unit Testing Check List | QA (trình bày) + BE1, BE2 (unit test) | BE1 | Day 23 | Day 24 |
 | `13_FinalCheckList.docx` | Final Check List | QA | BE1 | Day 26 | Day 27 |
-| `14_UserGuide.docx` | User Guide (Hướng dẫn sử dụng) | FE1 (GUEST, STUDENT, STAFF) + FE2 (ADMIN, MANAGER) | QA (làm thử theo hướng dẫn) | Day 22 | Day 25 |
+| `14_UserGuide.docx` | User Guide (Hướng dẫn sử dụng) | FE1 (GUEST, STUDENT, STAFF) + FE2 (ADMIN, TEACHER) | QA (làm thử theo hướng dẫn) | Day 22 | Day 25 |
 | `15_InstallationGuide.docx` | Installation Guide (Hướng dẫn cài đặt) | BE2 | QA (cài thử trên máy sạch) | Day 24 | Day 26 (sau test máy sạch) |
 
 Quy trình: người được giao viết nháp → người review góp ý (comment trong Word) → sửa → QA ghép vào Project Report.

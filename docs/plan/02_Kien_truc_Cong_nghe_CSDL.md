@@ -3,7 +3,9 @@
 > Phần 2 của bộ kế hoạch eProject **Institute of Fine Arts**. Đọc cùng: `01_Phan_tich_nghiep_vu_BA.md` (nguồn chuẩn của luật nghiệp vụ), `03_...` (tiến độ), `04_...` (kiểm thử & tài liệu).
 >
 > **Công nghệ đã chốt (theo yêu cầu giảng viên): .NET** – ASP.NET Core MVC (.NET 10 LTS) + Entity Framework Core + SQL Server.
-> Tên chuẩn dùng chung: vai trò `ADMIN`, `MANAGER`, `STAFF`, `STUDENT` (+ `GUEST`); 11 entity `Account`, `StaffProfile`, `StudentProfile`, `Competition`, `CompetitionAward`, `Submission`, `Evaluation`, `AwardIssued`, `Exhibition`, `ExhibitionEntry`, `Customer`; module M01–M11 (+ M12+ tùy chọn).
+> Tên chuẩn dùng chung: vai trò `ADMIN`, `STAFF`, `TEACHER`, `STUDENT` (+ `GUEST`) – từ 11/2026 bỏ `MANAGER` (gộp vào STAFF), thêm `TEACHER` (giám khảo); entity chính `Account`, `StaffProfile`, `StudentProfile`, `Competition`, `CompetitionAward`, `Submission`, `Evaluation`, `AwardIssued`, `Exhibition`, `ExhibitionEntry`, `Customer` + (11/2026) `SubmissionImage`, `CompetitionJudge`, `GradingCriterion`, `CompetitionCriterion`, `JudgeEvaluation`, `JudgeScore`, `RatingThreshold`, `AuditLog`; module M01–M11 (+ M12+ tùy chọn, M21 ban giám khảo & tiêu chí).
+>
+> **Cập nhật 19–20/11/2026:** vai trò (TEACHER thay MANAGER), nhật ký gắn theo đối tượng, ban giám khảo, chấm theo tiêu chí có trọng số, trao giải tự động, nhiều ảnh JPG/PNG/WebP. Nguồn chuẩn của luật là BA (01) mục 4.
 
 ## Mục lục
 1. [Phân tích yêu cầu công nghệ & lý do chọn ASP.NET Core](#1-phân-tích-yêu-cầu-công-nghệ--lý-do-chọn-aspnet-core)
@@ -38,7 +40,7 @@
 | SQL Server 2000 hoặc mới hơn (R1) | **SQL Server 2022/2025** + EF Core provider `Microsoft.EntityFrameworkCore.SqlServer` | “Hoặc mới hơn” ✔ |
 | JavaScript / HTML editor (R1) | Razor View (`.cshtml`) + HTML5 + Bootstrap 5 + JavaScript | ✔ |
 | File I/O (R2) | `System.IO` (`FileStream`, `File`, `Directory`, `Path`) + `IFormFile.CopyToAsync` | Ảnh lưu thành file trên ổ đĩa, đọc/ghi/xóa bằng File I/O; CSDL chỉ lưu đường dẫn |
-| 4 phân hệ (R3) | **Areas** (`Admin`, `Staff`, `Student`, `Manager`) + Cookie Authentication + `[Authorize(Roles = ...)]` | Mỗi phân hệ một Area riêng, phân quyền rõ ràng |
+| 4 phân hệ (R3) | **Areas** (`Admin`, `Staff`, `Teacher`, `Student`) + Cookie Authentication + `[Authorize(Roles = ...)]` | Mỗi phân hệ một Area riêng, phân quyền rõ ràng; phần "Manager" của đề bài nằm trong Area `Staff` (BA A-23) |
 | Comment & tài liệu (R4) | XML doc comment `///` + comment trong từng khối code | Quy ước mục 9.2 |
 
 ### 1.3. Vì sao ASP.NET Core MVC (mà không phải Web Forms, Razor Pages hay Web API + SPA)?
@@ -136,7 +138,7 @@ Mức độ khó: ⭐ dễ · ⭐⭐ trung bình · ⭐⭐⭐ khó. Khuyến ngh
 ### 3.2. Thư viện frontend (đặt trong `wwwroot/lib/`)
 | Công nghệ | Mục đích | Độ khó | Khuyến nghị |
 |---|---|---|---|
-| **Chart.js** 4.5.x | Biểu đồ dashboard Manager/Admin | ⭐ | **Nên dùng** |
+| **Chart.js** 4.5.x | Biểu đồ dashboard Staff/Admin | ⭐ | **Nên dùng** |
 | **SweetAlert2** 11.x | Hộp thoại xác nhận xóa, thông báo | ⭐ | **Nên dùng** |
 | **DataTables** 2.x (bản Bootstrap 5) | Sắp xếp/tìm kiếm phía client cho bảng nhỏ | ⭐ | **Tùy chọn** – bảng chính vẫn phân trang phía server |
 | Toastr | Thông báo góc màn hình | ⭐ | **Bỏ qua** (Bootstrap Toast đủ dùng) |
@@ -166,13 +168,13 @@ Mức độ khó: ⭐ dễ · ⭐⭐ trung bình · ⭐⭐⭐ khó. Khuyến ngh
 
 ```mermaid
 flowchart TB
-    subgraph Client["Trình duyệt (Guest / Student / Staff / Manager / Admin)"]
+    subgraph Client["Trình duyệt / app mobile (Guest / Student / Staff / Teacher / Admin)"]
         B["HTML + Bootstrap 5 + JS<br/>Chart.js, SweetAlert2"]
     end
 
     subgraph App["ASP.NET Core MVC (Kestrel)"]
         MW["Middleware pipeline<br/>(ExceptionHandler, StaticFiles, Routing,<br/>Authentication, Authorization)"]
-        C["Controller<br/>(Areas: Admin, Staff, Student, Manager + Controllers chung)"]
+        C["Controller<br/>(Areas: Admin, Staff, Teacher, Student + Controllers chung + API)"]
         V["Razor View (.cshtml)<br/>+ ViewModel"]
         S["Service<br/>(luật nghiệp vụ, transaction)"]
         FS["FileStorageService<br/>(System.IO – File I/O)"]
@@ -182,7 +184,7 @@ flowchart TB
     end
 
     DB[("SQL Server<br/>IFA_DB")]
-    UP[["Thư mục uploads/<br/>(ảnh JPEG + thumbnail)"]]
+    UP[["Thư mục uploads/<br/>(ảnh JPG/PNG/WebP + thumbnail JPEG)"]]
 
     B -- "HTTP request" --> MW --> C
     C -- "gọi" --> S
@@ -252,15 +254,16 @@ src/InstituteOfFineArts.Web/uploads/       ← Upload:RootPath (cấu hình tron
 **Quy tắc:**
 | Hạng mục | Quy tắc |
 |---|---|
-| Định dạng (BR-16) | Chỉ **JPEG**: đuôi `.jpg`/`.jpeg` **và** `ContentType == "image/jpeg"` **và** 3 byte đầu `FF D8 FF` **và** giải mã được bằng SkiaSharp (chặn file đổi đuôi) |
-| Kích thước (BR-17) | Tối đa **5 MB**/file: `[RequestSizeLimit(6_000_000)]` trên action + `FormOptions.MultipartBodyLengthLimit` + kiểm tra `file.Length` trong `JpegValidator`; cạnh ngắn < 600 px → chỉ **cảnh báo** |
-| Đặt tên | Không dùng tên file người dùng để lưu. Lưu `Guid.NewGuid() + ".jpg"`; tên gốc lưu cột `original_file_name` (chỉ để hiển thị) |
+| Định dạng (BR-16) | **JPG/JPEG, PNG, WebP**: đuôi file **và** `ContentType` **và** magic bytes (`FF D8 FF` / `89 50 4E 47 0D 0A 1A 0A` / `RIFF….WEBP`) cùng một định dạng **và** SkiaSharp giải mã ra đúng định dạng đó (chặn file đổi đuôi) – `Helpers/ImageValidator` |
+| Kích thước (BR-17) | Tối đa **10 MB/ảnh** (`Upload:MaxFileSizeBytes`), **1–5 ảnh/bài**: giới hạn request = 5 × 10 MB + 1 MB (Kestrel, IIS, `FormOptions`, `[RequestSizeLimit]` trên action nộp/sửa bài); cạnh ngắn < 600 px → chỉ **cảnh báo** |
+| Đặt tên | Không dùng tên file người dùng để lưu. Lưu `Guid.NewGuid() + đuôi theo định dạng đã kiểm tra`; thumbnail luôn `.jpg` (làm phẳng trên nền trắng); tên gốc lưu cột `original_file_name` (chỉ để hiển thị) |
 | Đường dẫn trong CSDL | Lưu **đường dẫn tương đối** so với `Upload:RootPath`, ví dụ `submissions/12/3f2a...jpg` |
 | Ghi file | `await using var fs = new FileStream(tempPath, FileMode.CreateNew)` → `await file.CopyToAsync(fs)` → `File.Move(tempPath, target)` |
-| Sửa ảnh | Ghi file mới → `SaveChangesAsync()` thành công → mới xóa file cũ (`File.Delete`). Nếu lưu CSDL lỗi → xóa file mới |
-| Xóa bài | Xóa bản ghi → sau khi lưu thành công xóa file gốc + thumbnail |
-| Tải xuống / hiển thị | Ảnh **không** đặt trong `wwwroot`. Truy cập qua `FilesController` `GET /files/submissions/{id}` (và `/thumb`) → kiểm tra quyền → mở `FileStream` và trả `File(stream, "image/jpeg")`; `?download=true` thì trả kèm tên file để trình duyệt tải về |
-| Quyền xem ảnh (BR-20) | Guest/Student khác: chỉ ảnh bài **BEST hoặc đạt giải của cuộc thi đã GRADED**. Student: ảnh của mình. Staff/Manager: tất cả |
+| Nhiều ảnh (BR-18) | Mỗi ảnh một dòng `submission_image` (thứ tự, ảnh đại diện); ảnh đại diện được chép sang các cột ảnh của `submission` để danh sách, gallery, báo cáo vẫn dùng 1 ảnh |
+| Sửa ảnh | Ghi các file mới → `SaveChangesAsync()` thành công → mới xóa file của ảnh bị bỏ (`File.Delete`). Nếu lưu CSDL lỗi (hoặc một ảnh bị từ chối) → xóa các file mới đã ghi |
+| Xóa bài | Xóa bản ghi → sau khi lưu thành công xóa mọi file gốc + thumbnail của bài |
+| Tải xuống / hiển thị | Ảnh **không** đặt trong `wwwroot`. Truy cập qua `FilesController` `GET /files/submissions/{id}` (ảnh đại diện), `GET /files/submission-images/{imageId}` (từng ảnh) và `/thumb` → kiểm tra quyền → mở `FileStream`, content-type theo đuôi file; `?download=true` thì trả kèm tên file. API mobile: `/api/submissions/{id}/image`, `/api/submissions/{id}/images/{imageId}` |
+| Quyền xem ảnh (BR-20) | Guest/Student khác: chỉ ảnh bài **BEST hoặc đạt giải của cuộc thi đã GRADED**. Student: ảnh của mình. Staff: tất cả. **Teacher: chỉ cuộc thi mình là giám khảo, khi đã qua hạn nộp** (`SubmissionImagePolicy`) |
 | Chống path traversal | Đường dẫn luôn tạo từ dữ liệu trong DB, không nhận path từ URL; kiểm tra `Path.GetFullPath(target).StartsWith(rootFullPath)` |
 | Khởi động | `Directory.CreateDirectory(root)` khi ứng dụng chạy |
 | Backup | Thư mục `uploads/` được nén cùng file `.bak` hằng ngày (mục 11.2) |
@@ -268,18 +271,18 @@ src/InstituteOfFineArts.Web/uploads/       ← Upload:RootPath (cấu hình tron
 **Snippet minh họa (có comment theo quy ước):**
 ```csharp
 /// <summary>
-/// Lưu ảnh JPEG của bài dự thi xuống đĩa bằng File I/O.
+/// Lưu một ảnh (JPG/PNG/WebP) của bài dự thi xuống đĩa bằng File I/O.
 /// </summary>
 /// <param name="file">File người dùng tải lên</param>
 /// <param name="competitionId">Id cuộc thi – dùng làm thư mục con</param>
 /// <returns>Thông tin file đã lưu (đường dẫn tương đối, kích thước)</returns>
 public async Task<StoredFile> SaveSubmissionImageAsync(IFormFile file, long competitionId)
 {
-    // 1. Kiểm tra file hợp lệ: đuôi, MIME, magic bytes, kích thước
-    await _jpegValidator.ValidateAsync(file);
+    // 1. Kiểm tra file hợp lệ: đuôi, MIME, magic bytes, giải mã, kích thước (≤ 10 MB)
+    var check = await ImageValidator.ValidateAsync(file, _options.MaxFileSizeBytes);
 
-    // 2. Tạo tên file ngẫu nhiên, KHÔNG dùng tên gốc để tránh trùng & path traversal
-    var fileName = $"{Guid.NewGuid()}.jpg";
+    // 2. Tạo tên file ngẫu nhiên (đuôi theo định dạng đã kiểm tra), KHÔNG dùng tên gốc
+    var fileName = $"{Guid.NewGuid()}{check.Extension}";
     var dir = Path.Combine(_rootPath, "submissions", competitionId.ToString());
     var target = Path.GetFullPath(Path.Combine(dir, fileName));
 
@@ -317,10 +320,13 @@ public async Task<IActionResult> Submission(long id, bool download = false)
     // Mở luồng đọc file từ ổ đĩa
     var stream = new FileStream(image.FullPath, FileMode.Open, FileAccess.Read);
 
+    // Content-type theo đuôi file (image/jpeg, image/png, image/webp)
+    var type = ImageValidator.ContentTypeOf(image.RelativePath);
+
     // download = true → trình duyệt tải về với tên gốc; ngược lại hiển thị trực tiếp
     return download
-        ? File(stream, "image/jpeg", image.DownloadName)
-        : File(stream, "image/jpeg");
+        ? File(stream, type, image.DownloadName)
+        : File(stream, type);
 }
 ```
 
@@ -335,22 +341,24 @@ Mã luật lấy **đúng theo tài liệu BA** (`01_Phan_tich_nghiep_vu_BA.md`,
 | BR-04, BR-05 | Account đã phát sinh dữ liệu → **không xóa cứng**, chỉ `active = 0`; account bị khóa không đăng nhập được | `StaffService`, `StudentService` + `AuthService` (đăng nhập) |
 | BR-06 | `start_date ≤ end_date`; hạn nộp = **23:59:59 ngày `end_date`** | Attribute `[DateRange]` + `CompetitionService` + CHECK |
 | BR-07 | Trạng thái **UPCOMING / ONGOING / CLOSED tính từ ngày** (không nhập tay); **GRADED** chỉ khi Staff công bố | `CompetitionStatusResolver` (dùng khi đọc) + `StatusSyncBackgroundService` (đồng bộ cột `status`) |
-| BR-08 | Công bố (→ GRADED) chỉ khi đang CLOSED **và 100% bài nộp đã có Evaluation** | `CompetitionService.PublishResultsAsync()` |
+| BR-08 | Công bố (→ GRADED) chỉ khi đang CLOSED, **có ban giám khảo** và **mọi bài đã được mọi giám khảo chấm**; tính lại kết quả, tự trao giải | `CompetitionResultService.PublishAsync()` |
 | BR-09 | Có ≥ 1 CompetitionAward (cảnh báo); `rank ≥ 1`, `prize_value ≥ 0`, `quantity ≥ 1` | `CompetitionService` + CHECK |
 | BR-10 | Đã có bài: không sửa `start_date`, chỉ **gia hạn** `end_date`; GRADED: chỉ xem | `CompetitionService` |
 | BR-11 | Chỉ xóa cuộc thi khi **chưa có Submission** (xóa kèm CompetitionAward) | `CompetitionService` + FK CASCADE award |
 | BR-13, BR-14 | Chỉ nộp/sửa/thay ảnh/xóa khi cuộc thi **ONGOING** (kiểm tra ở server); quá hạn → từ chối. DISQUALIFIED dùng cho bài nhập bù sau hạn hoặc vi phạm thể lệ | `SubmissionService`, `EvaluationService` |
 | BR-15 | Mỗi học viên **tối đa 1 bài / 1 cuộc thi** | UNIQUE (`competition_id`, `student_id`) |
-| BR-16..BR-18 | JPEG (đuôi + MIME + magic bytes `FF D8 FF`), ≤ 5 MB, lưu `uploads/submissions/{competitionId}/{uuid}.jpg`; thay ảnh → ghi file mới rồi xóa file cũ; xóa bài → xóa file | `JpegValidator`, `FileStorageService` |
+| BR-16..BR-18 | JPG/PNG/WebP (đuôi + MIME + magic bytes + giải mã), ≤ 10 MB/ảnh, 1–5 ảnh/bài, lưu `uploads/submissions/{competitionId}/{uuid}.{ext}`; thêm/bỏ ảnh → ghi file mới rồi mới xóa file cũ; xóa bài → xóa mọi file | `ImageValidator`, `FileStorageService`, `SubmissionService` |
 | BR-19 | Bắt buộc `title` ≤ 150, ảnh, `description` ≤ 2000, `text_content` ≤ 4000 + `text_type` ∈ POEM/QUOTATION/STORY/OTHER | `SubmissionFormVm` (DataAnnotations) + CHECK |
-| BR-20 | Học viên chỉ xem/sửa/xóa/tải bài của mình; ảnh luôn đi qua controller kiểm tra quyền | `SubmissionService.GetImageForViewerAsync()` |
-| BR-21 | Chỉ chấm khi cuộc thi **CLOSED**; sửa/xóa Evaluation khi **chưa GRADED** | `EvaluationService` |
-| BR-22 | **Tối đa 1 Evaluation / Submission**; lưu `evaluated_by`, `evaluated_at` (người sửa cuối ghi đè) | UNIQUE `evaluation.submission_id` |
-| BR-23 | `rating` bắt buộc; DISQUALIFIED bắt buộc lý do (`negative_points`); rating khác bắt buộc `positive_points` | `EvaluationFormVm` + `EvaluationService` + CHECK |
-| BR-24 | Học viên chỉ thấy Evaluation của mình **sau khi GRADED** | `EvaluationService`, `Student/ResultsController` |
-| BR-30 | Chỉ trao giải cho bài **rating = BEST** của đúng cuộc thi; DISQUALIFIED tuyệt đối không | `AwardService` |
-| BR-31 | Số giải trao ≤ `quantity`; **tối đa 1 giải / học viên / cuộc thi** | `AwardService` + UNIQUE `award_issued.submission_id` |
-| BR-32, BR-33 | Trao giải khi CLOSED hoặc GRADED; chỉ công khai khi GRADED; thu hồi phải ghi lý do | `AwardService` |
+| BR-20 | Học viên chỉ xem/sửa/xóa/tải bài của mình; Teacher chỉ bài cuộc thi mình chấm, sau hạn nộp (404 nếu không); ảnh luôn đi qua controller kiểm tra quyền | `SubmissionImagePolicy`, `ImageAccessService`, `StaffSubmissionService(judgeId)`, `EvaluationService.GetPageAsync` |
+| BR-21 | Chỉ chấm khi cuộc thi **CLOSED**; chỉ giám khảo của cuộc thi; sửa/xóa phần chấm khi **chưa GRADED** | `EvaluationService` |
+| BR-22 | **Mỗi giám khảo chấm mỗi bài 1 lần**; kết quả (`evaluation`) chỉ có khi mọi giám khảo đã chấm = trung bình điểm tổng | UNIQUE `judge_evaluation(submission_id, judge_id)`, UNIQUE `evaluation.submission_id`; `JuryResults` |
+| BR-23 | Điểm 0–100 (2 số lẻ) cho mọi tiêu chí; tổng = Σ điểm × trọng số / 100 tính lại ở server; loại bài bắt buộc lý do; 1 giám khảo loại → DISQUALIFIED | `EvaluationService`, `GradingMath`, CHECK `judge_score`, `judge_evaluation` |
+| BR-24 | Bảng điểm: chủ bài + giám khảo sau GRADED, Staff khi bài đã chấm đủ | `EvaluationService.GetScoreSheetAsync()` |
+| BR-25, BR-26 | Ban giám khảo (TEACHER active, 1 trưởng ban); tiêu chí không trùng, trọng số > 0, tổng 100%; khóa tiêu chí khi đã chấm; không bỏ giám khảo đã chấm | `CompetitionService` (Jury) + CHECK `competition_criterion.weight_percent` |
+| BR-27, BR-28 | Ngưỡng xếp loại chung (giảm dần, 0–100); so sánh bằng `decimal` đầy đủ, chỉ làm tròn khi hiển thị | `GradingMath`, `GradingCriterionService`, bảng `rating_threshold` |
+| BR-30, BR-31 | Trao giải tự động khi công bố: xếp hạng dense theo trung bình, mỗi giải lấy hạng tiếp theo đến đủ `quantity` (không tách nhóm đồng hạng), đủ giá trị mỗi người; bài DISQUALIFIED không xếp hạng; **tối đa 1 giải / học viên / cuộc thi** | `GradingMath.Awards`, `CompetitionResultService` + UNIQUE `award_issued.submission_id` |
+| BR-32, BR-33 | Xếp hạng dự kiến trước khi công bố; giải chỉ công khai khi GRADED; Staff chỉ sửa ngày/ghi chú, thu hồi phải ghi lý do (suất để trống) | `CompetitionResultService.GetRankingAsync`, `AwardIssuedService` |
+| BR-48, BR-49 | Nhật ký mọi thay đổi + lượt mở/tải bài của Staff/Teacher/Admin, gắn cuộc thi / triển lãm / bài / tài khoản | `AuditActionFilter`, `AuditTargetService`, `AuditLogService` |
 | BR-40 | Chỉ bài **BEST/BETTER** của cuộc thi **GRADED** được gửi triển lãm | `ExhibitionEntryService` |
 | BR-41 | `asking_price` > 0 do học viên quyết định; Staff tạo trực tiếp phải nhập đúng giá học viên báo | `ExhibitionEntryService` + CHECK |
 | BR-42 | Chỉ gửi tới triển lãm **UPCOMING**; trạng thái triển lãm tính tự động UPCOMING/ONGOING/FINISHED; chỉ xóa triển lãm khi chưa có entry | `ExhibitionService` |
@@ -378,19 +386,19 @@ institute-of-fine-arts/                         ← thư mục gốc repo
 │       ├── appsettings.json                    ← chuỗi kết nối, cấu hình upload
 │       ├── appsettings.Development.json
 │       ├── Areas/
-│       │   ├── Admin/   {Controllers, Views}   ← M03, M04, dashboard Admin
-│       │   ├── Staff/   {Controllers, Views}   ← M05, M07, M08, M09, xem học viên
-│       │   ├── Student/ {Controllers, Views}   ← M06, kết quả, triển lãm của học viên
-│       │   └── Manager/ {Controllers, Views}   ← M11, quản lý triển lãm
+│       │   ├── Admin/   {Controllers, Views}   ← M03, M04, dashboard Admin, nhật ký, thư viện tiêu chí & ngưỡng
+│       │   ├── Staff/   {Controllers, Views}   ← M05, M08, M09, M11 (dashboard tổng quan), xem học viên, Team
+│       │   ├── Teacher/ {Controllers, Views}   ← M07 chấm bài theo tiêu chí, xem cuộc thi/triển lãm (11/2026)
+│       │   └── Student/ {Controllers, Views}   ← M06, kết quả, triển lãm của học viên
 │       ├── Controllers/                        ← HomeController (M02), AccountController (M01),
 │       │                                          ProfileController, FilesController, ReportsController (M10), ErrorController
 │       ├── Views/
 │       │   ├── Home/, Account/, Profile/, Reports/, Error/
 │       │   └── Shared/                         ← _Layout.cshtml, _LayoutDashboard.cshtml, _Sidebar, _Pagination, _Alerts
 │       ├── Models/
-│       │   ├── Entities/                       ← 11 entity + BaseEntity (CreatedAt/UpdatedAt)
+│       │   ├── Entities/                       ← entity + BaseEntity (CreatedAt/UpdatedAt)
 │       │   └── Enums/                          ← Role, Gender, EnrollmentStatus, CompetitionStatus, TextType,
-│       │                                          Rating, ExhibitionStatus, EntryStatus
+│       │                                          Rating, ExhibitionStatus, EntryStatus, AuditCategory
 │       ├── ViewModels/                         ← *FormVm (dữ liệu nhập, có DataAnnotations), *Vm (hiển thị), PagedResult
 │       ├── Data/
 │       │   ├── AppDbContext.cs
@@ -402,14 +410,16 @@ institute-of-fine-arts/                         ← thư mục gốc repo
 │       │   │                                      ICompetitionAwardService, IFileStorageService, ISubmissionService, IHomeService,
 │       │   │                                      IStaffSubmissionService, IEvaluationService, IAwardService, IResultService,
 │       │   │                                      IStudentResultService, IExhibitionService, IExhibitionEntryService,
-│       │   │                                      ICustomerService, IReportService, IManagerService (tên theo docs/Phan_cong_task.xlsx)
+│       │   │                                      ICustomerService, IReportService, IStaffDashboardService, ITeacherDashboardService,
+│       │   │                                      ICompetitionResultService, IGradingCriterionService, IAuditLogService, IAuditTargetService
 │       │   └── Implementations/
 │       ├── Infrastructure/
-│       │   ├── FileStorage/                    ← FileStorageService, ThumbnailService, UploadOptions
+│       │   ├── FileStorage/                    ← UploadOptions (FileStorageService, ThumbnailService ở Services/)
+│       │   ├── Audit/, Filters/                ← AuditEntry, [AuditView], AuditActionFilter (nhật ký)
 │       │   ├── Security/                       ← cấu hình cookie, ClaimsPrincipal extensions (lấy Id người dùng)
 │       │   └── BackgroundJobs/                 ← StatusSyncBackgroundService
-│       ├── Helpers/                            ← JpegValidator, DateTimeHelper, CompetitionStatusResolver, Constants
-│       ├── Validation/                         ← attribute tự viết: [DateRange], [JpegFile]
+│       ├── Helpers/                            ← ImageValidator, GradingMath, DateTimeHelper, CompetitionStatusResolver, RoleNames
+│       ├── Validation/                         ← attribute tự viết: [DateRange]
 │       ├── Exceptions/                         ← BusinessException, NotFoundException, FileStorageException
 │       ├── Mappers/                            ← hàm map tay Entity ↔ ViewModel
 │       ├── wwwroot/                            ← css/, js/, img/ (ảnh giao diện), lib/ (bootstrap, chart.js, sweetalert2)
@@ -431,7 +441,7 @@ institute-of-fine-arts/                         ← thư mục gốc repo
 - **Quy ước:** tên bảng/cột `snake_case` số ít, khóa chính `id BIGINT IDENTITY(1,1)`, khóa ngoại `<bảng>_id`, thời gian `DATETIME2(0)`, tiền `DECIMAL(18,2)` (VND), cờ `BIT`.
 - **Enum:** lưu dạng `VARCHAR` + `CHECK` constraint (C#: enum + `.HasConversion<string>()` trong EF Core) – dễ đọc trong SSMS, không cần bảng lookup.
 - **Audit:** mọi bảng có `created_at DATETIME2(0) NOT NULL DEFAULT SYSDATETIME()` và `updated_at DATETIME2(0) NULL` (gán tự động trong `AppDbContext.SaveChangesAsync` cho mọi entity kế thừa `BaseEntity`).
-- **Quan hệ người dùng:** `account` (đăng nhập + thông tin cá nhân chung + role) 1–1 `staff_profile` (ADMIN, MANAGER, STAFF – đều là nhân sự học viện) hoặc 1–1 `student_profile` (STUDENT).
+- **Quan hệ người dùng:** `account` (đăng nhập + thông tin cá nhân chung + role) 1–1 `staff_profile` (ADMIN, STAFF, TEACHER – đều là nhân sự học viện; tên bảng giữ nguyên, dùng chung cho Staff và Teacher) hoặc 1–1 `student_profile` (STUDENT).
 
 ### 6.1. ERD (Mermaid)
 
@@ -453,6 +463,15 @@ erDiagram
     customer ||--o{ exhibition_entry : "mua"
     staff_profile ||--o{ exhibition : "quản lý"
     account ||--o{ exhibition_entry : "đề xuất"
+    competition ||--o{ competition_judge : "ban giám khảo"
+    staff_profile ||--o{ competition_judge : "là giám khảo"
+    competition ||--|{ competition_criterion : "chấm theo"
+    grading_criterion ||--o{ competition_criterion : "được chọn"
+    submission ||--o{ judge_evaluation : "mỗi giám khảo chấm"
+    staff_profile ||--o{ judge_evaluation : "chấm"
+    judge_evaluation ||--|{ judge_score : "điểm từng tiêu chí"
+    competition_criterion ||--o{ judge_score : "của tiêu chí"
+    submission ||--|{ submission_image : "1-5 ảnh"
 
     account {
         bigint id PK
@@ -464,7 +483,7 @@ erDiagram
         date date_of_birth
         char gender
         nvarchar address
-        varchar role "ADMIN MANAGER STAFF STUDENT"
+        varchar role "ADMIN STAFF TEACHER STUDENT"
         bit active
         datetime2 last_login_at
     }
@@ -532,6 +551,7 @@ erDiagram
         bigint submission_id FK,UK
         bigint evaluated_by FK
         varchar rating
+        decimal total_score
         nvarchar positive_points
         nvarchar negative_points
         nvarchar improvement_areas
@@ -573,6 +593,55 @@ erDiagram
         bigint reviewed_by FK
         nvarchar notes
     }
+    competition_judge {
+        bigint id PK
+        bigint competition_id FK
+        bigint judge_id FK
+        bit is_chair
+    }
+    grading_criterion {
+        bigint id PK
+        nvarchar name UK
+        nvarchar description
+        bit active
+    }
+    competition_criterion {
+        bigint id PK
+        bigint competition_id FK
+        bigint criterion_id FK
+        decimal weight_percent
+        int sort_order
+    }
+    judge_evaluation {
+        bigint id PK
+        bigint submission_id FK
+        bigint judge_id FK
+        bit disqualified
+        decimal total_score
+        nvarchar positive_points
+        nvarchar negative_points
+        nvarchar improvement_areas
+    }
+    judge_score {
+        bigint id PK
+        bigint judge_evaluation_id FK
+        bigint competition_criterion_id FK
+        decimal score
+        nvarchar comment
+    }
+    submission_image {
+        bigint id PK
+        bigint submission_id FK
+        varchar image_path
+        varchar content_type
+        int sort_order
+        bit is_cover
+    }
+    rating_threshold {
+        bigint id PK
+        varchar rating UK
+        decimal min_score
+    }
     customer {
         bigint id PK
         nvarchar full_name
@@ -599,7 +668,7 @@ erDiagram
 | date_of_birth | DATE | ✔ | | |
 | gender | CHAR(1) | ✔ | CHECK (`M`,`F`,`O`) | |
 | address | NVARCHAR(255) | ✔ | | |
-| role | VARCHAR(20) | ✘ | CHECK (`ADMIN`,`MANAGER`,`STAFF`,`STUDENT`) | 1 tài khoản 1 role (BR-03) |
+| role | VARCHAR(20) | ✘ | CHECK (`ADMIN`,`STAFF`,`TEACHER`,`STUDENT`) | 1 tài khoản 1 role (BR-03); migration 11/2026 đổi MANAGER → STAFF |
 | active | BIT | ✘ | DEFAULT 1 | `0` = khóa/vô hiệu hóa (BR-04, BR-05) – thay cho xóa cứng |
 | last_login_at | DATETIME2(0) | ✔ | | Cập nhật ở LoginSuccessHandler |
 | created_at / updated_at | DATETIME2(0) | ✘ / ✔ | DEFAULT SYSDATETIME() | Audit |
@@ -676,7 +745,7 @@ Index: `IX_competition_status_dates (status, start_date, end_date)`.
 | competition_id | BIGINT | ✘ | **FK → competition(id)** | |
 | student_id | BIGINT | ✘ | **FK → student_profile(id)** | |
 | title | NVARCHAR(150) | ✘ | | Tên tranh (BR-19) |
-| image_path | VARCHAR(500) | ✘ | | Đường dẫn tương đối file JPEG |
+| image_path | VARCHAR(500) | ✘ | | Đường dẫn tương đối của **ảnh đại diện** (JPG/PNG/WebP); mọi ảnh ở `submission_image` |
 | thumbnail_path | VARCHAR(500) | ✔ | | |
 | original_file_name | NVARCHAR(255) | ✘ | | Chỉ để hiển thị/tải xuống |
 | file_size | BIGINT | ✘ | CHECK (> 0) | byte |
@@ -690,12 +759,15 @@ Index: `IX_competition_status_dates (status, start_date, end_date)`.
 
 Ràng buộc/Index: **UNIQUE (`competition_id`, `student_id`)** (BR-15), `IX_submission_competition_submitted (competition_id, submitted_at)` (phục vụ báo cáo theo khoảng ngày), `IX_submission_student`.
 
-#### 6.2.7. `evaluation` – Kết quả chấm (Entity `Evaluation`)
+#### 6.2.7. `evaluation` – Kết quả chấm của bài (Entity `Evaluation`)
+
+> Từ 11/2026 `evaluation` là **kết quả cuối** của bài, do hệ thống ghi khi **mọi giám khảo** đã chấm (`JuryResults`): `rating` suy ra từ ngưỡng, `total_score DECIMAL(9,4)` = trung bình ban, `evaluated_by` = trưởng ban; DISQUALIFIED thì `negative_points` = lý do của giám khảo. Phần chấm của từng giám khảo ở `judge_evaluation`. Nhờ vậy giải, triển lãm, gallery, báo cáo, biểu đồ vẫn đọc 1 dòng/bài.
 | Cột | Kiểu | Null | Ràng buộc | Ghi chú |
 |---|---|---|---|---|
 | id | BIGINT IDENTITY | ✘ | **PK** | |
-| submission_id | BIGINT | ✘ | **FK → submission(id)**, **UNIQUE** | Tối đa 1 Evaluation / bài (BR-22) |
-| evaluated_by | BIGINT | ✘ | **FK → staff_profile(id)** | Người chấm/sửa cuối (BR-22) |
+| submission_id | BIGINT | ✘ | **FK → submission(id)**, **UNIQUE** | 1 kết quả / bài (BR-22) |
+| evaluated_by | BIGINT | ✘ | **FK → staff_profile(id)** | Trưởng ban (hoặc giám khảo đầu tiên) |
+| total_score | DECIMAL(9,4) | ✔ | | Trung bình ban (null khi loại / chấm kiểu cũ) |
 | rating | VARCHAR(20) | ✘ | CHECK (`BEST`,`BETTER`,`GOOD`,`MODERATE`,`NORMAL`,`DISQUALIFIED`) | Xuất sắc nhất → Bị loại |
 | positive_points | NVARCHAR(MAX) | ✔ | | Điểm mạnh; bắt buộc khi rating ≠ DISQUALIFIED (BR-23) |
 | negative_points | NVARCHAR(MAX) | ✔ | | Điểm yếu; **bắt buộc** khi DISQUALIFIED (lý do – BR-23) |
@@ -720,7 +792,7 @@ CONSTRAINT CK_evaluation_dq_reason CHECK (rating <> 'DISQUALIFIED' OR negative_p
 | remarks | NVARCHAR(MAX) | ✔ | | Nhận xét khi trao giải / nhận xét về cuộc thi |
 | created_at / updated_at | DATETIME2(0) | | | |
 
-> `AwardService` kiểm tra: bài có Evaluation **rating = BEST** (BR-30), giải và bài cùng cuộc thi, cuộc thi CLOSED/GRADED (BR-32), không vượt `quantity` (BR-31). Thu hồi giải phải ghi lý do vào log (BR-33).
+> Từ 11/2026 `award_issued` do `CompetitionResultService.PublishAsync` tạo khi công bố, theo xếp hạng (`GradingMath.Awards`, BR-30, BR-31 – đồng hạng có thể vượt `quantity`). `AwardIssuedService` chỉ sửa ngày/ghi chú và thu hồi (bắt buộc lý do, ghi `audit_log` – BR-33).
 
 #### 6.2.9. `exhibition` – Triển lãm (Entity `Exhibition`)
 | Cột | Kiểu | Null | Ràng buộc | Ghi chú |
@@ -734,7 +806,7 @@ CONSTRAINT CK_evaluation_dq_reason CHECK (rating <> 'DISQUALIFIED' OR negative_p
 | start_date | DATE | ✘ | | |
 | end_date | DATE | ✘ | CHECK (`end_date >= start_date`) | |
 | status | VARCHAR(20) | ✘ | DEFAULT `UPCOMING`, CHECK (`UPCOMING`,`ONGOING`,`FINISHED`) | Tính tự động theo ngày (BR-42), `StatusSyncBackgroundService` đồng bộ |
-| created_by | BIGINT | ✘ | **FK → staff_profile(id)** | Staff hoặc Manager |
+| created_by | BIGINT | ✘ | **FK → staff_profile(id)** | Staff |
 | created_at / updated_at | DATETIME2(0) | | | |
 
 #### 6.2.10. `exhibition_entry` – Tranh gửi triển lãm & bán tranh (Entity `ExhibitionEntry`)
@@ -787,6 +859,82 @@ Index: `IX_entry_exhibition_status (exhibition_id, status)`. (Không đặt UNIQ
 
 Index: `IX_customer_phone`.
 
+#### 6.2.12. Bảng thêm từ 11/2026 – ban giám khảo, chấm theo tiêu chí, nhiều ảnh, nhật ký
+
+**`competition_judge`** – ban giám khảo (Entity `CompetitionJudge`)
+| Cột | Kiểu | Null | Ràng buộc | Ghi chú |
+|---|---|---|---|---|
+| id | BIGINT IDENTITY | ✘ | **PK** | |
+| competition_id | BIGINT | ✘ | **FK → competition(id)** ON DELETE CASCADE | |
+| judge_id | BIGINT | ✘ | **FK → staff_profile(id)** RESTRICT | Tài khoản TEACHER |
+| is_chair | BIT | ✘ | | Trưởng ban (tối đa 1) |
+
+Index: **UNIQUE (`competition_id`, `judge_id`)**, `IX_competition_judge_judge`.
+
+**`grading_criterion`** – thư viện tiêu chí, Admin quản lý (Entity `GradingCriterion`)
+| Cột | Kiểu | Null | Ràng buộc | Ghi chú |
+|---|---|---|---|---|
+| id | BIGINT IDENTITY | ✘ | **PK** | |
+| name | NVARCHAR(100) | ✘ | **UNIQUE** | VD Colour, Composition, Light and shadow |
+| description | NVARCHAR(500) | ✔ | | Giám khảo cần nhìn gì |
+| active | BIT | ✘ | DEFAULT 1 | 0 = ẩn (không xóa tiêu chí đã dùng) |
+
+**`competition_criterion`** – tiêu chí của cuộc thi (Entity `CompetitionCriterion`)
+| Cột | Kiểu | Null | Ràng buộc | Ghi chú |
+|---|---|---|---|---|
+| id | BIGINT IDENTITY | ✘ | **PK** | |
+| competition_id | BIGINT | ✘ | **FK → competition(id)** CASCADE | |
+| criterion_id | BIGINT | ✘ | **FK → grading_criterion(id)** RESTRICT | |
+| weight_percent | DECIMAL(5,2) | ✘ | CHECK `> 0 AND <= 100` | Tổng 100% kiểm tra ở service (nhiều dòng) |
+| sort_order | INT | ✘ | | Thứ tự hiển thị |
+
+Index: **UNIQUE (`competition_id`, `criterion_id`)**.
+
+**`judge_evaluation`** – phần chấm của một giám khảo cho một bài (Entity `JudgeEvaluation`)
+| Cột | Kiểu | Null | Ràng buộc | Ghi chú |
+|---|---|---|---|---|
+| id | BIGINT IDENTITY | ✘ | **PK** | |
+| submission_id | BIGINT | ✘ | **FK → submission(id)** CASCADE | |
+| judge_id | BIGINT | ✘ | **FK → staff_profile(id)** RESTRICT | |
+| disqualified | BIT | ✘ | | Giám khảo loại bài |
+| total_score | DECIMAL(5,2) | ✔ | CHECK 0–100 | Σ điểm × trọng số / 100 (null khi loại) |
+| positive_points / negative_points / improvement_areas | NVARCHAR(MAX) | ✔ | CHECK: loại → có `negative_points`, không có `total_score` | Nhận xét chung của giám khảo |
+| evaluated_at | DATETIME2(0) | ✘ | | |
+
+Index: **UNIQUE (`submission_id`, `judge_id`)** (BR-22), `IX_judge_evaluation_judge`.
+
+**`judge_score`** – điểm từng tiêu chí (Entity `JudgeScore`)
+| Cột | Kiểu | Null | Ràng buộc | Ghi chú |
+|---|---|---|---|---|
+| id | BIGINT IDENTITY | ✘ | **PK** | |
+| judge_evaluation_id | BIGINT | ✘ | **FK → judge_evaluation(id)** CASCADE | |
+| competition_criterion_id | BIGINT | ✘ | **FK → competition_criterion(id)** NO ACTION | |
+| score | DECIMAL(5,2) | ✘ | CHECK `0..100` | |
+| comment | NVARCHAR(1000) | ✔ | | Nhận xét riêng tiêu chí |
+
+Index: **UNIQUE (`judge_evaluation_id`, `competition_criterion_id`)**.
+
+**`rating_threshold`** – ngưỡng xếp loại chung (Entity `RatingThreshold`)
+| Cột | Kiểu | Null | Ràng buộc | Ghi chú |
+|---|---|---|---|---|
+| id | BIGINT IDENTITY | ✘ | **PK** | |
+| rating | VARCHAR(20) | ✘ | **UNIQUE**, CHECK (`BEST`,`BETTER`,`GOOD`,`MODERATE`) | Dưới MODERATE = NORMAL |
+| min_score | DECIMAL(5,2) | ✘ | CHECK 0–100 | Mặc định 90 / 80 / 65 / 50; giảm dần (service) |
+
+**`submission_image`** – các ảnh của bài (Entity `SubmissionImage`)
+| Cột | Kiểu | Null | Ràng buộc | Ghi chú |
+|---|---|---|---|---|
+| id | BIGINT IDENTITY | ✘ | **PK** | |
+| submission_id | BIGINT | ✘ | **FK → submission(id)** CASCADE | |
+| image_path / thumbnail_path | VARCHAR(500) | ✘ / ✔ | | Đường dẫn tương đối |
+| original_file_name | NVARCHAR(255) | ✘ | | |
+| file_size | BIGINT | ✘ | | ≤ 10 MB |
+| content_type | VARCHAR(20) | ✘ | CHECK (`image/jpeg`,`image/png`,`image/webp`) | |
+| sort_order | INT | ✘ | | |
+| is_cover | BIT | ✘ | | Đúng 1 ảnh đại diện / bài (service); chép sang các cột ảnh của `submission` |
+
+**`audit_log`** – nhật ký (Entity `AuditLog`): `account_id` (FK SET NULL), `username`, `action`, **`category`** (`LOGIN`,`ACCOUNT`,`COMPETITION`,`SUBMISSION`,`GRADING`,`AWARD`,`EXHIBITION`,`SALE`,`OTHER`), **`summary`** (câu mô tả), `entity`, `entity_id`, **`competition_id`**, **`exhibition_id`**, **`submission_id`**, **`target_account_id`** (không FK – nhật ký còn sau khi xóa đối tượng), `details` (≤ 1000, có "Changes: cũ → mới"), `ip_address`. Index theo (`competition_id`, `created_at`), (`exhibition_id`, …), (`submission_id`, …), (`target_account_id`, …), (`account_id`, …).
+
 ### 6.3. Trích đoạn script tạo bảng (mẫu – 2 bảng)
 
 > Schema được tạo bằng **EF Core Code-First Migrations**. Script SQL dưới đây là kết quả mong muốn (xuất bằng `dotnet ef migrations script` → `database/01_schema.sql` để nộp).
@@ -807,7 +955,7 @@ CREATE TABLE account (
     gender         CHAR(1)       NULL CONSTRAINT CK_account_gender CHECK (gender IN ('M','F','O')),
     address        NVARCHAR(255) NULL,
     role           VARCHAR(20)   NOT NULL CONSTRAINT CK_account_role
-                       CHECK (role IN ('ADMIN','MANAGER','STAFF','STUDENT')),
+                       CHECK (role IN ('ADMIN','STAFF','TEACHER','STUDENT')),
     active         BIT           NOT NULL CONSTRAINT DF_account_active DEFAULT 1,  -- 0 = khóa (BR-04)
     last_login_at  DATETIME2(0)  NULL,
     created_at     DATETIME2(0)  NOT NULL CONSTRAINT DF_account_created DEFAULT SYSDATETIME(),
@@ -865,10 +1013,10 @@ Các báo cáo khác: số bài nộp theo cuộc thi; phân bố xếp loại; 
 | Hạng mục | Thiết kế |
 |---|---|
 | Xác thực | **Cookie Authentication**: `GET/POST /login`, `POST /logout`. `AuthService` đọc bảng `account` theo `username`, so mật khẩu bằng `BCrypt.Verify`; tài khoản `active = 0` không đăng nhập được (BR-05) |
-| Claims trong cookie | `NameIdentifier` (account id), `Name` (username), `GivenName` (họ tên), `Role` (ADMIN/MANAGER/STAFF/STUDENT) |
+| Claims trong cookie | `NameIdentifier` (account id), `Name` (username), `GivenName` (họ tên), `Role` (ADMIN/STAFF/TEACHER/STUDENT) |
 | Mật khẩu (BR-02) | **BCrypt** (`BCrypt.Net.BCrypt.HashPassword`, work factor 11). Không bao giờ lưu/ghi log mật khẩu thô |
 | Chính sách mật khẩu | ≥ 8 ký tự, có chữ và số (BR-02; `[RegularExpression]` trong `StaffFormVm/StudentFormVm`) |
-| Sau đăng nhập | Chuyển trang theo vai trò: ADMIN→`/admin`, MANAGER→`/manager`, STAFF→`/staff`, STUDENT→`/student`; cập nhật `last_login_at` |
+| Sau đăng nhập | Chuyển trang theo vai trò: ADMIN→`/admin`, STAFF→`/staff`, TEACHER→`/teacher`, STUDENT→`/student`; cập nhật `last_login_at`; ghi nhật ký đăng nhập (cả đăng nhập sai, cả từ app) |
 | Phân quyền | `[Authorize(Roles = "STAFF")]` đặt ở **base controller của từng Area** (ví dụ `StaffBaseController`); trang công khai dùng `[AllowAnonymous]` |
 | Phân quyền theo dữ liệu (ownership) | Học viên chỉ xem/sửa **bài của chính mình**: Service so sánh `submission.Student.AccountId == User.GetAccountId()`, sai → trả 403 (`Forbid()`). Không tin Id trên URL |
 | Anti-forgery (CSRF) | Bật toàn cục: `options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute())`; form dùng Tag Helper `asp-action` tự chèn token |
@@ -876,11 +1024,11 @@ Các báo cáo khác: số bài nộp theo cuộc thi; phân bố xếp loại; 
 | Ghi nhớ đăng nhập | Tùy chọn (checkbox, cookie 7 ngày) |
 | XSS | Razor tự mã hóa HTML khi dùng `@Model.X`; **cấm** `@Html.Raw` với dữ liệu người dùng (thơ, mô tả) |
 | SQL Injection | Chỉ dùng LINQ / `FromSqlInterpolated` (tham số hóa) – cấm nối chuỗi SQL |
-| Upload | Mục 4.3 (JPEG, 5 MB, Guid, chống path traversal) |
+| Upload | Mục 4.3 (JPG/PNG/WebP, 10 MB/ảnh, 1–5 ảnh/bài, Guid, chống path traversal) |
 | Trang lỗi | `app.UseExceptionHandler("/error/500")` + `app.UseStatusCodePagesWithReExecute("/error/{0}")` – không lộ chi tiết lỗi |
 
 ### 7.2. Ma trận phân quyền URL
-| Mẫu URL | GUEST | STUDENT | STAFF | MANAGER | ADMIN |
+| Mẫu URL | GUEST | STUDENT | STAFF | TEACHER | ADMIN |
 |---|:-:|:-:|:-:|:-:|:-:|
 | `/`, `/competitions/**`, `/winners/**`, `/exhibitions/**` (trang công khai) | ✔ | ✔ | ✔ | ✔ | ✔ |
 | `/login`, `/css/**`, `/js/**`, `/img/**`, `/lib/**`, `/error/**` | ✔ | ✔ | ✔ | ✔ | ✔ |
@@ -888,11 +1036,11 @@ Các báo cáo khác: số bài nộp theo cuộc thi; phân bố xếp loại; 
 | `/profile/**` (hồ sơ cá nhân, đổi mật khẩu) | | ✔ | ✔ | ✔ | ✔ |
 | `/student/**` | | ✔ | | | |
 | `/staff/**` | | | ✔ | | |
-| `/manager/**` | | | | ✔ | |
-| `/reports/**` (từng báo cáo kiểm tra vai trò chi tiết) | | | ✔ | ✔ | ✔ |
+| `/teacher/**` (chỉ cuộc thi mình là giám khảo – kiểm tra ở Service) | | | | ✔ | |
+| `/reports/**`, `/charts/**` (từng báo cáo kiểm tra vai trò chi tiết) | | | ✔ | | ✔ |
 | `/admin/**` | | | | | ✔ |
 
-(*) chỉ ảnh công khai / ảnh của mình. Mỗi phân hệ là một vai trò riêng đúng như đề bài (Admin quản lý tài khoản, không chấm bài).
+(*) chỉ ảnh công khai / ảnh của mình; TEACHER: ảnh cuộc thi mình chấm, sau hạn nộp. Mỗi phân hệ là một vai trò riêng (Admin quản lý tài khoản, không chấm bài; Staff vận hành, không chấm; Teacher chấm).
 
 ```csharp
 // ===== Program.cs (trích) – cấu hình xác thực & phân quyền =====
@@ -917,7 +1065,7 @@ builder.Services.AddControllersWithViews(options =>
 app.UseAuthentication();   // đọc cookie → User
 app.UseAuthorization();    // kiểm tra [Authorize(Roles = ...)]
 
-// Route cho Areas (Admin, Staff, Student, Manager) đặt trước route mặc định
+// Route cho Areas (Admin, Staff, Teacher, Student) đặt trước route mặc định
 app.MapControllerRoute("areas", "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
 app.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
 ```
@@ -938,8 +1086,8 @@ public abstract class StaffBaseController : Controller
 | Username | Role | Ghi chú |
 |---|---|---|
 | `admin01` | ADMIN | |
-| `manager01` | MANAGER | |
-| `staff01` … `staff03` | STAFF | |
+| `staff01`, `staff02` | STAFF | Vận hành (manager01 cũ đã bỏ, 11/2026) |
+| `teacher01` … `teacher03` | TEACHER | Giám khảo các cuộc thi mẫu |
 | `student01` … `student10` | STUDENT | `student10` bị khóa để test |
 
 - Mật khẩu demo ghi trong `README.md` và tài liệu cài đặt (xem docs/plan/04 mục 4.5).
@@ -951,7 +1099,7 @@ public abstract class StaffBaseController : Controller
 
 Quy ước: danh sách `GET /xxx?keyword=&page=&size=`; form tạo `GET /xxx/new` + `POST /xxx`; form sửa `GET /xxx/{id}/edit` + `POST /xxx/{id}`; xóa `POST /xxx/{id}/delete` (form có CSRF, không dùng GET để xóa). Sau POST thành công → **redirect** (PRG pattern) + thông báo qua `TempData`.
 
-> Hiện thực trong ASP.NET Core: mỗi vai trò là một **Area** (`Areas/Admin`, `Areas/Staff`, `Areas/Student`, `Areas/Manager`); URL đặt bằng **attribute routing** (`[Route("staff/competitions")]`, `[HttpGet("{id}/edit")]`…) để giữ đúng bảng dưới. Form POST luôn có anti-forgery token (`asp-action` tự chèn).
+> Hiện thực trong ASP.NET Core: mỗi vai trò là một **Area** (`Areas/Admin`, `Areas/Staff`, `Areas/Teacher`, `Areas/Student`); URL đặt bằng **attribute routing** (`[Route("staff/competitions")]`, `[HttpGet("{id}/edit")]`…) để giữ đúng bảng dưới. Form POST luôn có anti-forgery token (`asp-action` tự chèn).
 
 ### M01 – Auth
 | Method | URL | Role | Mô tả |
@@ -974,7 +1122,7 @@ Quy ước: danh sách `GET /xxx?keyword=&page=&size=`; form tạo `GET /xxx/new
 | GET | `/files/submissions/{id}` , `/files/submissions/{id}/thumb` | Theo quyền | Stream ảnh (File I/O); `?download=true` để tải về |
 | GET | `/files/competitions/{id}/cover` | Tất cả | Ảnh bìa cuộc thi |
 
-### M03 – Admin quản lý nhân sự (Staff/Manager/Admin)
+### M03 – Admin quản lý nhân sự (Staff/Teacher/Admin)
 | Method | URL | Role | Mô tả |
 |---|---|---|---|
 | GET | `/admin` | ADMIN | Dashboard (số NV, HV, cuộc thi) |
@@ -1015,7 +1163,7 @@ Quy ước: danh sách `GET /xxx?keyword=&page=&size=`; form tạo `GET /xxx/new
 | GET | `/student` | STUDENT | Dashboard học viên |
 | GET | `/student/competitions` , `/student/competitions/{id}` | STUDENT | Cuộc thi sắp/đang diễn ra + giải, thể lệ |
 | GET | `/student/submissions` | STUDENT | Bài của tôi (tìm theo tên, cuộc thi) |
-| GET/POST | `/student/competitions/{id}/submit`, `/student/submissions` | STUDENT | Nộp bài: upload JPEG + thơ/trích dẫn + mô tả (BR-13, BR-15..19) |
+| GET/POST | `/student/competitions/{id}/submit`, `/student/submissions` | STUDENT | Nộp bài: 1–5 ảnh JPG/PNG/WebP + thơ/trích dẫn + mô tả (BR-13, BR-15..19) |
 | GET | `/student/submissions/{id}` | STUDENT | Chi tiết bài + kết quả chấm (nếu có) |
 | GET/POST | `/student/submissions/{id}/edit`, `/student/submissions/{id}` | STUDENT | Đổi ảnh/nội dung – chỉ khi ONGOING (BR-13) |
 | POST | `/student/submissions/{id}/delete` | STUDENT | Xóa bài + file – chỉ khi ONGOING (BR-13, BR-18) |
@@ -1027,25 +1175,26 @@ Quy ước: danh sách `GET /xxx?keyword=&page=&size=`; form tạo `GET /xxx/new
 | POST | `/student/exhibitions/{id}/entries` | STUDENT | Gửi tranh BEST/BETTER (cuộc thi GRADED) + `asking_price` → entry `PENDING` (BR-40..43) |
 | POST | `/student/entries/{id}` , `/student/entries/{id}/withdraw` | STUDENT | Sửa giá / rút đề xuất – chỉ khi `PENDING` (BR-46) |
 
-### M07 – Chấm bài (Staff)
+### M07 – Chấm bài (Teacher – ban giám khảo; Staff chỉ xem) (cập nhật 11/2026)
 | Method | URL | Role | Mô tả |
 |---|---|---|---|
-| GET | `/staff/submissions` | STAFF | Tất cả bài, lọc theo cuộc thi / xếp loại / đã-chưa chấm / ngày nộp |
-| GET | `/staff/submissions/{id}` | STAFF | Xem bài (ảnh, thơ, mô tả, ngày đăng) |
-| GET/POST | `/staff/submissions/{id}/evaluate` | STAFF | Chấm: rating + điểm mạnh/yếu/cần cải thiện – chỉ khi CLOSED (BR-21..23) |
-| POST | `/staff/evaluations/{id}` | STAFF | Sửa kết quả chấm – khi chưa GRADED (BR-21) |
-| POST | `/staff/evaluations/{id}/delete` | STAFF | Xóa kết quả chấm – chưa GRADED, chưa trao giải/gửi triển lãm |
+| GET | `/staff/submissions`, `/staff/submissions/{id}` | STAFF | Tất cả bài (lọc cuộc thi / trạng thái / chấm / xếp loại / ngày nộp); chi tiết kèm bảng điểm, lịch sử bài |
+| GET | `/teacher` | TEACHER | Dashboard giám khảo |
+| GET | `/teacher/submissions`, `/teacher/submissions/{id}` | TEACHER | Bài của cuộc thi mình là giám khảo, sau hạn nộp (404 nếu không) |
+| GET/POST | `/teacher/evaluations/{id}` | TEACHER | Chấm theo tiêu chí (điểm + nhận xét) hoặc loại bài – chỉ khi CLOSED (BR-21..23) |
+| POST | `/teacher/evaluations/{id}/delete` | TEACHER | Xóa phần chấm của mình – khi CLOSED |
+| GET/PUT/DELETE | `/api/staff/competitions`, `/api/staff/competitions/{id}/submissions`, `/api/staff/submissions/{id}`, `.../evaluation` | TEACHER (ghi), STAFF (xem kết quả đã công bố) | API mobile chấm bài |
 
-### M08 – Trao giải (Staff)
+### M08 – Trao giải (tự động khi công bố; Staff sửa/thu hồi) (cập nhật 11/2026)
 | Method | URL | Role | Mô tả |
 |---|---|---|---|
 | GET | `/staff/awards` | STAFF | Danh sách giải đã trao, lọc theo cuộc thi |
-| GET/POST | `/staff/awards/new`, `/staff/awards` | STAFF | Trao giải: cuộc thi CLOSED/GRADED → giải → **chỉ bài BEST** chưa đạt giải (BR-30..32) |
-| GET/POST | `/staff/awards/{id}/edit`, `/staff/awards/{id}` | STAFF | Sửa nhận xét |
-| POST | `/staff/awards/{id}/delete` | STAFF | Thu hồi – bắt buộc nhập lý do (BR-33) |
-| POST | `/staff/competitions/{id}/publish` | STAFF | Công bố kết quả → `GRADED` (BR-08), hiển thị trang chủ (route chính thuộc M05) |
+| GET/POST | `/staff/awards/{id}/edit` | STAFF | Sửa ngày trao, ghi chú (người nhận do điểm quyết định) |
+| POST | `/staff/awards/{id}/delete` | STAFF | Thu hồi – bắt buộc lý do, suất để trống (BR-33) |
+| GET | `/staff/competitions/{id}` | STAFF | Ban giám khảo, tiêu chí, xếp hạng dự kiến / đã công bố |
+| POST | `/staff/competitions/{id}/publish` | STAFF | Công bố → tính lại kết quả, **tự trao giải**, `GRADED` (BR-08, BR-30, BR-31) |
 
-### M09 – Triển lãm & bán tranh (Staff; Manager quản lý triển lãm)
+### M09 – Triển lãm & bán tranh (Staff)
 | Method | URL | Role | Mô tả |
 |---|---|---|---|
 | GET | `/staff/exhibitions` | STAFF | CRUD + tìm kiếm triển lãm |
@@ -1059,26 +1208,24 @@ Quy ước: danh sách `GET /xxx?keyword=&page=&size=`; form tạo `GET /xxx/new
 | POST | `/staff/entries/{id}/pay` | STAFF | Ghi nhận trả tiền: `paid_amount`, `paid_date` (BR-45) |
 | POST | `/staff/entries/{id}/unsold` , `/delete` | STAFF | Đánh dấu `UNSOLD` (`StatusSyncBackgroundService` cũng tự làm khi triển lãm FINISHED) / xóa entry chưa bán |
 | GET/POST | `/staff/customers`, `/staff/customers/new`, `/{id}/edit`… | STAFF | Quản lý khách hàng |
-| GET/POST | `/manager/exhibitions/**` (cùng các thao tác CRUD triển lãm) | MANAGER | Manager quản lý triển lãm sắp tổ chức (dùng chung `ExhibitionService`) |
+| GET | `/teacher/exhibitions`, `/teacher/exhibitions/{id}` | TEACHER | Xem triển lãm (dùng chung view, không có nút sửa) |
 
 ### M10 – Báo cáo
 | Method | URL | Role | Mô tả |
 |---|---|---|---|
-| GET | `/reports` | STAFF, MANAGER, ADMIN | Danh sách báo cáo (SCR-33) |
-| GET | `/reports/{code}?...` | STAFF, MANAGER, ADMIN (theo từng RPT) | Chạy báo cáo `RPT-xx` theo BA mục 7, VD `/reports/RPT-01?competitionId=&from=&to=&rating=` |
+| GET | `/reports` | STAFF, ADMIN | Danh sách báo cáo (SCR-33) |
+| GET | `/reports/{code}?...` | STAFF, ADMIN (theo từng RPT) | Chạy báo cáo `RPT-xx` theo BA mục 7, VD `/reports/RPT-01?competitionId=&from=&to=&rating=` |
 | GET | `/reports/{code}/export?format=xlsx\|pdf` | như trên | (Tùy chọn) xuất Excel/PDF |
 
-### M11 – Manager (chỉ xem + quản lý triển lãm)
+### M11 – Tổng quan (trước đây Manager; từ 11/2026 trong Area Staff) + M17, M21
 | Method | URL | Role | Mô tả |
 |---|---|---|---|
-| GET | `/manager` | MANAGER | Dashboard + biểu đồ Chart.js |
-| GET | `/manager/students`, `/manager/students/{id}` | MANAGER | Xem học viên |
-| GET | `/manager/staff`, `/manager/staff/{id}` | MANAGER | Xem nhân viên |
-| GET | `/manager/competitions`, `/manager/competitions/{id}` | MANAGER | Cuộc thi đã tổ chức |
-| GET | `/manager/awards` | MANAGER | Giải đã trao |
-| GET | `/manager/submissions?competitionId=` | MANAGER | Tất cả bài theo cuộc thi |
-| GET | `/manager/submissions/{id}` | MANAGER | Xếp loại & nhận xét của 1 bức tranh |
-| GET | `/manager/exhibition-entries` | MANAGER | Tranh đã đưa đi triển lãm + chi tiết |
+| GET | `/staff?period=month\|year\|all` | STAFF | Dashboard: việc chờ, số liệu, so sánh kỳ trước, biểu đồ Chart.js |
+| GET | `/staff/team`, `/staff/team/{id}` | STAFF | Xem nhân viên, giáo viên |
+| GET | `/staff/competitions/{id}/history`, `/staff/exhibitions/{id}/history` | STAFF | Lịch sử đầy đủ của cuộc thi / triển lãm (lọc loại việc, người) |
+| GET | `/admin/audit-log?Category=&CompetitionId=&ExhibitionId=` | ADMIN | Nhật ký toàn hệ thống |
+| GET | `/admin/staff/{id}?tab=logins\|activity\|changes`, `/admin/students/{id}?tab=…` | ADMIN | Lịch sử tài khoản |
+| GET/POST | `/admin/grading`, `/admin/grading/criteria/**`, `/admin/grading/thresholds` | ADMIN | Thư viện tiêu chí, ngưỡng xếp loại |
 
 ### M12+ – Tùy chọn
 | Tính năng | URL gợi ý |
@@ -1142,11 +1289,11 @@ Quy ước: danh sách `GET /xxx?keyword=&page=&size=`; form tạo `GET /xxx/new
 | `BusinessException` (vi phạm luật nghiệp vụ, ví dụ "The submission deadline has passed") | Controller bắt, thêm vào `ModelState` hoặc `TempData["Error"]`, hiển thị lại form |
 | `NotFoundException` | Trả `NotFound()` → trang 404 |
 | Không đủ quyền | `Forbid()` → trang 403 |
-| File quá lớn | Bắt lỗi giới hạn request → thông báo "Images must be 5 MB or smaller" |
+| File quá lớn | Bắt lỗi giới hạn request → trang 413; từng ảnh > 10 MB → "Images must be 10 MB or smaller" |
 | Lỗi không lường trước | `UseExceptionHandler("/error/500")` → trang 500 thân thiện; chi tiết ghi vào log |
 
 ### 9.5. Validation
-- **Phía server:** DataAnnotations trên ViewModel (`[Required]`, `[StringLength]`, `[EmailAddress]`, `[Range]`, `[RegularExpression]`) + attribute tự viết (`[DateRange]`, `[JpegFile]`); controller luôn kiểm tra `ModelState.IsValid`.
+- **Phía server:** DataAnnotations trên ViewModel (`[Required]`, `[StringLength]`, `[EmailAddress]`, `[Range]`, `[RegularExpression]`) + attribute tự viết (`[DateRange]`); file ảnh kiểm tra bằng `ImageValidator` trong service; controller luôn kiểm tra `ModelState.IsValid`.
 - **Phía client:** jQuery Validation Unobtrusive (có sẵn) hiện lỗi ngay khi nhập; **không thay** cho kiểm tra phía server.
 - Thông báo lỗi **tiếng Anh**, ghi trực tiếp trong attribute (`ErrorMessage = "Please enter a title"`). Khi làm tính năng tiếng Việt (M19) mới chuyển sang file `.resx`.
 - Luật liên quan nhiều bảng (hạn nộp, 1 bài/cuộc thi, chỉ trao giải cho BEST…) kiểm tra trong **Service**.
@@ -1234,7 +1381,7 @@ Quy tắc: `git pull origin develop` mỗi sáng trước khi code; **không** c
 | Thành viên | Phạm vi kỹ thuật |
 |---|---|
 | BE1 (trưởng nhóm) | Kiến trúc, xác thực/phân quyền, Entity + EF Core migration (chỉ BE1 tạo migration), FileStorageService, Service có luật nghiệp vụ (cuộc thi, nộp bài, chấm, trao giải, bán tranh), review mọi Pull Request |
-| BE2 (đang học) | Dữ liệu mẫu, CRUD Admin, StatusSyncBackgroundService, Service chỉ đọc (bài nộp, kết quả, trang chủ, báo cáo, Manager), triển lãm, khách mua |
+| BE2 (đang học) | Dữ liệu mẫu, CRUD Admin, StatusSyncBackgroundService, Service chỉ đọc (bài nộp, kết quả, trang chủ, báo cáo, tổng quan), triển lãm, khách mua |
 | FE1 | `_Layout`, Bootstrap, site.css, View cho phần của BE1, JS xem trước ảnh / đếm ngược |
 | FE2 | Khung Area, `_Sidebar`, partial dùng chung, View cho phần của BE2, Chart.js |
 | QA | Test case, Selenium IDE, báo lỗi bằng GitHub Issue, trang lỗi, trang giới thiệu, print.css |
@@ -1355,7 +1502,7 @@ endlocal
 ## Phụ lục – Bảng tra nhanh tên chuẩn (dùng chung cho các phần kế hoạch 01/03/04)
 | Entity (C#) | Bảng (SQL) | Enum liên quan |
 |---|---|---|
-| `Account` | `account` | `Role`: ADMIN, MANAGER, STAFF, STUDENT · `Gender`: M, F, O · cờ `active` |
+| `Account` | `account` | `Role`: ADMIN, STAFF, TEACHER, STUDENT · `Gender`: M, F, O · cờ `active` |
 | `StaffProfile` | `staff_profile` | – |
 | `StudentProfile` | `student_profile` | `EnrollmentStatus`: STUDYING, GRADUATED, SUSPENDED, DROPPED |
 | `Competition` | `competition` | `CompetitionStatus`: UPCOMING, ONGOING, CLOSED (tính từ ngày), GRADED (Staff công bố) |

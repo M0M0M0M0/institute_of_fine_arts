@@ -30,7 +30,7 @@
 
 **Chọn: ASP.NET Core MVC (.NET 10) + Entity Framework Core + SQL Server.** Lý do:
 - Giảng viên yêu cầu làm bằng **.NET**; đặc tả cũng cho phép .Net và SQL Server (“hoặc mới hơn”).
-- ASP.NET Core MVC đúng mô hình MVC học ở Sem 3; mỗi phân hệ (Admin, Staff, Student, Manager) là một **Area** riêng.
+- ASP.NET Core MVC đúng mô hình MVC học ở Sem 3; mỗi phân hệ (Admin, Staff, Teacher, Student) là một **Area** riêng (từ 11/2026: phần Manager của đề bài gộp vào Staff, Teacher là ban giám khảo).
 - Máy đã có sẵn .NET SDK 10 và SQL Server.
 
 | Lớp | Công nghệ |
@@ -55,12 +55,13 @@ Phần BA (file 01) là **nguồn chuẩn cho quy tắc nghiệp vụ**. Nếu c
 
 | Chủ đề | Quyết định |
 |---|---|
-| Vai trò | `ADMIN`, `MANAGER`, `STAFF`, `STUDENT` (+ `GUEST` chưa đăng nhập, chỉ xem trang chủ) |
-| 11 thực thể / bảng | Account `account`, StaffProfile `staff_profile`, StudentProfile `student_profile`, Competition `competition`, CompetitionAward `competition_award`, Submission `submission`, Evaluation `evaluation`, AwardIssued `award_issued`, Exhibition `exhibition`, ExhibitionEntry `exhibition_entry`, Customer `customer` |
-| Trạng thái cuộc thi | `UPCOMING` → `ONGOING` → `CLOSED` được tính theo ngày (hạn nộp là 23:59:59 của endDate). Trạng thái `GRADED` chỉ có khi Staff bấm **công bố kết quả** và mọi bài đã được chấm |
-| Nộp bài | Mỗi học viên **1 bài/1 cuộc thi**. Chỉ nhận JPEG (kiểm tra đuôi file, MIME và magic bytes `FFD8FF`), **tối đa 5 MB**. Chỉ được nộp, sửa, xóa khi cuộc thi đang `ONGOING`; quá hạn thì server từ chối |
-| Xếp loại | `BEST`, `BETTER`, `GOOD`, `MODERATE`, `NORMAL`, `DISQUALIFIED`, kèm điểm mạnh / điểm yếu / cần cải thiện. Mỗi bài 1 Evaluation. Chỉ chấm khi cuộc thi đã `CLOSED`. Học viên chỉ thấy kết quả sau `GRADED` |
-| Trao giải | Chỉ trao cho bài `BEST`. Mỗi học viên tối đa 1 giải/cuộc thi. Số giải không vượt `quantity` |
+| Vai trò | `ADMIN`, `STAFF` (vận hành, gồm phần "Manager" của đề bài; không chấm), `TEACHER` (giám khảo), `STUDENT` (+ `GUEST` chưa đăng nhập). Người làm cả vận hành và chấm dùng 2 tài khoản; mọi thao tác ghi nhật ký (cập nhật 11/2026) |
+| Thực thể / bảng | Account, StaffProfile, StudentProfile, Competition, CompetitionAward, Submission, Evaluation (kết quả của bài), AwardIssued, Exhibition, ExhibitionEntry, Customer + (11/2026) SubmissionImage, CompetitionJudge, GradingCriterion, CompetitionCriterion, JudgeEvaluation, JudgeScore, RatingThreshold, AuditLog |
+| Trạng thái cuộc thi | `UPCOMING` → `ONGOING` → `CLOSED` được tính theo ngày (hạn nộp là 23:59:59 của endDate). Trạng thái `GRADED` chỉ có khi Staff bấm **công bố kết quả** và mọi bài đã được **cả ban giám khảo** chấm |
+| Nộp bài | Mỗi học viên **1 bài/1 cuộc thi**, **1–5 ảnh** của cùng tác phẩm, **JPG/PNG/WebP** (kiểm tra đuôi file, MIME, magic bytes, giải mã), **tối đa 10 MB/ảnh**. Chỉ được nộp, sửa, xóa khi cuộc thi đang `ONGOING`; quá hạn thì server từ chối |
+| Chấm bài | Chỉ **TEACHER trong ban giám khảo** của cuộc thi, chỉ khi `CLOSED`; điểm 0–100 từng **tiêu chí có trọng số** (tổng 100%) + nhận xét; điểm bài = trung bình ban; giám khảo không thấy điểm nhau trước khi công bố. Teacher chỉ thấy bài sau hạn nộp |
+| Xếp loại | `BEST`, `BETTER`, `GOOD`, `MODERATE`, `NORMAL` suy ra từ điểm theo **ngưỡng** Admin đặt (mặc định 90/80/65/50); `DISQUALIFIED` khi giám khảo loại bài. Học viên thấy bảng điểm đầy đủ sau `GRADED` |
+| Trao giải | **Tự động khi công bố**, theo xếp hạng điểm (không cần BEST); đồng điểm đồng giải, nhận đủ giá trị; mỗi học viên tối đa 1 giải/cuộc thi. Staff chỉ thu hồi khi có vi phạm |
 | Tranh triển lãm | Chỉ nhận bài `BEST`/`BETTER` của cuộc thi đã `GRADED`. Trạng thái: `PENDING` (học viên đề xuất giá `asking_price`) → `ACCEPTED`/`REJECTED` (Staff duyệt; nếu Staff tự tạo thì vào thẳng `ACCEPTED`) → `SOLD`/`UNSOLD`. Khi SOLD phải có giá bán, ngày bán và khách mua. Trả học viên 100% tiền bán, ghi vào `paid_to_student`, `paid_amount`, `paid_date` |
 | Ngôn ngữ | **Giao diện, thông báo, dữ liệu mẫu và comment trong code: tiếng Anh** (team nước ngoài chấm). Tiền tệ **USD**. Tên người mẫu tiếng Việt không dấu. Tiếng Việt là tính năng phụ (M19). Tài liệu hiện viết tiếng Việt, dịch sang tiếng Anh khi chốt |
 | Tài khoản | Chỉ Admin tạo tài khoản. Tài khoản đã có dữ liệu thì **khóa** (`active = 0`), không xóa hẳn |
@@ -74,7 +75,7 @@ Phần BA (file 01) là **nguồn chuẩn cho quy tắc nghiệp vụ**. Nếu c
 | Mã | Người | Vai trò chính |
 |---|---|---|
 | **BE1** | Bạn (trưởng nhóm) | Kiến trúc, CSDL, đăng nhập, File I/O, cuộc thi, nộp bài, chấm bài, trao giải, bán tranh; review & gộp mọi PR; gửi email STATUS / DOUBT / nộp bài |
-| **BE2** | Thành viên backend (đang học) | Dữ liệu mẫu, quản lý nhân viên & học viên, các trang chỉ đọc, triển lãm, khách mua, trang chủ, báo cáo, Manager – chủ yếu CRUD, BE1 kèm |
+| **BE2** | Thành viên backend (đang học) | Dữ liệu mẫu, quản lý nhân viên & học viên, các trang chỉ đọc, triển lãm, khách mua, trang chủ, báo cáo, tổng quan (trước đây Manager) – chủ yếu CRUD, BE1 kèm |
 | **FE1** | Thành viên frontend | Layout chung, GUI Standards, màn hình cho phần của BE1 |
 | **FE2** | Thành viên frontend | Khung Area & menu, màn hình cho phần của BE2, Interface Design |
 | **QA** | Thành viên kiểm thử (đang học) | Ảnh mẫu, test case, 3 vòng kiểm thử, chụp màn hình, tài liệu tổng hợp; khi rảnh làm trang FE nhỏ (trang lỗi, trang giới thiệu, CSS in). **Không nằm trên đường găng** |
@@ -108,7 +109,7 @@ Chi tiết từng task: `docs/Phan_cong_task.xlsx`. Ai viết tài liệu nào: 
 Phân tích BA  →  ERD/CSDL  →  Khung project + Đăng nhập/phân quyền (M01)
    →  Dữ liệu gốc (M03, M04, M05)  →  Nộp bài bằng File I/O (M06)
    →  Chấm bài (M07)  →  Trao giải (M08)  →  Triển lãm & bán tranh (M09)
-   →  Báo cáo, Manager, trang chủ (M10, M11, M02)  →  Optional (M12+)
+   →  Báo cáo, tổng quan Staff, trang chủ (M10, M11, M02)  →  Optional (M12+)  →  (11/2026) ban giám khảo, tiêu chí, trao giải tự động, nhiều ảnh (M21)
 ```
 
 - Mỗi bước dùng dữ liệu do bước trước tạo ra:

@@ -1,10 +1,12 @@
 # Institute of Fine Arts – eProject Sem 3
 
-Website quản lý cuộc thi vẽ tranh của Học viện Mỹ thuật: học viên nộp tranh (JPEG + thơ/trích dẫn),
-giáo viên chấm & nhận xét, trao giải, đưa tranh đi triển lãm và bán.
+Website (kèm app mobile Flutter) quản lý cuộc thi vẽ tranh của Học viện Mỹ thuật: học viên nộp tranh
+(1–5 ảnh JPG/PNG/WebP + thơ/trích dẫn), ban giám khảo chấm theo tiêu chí, hệ thống xếp hạng và trao giải,
+nhân viên đưa tranh đi triển lãm và bán.
 
-> **Trạng thái:** mới dựng khung (skeleton) – chưa có code chức năng (trang mặc định của template MVC).
-> Kế hoạch đầy đủ: [`docs/plan/00_TONG_QUAN.md`](docs/plan/00_TONG_QUAN.md)
+> **Trạng thái:** đủ chức năng bắt buộc; đang trong giai đoạn review & cải tiến (11/2026: vai trò Teacher, ban giám khảo,
+> chấm theo tiêu chí, trao giải tự động, nhiều ảnh, nhật ký theo đối tượng).
+> Kế hoạch đầy đủ: [`docs/plan/00_TONG_QUAN.md`](docs/plan/00_TONG_QUAN.md) · nghiệp vụ: [`docs/plan/01_Phan_tich_nghiep_vu_BA.md`](docs/plan/01_Phan_tich_nghiep_vu_BA.md)
 
 ## Công nghệ
 .NET 10 · ASP.NET Core MVC (C#) · Razor + Bootstrap 5.3 · Entity Framework Core 10 + SQL Server (`IFA_DB`) ·
@@ -82,6 +84,7 @@ institute-of-fine-arts/
 ├── InstituteOfFineArts.sln
 ├── src/InstituteOfFineArts.Web/    ← project ASP.NET Core MVC (xem README.md bên trong để biết từng thư mục)
 ├── tests/InstituteOfFineArts.Tests/← unit test (xUnit + Moq)
+├── mobile/                         ← app Flutter (học viên, staff, giám khảo) dùng API /api/...
 ├── database/                       ← script SQL + backup + ảnh mẫu để nộp bài
 ├── scripts/                        ← backup, restore CSDL
 ├── docs/                           ← đề bài, kế hoạch, tài liệu nộp, test case, báo cáo tiến độ
@@ -95,4 +98,13 @@ institute-of-fine-arts/
 - Cuối ngày: push code + chạy `scripts/backup-db.cmd`.
 
 ## Tài khoản demo
-(Bổ sung khi có dữ liệu mẫu – Day 4.)
+Chỉ dùng cho môi trường Development – dữ liệu mẫu do `DbSeeder` tạo khi CSDL trống (xóa CSDL để seed lại).
+
+| Vai trò | Username | Mật khẩu | Dùng để |
+|---|---|---|---|
+| ADMIN | `admin01` | `Admin@123` | Tài khoản nhân viên, giáo viên, học viên; nhật ký; thư viện tiêu chí & ngưỡng xếp loại |
+| STAFF | `staff01`, `staff02` | `Staff@123` | Vận hành: cuộc thi (giải, ban giám khảo, tiêu chí), công bố kết quả, triển lãm, bán tranh, dashboard, báo cáo |
+| TEACHER | `teacher01` … `teacher03` | `Teacher@123` | Giám khảo: chấm bài theo tiêu chí các cuộc thi mình trong ban |
+| STUDENT | `student01` … `student09` | `Student@123` | Nộp bài, xem bảng điểm, giải, triển lãm (`student10` bị khóa để test) |
+
+> Từ 11/2026 không còn vai trò MANAGER (`manager01`): phần xem tổng quan của Manager thuộc STAFF.

@@ -6,6 +6,8 @@
 **Nhịp độ:** làm xong **toàn bộ chức năng bắt buộc trong ~2,5 tuần (Day 17)** → **Day 18–23 review & chỉnh sửa** theo góp ý → Day 24–28 khóa code, hoàn thiện tài liệu, nộp bài
 **Công nghệ:** .NET 10 · ASP.NET Core MVC (C#) · Entity Framework Core · SQL Server · Razor + Bootstrap 5 · File I/O lưu ảnh · GitHub
 
+> **Cập nhật 11/2026 (sau Day 17, giai đoạn review & chỉnh sửa):** theo góp ý, nhóm đổi vai trò (bỏ MANAGER – gộp vào STAFF; thêm TEACHER = ban giám khảo), thêm ban giám khảo + chấm theo tiêu chí + trao giải tự động, nhiều ảnh JPG/PNG/WebP (10 MB), nhật ký theo đối tượng. Các mục kế hoạch Sprint 1–3 bên dưới giữ nguyên như lịch sử; quy tắc hiện hành xem BA (01). Việc của đợt này theo dõi trong `PLAN/TODO.md` của trưởng nhóm.
+
 > Tài liệu này là **Project Plan** của nhóm, là nguồn để viết các mục "Kế hoạch dự án (Project Plan)" và "Báo cáo đánh giá và theo dõi dự án (Project Review and Monitoring Report)". Phân công chi tiết (Task Sheet) nằm trong `docs/Phan_cong_task.xlsx`.
 
 ---
@@ -353,7 +355,7 @@ Nhóm [Group] – khóa [Batch] xin gửi báo cáo tiến độ lần 1 của e
    - Phân tích yêu cầu, Đặc tả yêu cầu khách hàng (CRS)
    - Sơ đồ ERD và script tạo CSDL SQL Server
    - Wireframe các màn hình, GUI Standards (bản nháp)
-   - Khung dự án ASP.NET Core MVC (.NET 10), chức năng đăng nhập & phân quyền 4 vai trò (Admin, Manager, Staff, Student)
+   - Khung dự án ASP.NET Core MVC (.NET 10), chức năng đăng nhập & phân quyền 4 vai trò (Admin, Manager, Staff, Student – từ 11/2026: Admin, Staff, Teacher, Student)
 2. Công việc đang thực hiện: Quản lý nhân viên, học viên (Admin)
 3. Kế hoạch tiếp theo: Quản lý cuộc thi, nộp bài (upload ảnh bằng File I/O), trang chủ
 4. Khó khăn / thắc mắc: [ghi rõ hoặc "Không có"]
@@ -491,6 +493,7 @@ Tiêu đề: DOUBT: [Batch_Group] Institute of Fine Arts – Làm rõ quyền qu
 Kính gửi Nhóm eProjects,
 Trong đề bài, cả Staff và Manager đều có chức năng "quản lý thông tin triển lãm sắp tổ chức".
 Nhóm hiểu là: Staff và Manager đều được thêm/sửa/xóa triển lãm; chỉ Staff được gửi tranh đến triển lãm.
+(Cập nhật 11/2026: nhóm đã gộp Manager vào Staff, nên câu hỏi này chỉ còn giá trị lịch sử.)
 Xin xác nhận cách hiểu này có đúng không?
 Trân trọng, [Họ tên] – nhóm [Group]
 ```
@@ -518,8 +521,8 @@ Cấu trúc thư mục bên trong ZIP: **docs/plan/04 mục 8.1** (chỉ mô t�
 | 3 | Mọi khối mã có comment (rà soát nhanh từng thư mục) | BE1 + FE1 | ☐ |
 | 4 | Restore `.bak` thành công trên máy sạch; hoặc chạy `01_schema.sql` + `02_seed_data.sql` không lỗi | BE2 | ☐ |
 | 5 | Ảnh mẫu hiển thị đúng sau khi chép thư mục `uploads/` theo Installation Guide | QA | ☐ |
-| 6 | Đăng nhập được bằng **tài khoản mẫu của cả 4 vai trò** (ADMIN, MANAGER, STAFF, STUDENT) + trang chủ Guest | QA | ☐ |
-| 7 | Luồng demo chạy trọn: tạo cuộc thi → nộp bài → chấm → trao giải → triển lãm → bán tranh → báo cáo | QA + FE2 | ☐ |
+| 6 | Đăng nhập được bằng **tài khoản mẫu của cả 4 vai trò** (ADMIN, STAFF, TEACHER, STUDENT) + trang chủ Guest | QA | ☐ |
+| 7 | Luồng demo chạy trọn: tạo cuộc thi (giải, ban giám khảo, tiêu chí) → nộp bài nhiều ảnh → các giám khảo chấm → công bố (tự trao giải) → triển lãm → bán tranh → báo cáo | QA + FE2 | ☐ |
 | 8 | Bộ tài liệu đủ 13 mục: Certificate of Completion, Table of Contents, Problem Definition, Customer Requirement Specification, Project Plan, E-R Diagrams, Algorithms, GUI Standards Document, Interface Design Document, Task Sheet, Project Review and Monitoring Report, Unit Testing Check List, Final Check List | QA | ☐ |
 | 9 | User Guide có: yêu cầu cài đặt, cấu hình `appsettings.json`, cách chạy, **thông tin đăng nhập ứng dụng & CSDL** | FE1 | ☐ |
 | 10 | Form Báo cáo tiến độ đã điền đủ lần 1 & lần 2; Phiếu phản hồi đã chọn đánh giá ở các ô màu vàng | QA | ☐ |
