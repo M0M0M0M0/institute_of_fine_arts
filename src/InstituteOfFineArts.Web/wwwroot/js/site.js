@@ -293,3 +293,24 @@
         });
     }
 })();
+
+// ---- Pictures of an entry (Views/Shared/_EntryImages.cshtml): a thumbnail shows its picture in the large frame ----
+(function () {
+    "use strict";
+    document.querySelectorAll("[data-entry-images]").forEach(function (box) {
+        const main = box.querySelector("[data-entry-main]");
+        const frame = main.closest(".artwork-frame");
+        const download = box.querySelector("[data-entry-download]");
+        box.querySelectorAll(".entry-thumb").forEach(function (thumb) {
+            thumb.addEventListener("click", function () {
+                main.src = thumb.dataset.src;
+                if (frame && frame.dataset.zoomDownload !== undefined) { frame.dataset.zoomDownload = thumb.dataset.download; }
+                if (download) { download.href = thumb.dataset.download; }
+                box.querySelectorAll(".entry-thumb").forEach(function (t) {
+                    t.classList.toggle("is-current", t === thumb);
+                    t.setAttribute("aria-pressed", t === thumb ? "true" : "false");
+                });
+            });
+        });
+    });
+})();

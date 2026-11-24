@@ -22,6 +22,8 @@ public class AuditTargetService : IAuditTargetService
         ["competitions"] = "Competition",
         ["awards"] = "AwardIssued", // CompetitionAward when it follows competitions/{id} outside "awarding"
         ["submissions"] = "Submission",
+        ["submission-images"] = "SubmissionImage", // one picture of an entry: logged against the entry
+        ["images"] = "SubmissionImage",
         ["evaluations"] = "Submission",
         ["exhibitions"] = "Exhibition",
         ["exhibition-entries"] = "ExhibitionEntry",
@@ -39,6 +41,7 @@ public class AuditTargetService : IAuditTargetService
         ["CompetitionAward"] = "the award",
         ["AwardIssued"] = "the award",
         ["Submission"] = "the entry",
+        ["SubmissionImage"] = "a picture of the entry",
         ["Exhibition"] = "the exhibition",
         ["ExhibitionEntry"] = "the artwork",
         ["Customer"] = "the customer",
@@ -95,6 +98,20 @@ public class AuditTargetService : IAuditTargetService
             {
                 Category = AuditCategory.ACCOUNT,
                 Summary = segments[^1] == "confirm" ? "Imported student accounts from a file" : "Uploaded a student import file",
+            };
+        }
+        if (segments.Length > 1 && segments[0] == "admin" && segments[1] == "grading")
+        {
+            return new AuditTarget
+            {
+                Category = AuditCategory.OTHER,
+                Summary = segments[^1] switch
+                {
+                    "thresholds" => "Changed the rating thresholds",
+                    "new" => "Added a grading criterion",
+                    "delete" => "Deleted or hid a grading criterion",
+                    _ => "Edited a grading criterion",
+                },
             };
         }
         if (segments.Length > 0 && segments[0] == "profile")
@@ -295,6 +312,10 @@ public class AuditTargetService : IAuditTargetService
                 var entry = await q.Submissions.Where(s => s.Id == id)
                     .Select(s => new { s.Title, s.CompetitionId }).FirstOrDefaultAsync();
                 return target with { Label = entry?.Title, SubmissionId = id, CompetitionId = entry?.CompetitionId };
+            case "SubmissionImage":
+                var picture = await q.SubmissionImages.Where(i => i.Id == id)
+                    .Select(i => new { i.SubmissionId, i.Submission.Title, i.Submission.CompetitionId }).FirstOrDefaultAsync();
+                return target with { Label = picture?.Title, SubmissionId = picture?.SubmissionId, CompetitionId = picture?.CompetitionId };
             case "Exhibition":
                 return target with
                 {

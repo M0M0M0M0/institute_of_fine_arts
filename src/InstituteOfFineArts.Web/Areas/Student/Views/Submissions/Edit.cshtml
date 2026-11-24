@@ -1,13 +1,17 @@
 @model InstituteOfFineArts.Web.ViewModels.Student.Submissions.SubmissionEditVm
 @*
-    Student – edit an entry / replace its image (/student/submissions/{id}/edit, SCR-43, F-M06-02, F-M06-03).
+    Student – edit an entry and its pictures (/student/submissions/{id}/edit, SCR-43, F-M06-02, F-M06-03).
     Only while the competition is ongoing (BR-13). Created by BE1 (BE1-09); styled by FE1-05: form sheet, current
-    image with its wall label, live preview of a replacement JPEG (upload-preview.js), text type pills, countdown.
+    pictures (remove, choose the cover), live preview of pictures to add (upload-preview.js), text type pills, countdown.
+    The entry keeps 1 to 5 pictures (BR-18); the server checks the count again.
 *@
 @using System.Globalization
 @using InstituteOfFineArts.Web.Helpers
+@using InstituteOfFineArts.Web.Infrastructure.FileStorage
 @{
     ViewData["Title"] = "Edit entry";
+    var max = UploadOptions.MaxImagesPerSubmission;
+    var left = Math.Max(0, max - Model.CurrentImages.Count);
     var deadlineIso = CompetitionStatusResolver.SubmissionDeadline(Model.Deadline).ToString("yyyy-MM-dd'T'HH:mm:ss", CultureInfo.InvariantCulture);
 }
 
@@ -28,33 +32,55 @@
 
 <partial name="_Alerts" />
 
-@* multipart/form-data is required to upload a new image *@
+@* multipart/form-data is required to upload new pictures *@
 <form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data" novalidate class="form-sheet">
     <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
 
-    <div class="mb-4">
-        <div class="upload-preview mt-0 mb-3">
-            <div class="artwork-frame is-contain"><img src="/files/submissions/@Model.Id/thumb" alt="Current image" /></div>
-            <div class="wall-label">
-                <span class="wl-artist">Current image</span>
-                <span class="wl-meta">Current file: @Model.OriginalFileName</span>
+    <fieldset class="mb-4">
+        <legend class="form-label">Current pictures</legend>
+        @if (Model.CurrentImages.Count == 0)
+        {
+            @* Entry saved before pictures were kept one by one: its single image *@
+            <div class="upload-preview mt-0 mb-3">
+                <div class="artwork-frame is-contain"><img src="/files/submissions/@Model.Id/thumb" alt="Current image" /></div>
+                <div class="wall-label"><span class="wl-meta">Current file: @Model.OriginalFileName</span></div>
             </div>
-        </div>
-        <label asp-for="NewImage" class="form-label"></label>
-        <input asp-for="NewImage" type="file" accept=".jpg,.jpeg,image/jpeg" class="form-control" data-upload-preview="image-preview" />
-        <div class="form-text">Leave empty to keep the current image. The old image is deleted when you choose a new one.</div>
-        <span asp-validation-for="NewImage" class="text-danger"></span>
+        }
+        else
+        {
+            <ul class="upload-list" data-current-images>
+                @foreach (var img in Model.CurrentImages)
+                {
+                    var removing = Model.RemoveImageIds.Contains(img.Id);
+                    var cover = Model.CoverImageId.HasValue ? Model.CoverImageId == img.Id : img.IsCover;
+                    <li class="upload-item @(removing ? "is-removed" : "")">
+                        <div class="upload-thumb"><img src="/files/submission-images/@img.Id/thumb" alt="" loading="lazy" /></div>
+                        <div class="upload-info">
+                            <span class="upload-name">@img.FileName</span>
+                            <span class="upload-meta">@((img.FileSize / 1024.0).ToString("#,##0")) KB@(img.IsCover ? " · current cover" : "")</span>
+                            <div class="upload-choices">
+                                <label class="form-check-label"><input type="radio" class="form-check-input me-1" name="CoverImageId" value="@img.Id" checked="@cover" />Cover</label>
+                                <label class="form-check-label"><input type="checkbox" class="form-check-input me-1" name="RemoveImageIds" value="@img.Id" checked="@removing" data-remove-image />Remove</label>
+                            </div>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </fieldset>
 
-        @* Filled by upload-preview.js once a file is chosen; it only informs, the server checks the file *@
-        <div id="image-preview" class="upload-preview" hidden>
-            <div class="artwork-frame is-contain"><img alt="" /></div>
-            <div class="wall-label" aria-live="polite">
-                <span class="wl-artist">New image</span>
-                <span class="wl-title" data-preview-name></span>
-                <span class="wl-meta" data-preview-meta></span>
-                <span class="wl-note" data-preview-warn hidden></span>
-            </div>
+    <div class="mb-4">
+        <label asp-for="NewImages" class="form-label"></label>
+        <input asp-for="NewImages" type="file" multiple accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" class="form-control"
+               data-upload-multi="image-list" data-max-files="@left" data-max-total="@max" />
+        <div class="form-text">
+            Optional. An entry has 1 to @max pictures of the same artwork (JPG, PNG or WebP, up to 10 MB each).
+            Removed pictures are deleted when you save. To make a new picture the cover, save first, then choose it here.
         </div>
+        <span asp-validation-for="NewImages" class="text-danger d-block"></span>
+
+        @* Filled by upload-preview.js once files are chosen; it only informs, the server checks every file *@
+        <ul id="image-list" class="upload-list" aria-live="polite" hidden></ul>
     </div>
 
     <partial name="_Form" model="Model" />

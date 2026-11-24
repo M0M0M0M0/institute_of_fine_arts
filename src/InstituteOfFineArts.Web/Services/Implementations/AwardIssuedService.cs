@@ -26,6 +26,9 @@ public class AwardIssuedService : IAwardIssuedService
     /// <summary>Message when the competition is UPCOMING / ONGOING (TC-M08-02).</summary>
     public const string NotClosedMessage = "Awards can only be issued after the competition has closed.";
 
+    /// <summary>Message when someone tries to pick a winner by hand: awards come from the scores.</summary>
+    public const string AutomaticAwardsMessage = "Awards are given automatically from the jury's scores when the results are published. Only the date and the remarks of a given award can be changed.";
+
     /// <summary>Message when the award has been given as many times as its quantity (US-11 AC1, TC-M08-04).</summary>
     public const string NoSlotsMessage = "No award slots left.";
 
@@ -214,43 +217,9 @@ public class AwardIssuedService : IAwardIssuedService
     }
 
     /// <inheritdoc />
-    public async Task<long> CreateAsync(AwardIssuedFormVm form, long staffProfileId)
-    {
-        // Competition chosen in the form
-        if (form.CompetitionId is not { } competitionId)
-        {
-            throw new BusinessException(AwardIssuedFormVm.CompetitionRequiredMessage, nameof(AwardIssuedFormVm.CompetitionId));
-        }
-        var competition = await _db.Competitions.AsNoTracking().FirstOrDefaultAsync(c => c.Id == competitionId)
-            ?? throw new BusinessException(UnknownCompetitionMessage, nameof(AwardIssuedFormVm.CompetitionId));
-
-        var (award, submission, date, remarks) = await ValidateAsync(competition, form, exceptIssuedId: null);
-
-        // Valid → insert
-        var issued = new AwardIssued
-        {
-            CompetitionAwardId = award.Id,
-            SubmissionId = submission.Id,
-            IssuedBy = staffProfileId,
-            IssuedDate = date,
-            Remarks = remarks,
-        };
-        _db.AwardsIssued.Add(issued);
-        await SaveAsync();
-        if (await OverIssuedAsync(award))
-        {
-            // Another staff member took the last slot at the same moment (BA-07): undo this one
-            _db.AwardsIssued.Remove(issued);
-            await _db.SaveChangesAsync();
-            throw new BusinessException(NoSlotsMessage, nameof(AwardIssuedFormVm.CompetitionAwardId));
-        }
-        _logger.LogInformation("Award {AwardName} of competition {Code} issued to submission {SubmissionId} by staff {StaffId}",
-            award.AwardName, competition.Code, submission.Id, staffProfileId);
-
-        // M12: the winner is told (in-app + e-mail; never fails the save)
-        await _notifications.AwardIssuedAsync(issued.Id);
-        return issued.Id;
-    }
+    public Task<long> CreateAsync(AwardIssuedFormVm form, long staffProfileId)
+        // Winners come from the jury's scores when the results are published (CompetitionResultService)
+        => throw new BusinessException(AutomaticAwardsMessage);
 
     /// <inheritdoc />
     public async Task<long> UpdateAsync(long id, AwardIssuedFormVm form)
@@ -259,26 +228,36 @@ public class AwardIssuedService : IAwardIssuedService
             .Include(a => a.CompetitionAward).ThenInclude(a => a.Competition)
             .FirstOrDefaultAsync(a => a.Id == id)
             ?? throw new NotFoundException($"Issued award {id} was not found.");
-
-        // The competition of an issued award never changes; the same rules apply, without counting this award itself
         var competition = issued.CompetitionAward.Competition;
-        var (award, submission, date, remarks) = await ValidateAsync(competition, form, exceptIssuedId: id);
 
-        var before = (issued.CompetitionAwardId, issued.SubmissionId, issued.IssuedDate, issued.Remarks);
-        issued.CompetitionAwardId = award.Id;
-        issued.SubmissionId = submission.Id;
+        // The winner and the award come from the scores: only the date and the remarks can change
+        if ((form.CompetitionAwardId is { } award && award != issued.CompetitionAwardId)
+            || (form.SubmissionId is { } entry && entry != issued.SubmissionId))
+        {
+            throw new BusinessException(AutomaticAwardsMessage);
+        }
+        if (form.IssuedDate is not { } date)
+        {
+            throw new BusinessException(AwardIssuedFormVm.IssuedDateRequiredMessage, nameof(AwardIssuedFormVm.IssuedDate));
+        }
+        if (date > DateTimeHelper.Today)
+        {
+            throw new BusinessException(FutureDateMessage, nameof(AwardIssuedFormVm.IssuedDate));
+        }
+        if (date <= competition.EndDate)
+        {
+            throw new BusinessException(DateBeforeEndMessage, nameof(AwardIssuedFormVm.IssuedDate));
+        }
+        var remarks = string.IsNullOrWhiteSpace(form.Remarks) ? null : form.Remarks.Trim();
+        if (remarks?.Length > AwardIssuedFormVm.MaxRemarksLength)
+        {
+            throw new BusinessException(AwardIssuedFormVm.RemarksTooLongMessage, nameof(AwardIssuedFormVm.Remarks));
+        }
+
         issued.IssuedDate = date;
         issued.Remarks = remarks;
-        await SaveAsync();
-        if (before.CompetitionAwardId != award.Id && await OverIssuedAsync(award))
-        {
-            // Another staff member took the last slot of the new award at the same moment (BA-07): put it back
-            (issued.CompetitionAwardId, issued.SubmissionId, issued.IssuedDate, issued.Remarks) = before;
-            await _db.SaveChangesAsync();
-            throw new BusinessException(NoSlotsMessage, nameof(AwardIssuedFormVm.CompetitionAwardId));
-        }
-        _logger.LogInformation("Issued award {IssuedId} of competition {Code} updated: award {AwardName}, submission {SubmissionId}",
-            id, competition.Code, award.AwardName, submission.Id);
+        await _db.SaveChangesAsync();
+        _logger.LogInformation("Issued award {IssuedId} of competition {Code}: date / remarks updated", id, competition.Code);
         return competition.Id;
     }
 

@@ -12,7 +12,10 @@ public class UploadOptions
     public string RootPath { get; set; } = "uploads";
 
     /// <summary>Maximum size of one image in bytes (BR-17: 5 MB).</summary>
-    public long MaxFileSizeBytes { get; set; } = 5 * 1024 * 1024;
+    public long MaxFileSizeBytes { get; set; } = 10 * 1024 * 1024;
+
+    /// <summary>Pictures of one entry (BR-18, decided 16/11/2026): up to 5 pictures of the same artwork.</summary>
+    public const int MaxImagesPerSubmission = 5;
 
     /// <summary>Width in pixels of the generated thumbnails.</summary>
     public int ThumbnailWidth { get; set; } = 400;

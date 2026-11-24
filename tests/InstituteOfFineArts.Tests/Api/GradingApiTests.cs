@@ -19,13 +19,20 @@ using Microsoft.Extensions.Logging.Abstractions;
 
 namespace InstituteOfFineArts.Tests.Api;
 
-/// <summary>Mobile grading API (GradingApiController): JSON shape, evaluation rules via the service, rowVersion, role.</summary>
+/// <summary>
+/// Mobile grading API (GradingApiController, jury + criteria since 11/2026): JSON shape, grading rules via the service,
+/// rowVersion, roles; a teacher sees only competitions they judge.
+/// </summary>
 public class GradingApiTests
 {
     private static readonly DateOnly Today = DateTimeHelper.Today;
 
     private long _staff1;
+    private long _teacher;
     private long _student;
+
+    /// <summary>The only criterion (100 %) of each competition.</summary>
+    private readonly Dictionary<long, long> _criterion = new();
 
     private AppDbContext CreateDb()
     {
@@ -40,10 +47,16 @@ public class GradingApiTests
             StudentCode = "HV0001", EnrollmentDate = new DateOnly(2025, 9, 1), CourseName = "Painting",
             Account = new Account { Username = "student01", FullName = "Nguyen Van An", Email = "st@ifa.local", Role = Role.STUDENT, PasswordHash = "x" },
         };
-        db.StaffProfiles.Add(staff);
+        var teacher = new StaffProfile
+        {
+            StaffCode = "NV0005", JoinedDate = new DateOnly(2024, 1, 1),
+            Account = new Account { Username = "teacher01", FullName = "Pham Thu Ha", Email = "t1@ifa.local", Role = Role.TEACHER, PasswordHash = "x" },
+        };
+        db.StaffProfiles.AddRange(staff, teacher);
         db.StudentProfiles.Add(student);
         db.SaveChanges();
         _staff1 = staff.Id;
+        _teacher = teacher.Id;
         _student = student.Id;
         return db;
     }
@@ -55,14 +68,15 @@ public class GradingApiTests
         var identity = new ClaimsIdentity(
         [
             new Claim(ClaimTypes.NameIdentifier, "1"),
-            new Claim(ClaimsPrincipalExtensions.ProfileIdClaim, _staff1.ToString()),
+            new Claim(ClaimsPrincipalExtensions.ProfileIdClaim, (role == RoleNames.Teacher ? _teacher : _staff1).ToString()),
             new Claim(ClaimTypes.Role, role),
         ], "test");
         controller.ControllerContext = new ControllerContext { HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) } };
         return controller;
     }
 
-    private Competition AddCompetition(AppDbContext db, CompetitionStatus status = CompetitionStatus.CLOSED)
+    /// <summary>A competition judged by the teacher (unless <paramref name="judged"/> is false) with one criterion.</summary>
+    private Competition AddCompetition(AppDbContext db, CompetitionStatus status = CompetitionStatus.CLOSED, bool judged = true)
     {
         var (start, end) = status switch
         {
@@ -76,7 +90,17 @@ public class GradingApiTests
             Status = status == CompetitionStatus.GRADED ? CompetitionStatus.GRADED : CompetitionStatus.UPCOMING, CreatedBy = _staff1,
         };
         db.Competitions.Add(c);
+        var criterion = new GradingCriterion { Name = "Overall " + Guid.NewGuid().ToString("N")[..6] };
+        db.GradingCriteria.Add(criterion);
         db.SaveChanges();
+        var cc = new CompetitionCriterion { CompetitionId = c.Id, CriterionId = criterion.Id, WeightPercent = 100m };
+        db.CompetitionCriteria.Add(cc);
+        if (judged)
+        {
+            db.CompetitionJudges.Add(new CompetitionJudge { CompetitionId = c.Id, JudgeId = _teacher, IsChair = true });
+        }
+        db.SaveChanges();
+        _criterion[c.Id] = cc.Id;
         return c;
     }
 
@@ -92,8 +116,13 @@ public class GradingApiTests
         return s;
     }
 
-    private static GradingEvaluationRequest Request(Rating? rating = Rating.BEST, string? positive = "Strong", string? rowVersion = null)
-        => new() { Rating = rating, PositivePoints = positive, RowVersion = rowVersion };
+    /// <summary>A grade of the entry: <paramref name="score"/> on its only criterion (92 → BEST, 85 → BETTER, 70 → GOOD).</summary>
+    private GradingEvaluationRequest Request(Submission e, decimal? score = 92m, string? positive = "Strong", string? rowVersion = null)
+        => new()
+        {
+            Scores = [new GradingScoreDto { CriterionId = _criterion[e.CompetitionId], Score = score }],
+            PositivePoints = positive, RowVersion = rowVersion,
+        };
 
     private static T Value<T>(ActionResult<T> result) => Assert.IsType<T>(result.Value);
 
@@ -154,7 +183,8 @@ public class GradingApiTests
         var e1 = AddEntry(db, closed);
         AddEntry(db, closed, "Second", 11);
         AddCompetition(db, CompetitionStatus.UPCOMING); // no entries, not gradable → hidden
-        await Api(db).Save(e1.Id, Request());
+        AddEntry(db, AddCompetition(db, judged: false), "Not mine"); // another jury → hidden
+        await Api(db).Save(e1.Id, Request(e1));
 
         var list = Value(await Api(db).Competitions());
 
@@ -172,7 +202,7 @@ public class GradingApiTests
         var c = AddCompetition(db);
         var e1 = AddEntry(db, c, "Neon Street", 9);
         AddEntry(db, c, "Harbour", 10);
-        await Api(db).Save(e1.Id, Request(Rating.GOOD));
+        await Api(db).Save(e1.Id, Request(e1, 70m));
 
         var pending = Value(await Api(db).Submissions(c.Id, false, null, null));
         Assert.Equal(2, pending.Total);
@@ -195,6 +225,16 @@ public class GradingApiTests
         await Assert.ThrowsAsync<NotFoundException>(() => Api(db).Submissions(999, null, null, null));
     }
 
+    /// <summary>An entry of a competition the teacher does not judge → 404.</summary>
+    [Fact]
+    public async Task Detail_NotOnJury_NotFound()
+    {
+        using var db = CreateDb();
+        var e = AddEntry(db, AddCompetition(db, judged: false));
+        await Assert.ThrowsAsync<NotFoundException>(() => Api(db).Detail(e.Id));
+        await Assert.ThrowsAsync<NotFoundException>(() => Api(db).Save(e.Id, Request(e)));
+    }
+
     [Fact]
     public async Task Detail_Unevaluated_HasNextAndCanEvaluate()
     {
@@ -213,6 +253,8 @@ public class GradingApiTests
         Assert.Equal(2, d.Total);
         Assert.Equal(0, d.Evaluated);
         Assert.Equal("HV0001", d.StudentCode);
+        Assert.Equal(_criterion[c.Id], Assert.Single(d.Criteria).Id);
+        Assert.True(Assert.Single(d.Jury).IsMe);
     }
 
     [Fact]
@@ -244,17 +286,19 @@ public class GradingApiTests
         var e1 = AddEntry(db, c, "A", 9);
         var e2 = AddEntry(db, c, "B", 10);
 
-        var d = Value(await Api(db).Save(e1.Id, Request(Rating.BETTER, "  Good light ")));
+        var d = Value(await Api(db).Save(e1.Id, Request(e1, 85m, "  Good light ")));
 
         Assert.NotNull(d.Evaluation);
-        Assert.Equal(Rating.BETTER, d.Evaluation!.Rating);
+        Assert.Equal(85m, d.Evaluation!.TotalScore);
+        Assert.Equal(85m, Assert.Single(d.Evaluation.Scores).Score);
+        Assert.Equal(Rating.BETTER, d.ResultRating);
         Assert.Equal("Good light", d.Evaluation.PositivePoints);
-        Assert.Equal("Le Minh Hoang", d.Evaluation.EvaluatedByName);
+        Assert.Equal("Pham Thu Ha", d.Evaluation.EvaluatedByName);
         Assert.False(string.IsNullOrEmpty(d.Evaluation.RowVersion));
         Assert.True(d.CanDeleteEvaluation);
         Assert.Equal(e2.Id, d.NextUnevaluatedId);
         Assert.Equal(1, d.Evaluated);
-        Assert.Equal(_staff1, (await db.Evaluations.SingleAsync()).EvaluatedBy);
+        Assert.Equal(_teacher, (await db.Evaluations.SingleAsync()).EvaluatedBy);
     }
 
     [Fact]
@@ -263,11 +307,12 @@ public class GradingApiTests
         using var db = CreateDb();
         var c = AddCompetition(db);
         var e = AddEntry(db, c);
-        var first = Value(await Api(db).Save(e.Id, Request(Rating.GOOD)));
+        var first = Value(await Api(db).Save(e.Id, Request(e, 70m)));
 
-        var second = Value(await Api(db).Save(e.Id, Request(Rating.BEST, "Better", first.Evaluation!.RowVersion)));
+        var second = Value(await Api(db).Save(e.Id, Request(e, 92m, "Better", first.Evaluation!.RowVersion)));
 
-        Assert.Equal(Rating.BEST, second.Evaluation!.Rating);
+        Assert.Equal(Rating.BEST, second.ResultRating);
+        Assert.Single(db.JudgeEvaluations);
         Assert.Single(db.Evaluations);
     }
 
@@ -277,10 +322,10 @@ public class GradingApiTests
         using var db = CreateDb();
         var c = AddCompetition(db);
         var e = AddEntry(db, c);
-        await Api(db).Save(e.Id, Request(Rating.GOOD));
+        await Api(db).Save(e.Id, Request(e, 70m));
 
-        var stale = await Api(db).Save(e.Id, Request(Rating.BEST, "x", "123"));
-        var missing = await Api(db).Save(e.Id, Request(Rating.BEST, "x", null));
+        var stale = await Api(db).Save(e.Id, Request(e, 92m, "x", "123"));
+        var missing = await Api(db).Save(e.Id, Request(e, 92m, "x", null));
 
         Assert.Equal(409, Assert.IsType<ObjectResult>(stale.Result).StatusCode);
         Assert.Equal(409, Assert.IsType<ObjectResult>(missing.Result).StatusCode);
@@ -295,10 +340,11 @@ public class GradingApiTests
         var closed = AddEntry(db, AddCompetition(db));
 
         // Open competition: the entry is not visible to the jury yet, so saving answers 404 like an unknown entry
-        await Assert.ThrowsAsync<NotFoundException>(() => Api(db).Save(open.Id, Request()));
-        await Assert.ThrowsAsync<BusinessException>(() => Api(db).Save(closed.Id, Request(Rating.GOOD, "  ")));
-        await Assert.ThrowsAsync<BusinessException>(() => Api(db).Save(closed.Id, Request(null)));
-        await Assert.ThrowsAsync<NotFoundException>(() => Api(db).Save(404, Request()));
+        await Assert.ThrowsAsync<NotFoundException>(() => Api(db).Save(open.Id, Request(open)));
+        await Assert.ThrowsAsync<BusinessException>(() => Api(db).Save(closed.Id, Request(closed, 70m, "  ")));
+        await Assert.ThrowsAsync<BusinessException>(() => Api(db).Save(closed.Id, Request(closed, null)));
+        await Assert.ThrowsAsync<BusinessException>(() => Api(db).Save(closed.Id, Request(closed, 101m)));
+        await Assert.ThrowsAsync<NotFoundException>(() => Api(db).Save(404, Request(closed)));
     }
 
     [Fact]
@@ -307,7 +353,7 @@ public class GradingApiTests
         using var db = CreateDb();
         var c = AddCompetition(db);
         var e = AddEntry(db, c);
-        var d = Value(await Api(db).Save(e.Id, Request()));
+        var d = Value(await Api(db).Save(e.Id, Request(e)));
 
         var stale = await Api(db).DeleteEvaluation(e.Id, "1");
         Assert.Equal(409, Assert.IsType<ObjectResult>(stale).StatusCode);
@@ -334,7 +380,7 @@ public class GradingApiTests
         using var db = CreateDb();
         var c = AddCompetition(db);
         var e = AddEntry(db, c);
-        var d = Value(await Api(db).Save(e.Id, Request(Rating.BEST)));
+        var d = Value(await Api(db).Save(e.Id, Request(e)));
 
         var options = new JsonSerializerOptions(JsonSerializerDefaults.Web) { Converters = { new JsonStringEnumConverter() } };
         using var json = JsonDocument.Parse(JsonSerializer.Serialize(d, options));
@@ -344,17 +390,20 @@ public class GradingApiTests
         {
             "id", "competitionId", "competitionTitle", "competitionStatus", "title", "description", "textType", "textContent",
             "studentName", "studentCode", "submittedAt", "updatedAt", "canEvaluate", "canDeleteEvaluation", "lockReason",
-            "evaluation", "nextUnevaluatedId", "total", "evaluated",
+            "evaluation", "nextUnevaluatedId", "total", "evaluated", "criteria", "jury", "resultRating", "resultScore",
+            "scoreSheet", "imageIds",
         })
         {
             Assert.True(root.TryGetProperty(key, out _), key);
         }
         Assert.Equal("CLOSED", root.GetProperty("competitionStatus").GetString());
-        Assert.Equal("BEST", root.GetProperty("evaluation").GetProperty("rating").GetString());
+        Assert.Equal("BEST", root.GetProperty("resultRating").GetString());
+        Assert.Equal(92m, root.GetProperty("evaluation").GetProperty("totalScore").GetDecimal());
         Assert.Equal(JsonValueKind.Null, root.GetProperty("nextUnevaluatedId").ValueKind);
 
-        // The app sends "Best": the case-insensitive converter must read it
-        var body = JsonSerializer.Deserialize<GradingEvaluationRequest>("{\"rating\":\"Best\",\"positivePoints\":\"x\"}", options);
-        Assert.Equal(Rating.BEST, body!.Rating);
+        // The body the app sends
+        var body = JsonSerializer.Deserialize<GradingEvaluationRequest>(
+            "{\"disqualified\":false,\"scores\":[{\"criterionId\":5,\"score\":88.5,\"comment\":\"ok\"}],\"positivePoints\":\"x\"}", options);
+        Assert.Equal(88.5m, Assert.Single(body!.Scores).Score);
     }
 }

@@ -7,7 +7,9 @@
 <div class="table-responsive">
     <table class="table table-hover align-middle">
         <thead>
-            <tr><th><span class="visually-hidden">Image</span></th><th>Title</th><th>Student</th><th>Competition</th><th>Submitted</th><th>Rating</th><th>Award</th></tr>
+            @* Teacher view: the judge's own grade, then the jury's result *@
+            @{ var judgeView = Model.Any(s => s.GradedByMe != null); }
+            <tr><th><span class="visually-hidden">Image</span></th><th>Title</th><th>Student</th><th>Competition</th><th>Submitted</th>@if (judgeView) { <th>Your grade</th> }<th>@(judgeView ? "Result" : "Rating")</th><th>Award</th></tr>
         </thead>
         <tbody>
             @foreach (var s in Model)
@@ -39,6 +41,19 @@
                             <span class="tag tag-DISQUALIFIED tag-plain"><i class="bi bi-clock-history" aria-hidden="true"></i>Late entry</span>
                         }
                     </td>
+                    @if (judgeView)
+                    {
+                        <td>
+                            @if (s.GradedByMe == true)
+                            {
+                                <span class="tag tag-GOOD tag-plain"><i class="bi bi-check2" aria-hidden="true"></i>Graded</span>
+                            }
+                            else
+                            {
+                                <span class="tag tag-NOT_GRADED">To grade</span>
+                            }
+                        </td>
+                    }
                     <td>
                         @if (s.Rating is { } rating)
                         {
@@ -46,7 +61,7 @@
                         }
                         else
                         {
-                            <span class="tag tag-NOT_GRADED">Not evaluated</span>
+                            <span class="tag tag-NOT_GRADED">@(judgeView ? "Waiting for the jury" : "Not evaluated")</span>
                         }
                     </td>
                     <td>

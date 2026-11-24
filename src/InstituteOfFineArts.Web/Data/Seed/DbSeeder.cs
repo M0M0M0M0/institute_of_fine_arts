@@ -9,6 +9,7 @@ namespace InstituteOfFineArts.Web.Data.Seed;
 /// <item><c>DbSeeder.Accounts.cs</c> – sample accounts (task BE1-01)</item>
 /// <item><c>DbSeeder.SampleData.cs</c> – competitions, submissions, grading, awards, exhibitions (task BE2-01)</item>
 /// <item><c>DbSeeder.Archive.cs</c> – two years of past competitions with ~1,500 real paintings (downloaded separately)</item>
+/// <item><c>DbSeeder.Grading.cs</c> – criteria library, juries, judges' scores, results, awards and pictures (11/2026)</item>
 /// </list>
 /// </summary>
 public static partial class DbSeeder
@@ -25,6 +26,11 @@ public static partial class DbSeeder
 
         // Create the database (if missing) and apply new migrations
         await db.Database.MigrateAsync();
+
+        // Competitions that exist before this run; a database upgraded from before the jury (no criteria library yet)
+        // gets juries and scores for all of its competitions
+        var upgraded = !await db.GradingCriteria.AnyAsync();
+        var before = await db.Competitions.Select(c => c.Id).ToListAsync();
 
         // Step 1: accounts (only when the account table is empty)
         if (!await db.Accounts.AnyAsync())
@@ -49,5 +55,9 @@ public static partial class DbSeeder
             scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DbSeeder.Archive")
                 .LogError(ex, "Archive sample data could not be seeded");
         }
+
+        // Step 4: jury grading of the competitions seeded above (criteria, juries, scores, awards, pictures)
+        var added = await db.Competitions.Where(c => !before.Contains(c.Id)).Select(c => c.Id).ToListAsync();
+        await SeedGradingAsync(db, scope.ServiceProvider, upgraded ? null : added);
     }
 }

@@ -16,6 +16,12 @@ public class Evaluation : BaseEntity
     /// <summary>Rating.</summary>
     public Rating Rating { get; set; }
 
+    /// <summary>
+    /// Average weighted score of the jury (0–100, 4 decimals); null when disqualified or graded before criteria existed.
+    /// The rating comes from it through the rating thresholds.
+    /// </summary>
+    public decimal? TotalScore { get; set; }
+
     /// <summary>Positive points – required unless disqualified (BR-23).</summary>
     public string? PositivePoints { get; set; }
 

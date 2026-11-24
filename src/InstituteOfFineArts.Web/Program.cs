@@ -61,9 +61,11 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.SameSite = SameSiteMode.Lax;
     });
 
-// Upload size limit (BR-17, task BE1-03): images ≤ Upload:MaxFileSizeBytes (5 MB) plus 1 MB for the other form fields.
-// Applied to every request body (Kestrel and IIS) and to multipart forms; a larger request shows the 413 error page.
-var maxRequestBytes = builder.Configuration.GetValue<long>("Upload:MaxFileSizeBytes", 5 * 1024 * 1024) + 1024 * 1024;
+// Upload size limit (BR-17, task BE1-03; widened 16/11/2026): an entry has up to 5 pictures of ≤ Upload:MaxFileSizeBytes
+// (10 MB) each, plus 1 MB for the other form fields. Applied to every request body (Kestrel and IIS) and to multipart
+// forms; a larger request shows the 413 error page.
+var maxRequestBytes = builder.Configuration.GetValue<long>("Upload:MaxFileSizeBytes", 10 * 1024 * 1024)
+                      * InstituteOfFineArts.Web.Infrastructure.FileStorage.UploadOptions.MaxImagesPerSubmission + 1024 * 1024;
 builder.WebHost.ConfigureKestrel(options => options.Limits.MaxRequestBodySize = maxRequestBytes);
 builder.Services.Configure<IISServerOptions>(options => options.MaxRequestBodySize = maxRequestBytes);
 builder.Services.Configure<FormOptions>(options => options.MultipartBodyLengthLimit = maxRequestBytes);

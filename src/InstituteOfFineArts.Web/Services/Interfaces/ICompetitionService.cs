@@ -28,6 +28,10 @@ public interface ICompetitionService
     /// <param name="staffProfileId">staff_profile.id of the creator</param>
     Task<long> CreateAsync(CompetitionFormVm form, long staffProfileId);
 
+    /// <summary>Fills the choices of the jury (active teachers) and criteria (library) of a form, and whether the criteria are locked.</summary>
+    /// <param name="form">Form to fill (its chosen judges / criteria stay listed even when inactive)</param>
+    Task FillJuryOptionsAsync(CompetitionFormVm form);
+
     /// <summary>Saves changes within BR-10 (entries exist → only extend the end date, description, rules, cover).</summary>
     /// <returns>What changed (fields with old → new value, awards added / changed / removed), for the history</returns>
     Task<IReadOnlyList<string>> UpdateAsync(long id, CompetitionFormVm form);

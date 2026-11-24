@@ -1,0 +1,103 @@
+@model InstituteOfFineArts.Web.ViewModels.Admin.Grading.GradingLibraryVm
+@*
+    Admin – grading library (/admin/grading): the criteria competitions pick (with their weights, on the competition
+    form) and the rating thresholds of the whole institute (the jury's average → BEST / BETTER / GOOD / MODERATE /
+    NORMAL). A used criterion is hidden, never deleted.
+*@
+@{
+    ViewData["Title"] = "Grading";
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+    var thresholds = new (string Name, decimal? Value)[]
+    {
+        ("Best", Model.Thresholds.Best), ("Better", Model.Thresholds.Better), ("Good", Model.Thresholds.Good), ("Moderate", Model.Thresholds.Moderate),
+    };
+}
+<div class="page-head">
+    <div>
+        <h1>Grading</h1>
+        <p class="page-sub">The criteria the juries score, and how an average score becomes a rating.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-plus-lg" aria-hidden="true"></i>New criterion</a>
+    </div>
+</div>
+<partial name="_Alerts" />
+
+<section class="section" aria-labelledby="thresholds-title">
+    <div class="section-head"><h2 id="thresholds-title">Rating thresholds</h2></div>
+    <p class="text-muted small">
+        The lowest average score (0–100) for each rating; below MODERATE an entry is NORMAL. Each must be lower than the one above.
+        A change applies to results calculated from now on; published results keep their rating.
+    </p>
+    <form asp-action="Thresholds" method="post" class="filters">
+        @foreach (var t in thresholds)
+        {
+            <div class="filter">
+                <label class="form-label" for="th-@t.Name">@t.Name.ToUpperInvariant() from</label>
+                <input class="form-control num" id="th-@t.Name" name="Thresholds.@t.Name" type="number" min="0" max="100" step="0.01" value="@t.Value?.ToString("0.##", inv)" required />
+            </div>
+        }
+        <div class="filter-actions">
+            <button type="submit" class="btn btn-primary">Save thresholds</button>
+        </div>
+    </form>
+</section>
+
+<section class="section" aria-labelledby="criteria-title">
+    <div class="section-head"><h2 id="criteria-title">Criteria</h2></div>
+    @if (Model.Criteria.Count == 0)
+    {
+        <div class="empty">
+            <i class="bi bi-list-check" aria-hidden="true"></i>
+            <p>No criterion yet.</p>
+            <a asp-action="Create" class="btn btn-primary">New criterion</a>
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr><th scope="col">Criterion</th><th scope="col">Status</th><th scope="col" class="text-end">Used by</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var c in Model.Criteria)
+                    {
+                        var used = c.UsedBy > 0;
+                        <tr>
+                            <td>
+                                <span class="row-title">@c.Name</span>
+                                @if (c.Description != null)
+                                {
+                                    <span class="small text-muted d-block">@c.Description</span>
+                                }
+                            </td>
+                            <td>
+                                @if (c.Active)
+                                {
+                                    <span class="tag tag-ONGOING tag-plain">Available</span>
+                                }
+                                else
+                                {
+                                    <span class="tag tag-CLOSED tag-plain">Hidden</span>
+                                }
+                            </td>
+                            <td class="text-end num">@c.UsedBy</td>
+                            <td class="text-end text-nowrap">
+                                <a asp-action="Edit" asp-route-id="@c.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                                @if (c.Active || !used)
+                                {
+                                    <form asp-action="Delete" asp-route-id="@c.Id" method="post" class="d-inline"
+                                          data-confirm="@(used ? "Hide this criterion? Competitions that use it keep it." : "Delete this criterion?")"
+                                          data-confirm-ok="@(used ? "Hide" : "Delete")">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">@(used ? "Hide" : "Delete")</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

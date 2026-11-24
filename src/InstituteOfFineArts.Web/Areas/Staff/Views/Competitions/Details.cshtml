@@ -95,6 +95,8 @@
     <p style="white-space: pre-line">@(Model.Rules ?? "–")</p>
 </section>
 
+<partial name="_JuryInfo" model="Model" />
+
 @* Awards (F-M05-06, BE1-06): add / edit / delete while the competition is not GRADED *@
 <section class="section" aria-labelledby="awards-title">
     <div class="section-head">
@@ -186,6 +188,13 @@
         </div>
     }
 </section>
+
+@* Ranking from the jury's averages: preview while CLOSED, given awards once GRADED *@
+@if (ViewBag.Ranking is IReadOnlyList<InstituteOfFineArts.Web.ViewModels.Staff.Competitions.RankingRowVm> ranking)
+{
+    ViewData["Preview"] = Model.Status == CompetitionStatus.CLOSED;
+    <partial name="_Ranking" model="ranking" view-data="ViewData" />
+}
 
 @* Publish results (F-M05-08, BR-08, BE1-11): only while CLOSED; refused while entries are not graded *@
 @if (Model.CanPublish)

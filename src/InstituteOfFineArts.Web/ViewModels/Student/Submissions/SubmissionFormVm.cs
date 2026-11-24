@@ -56,9 +56,17 @@ public abstract class SubmissionFieldsVm
 /// </summary>
 public class SubmissionFormVm : SubmissionFieldsVm
 {
-    /// <summary>The painting: JPEG (.jpg / .jpeg), at most 5 MB (BR-16, BR-17). Checked again by the file storage.</summary>
-    [Required(ErrorMessage = "Please choose an image file.")]
-    [Display(Name = "Image (JPEG, up to 5 MB)")]
+    /// <summary>
+    /// Pictures of the artwork (BR-16..18, widened 16/11/2026): 1 to 5 JPG / PNG / WebP files of at most 10 MB each –
+    /// the same artwork from another angle, in another light, a close-up. Checked again by the file storage.
+    /// </summary>
+    [Display(Name = "Pictures (1 to 5 – JPG, PNG or WebP, up to 10 MB each)")]
+    public List<IFormFile> Images { get; set; } = new();
+
+    /// <summary>Which of <see cref="Images"/> is the cover (0 = the first).</summary>
+    public int CoverIndex { get; set; }
+
+    /// <summary>One picture, kept for the older mobile app (form field "image"); added to <see cref="Images"/>.</summary>
     public IFormFile? Image { get; set; }
 }
 
@@ -70,13 +78,32 @@ public class SubmissionEditVm : SubmissionFieldsVm
     /// <summary>Submission id.</summary>
     public long Id { get; set; }
 
-    /// <summary>File name of the current image (display only).</summary>
+    /// <summary>File name of the current cover (display only).</summary>
     public string OriginalFileName { get; set; } = string.Empty;
 
-    /// <summary>Optional new image; when chosen it replaces the current file (BR-18).</summary>
-    [Display(Name = "Replace the image (optional, JPEG up to 5 MB)")]
+    /// <summary>Display only: the current pictures, cover first.</summary>
+    public List<SubmissionImageVm> CurrentImages { get; set; } = new();
+
+    /// <summary>Pictures to add (JPG / PNG / WebP, up to 10 MB each); the entry keeps 1 to 5 pictures in total.</summary>
+    [Display(Name = "Add pictures (JPG, PNG or WebP, up to 10 MB each)")]
+    public List<IFormFile> NewImages { get; set; } = new();
+
+    /// <summary>Current pictures to remove (submission_image ids).</summary>
+    public List<long> RemoveImageIds { get; set; } = new();
+
+    /// <summary>Current picture to make the cover (null = keep the cover, or the first one left).</summary>
+    public long? CoverImageId { get; set; }
+
+    /// <summary>Older mobile app: one new picture that replaces all the current ones (BR-18).</summary>
     public IFormFile? NewImage { get; set; }
 }
+
+/// <summary>One current picture on the edit form.</summary>
+/// <param name="Id">submission_image.id</param>
+/// <param name="FileName">File name chosen by the student</param>
+/// <param name="FileSize">Size in bytes</param>
+/// <param name="IsCover">The cover picture</param>
+public record SubmissionImageVm(long Id, string FileName, long FileSize, bool IsCover);
 
 /// <summary>Result of saving an entry.</summary>
 /// <param name="Id">Submission id</param>

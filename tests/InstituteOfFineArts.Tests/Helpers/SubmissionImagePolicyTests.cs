@@ -56,10 +56,15 @@ public class SubmissionImagePolicyTests
     {
         var today = InstituteOfFineArts.Web.Helpers.DateTimeHelper.Today;
         var teacher = User(RoleNames.Teacher, 3);
-        Submission Dated(DateOnly start, DateOnly end, CompetitionStatus stored = CompetitionStatus.UPCOMING) => new()
+        // The teacher (profile 3) judges every competition below except "notMine"
+        Submission Dated(DateOnly start, DateOnly end, CompetitionStatus stored = CompetitionStatus.UPCOMING, bool judged = true) => new()
         {
             StudentId = OwnerId,
-            Competition = new Competition { Status = stored, StartDate = start, EndDate = end },
+            Competition = new Competition
+            {
+                Status = stored, StartDate = start, EndDate = end,
+                Judges = judged ? [new CompetitionJudge { JudgeId = 3 }] : [],
+            },
         };
 
         var open = Dated(today.AddDays(-5), today);              // ONGOING: deadline is tonight
@@ -73,6 +78,11 @@ public class SubmissionImagePolicyTests
         Assert.True(SubmissionImagePolicy.CanView(closed, teacher));
         Assert.True(SubmissionImagePolicy.CanDownload(closed, teacher));
         Assert.True(SubmissionImagePolicy.CanView(graded, teacher));
+
+        // BR-20: a teacher outside the jury never sees the entries
+        var notMine = Dated(today.AddDays(-20), today.AddDays(-1), judged: false);
+        Assert.False(SubmissionImagePolicy.CanView(notMine, teacher));
+        Assert.False(SubmissionImagePolicy.CanDownload(notMine, teacher));
     }
 
     /// <summary>The owner views and downloads their own image at any time.</summary>

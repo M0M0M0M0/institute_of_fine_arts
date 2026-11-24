@@ -8,8 +8,11 @@ namespace InstituteOfFineArts.Web.ViewModels.Staff.Submissions;
 /// </summary>
 public class SubmissionDetailsVm
 {
-    /// <summary>Submission id (image: /files/submissions/{id}).</summary>
+    /// <summary>Submission id (cover: /files/submissions/{id}).</summary>
     public long Id { get; set; }
+
+    /// <summary>Pictures of the entry (submission_image ids, /files/submission-images/{id}), cover first.</summary>
+    public IReadOnlyList<long> ImageIds { get; set; } = [];
 
     /// <summary>Title of the painting.</summary>
     public string Title { get; set; } = string.Empty;

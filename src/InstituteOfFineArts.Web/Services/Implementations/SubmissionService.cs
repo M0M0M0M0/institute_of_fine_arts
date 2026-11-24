@@ -63,12 +63,17 @@ public class SubmissionService : ISubmissionService
         var competition = await FindOpenCompetitionAsync(form.CompetitionId, studentProfileId);
         var textType = CheckFields(form);
 
-        // 2. Store the JPEG (BR-16..BR-18); an invalid file throws on the Image field and nothing is written
-        if (form.Image == null)
+        // 2. Store the pictures (BR-16..BR-18: 1 to 5 JPG / PNG / WebP, 10 MB each); an invalid file throws on the
+        //    Images field and the files already written are removed again
+        var files = form.Images.Where(f => f is { Length: > 0 }).ToList();
+        if (form.Image is { Length: > 0 } single)
         {
-            throw new BusinessException(JpegValidator.MissingMessage, nameof(SubmissionFormVm.Image));
+            files.Add(single);
         }
-        var image = await _files.SaveSubmissionImageAsync(form.Image, competition.Id, nameof(SubmissionFormVm.Image));
+        CheckImageCount(files.Count, nameof(SubmissionFormVm.Images));
+        var stored = await StoreAllAsync(files, competition.Id, nameof(SubmissionFormVm.Images));
+        var cover = Math.Clamp(form.CoverIndex, 0, stored.Count - 1);
+        var image = stored[cover];
 
         // 3. Insert the row; when that fails the stored files would be orphaned, so they are deleted again
         var submission = new Submission
@@ -85,6 +90,10 @@ public class SubmissionService : ISubmissionService
             FileSize = image.FileSize,
             SubmittedAt = DateTimeHelper.Now,
         };
+        for (var i = 0; i < stored.Count; i++)
+        {
+            submission.Images.Add(NewImageRow(stored[i], i, i == cover));
+        }
         _db.Submissions.Add(submission);
         try
         {
@@ -92,7 +101,7 @@ public class SubmissionService : ISubmissionService
         }
         catch (DbUpdateException)
         {
-            _files.Delete(image.RelativePath, image.ThumbnailPath);
+            DeleteStored(stored);
             _db.Entry(submission).State = EntityState.Detached;
 
             // Two submits at the same time: the unique index (BR-15) stopped the second one
@@ -104,13 +113,13 @@ public class SubmissionService : ISubmissionService
         }
         catch
         {
-            _files.Delete(image.RelativePath, image.ThumbnailPath);
+            DeleteStored(stored);
             throw;
         }
 
-        _logger.LogInformation("Submission {SubmissionId} created by student {StudentId} in competition {CompetitionId}",
-            submission.Id, studentProfileId, competition.Id);
-        return new SubmissionSaveResult(submission.Id, image.Warning);
+        _logger.LogInformation("Submission {SubmissionId} created by student {StudentId} in competition {CompetitionId} with {Count} picture(s)",
+            submission.Id, studentProfileId, competition.Id, stored.Count);
+        return new SubmissionSaveResult(submission.Id, Warnings(stored));
     }
 
     /// <inheritdoc />
@@ -199,10 +208,13 @@ public class SubmissionService : ISubmissionService
             .FirstOrDefaultAsync(x => x.Id == id && x.StudentId == studentProfileId)
             ?? throw new NotFoundException($"Submission {id} was not found.");
         var status = CompetitionStatusResolver.Resolve(s.Competition);
+        var imageIds = await _db.SubmissionImages.AsNoTracking().Where(i => i.SubmissionId == id)
+            .OrderByDescending(i => i.IsCover).ThenBy(i => i.SortOrder).ThenBy(i => i.Id).Select(i => i.Id).ToListAsync();
 
         return new MySubmissionDetailsVm
         {
             Id = s.Id,
+            ImageIds = imageIds,
             Title = s.Title,
             OriginalFileName = s.OriginalFileName,
             FileSize = s.FileSize,
@@ -239,6 +251,9 @@ public class SubmissionService : ISubmissionService
             TextType = s.TextType,
             TextContent = s.TextContent,
             OriginalFileName = s.OriginalFileName,
+            CurrentImages = await _db.SubmissionImages.AsNoTracking().Where(i => i.SubmissionId == id)
+                .OrderByDescending(i => i.IsCover).ThenBy(i => i.SortOrder).ThenBy(i => i.Id)
+                .Select(i => new SubmissionImageVm(i.Id, i.OriginalFileName, i.FileSize, i.IsCover)).ToListAsync(),
         };
     }
 
@@ -254,18 +269,53 @@ public class SubmissionService : ISubmissionService
         s.TextType = textType;
         s.TextContent = form.TextContent.Trim();
 
-        // New image (optional): write the new file first; the old files are deleted only after saving (BR-18)
-        var oldImage = s.ImagePath;
-        var oldThumbnail = s.ThumbnailPath;
-        StoredImage? image = null;
-        if (form.NewImage is { Length: > 0 })
+        // Pictures (BR-18): remove the ticked ones, add the new ones (written first), keep 1 to 5, choose the cover.
+        // New files are written before saving; the removed files are deleted only after the save succeeded.
+        var images = await _db.SubmissionImages.Where(i => i.SubmissionId == s.Id).ToListAsync();
+        if (images.Count == 0 && !string.IsNullOrEmpty(s.ImagePath))
         {
-            image = await _files.SaveSubmissionImageAsync(form.NewImage, s.CompetitionId, nameof(SubmissionEditVm.NewImage));
-            s.ImagePath = image.RelativePath;
-            s.ThumbnailPath = image.ThumbnailPath;
-            s.OriginalFileName = image.OriginalFileName;
-            s.FileSize = image.FileSize;
+            // Entry stored before submission_image existed: its picture becomes the first row
+            var legacy = new SubmissionImage
+            {
+                SubmissionId = s.Id, ImagePath = s.ImagePath, ThumbnailPath = s.ThumbnailPath, OriginalFileName = s.OriginalFileName,
+                FileSize = s.FileSize, ContentType = ImageValidator.ContentTypeOf(s.ImagePath), SortOrder = 0, IsCover = true,
+            };
+            _db.SubmissionImages.Add(legacy);
+            images.Add(legacy);
         }
+        var newFiles = form.NewImages.Where(f => f is { Length: > 0 }).ToList();
+        var replaceAll = form.NewImage is { Length: > 0 } && newFiles.Count == 0;
+        if (form.NewImage is { Length: > 0 } one)
+        {
+            newFiles.Add(one);
+        }
+        var removed = replaceAll ? images.ToList() : images.Where(i => i.Id != 0 && form.RemoveImageIds.Contains(i.Id)).ToList();
+        CheckImageCount(images.Count - removed.Count + newFiles.Count, nameof(SubmissionEditVm.NewImages));
+
+        var stored = await StoreAllAsync(newFiles, s.CompetitionId, nameof(SubmissionEditVm.NewImages));
+        var kept = images.Except(removed).ToList();
+        var order = kept.Count == 0 ? 0 : kept.Max(i => i.SortOrder) + 1;
+        var added = stored.Select((img, k) => NewImageRow(img, order + k, false)).ToList();
+        foreach (var row in added)
+        {
+            row.SubmissionId = s.Id;
+            _db.SubmissionImages.Add(row);
+        }
+        _db.SubmissionImages.RemoveRange(removed.Where(r => r.Id != 0));
+
+        // Cover: the chosen picture, else the current cover if kept, else the first picture left
+        var all = kept.Concat(added).ToList();
+        var cover = all.FirstOrDefault(i => form.CoverImageId is { } c && i.Id == c)
+                    ?? all.FirstOrDefault(i => i.IsCover)
+                    ?? all[0];
+        foreach (var i in all)
+        {
+            i.IsCover = ReferenceEquals(i, cover);
+        }
+        s.ImagePath = cover.ImagePath;
+        s.ThumbnailPath = cover.ThumbnailPath;
+        s.OriginalFileName = cover.OriginalFileName;
+        s.FileSize = cover.FileSize;
 
         try
         {
@@ -273,21 +323,18 @@ public class SubmissionService : ISubmissionService
         }
         catch
         {
-            // The row still points to the old files: remove the new ones so they are not orphaned
-            if (image != null)
-            {
-                _files.Delete(image.RelativePath, image.ThumbnailPath);
-            }
+            // The rows still point to the old files: remove the new ones so they are not orphaned
+            DeleteStored(stored);
             throw;
         }
 
-        if (image != null)
+        foreach (var r in removed)
         {
-            _files.Delete(oldImage, oldThumbnail);
+            _files.Delete(r.ImagePath, r.ThumbnailPath);
         }
-        _logger.LogInformation("Submission {SubmissionId} updated by student {StudentId} (image replaced: {Replaced})",
-            s.Id, studentProfileId, image != null);
-        return new SubmissionSaveResult(s.Id, image?.Warning);
+        _logger.LogInformation("Submission {SubmissionId} updated by student {StudentId} (pictures: +{Added} −{Removed})",
+            s.Id, studentProfileId, added.Count, removed.Count);
+        return new SubmissionSaveResult(s.Id, Warnings(stored));
     }
 
     /// <inheritdoc />
@@ -296,9 +343,15 @@ public class SubmissionService : ISubmissionService
         var s = await FindEditableAsync(id, studentProfileId, tracking: true);
 
         // Row first, files after the delete succeeded (BR-18)
+        var pictures = await _db.SubmissionImages.AsNoTracking().Where(i => i.SubmissionId == s.Id)
+            .Select(i => new { i.ImagePath, i.ThumbnailPath }).ToListAsync();
         _db.Submissions.Remove(s);
         await _db.SaveChangesAsync();
         _files.Delete(s.ImagePath, s.ThumbnailPath);
+        foreach (var p in pictures)
+        {
+            _files.Delete(p.ImagePath, p.ThumbnailPath);
+        }
         _logger.LogInformation("Submission {SubmissionId} deleted by student {StudentId}", s.Id, studentProfileId);
     }
 
@@ -386,5 +439,63 @@ public class SubmissionService : ISubmissionService
         {
             throw new BusinessException(tooLongMessage, field);
         }
+    }
+
+    /// <summary>An entry has 1 to 5 pictures (BR-18).</summary>
+    public const string TooManyImagesMessage = "An entry can have at most 5 pictures of the artwork.";
+
+    /// <summary>Refuses 0 or more than 5 pictures, on the given form field.</summary>
+    private static void CheckImageCount(int count, string field)
+    {
+        if (count < 1)
+        {
+            throw new BusinessException(ImageValidator.MissingMessage, field);
+        }
+        if (count > InstituteOfFineArts.Web.Infrastructure.FileStorage.UploadOptions.MaxImagesPerSubmission)
+        {
+            throw new BusinessException(TooManyImagesMessage, field);
+        }
+    }
+
+    /// <summary>Stores the files one by one; when one is refused the ones already written are removed and the error is rethrown.</summary>
+    private async Task<List<StoredImage>> StoreAllAsync(IReadOnlyList<IFormFile> files, long competitionId, string field)
+    {
+        var stored = new List<StoredImage>();
+        try
+        {
+            foreach (var file in files)
+            {
+                stored.Add(await _files.SaveSubmissionImageAsync(file, competitionId, field));
+            }
+        }
+        catch
+        {
+            DeleteStored(stored);
+            throw;
+        }
+        return stored;
+    }
+
+    /// <summary>Deletes stored files (and thumbnails).</summary>
+    private void DeleteStored(IEnumerable<StoredImage> stored)
+    {
+        foreach (var img in stored)
+        {
+            _files.Delete(img.RelativePath, img.ThumbnailPath);
+        }
+    }
+
+    /// <summary>A submission_image row for a stored file.</summary>
+    private static SubmissionImage NewImageRow(StoredImage img, int order, bool cover) => new()
+    {
+        ImagePath = img.RelativePath, ThumbnailPath = img.ThumbnailPath, OriginalFileName = img.OriginalFileName,
+        FileSize = img.FileSize, ContentType = img.ContentType, SortOrder = order, IsCover = cover,
+    };
+
+    /// <summary>The small-image advice of the stored pictures, one sentence each, or null.</summary>
+    private static string? Warnings(IEnumerable<StoredImage> stored)
+    {
+        var warnings = stored.Where(i => i.Warning != null).Select(i => $"{i.OriginalFileName}: {i.Warning}").ToList();
+        return warnings.Count == 0 ? null : string.Join(" ", warnings);
     }
 }

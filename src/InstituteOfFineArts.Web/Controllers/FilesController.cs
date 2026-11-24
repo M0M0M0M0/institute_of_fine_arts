@@ -13,6 +13,7 @@ namespace InstituteOfFineArts.Web.Controllers;
 /// GET /files/submissions/{id}               – image shown in a page
 /// GET /files/submissions/{id}?download=true – original file with its name (staff, manager, owner)
 /// GET /files/submissions/{id}/thumb         – small version for lists and galleries
+/// GET /files/submission-images/{id}         – one picture of an entry (BR-18; + /thumb, ?download=true), same rules
 /// GET /files/competitions/{id}/cover        – competition cover (public)
 /// A missing image and an image the user may not see both return 404, so ids of private entries are not revealed.
 /// Viewers other than the owner, STAFF, TEACHER and ADMIN receive a copy watermarked in memory (F-M13-02);
@@ -25,7 +26,7 @@ namespace InstituteOfFineArts.Web.Controllers;
 [Route("files")]
 public class FilesController : Controller
 {
-    /// <summary>Content type of every stored image.</summary>
+    /// <summary>Content type of thumbnails, watermarked copies and older entries.</summary>
     private const string JpegContentType = "image/jpeg";
 
     /// <summary>Finds images and checks permissions.</summary>
@@ -58,6 +59,20 @@ public class FilesController : Controller
     [HttpGet("submissions/{id:long}/thumb")]
     public async Task<IActionResult> Thumbnail(long id)
         => await ServeAsync(await _access.GetSubmissionImageAsync(id, User, thumbnail: true, download: false));
+
+    /// <summary>One picture of an entry (or the original as a download).</summary>
+    /// <param name="id">submission_image id</param>
+    /// <param name="download">True to download the original file</param>
+    [HttpGet("submission-images/{id:long}")]
+    [AuditView]
+    public async Task<IActionResult> Picture(long id, bool download = false)
+        => await ServeAsync(await _access.GetPictureAsync(id, User, thumbnail: false, download));
+
+    /// <summary>Thumbnail of one picture of an entry.</summary>
+    /// <param name="id">submission_image id</param>
+    [HttpGet("submission-images/{id:long}/thumb")]
+    public async Task<IActionResult> PictureThumbnail(long id)
+        => await ServeAsync(await _access.GetPictureAsync(id, User, thumbnail: true, download: false));
 
     /// <summary>Cover image of a competition.</summary>
     /// <param name="id">Competition id</param>
@@ -100,8 +115,9 @@ public class FilesController : Controller
         }
 
         // File(...) disposes the stream after sending. With a download name the browser shows "Save as".
+        var type = image.ContentType ?? JpegContentType;
         return image.DownloadName == null
-            ? File(stream, JpegContentType)
-            : File(stream, JpegContentType, image.DownloadName);
+            ? File(stream, type)
+            : File(stream, type, image.DownloadName);
     }
 }

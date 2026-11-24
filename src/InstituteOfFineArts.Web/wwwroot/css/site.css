@@ -744,6 +744,19 @@ html.has-zoom-viewer { overflow: hidden; }
 .upload-preview .wall-label { padding-top: 0; }
 .upload-preview .wl-note { color: var(--ifa-warning); }
 @media (max-width: 575.98px) { .upload-preview { grid-template-columns: 1fr; } }
+/* Chosen / current pictures of an entry (BR-18): one row each, thumbnail + name + cover / remove */
+.upload-list { list-style: none; margin: .9rem 0 0; padding: 0; border-top: 1px solid var(--ifa-line); max-width: 40rem; }
+.upload-item { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr); gap: .9rem; align-items: center; padding: .6rem 0; border-bottom: 1px solid var(--ifa-line); }
+.upload-thumb { width: 4.5rem; height: 4.5rem; background: var(--ifa-mist); overflow: hidden; }
+.upload-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.upload-info { display: flex; flex-direction: column; gap: .15rem; min-width: 0; }
+.upload-name { font-weight: 600; overflow-wrap: anywhere; }
+.upload-meta { font-size: .875rem; color: var(--ifa-muted); }
+.upload-note { font-size: .875rem; color: var(--ifa-warning); }
+.upload-choices { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; margin-top: .25rem; }
+.upload-item.is-removed .upload-thumb, .upload-item.is-removed .upload-name { opacity: .45; }
+.upload-item.is-removed .upload-name { text-decoration: line-through; }
+.upload-summary { margin: .5rem 0 0; font-size: .875rem; color: var(--ifa-warning); }
 /* Next steps on the student dashboard: a quiet list of rows, not a card grid */
 .next-steps { list-style: none; padding: 0; margin: 0 0 2rem; border-top: 1px solid var(--ifa-text); }
 .next-steps > li { display: grid; grid-template-columns: 2.25rem minmax(0, 1fr) auto; gap: .25rem 1rem; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--ifa-line); }
@@ -997,3 +1010,22 @@ h1, .h1, .hero-title, .band-title { letter-spacing: -0.02em; }
 .audit-tabs { display: flex; flex-wrap: wrap; gap: .25rem; border-bottom: 1px solid var(--ifa-line); margin-bottom: 1.25rem; }
 .audit-tabs a { padding: .5rem .9rem; text-decoration: none; color: var(--ifa-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
 .audit-tabs a[aria-current="page"] { color: var(--ifa-ink); border-bottom-color: var(--ifa-ink); font-weight: 600; }
+
+/* ---------- Jury and criteria of the competition form (_JuryCriteria.cshtml) ---------- */
+.jury-table { max-width: 40rem; }
+.jury-table td:first-child, .jury-table th:first-child, .jury-table td:last-child, .jury-table th:last-child { width: 6rem; text-align: center; }
+.criterion-row { display: grid; grid-template-columns: minmax(0, 1fr) 9rem auto; gap: .5rem; align-items: center; padding: .5rem 0; border-top: 1px solid var(--ifa-line); max-width: 40rem; }
+.criterion-row .criterion-error { grid-column: 1 / -1; }
+@media (max-width: 575.98px) { .criterion-row { grid-template-columns: minmax(0, 1fr) 7rem auto; } }
+
+/* ---------- Pictures of an entry (_EntryImages.cshtml) and grading form ---------- */
+.entry-thumbs { list-style: none; display: flex; flex-wrap: wrap; gap: .5rem; margin: .6rem 0 0; padding: 0; }
+.entry-thumb { width: 64px; height: 64px; padding: 0; border: 2px solid transparent; background: var(--ifa-mist); overflow: hidden; }
+.entry-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.entry-thumb.is-current { border-color: var(--ifa-ink); }
+.score-row { display: grid; grid-template-columns: minmax(0, 1fr) 6.5rem; gap: .35rem .75rem; padding: .6rem 0; border-top: 1px solid var(--ifa-line); align-items: start; }
+.score-row .score-comment, .score-row .score-error { grid-column: 1 / -1; }
+.score-total { margin: .75rem 0 0; font-size: 1.05rem; }
+.jury-progress li { padding: .2rem 0; }
+.score-sheet th, .score-sheet td { white-space: nowrap; }
+.score-sheet td.sheet-comment { white-space: normal; min-width: 12rem; }

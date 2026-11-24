@@ -107,6 +107,9 @@ public class SubmissionListItemVm
 
     /// <summary>Number of exhibition entries of this painting (any status).</summary>
     public int ExhibitionEntryCount { get; set; }
+
+    /// <summary>Teacher view only: the signed-in judge has graded this entry (null for staff).</summary>
+    public bool? GradedByMe { get; set; }
 }
 
 /// <summary>

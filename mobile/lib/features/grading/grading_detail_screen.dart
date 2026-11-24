@@ -12,7 +12,9 @@ import '../submissions/submissions.dart';
 import 'evaluation_fields.dart';
 import 'grading.dart';
 
-/// M-T3: grade one entry: framed picture (tap to zoom), entry info, evaluation form (UC-05).
+/// M-T3: grade one entry (UC-05, jury since 11/2026): the pictures (tap to zoom), entry info, who in the jury graded,
+/// and the judge's own grade – a score from 0 to 100 for every weighted criterion (live total) or a disqualification
+/// with its reason. After publishing: the jury's full score sheet, read only.
 class GradingDetailScreen extends ConsumerWidget {
   const GradingDetailScreen({super.key, required this.id});
 
@@ -46,8 +48,13 @@ class _BodyState extends ConsumerState<_Body> {
   late final TextEditingController _positive;
   late final TextEditingController _negative;
   late final TextEditingController _improvement;
-  SubmissionRating? _rating;
+  late final Map<int, TextEditingController> _scores;
+  late final Map<int, TextEditingController> _comments;
+  bool _disqualified = false;
   bool _busy = false;
+
+  /// Picture shown large (for "Download original"); null = the entry's own image.
+  int? _pictureId;
 
   GradingDetail get _d => widget.detail;
 
@@ -58,20 +65,30 @@ class _BodyState extends ConsumerState<_Body> {
     _positive = TextEditingController(text: ev?.positivePoints ?? '');
     _negative = TextEditingController(text: ev?.negativePoints ?? '');
     _improvement = TextEditingController(text: ev?.improvementAreas ?? '');
-    _rating = ev?.rating;
+    _disqualified = ev?.disqualified ?? false;
+    final mine = {for (final s in ev?.scores ?? const <GradingScore>[]) s.criterionId: s};
+    _scores = {
+      for (final c in _d.criteria)
+        c.id: TextEditingController(text: mine[c.id]?.score == null ? '' : _plain(mine[c.id]!.score!)),
+    };
+    _comments = {for (final c in _d.criteria) c.id: TextEditingController(text: mine[c.id]?.comment ?? '')};
+    _pictureId = _d.imageIds.isEmpty ? null : _d.imageIds.first;
   }
+
+  /// 85 → "85", 85.5 → "85.5", 85.25 → "85.25".
+  static String _plain(double v) => v == v.roundToDouble() ? v.toStringAsFixed(0) : '$v';
 
   @override
   void dispose() {
-    _positive.dispose();
-    _negative.dispose();
-    _improvement.dispose();
+    for (final c in [_positive, _negative, _improvement, ..._scores.values, ..._comments.values]) {
+      c.dispose();
+    }
     super.dispose();
   }
 
   void _toast(String text) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
 
-  // 409 = somebody else changed the data (BR-52): say so and reload the latest version
+  // 409 = the grade changed in another window (BR-52): say so and reload the latest version
   void _handleError(Object e) {
     final err = ApiException.from(e);
     _toast(err.statusCode == 409 ? '${err.message} The entry was reloaded with the latest version.' : err.message);
@@ -79,9 +96,17 @@ class _BodyState extends ConsumerState<_Body> {
     setState(() => _busy = false);
   }
 
-  /// Saves the evaluation (create, or update with RowVersion). [goNext] moves on to the next ungraded entry.
+  double? get _liveTotal => judgeTotal(_d.criteria, {for (final c in _d.criteria) c.id: parseScore(_scores[c.id]!.text)});
+
+  /// Saves the grade (create, or update with RowVersion). [goNext] moves on to the next entry to grade.
   Future<void> _save({required bool goNext}) async {
-    final error = validateEvaluation(_rating, _positive.text, _negative.text);
+    final error = validateEvaluation(
+      disqualified: _disqualified,
+      criteria: _d.criteria,
+      scoreTexts: {for (final e in _scores.entries) e.key: e.value.text},
+      positive: _positive.text,
+      negative: _negative.text,
+    );
     if (error != null) {
       _toast(error);
       return;
@@ -94,7 +119,11 @@ class _BodyState extends ConsumerState<_Body> {
       await ref.read(gradingRepositoryProvider).save(
             _d.id,
             EvaluationInput(
-              rating: _rating!,
+              disqualified: _disqualified,
+              scores: [
+                for (final c in _d.criteria)
+                  GradingScore(criterionId: c.id, score: parseScore(_scores[c.id]!.text), comment: _comments[c.id]!.text),
+              ],
               positivePoints: _positive.text.trim(),
               negativePoints: _negative.text.trim(),
               improvementAreas: _improvement.text.trim(),
@@ -102,14 +131,14 @@ class _BodyState extends ConsumerState<_Body> {
             ),
           );
       if (!mounted) return;
-      _toast('Evaluation saved.');
-      // Ask the API directly for the next ungraded entry (providers are refreshed only after leaving)
+      _toast('Grade saved.');
+      // Ask the API directly for the next entry to grade (providers are refreshed only after leaving)
       final nextId = goNext ? await _nextAfterSave() : null;
       if (!mounted) return;
       if (nextId != null) {
         context.pushReplacement('${gradingBase(context)}/submissions/$nextId/evaluate');
       } else {
-        if (goNext) _toast('Every entry of this competition is graded.');
+        if (goNext) _toast('You have graded every entry of this competition.');
         context.pop();
       }
       _invalidateAfterChange(container, id);
@@ -139,8 +168,8 @@ class _BodyState extends ConsumerState<_Body> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete evaluation?'),
-        content: const Text('The evaluation of this entry will be removed and the entry goes back to "To grade".'),
+        title: const Text('Delete your grade?'),
+        content: const Text('Your scores and comments for this entry will be removed. The entry has no result until you grade it again.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
@@ -153,7 +182,7 @@ class _BodyState extends ConsumerState<_Body> {
     try {
       await ref.read(gradingRepositoryProvider).deleteEvaluation(_d.id, ev.rowVersion);
       if (!mounted) return;
-      _toast('Evaluation deleted.');
+      _toast('Grade deleted.');
       _invalidateAfterChange(ProviderScope.containerOf(context), _d.id);
     } catch (e) {
       if (mounted) _handleError(e);
@@ -163,8 +192,11 @@ class _BodyState extends ConsumerState<_Body> {
   Future<void> _download() async {
     setState(() => _busy = true);
     try {
-      final bytes = await ref.read(submissionRepositoryProvider).imageBytes(_d.id, download: true);
-      final saved = await saveBytesAsFile(bytes, 'submission-${_d.id}.jpg');
+      final picture = _pictureId;
+      final bytes = picture == null
+          ? await ref.read(submissionRepositoryProvider).imageBytes(_d.id, download: true)
+          : await ref.read(submissionRepositoryProvider).pictureBytes(picture, download: true);
+      final saved = await saveBytesAsFile(bytes, 'submission-${_d.id}${picture == null ? '' : '-$picture'}.jpg');
       if (mounted) _toast(saved ? 'Picture downloaded.' : 'Downloading is not supported on this platform (use Chrome).');
     } catch (e) {
       if (mounted) _toast(ApiException.from(e).message);
@@ -178,37 +210,18 @@ class _BodyState extends ConsumerState<_Body> {
     final d = _d;
     final text = Theme.of(context).textTheme;
     final editable = d.canEvaluate && !_busy;
-    final disqualified = _rating == SubmissionRating.disqualified;
-    final awarded = _rating == SubmissionRating.best;
+    final total = _liveTotal;
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.gutter),
       children: [
-        // Large framed picture; tap to zoom
-        Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 440),
-            child: Semantics(
-              button: true,
-              label: 'Open ${d.title} full screen',
-              child: InkWell(
-                onTap: () => ArtworkViewer.open(
-                  context,
-                  ArtworkViewer.private(
-                    submissionId: d.id,
-                    title: d.title,
-                    subtitle: '${d.studentName} (${d.studentCode})',
-                  ),
-                ),
-                // The frame hugs the painting at its own proportions (portrait or landscape)
-                child: ArtworkFrame(
-                  awarded: awarded,
-                  aspectRatio: null,
-                  child: NaturalArtworkImage.private(submissionId: d.id, semanticLabel: d.title),
-                ),
-              ),
-            ),
-          ),
+        EntryPictures(
+          submissionId: d.id,
+          imageIds: d.imageIds,
+          title: d.title,
+          subtitle: '${d.studentName} (${d.studentCode})',
+          awarded: d.resultRating == SubmissionRating.best,
+          onSelected: (id) => setState(() => _pictureId = id),
         ),
         Align(
           alignment: Alignment.centerRight,
@@ -237,55 +250,91 @@ class _BodyState extends ConsumerState<_Body> {
           style: text.bodySmall,
         ),
         const SizedBox(height: AppSpacing.xs),
-        ProgressBarRow(label: 'Graded in this competition', value: d.evaluated, total: d.total),
+        ProgressBarRow(label: 'Graded by the whole jury', value: d.evaluated, total: d.total),
         const SectionHeader('Description', padding: EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.xs)),
         Text(d.description),
         SectionHeader(textTypeName(d.textType), padding: const EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.xs)),
         Text(d.textContent),
         const Divider(height: AppSpacing.xxl),
-        Semantics(header: true, child: Text('Evaluation', style: text.titleLarge)),
+
+        // Jury progress: who graded this entry (never their scores before publishing)
+        if (d.jury.isNotEmpty) ...[
+          Semantics(header: true, child: Text('Jury', style: text.titleLarge)),
+          const SizedBox(height: AppSpacing.xs),
+          for (final j in d.jury)
+            Row(
+              children: [
+                Icon(j.done ? Icons.check_circle : Icons.radio_button_unchecked,
+                    size: 18, color: j.done ? AppColors.ink : AppColors.muted),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(child: Text('${j.name}${j.isChair ? ' (chair)' : ''}${j.isMe ? ' – you' : ''}')),
+                Text(j.done ? 'Graded' : 'Not yet', style: text.bodySmall),
+              ],
+            ),
+          if (d.resultRating case final r?)
+            Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.sm),
+              child: Text(
+                'Result: ${ratingName(r)}${d.resultScore != null ? ' · ${formatScore(d.resultScore!)}' : ''}',
+                style: text.titleSmall,
+              ),
+            ),
+          const SizedBox(height: AppSpacing.lg),
+        ],
+
+        // Published: the whole score sheet
+        if (d.scoreSheet case final sheet?) ...[
+          Semantics(header: true, child: Text('Score sheet', style: text.titleLarge)),
+          const SizedBox(height: AppSpacing.sm),
+          ScoreSheetView(sheet: sheet),
+          const SizedBox(height: AppSpacing.lg),
+        ],
+
+        Semantics(header: true, child: Text('Your grade', style: text.titleLarge)),
         const SizedBox(height: AppSpacing.sm),
         if (d.evaluation case final ev?)
           Padding(
             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-            child: Text('Graded by ${ev.evaluatedByName} on ${formatDateTime(ev.evaluatedAt)}', style: text.bodySmall),
-          ),
-        // Not open for grading (competition still running, or results published): no form, just the result
-        if (!d.canEvaluate && d.evaluation != null)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    StatusChip.rating(d.evaluation!.rating),
-                    for (final (label, value) in [
-                      ('Strengths', d.evaluation!.positivePoints),
-                      ('Weaknesses', d.evaluation!.negativePoints),
-                      ('To improve', d.evaluation!.improvementAreas),
-                    ])
-                      if (value != null && value.trim().isNotEmpty) ...[
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(label, style: text.titleSmall),
-                        Text(value),
-                      ],
-                  ],
-                ),
-              ),
+            child: Text(
+              'Saved on ${formatDateTime(ev.evaluatedAt)}'
+              '${ev.disqualified ? ' · disqualified' : ev.totalScore != null ? ' · total ${formatScore(ev.totalScore!)}' : ''}',
+              style: text.bodySmall,
             ),
+          ),
+        // Not open for grading (results published): no form and no rule banner, just the state
         if (!d.canEvaluate && d.evaluation == null)
           Text('Not graded yet.', style: text.bodyMedium!.copyWith(color: AppColors.muted)),
         if (d.canEvaluate) ...[
-          const SizedBox(height: AppSpacing.sm),
-          Text('Rating *', style: text.labelLarge),
-          const SizedBox(height: AppSpacing.xs),
-          RatingChips(value: _rating, onChanged: editable ? (v) => setState(() => _rating = v) : null),
-          const SizedBox(height: AppSpacing.md),
+          SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Disqualify this entry'),
+            subtitle: const Text('Breaks the rules (late, copied, off topic). One disqualification is enough.'),
+            value: _disqualified,
+            onChanged: editable ? (v) => setState(() => _disqualified = v) : null,
+          ),
+          if (!_disqualified) ...[
+            const SizedBox(height: AppSpacing.sm),
+            CriterionScoreFields(
+              criteria: d.criteria,
+              scores: _scores,
+              comments: _comments,
+              enabled: editable,
+              onChanged: () => setState(() {}),
+            ),
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                total == null ? 'Total: enter every score' : 'Total: ${formatScore(total)} / 100',
+                style: text.titleMedium,
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+          ],
           EvaluationTextFields(
             positive: _positive,
             negative: _negative,
             improvement: _improvement,
-            disqualified: disqualified,
+            disqualified: _disqualified,
             enabled: editable,
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -305,12 +354,11 @@ class _BodyState extends ConsumerState<_Body> {
                 icon: const Icon(Icons.save_outlined),
                 label: const Text('Save'),
               ),
-              // Only offered when it is allowed (no award, not sent to an exhibition)
               if (d.evaluation != null && d.canDeleteEvaluation)
                 TextButton.icon(
                   onPressed: _busy ? null : _delete,
                   icon: const Icon(Icons.delete_outline),
-                  label: const Text('Delete evaluation'),
+                  label: const Text('Delete my grade'),
                   style: TextButton.styleFrom(foregroundColor: AppColors.danger),
                 ),
             ],

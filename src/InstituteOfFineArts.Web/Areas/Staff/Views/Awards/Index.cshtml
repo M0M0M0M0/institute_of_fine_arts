@@ -22,10 +22,7 @@
 <div class="page-head">
     <div>
         <h1>Issued awards</h1>
-        <p class="page-sub">Awards given to BEST entries; open one to edit or revoke it.</p>
-    </div>
-    <div class="page-actions">
-        <a asp-action="Create" asp-route-competitionId="@search.CompetitionId" class="btn btn-primary"><i class="bi bi-trophy" aria-hidden="true"></i>Issue award</a>
+        <p class="page-sub">Awards are given automatically from the jury's scores when the results are published. Open one to change its date or remarks, or revoke it.</p>
     </div>
 </div>
 <partial name="_Alerts" />
@@ -71,7 +68,6 @@
     <div class="empty">
         <i class="bi bi-trophy" aria-hidden="true"></i>
         <p>No issued awards found.</p>
-        <a asp-action="Create" asp-route-competitionId="@search.CompetitionId" class="btn btn-primary">Issue award</a>
     </div>
 }
 else

@@ -23,16 +23,20 @@ namespace InstituteOfFineArts.Web.Controllers.Api;
 [Authorize(Roles = RoleNames.Student)]
 public class StudentSubmissionsApiController : ApiControllerBase
 {
-    /// <summary>A 5 MB image plus 1 MB for the other fields (BR-17).</summary>
-    private const long MaxRequestBytes = 6 * 1024 * 1024;
+    /// <summary>5 pictures of 10 MB plus 1 MB for the other fields (BR-17).</summary>
+    private const long MaxRequestBytes = 51 * 1024 * 1024; // 5 pictures × 10 MB + 1 MB of fields
 
     private readonly ISubmissionService _submissions;
     private readonly AppDbContext _db;
 
-    public StudentSubmissionsApiController(ISubmissionService submissions, AppDbContext db)
+    /// <summary>Score sheet of the jury (null in older unit tests).</summary>
+    private readonly IEvaluationService? _evaluations;
+
+    public StudentSubmissionsApiController(ISubmissionService submissions, AppDbContext db, IEvaluationService? evaluations = null)
     {
         _submissions = submissions;
         _db = db;
+        _evaluations = evaluations;
     }
 
     /// <summary>Id of my entry in the competition, or { submissionId: null }.</summary>
@@ -64,12 +68,13 @@ public class StudentSubmissionsApiController : ApiControllerBase
             TextType = form.ParsedTextType,
             TextContent = form.TextContent ?? string.Empty,
             Image = form.Image,
+            Images = form.Images,
+            CoverIndex = form.CoverIndex,
         };
         try
         {
             var result = await _submissions.CreateAsync(vm, me);
-            var detail = await PublicAndSubmissionQueries.DetailAsync(_db, result.Id, me);
-            return Created($"/api/submissions/{result.Id}", detail);
+            return Created($"/api/submissions/{result.Id}", await DetailWithImagesAsync(result.Id, me));
         }
         catch (BusinessException ex) when (ex.Message == SubmissionService.AlreadySubmittedMessage)
         {
@@ -88,9 +93,19 @@ public class StudentSubmissionsApiController : ApiControllerBase
     /// <summary>One of my entries.</summary>
     [HttpGet("submissions/{id:long}")]
     public async Task<ActionResult<SubmissionDetailDto>> Details(long id)
-        => await PublicAndSubmissionQueries.DetailAsync(_db, id, User.GetProfileId());
+        => await DetailWithImagesAsync(id, User.GetProfileId());
 
-    /// <summary>Edit texts and optionally replace the image (multipart), while the competition is ongoing.</summary>
+    /// <summary>Entry details with its picture ids (cover first) and the jury's score sheet once published.</summary>
+    private async Task<SubmissionDetailDto> DetailWithImagesAsync(long id, long me)
+    {
+        var dto = await PublicAndSubmissionQueries.DetailAsync(_db, id, me);
+        var images = await _db.SubmissionImages.AsNoTracking().Where(i => i.SubmissionId == id)
+            .OrderByDescending(i => i.IsCover).ThenBy(i => i.SortOrder).ThenBy(i => i.Id).Select(i => i.Id).ToListAsync();
+        var sheet = _evaluations == null ? null : await _evaluations.GetScoreSheetAsync(id, new ScoreSheetViewer(RoleNames.Student, me));
+        return dto with { ScoreSheet = ScoreSheetDto.From(sheet), ImageIds = images };
+    }
+
+    /// <summary>Edit texts and pictures (multipart: images to add, removeImageIds, coverImageId; or one image that replaces all), while the competition is ongoing.</summary>
     [HttpPut("submissions/{id:long}")]
     [RequestSizeLimit(MaxRequestBytes)]
     public async Task<ActionResult<SubmissionDetailDto>> Update(long id, [FromForm] SubmissionApiForm form)
@@ -104,9 +119,12 @@ public class StudentSubmissionsApiController : ApiControllerBase
             TextType = form.ParsedTextType,
             TextContent = form.TextContent ?? string.Empty,
             NewImage = form.Image,
+            NewImages = form.Images,
+            RemoveImageIds = form.RemoveImageIds,
+            CoverImageId = form.CoverImageId,
         };
         await _submissions.UpdateAsync(id, vm, me);
-        return await PublicAndSubmissionQueries.DetailAsync(_db, id, me);
+        return await DetailWithImagesAsync(id, me);
     }
 
     /// <summary>Delete one of my entries while the competition is ongoing.</summary>

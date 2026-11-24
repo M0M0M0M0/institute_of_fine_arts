@@ -18,8 +18,25 @@
 
     <div class="row gx-lg-5 align-items-center">
         <!-- CỘT TRÁI: ẢNH LỚN -->
-        <div class="col-lg-7 mb-5 mb-lg-0 text-center">
-            <img src="/files/submissions/@Model.SubmissionId" alt="@Model.Title – @Model.StudentName" class="img-fluid shadow-sm border" style="max-height: 80vh; object-fit: contain; background-color: #faf9f6;" />
+        <div class="col-lg-7 mb-5 mb-lg-0 text-center" data-entry-images>
+            @{ var firstPicture = Model.ImageIds.Count > 0 ? $"/files/submission-images/{Model.ImageIds[0]}" : $"/files/submissions/{Model.SubmissionId}"; }
+            <img src="@firstPicture" alt="@Model.Title – @Model.StudentName" data-entry-main class="img-fluid shadow-sm border" style="max-height: 80vh; object-fit: contain; background-color: #faf9f6;" />
+            @* Other pictures of the same artwork (BR-18): clicking one shows it large (site.js) *@
+            @if (Model.ImageIds.Count > 1)
+            {
+                <ul class="entry-thumbs justify-content-center" aria-label="Pictures of this artwork">
+                    @for (var i = 0; i < Model.ImageIds.Count; i++)
+                    {
+                        var src = $"/files/submission-images/{Model.ImageIds[i]}";
+                        <li>
+                            <button type="button" class="entry-thumb @(i == 0 ? "is-current" : "")" data-src="@src"
+                                    aria-label="Show picture @(i + 1) of @Model.ImageIds.Count" aria-pressed="@(i == 0 ? "true" : "false")">
+                                <img src="@(src + "/thumb")" alt="" loading="lazy" />
+                            </button>
+                        </li>
+                    }
+                </ul>
+            }
         </div>
 
         <!-- CỘT PHẢI: THÔNG TIN CHI TIẾT -->

@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../features/account/account_screen.dart';
 import '../features/account/unsupported_role_screen.dart';
 import '../features/auth/auth.dart';
-import '../features/awarding/adjust_evaluation_screen.dart';
 import '../features/awarding/awarding.dart';
 import '../features/awarding/awarding_competitions_screen.dart';
 import '../features/awarding/awarding_detail_screen.dart';
@@ -233,14 +232,10 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/staff/submissions/:id/evaluate',
         builder: (context, state) => GradingDetailScreen(id: int.parse(state.pathParameters['id']!)),
       ),
-      // Trao giải & công bố (UC-06) và điều chỉnh đánh giá sau công bố (BR-34)
+      // Xếp hạng, công bố và giải do hệ thống trao (UC-06, BR-30)
       GoRoute(
         path: '/staff/awarding/:id',
         builder: (context, state) => AwardingDetailScreen(competitionId: int.parse(state.pathParameters['id']!)),
-      ),
-      GoRoute(
-        path: '/staff/awarding/submissions/:id/adjust',
-        builder: (context, state) => AdjustEvaluationScreen(id: int.parse(state.pathParameters['id']!)),
       ),
       // Triển lãm & bán tranh – học viên (F-M09-03, 04, 10, 12)
       GoRoute(

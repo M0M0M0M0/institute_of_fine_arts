@@ -57,6 +57,27 @@ public class AppDbContext : DbContext
     /// <summary>Forgot-password tokens (optional feature M16).</summary>
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
 
+    /// <summary>Juries: teachers who grade a competition.</summary>
+    public DbSet<CompetitionJudge> CompetitionJudges => Set<CompetitionJudge>();
+
+    /// <summary>Library of grading criteria (admin).</summary>
+    public DbSet<GradingCriterion> GradingCriteria => Set<GradingCriterion>();
+
+    /// <summary>Criteria chosen for each competition with their weights.</summary>
+    public DbSet<CompetitionCriterion> CompetitionCriteria => Set<CompetitionCriterion>();
+
+    /// <summary>The grade of each judge for each entry.</summary>
+    public DbSet<JudgeEvaluation> JudgeEvaluations => Set<JudgeEvaluation>();
+
+    /// <summary>Scores per criterion of each judge's grade.</summary>
+    public DbSet<JudgeScore> JudgeScores => Set<JudgeScore>();
+
+    /// <summary>Lowest average score of each rating (admin).</summary>
+    public DbSet<RatingThreshold> RatingThresholds => Set<RatingThreshold>();
+
+    /// <summary>Pictures of the entries (1–5 per entry).</summary>
+    public DbSet<SubmissionImage> SubmissionImages => Set<SubmissionImage>();
+
     /// <summary>
     /// Model configuration: UTF-8 collation, per-table configuration, common audit columns.
     /// </summary>

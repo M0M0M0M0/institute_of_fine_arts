@@ -471,6 +471,106 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.CompetitionCriterion", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("CompetitionId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("competition_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<long>("CriterionId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("criterion_id");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("sort_order");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("updated_at");
+
+                    b.Property<decimal>("WeightPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)")
+                        .HasColumnName("weight_percent");
+
+                    b.HasKey("Id")
+                        .HasName("pk_competition_criterion");
+
+                    b.HasIndex("CriterionId")
+                        .HasDatabaseName("ix_competition_criterion_criterion_id");
+
+                    b.HasIndex("CompetitionId", "CriterionId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_competition_criterion");
+
+                    b.ToTable("competition_criterion", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_competition_criterion_weight", "[weight_percent] > 0 AND [weight_percent] <= 100");
+                        });
+                });
+
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.CompetitionJudge", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("CompetitionId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("competition_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<bool>("IsChair")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_chair");
+
+                    b.Property<long>("JudgeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("judge_id");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_competition_judge");
+
+                    b.HasIndex("JudgeId")
+                        .HasDatabaseName("IX_competition_judge_judge");
+
+                    b.HasIndex("CompetitionId", "JudgeId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_competition_judge");
+
+                    b.ToTable("competition_judge", (string)null);
+                });
+
             modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.Customer", b =>
                 {
                     b.Property<long>("Id")
@@ -578,6 +678,11 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                     b.Property<long>("SubmissionId")
                         .HasColumnType("bigint")
                         .HasColumnName("submission_id");
+
+                    b.Property<decimal?>("TotalScore")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)")
+                        .HasColumnName("total_score");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasPrecision(0)
@@ -811,6 +916,184 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.GradingCriterion", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<bool>("Active")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true)
+                        .HasColumnName("active");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("name");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_grading_criterion");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("UX_grading_criterion_name");
+
+                    b.ToTable("grading_criterion", (string)null);
+                });
+
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.JudgeEvaluation", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<bool>("Disqualified")
+                        .HasColumnType("bit")
+                        .HasColumnName("disqualified");
+
+                    b.Property<DateTime>("EvaluatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("evaluated_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<string>("ImprovementAreas")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("improvement_areas");
+
+                    b.Property<long>("JudgeId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("judge_id");
+
+                    b.Property<string>("NegativePoints")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("negative_points");
+
+                    b.Property<string>("PositivePoints")
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("positive_points");
+
+                    b.Property<long>("SubmissionId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("submission_id");
+
+                    b.Property<decimal?>("TotalScore")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)")
+                        .HasColumnName("total_score");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_judge_evaluation");
+
+                    b.HasIndex("JudgeId")
+                        .HasDatabaseName("IX_judge_evaluation_judge");
+
+                    b.HasIndex("SubmissionId", "JudgeId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_judge_evaluation");
+
+                    b.ToTable("judge_evaluation", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_judge_evaluation_dq", "[disqualified] = 0 OR ([negative_points] IS NOT NULL AND [total_score] IS NULL)");
+
+                            t.HasCheckConstraint("CK_judge_evaluation_total", "[total_score] IS NULL OR ([total_score] >= 0 AND [total_score] <= 100)");
+                        });
+                });
+
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.JudgeScore", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("comment");
+
+                    b.Property<long>("CompetitionCriterionId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("competition_criterion_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<long>("JudgeEvaluationId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("judge_evaluation_id");
+
+                    b.Property<decimal>("Score")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)")
+                        .HasColumnName("score");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_judge_score");
+
+                    b.HasIndex("CompetitionCriterionId")
+                        .HasDatabaseName("ix_judge_score_competition_criterion_id");
+
+                    b.HasIndex("JudgeEvaluationId", "CompetitionCriterionId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_judge_score");
+
+                    b.ToTable("judge_score", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_judge_score_range", "[score] >= 0 AND [score] <= 100");
+                        });
+                });
+
             modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.Notification", b =>
                 {
                     b.Property<long>("Id")
@@ -919,6 +1202,54 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                         .HasDatabaseName("UX_password_reset_token_hash");
 
                     b.ToTable("password_reset_token", (string)null);
+                });
+
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.RatingThreshold", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<decimal>("MinScore")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)")
+                        .HasColumnName("min_score");
+
+                    b.Property<string>("Rating")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("rating");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_rating_threshold");
+
+                    b.HasIndex("Rating")
+                        .IsUnique()
+                        .HasDatabaseName("UX_rating_threshold_rating");
+
+                    b.ToTable("rating_threshold", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_rating_threshold_rating", "[rating] IN ('BEST','BETTER','GOOD','MODERATE')");
+
+                            t.HasCheckConstraint("CK_rating_threshold_score", "[min_score] >= 0 AND [min_score] <= 100");
+                        });
                 });
 
             modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.StaffProfile", b =>
@@ -1178,6 +1509,81 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.SubmissionImage", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("content_type");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint")
+                        .HasColumnName("file_size");
+
+                    b.Property<string>("ImagePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("image_path");
+
+                    b.Property<bool>("IsCover")
+                        .HasColumnType("bit")
+                        .HasColumnName("is_cover");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)")
+                        .HasColumnName("original_file_name");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("sort_order");
+
+                    b.Property<long>("SubmissionId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("submission_id");
+
+                    b.Property<string>("ThumbnailPath")
+                        .HasMaxLength(500)
+                        .IsUnicode(false)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("thumbnail_path");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_submission_image");
+
+                    b.HasIndex("SubmissionId", "SortOrder")
+                        .HasDatabaseName("IX_submission_image_order");
+
+                    b.ToTable("submission_image", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_submission_image_type", "[content_type] IN ('image/jpeg','image/png','image/webp')");
+                        });
+                });
+
             modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.AuditLog", b =>
                 {
                     b.HasOne("InstituteOfFineArts.Web.Models.Entities.Account", "Account")
@@ -1249,6 +1655,48 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                         .HasConstraintName("fk_competition_award_competitions_competition_id");
 
                     b.Navigation("Competition");
+                });
+
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.CompetitionCriterion", b =>
+                {
+                    b.HasOne("InstituteOfFineArts.Web.Models.Entities.Competition", "Competition")
+                        .WithMany("Criteria")
+                        .HasForeignKey("CompetitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_competition_criterion_competition_competition_id");
+
+                    b.HasOne("InstituteOfFineArts.Web.Models.Entities.GradingCriterion", "Criterion")
+                        .WithMany()
+                        .HasForeignKey("CriterionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_competition_criterion_grading_criteria_criterion_id");
+
+                    b.Navigation("Competition");
+
+                    b.Navigation("Criterion");
+                });
+
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.CompetitionJudge", b =>
+                {
+                    b.HasOne("InstituteOfFineArts.Web.Models.Entities.Competition", "Competition")
+                        .WithMany("Judges")
+                        .HasForeignKey("CompetitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_competition_judge_competition_competition_id");
+
+                    b.HasOne("InstituteOfFineArts.Web.Models.Entities.StaffProfile", "Judge")
+                        .WithMany()
+                        .HasForeignKey("JudgeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_competition_judge_staff_profiles_judge_id");
+
+                    b.Navigation("Competition");
+
+                    b.Navigation("Judge");
                 });
 
             modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.Evaluation", b =>
@@ -1330,6 +1778,48 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                     b.Navigation("Submission");
                 });
 
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.JudgeEvaluation", b =>
+                {
+                    b.HasOne("InstituteOfFineArts.Web.Models.Entities.StaffProfile", "Judge")
+                        .WithMany()
+                        .HasForeignKey("JudgeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_judge_evaluation_staff_profiles_judge_id");
+
+                    b.HasOne("InstituteOfFineArts.Web.Models.Entities.Submission", "Submission")
+                        .WithMany("JudgeEvaluations")
+                        .HasForeignKey("SubmissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_judge_evaluation_submissions_submission_id");
+
+                    b.Navigation("Judge");
+
+                    b.Navigation("Submission");
+                });
+
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.JudgeScore", b =>
+                {
+                    b.HasOne("InstituteOfFineArts.Web.Models.Entities.CompetitionCriterion", "CompetitionCriterion")
+                        .WithMany()
+                        .HasForeignKey("CompetitionCriterionId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired()
+                        .HasConstraintName("fk_judge_score_competition_criterion_competition_criterion_id");
+
+                    b.HasOne("InstituteOfFineArts.Web.Models.Entities.JudgeEvaluation", "JudgeEvaluation")
+                        .WithMany("Scores")
+                        .HasForeignKey("JudgeEvaluationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_judge_score_judge_evaluation_judge_evaluation_id");
+
+                    b.Navigation("CompetitionCriterion");
+
+                    b.Navigation("JudgeEvaluation");
+                });
+
             modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.Notification", b =>
                 {
                     b.HasOne("InstituteOfFineArts.Web.Models.Entities.Account", "Account")
@@ -1399,6 +1889,18 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                     b.Navigation("Student");
                 });
 
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.SubmissionImage", b =>
+                {
+                    b.HasOne("InstituteOfFineArts.Web.Models.Entities.Submission", "Submission")
+                        .WithMany("Images")
+                        .HasForeignKey("SubmissionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_submission_image_submission_submission_id");
+
+                    b.Navigation("Submission");
+                });
+
             modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.Account", b =>
                 {
                     b.Navigation("StaffProfile");
@@ -1409,6 +1911,10 @@ namespace InstituteOfFineArts.Web.Data.Migrations
             modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.Competition", b =>
                 {
                     b.Navigation("Awards");
+
+                    b.Navigation("Criteria");
+
+                    b.Navigation("Judges");
 
                     b.Navigation("Submissions");
                 });
@@ -1428,6 +1934,11 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                     b.Navigation("Entries");
                 });
 
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.JudgeEvaluation", b =>
+                {
+                    b.Navigation("Scores");
+                });
+
             modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.StudentProfile", b =>
                 {
                     b.Navigation("Submissions");
@@ -1440,6 +1951,10 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                     b.Navigation("Evaluation");
 
                     b.Navigation("ExhibitionEntries");
+
+                    b.Navigation("Images");
+
+                    b.Navigation("JudgeEvaluations");
                 });
 #pragma warning restore 612, 618
         }

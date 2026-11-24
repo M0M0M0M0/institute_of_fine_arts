@@ -1,17 +1,20 @@
 @model InstituteOfFineArts.Web.ViewModels.Staff.Evaluations.EvaluationPageVm
 @*
-    Teacher – evaluate a submission (/teacher/evaluations/{submissionId}, SCR-27, F-M07-03..05, F-M07-08): entry summary,
-    current evaluation and the form (create / edit), or the read-only evaluation with the reason.
-    Created by BE1 (BE1-10); styled by FE1-06: the painting large on its stone mat with the wall label and text,
-    the evaluation form beside it, the rating as a pill radio group (same name Form.Rating and values as the old select).
+    Teacher – grade an entry (/teacher/evaluations/{submissionId}, SCR-27, F-M07-03..05, F-M07-08; TODO steps 4–5).
+    - Left: the pictures of the entry (zoom, download), the wall label, the text and description.
+    - Right: the judge's own grade – a score 0–100 and a comment per criterion of the competition, the weighted total
+      shown live (wwwroot/js/grading-form.js, calculated again by the server), the general comments; or "Disqualify"
+      with the reason. A late entry can only be disqualified (BR-14).
+    - The jury: who has graded this entry (never the other judges' scores before the results are published).
+    - Once GRADED: the whole score sheet of the jury.
 *@
 @using InstituteOfFineArts.Web.ViewModels.Staff.Evaluations
 @{
     ViewData["Title"] = $"Evaluate – {Model.Title}";
-    // A late entry only offers DISQUALIFIED (BR-14); otherwise the six ratings
-    var ratings = Model.AllowedRatings;
-    // The old select pre-selected the only option of a late entry; the radio group does the same
-    Rating? selected = Model.Form.Rating ?? (Model.IsLate && ratings.Count == 1 ? ratings[0] : null);
+    var criteria = Model.Criteria.ToDictionary(c => c.CompetitionCriterionId);
+    string? Error(string key) => ViewData.ModelState.TryGetValue(key, out var e) && e.Errors.Count > 0 ? e.Errors[0].ErrorMessage : null;
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+    var images = new InstituteOfFineArts.Web.ViewModels.Common.EntryImagesVm(Model.SubmissionId, Model.ImageIds, $"{Model.Title} – {Model.StudentName}", true);
 }
 
 <div class="page-head">
@@ -31,45 +34,32 @@
     </div>
     <div class="page-actions">
         <a href="/teacher/submissions/@Model.SubmissionId" class="btn btn-outline-primary"><i class="bi bi-file-earmark-image" aria-hidden="true"></i>Submission details</a>
-        <a href="/teacher/submissions?competitionId=@Model.CompetitionId" class="btn btn-link">Back to entries</a>
+        <a href="/teacher/submissions?competitionId=@Model.CompetitionId&Evaluated=false" class="btn btn-link">Back to entries</a>
     </div>
 </div>
 <partial name="_Alerts" />
 
-@* BR-14: an entry received after the deadline can only be disqualified *@
 @if (Model.IsLate)
 {
     <div class="alert alert-danger late-warning" role="alert">
         <i class="bi bi-clock-history" aria-hidden="true"></i>
-        <div>
-            <strong>Late entry.</strong> This entry was submitted after the deadline (@Model.EndDate.ToString("dd MMM yyyy"), 23:59:59),
-            so it can only be rated DISQUALIFIED.
-        </div>
+        <div><strong>Late entry.</strong> Submitted after the deadline (@Model.EndDate.ToString("dd MMM yyyy"), 23:59:59), so it can only be disqualified.</div>
     </div>
 }
-
 @if (Model.ReadOnlyReason != null)
 {
     <div class="alert alert-info"><i class="bi bi-lock" aria-hidden="true"></i><div>@Model.ReadOnlyReason</div></div>
 }
 
 <div class="artwork-stage grading-stage">
-    @* Entry summary (F-M07-02); the full details stay on the submission page *@
     <figure class="artwork m-0">
-        <div class="artwork-frame" data-zoom data-zoom-download="/files/submissions/@Model.SubmissionId?download=true"><img src="/files/submissions/@Model.SubmissionId" alt="@Model.Title – @Model.StudentName" /></div>
+        <partial name="_EntryImages" model="images" />
         <figcaption class="wall-label wall-label-long">
             <span class="wl-title">@Model.Title</span>
             <span class="wl-artist">@Model.StudentName (@Model.StudentCode)</span>
             <span class="wl-meta">@Model.CompetitionTitle</span>
             <span class="wl-meta num">Submitted at @Model.SubmittedAt.ToString("dd MMM yyyy HH:mm")</span>
-            <span class="wl-meta"><a href="/files/submissions/@Model.SubmissionId?download=true"><i class="bi bi-download me-1" aria-hidden="true"></i>Download original</a></span>
-            @if (Model.IsLate)
-            {
-                <span class="wl-state"><span class="tag tag-DISQUALIFIED tag-plain"><i class="bi bi-clock-history" aria-hidden="true"></i>Late</span></span>
-            }
         </figcaption>
-
-        @* .artwork-text keeps the line breaks (pre-line); Razor encodes the text *@
         <div class="mt-4">
             <h2 class="h3">Text (@Model.TextType)</h2>
             <p class="artwork-text">@Model.TextContent</p>
@@ -79,100 +69,135 @@
     </figure>
 
     <div class="grading-panel">
-        <div class="section-head"><h2>Evaluation</h2></div>
+        <div class="section-head"><h2>Your grade</h2></div>
         @if (Model.HasEvaluation)
         {
-            <p class="text-muted small">
-                Last evaluated by @Model.EvaluatedByName, @Model.EvaluatedAt?.ToString("dd MMM yyyy HH:mm")
-            </p>
+            <p class="text-muted small">You last saved it on @Model.EvaluatedAt?.ToString("dd MMM yyyy HH:mm")@(Model.MyTotal is { } t ? $", total {t.ToString("0.00", inv)} / 100" : Model.Form.Disqualified ? ", disqualified" : "").</p>
         }
 
         @if (Model.CanEvaluate)
         {
-            @* Create the first time, edit afterwards (BR-22); BR-23 is checked again on the server *@
-            <form asp-action="Index" asp-route-submissionId="@Model.SubmissionId" method="post" novalidate class="form-sheet">
+            <form asp-action="Index" asp-route-submissionId="@Model.SubmissionId" method="post" novalidate class="form-sheet" data-grading-form>
                 <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
-                @* BA-07: version of the evaluation this page shows; saving is refused if someone changed it meanwhile *@
-                <input type="hidden" asp-for="Form.Version" />
+                <input type="hidden" name="Form.Version" value="@Model.Form.Version" />
 
-                <fieldset class="mb-4">
-                    <legend class="form-label">@Html.DisplayNameFor(m => m.Form.Rating)</legend>
-                    <div class="rating-pills">
-                        @foreach (var r in ratings)
-                        {
-                            <input type="radio" name="Form.Rating" id="Form_Rating_@r" value="@r" checked="@(selected == r)"
-                                   data-val="true" data-val-required="@EvaluationFormVm.RatingRequiredMessage" />
-                            <label for="Form_Rating_@r" class="rating-@r">
-                                @if (r == Rating.BEST)
+                <div class="form-check form-switch mb-3">
+                    @if (Model.IsLate)
+                    {
+                        <input type="hidden" name="Form.Disqualified" value="true" />
+                        <input class="form-check-input" type="checkbox" id="Form_Disqualified" checked disabled />
+                    }
+                    else
+                    {
+                        <input class="form-check-input" type="checkbox" name="Form.Disqualified" id="Form_Disqualified" value="true" checked="@Model.Form.Disqualified" data-disqualify />
+                        <input type="hidden" name="Form.Disqualified" value="false" />
+                    }
+                    <label class="form-check-label" for="Form_Disqualified">Disqualify this entry (rules broken, late…) – no scores, a reason is required</label>
+                </div>
+
+                <fieldset class="mb-3" data-scores>
+                    <legend class="form-label">Scores (0–100)</legend>
+                    @if (Error("Form.Scores") is { } scoresError)
+                    {
+                        <p class="text-danger small">@scoresError</p>
+                    }
+                    @for (var i = 0; i < Model.Form.Scores.Count; i++)
+                    {
+                        var line = Model.Form.Scores[i];
+                        if (!criteria.TryGetValue(line.CompetitionCriterionId, out var c)) { continue; }
+                        <div class="score-row">
+                            <input type="hidden" name="Form.Scores[@i].CompetitionCriterionId" value="@c.CompetitionCriterionId" />
+                            <label class="score-name" for="score-@i">
+                                <strong>@c.Name</strong> <span class="text-muted small num">@c.Weight.ToString("0.##", inv) %</span>
+                                @if (!string.IsNullOrWhiteSpace(c.Description))
                                 {
-                                    <i class="bi bi-award" aria-hidden="true"></i>
+                                    <span class="small text-muted d-block">@c.Description</span>
                                 }
-                                @r
                             </label>
-                        }
-                    </div>
-                    <span asp-validation-for="Form.Rating" class="text-danger"></span>
+                            <input class="form-control score-input num" id="score-@i" name="Form.Scores[@i].Score" type="number" min="0" max="100" step="0.01"
+                                   value="@line.Score?.ToString("0.##", inv)" data-weight="@c.Weight.ToString(inv)" inputmode="decimal" />
+                            <textarea class="form-control form-control-sm score-comment" name="Form.Scores[@i].Comment" rows="1" maxlength="1000"
+                                      placeholder="Comment on @c.Name (optional)" aria-label="Comment on @c.Name">@line.Comment</textarea>
+                            @foreach (var field in new[] { "Score", "Comment" })
+                            {
+                                if (Error($"Form.Scores[{i}].{field}") is { } e)
+                                {
+                                    <span class="text-danger small score-error">@e</span>
+                                }
+                            }
+                        </div>
+                    }
+                    <p class="score-total">Weighted total: <strong class="num" data-score-total>–</strong> / 100</p>
                 </fieldset>
 
                 <div class="mb-3">
-                    <label asp-for="Form.PositivePoints" class="form-label"></label>
-                    <textarea asp-for="Form.PositivePoints" class="form-control" rows="4" maxlength="2000"></textarea>
+                    <label for="Form_PositivePoints" class="form-label">Positive points</label>
+                    <textarea id="Form_PositivePoints" name="Form.PositivePoints" class="form-control" rows="3" maxlength="2000">@Model.Form.PositivePoints</textarea>
                     <div class="form-text">Required unless the entry is disqualified.</div>
-                    <span asp-validation-for="Form.PositivePoints" class="text-danger"></span>
+                    <span class="text-danger small">@Error("Form.PositivePoints")</span>
                 </div>
-
                 <div class="mb-3">
-                    <label asp-for="Form.NegativePoints" class="form-label"></label>
-                    <textarea asp-for="Form.NegativePoints" class="form-control" rows="4" maxlength="2000"></textarea>
-                    <div class="form-text">For DISQUALIFIED, write the reason here (required).</div>
-                    <span asp-validation-for="Form.NegativePoints" class="text-danger"></span>
+                    <label for="Form_NegativePoints" class="form-label">Negative points <span class="text-muted small" data-reason-hint>(the reason when disqualified)</span></label>
+                    <textarea id="Form_NegativePoints" name="Form.NegativePoints" class="form-control" rows="3" maxlength="2000">@Model.Form.NegativePoints</textarea>
+                    <span class="text-danger small">@Error("Form.NegativePoints")</span>
                 </div>
-
                 <div class="mb-3">
-                    <label asp-for="Form.ImprovementAreas" class="form-label"></label>
-                    <textarea asp-for="Form.ImprovementAreas" class="form-control" rows="4" maxlength="2000"></textarea>
-                    <span asp-validation-for="Form.ImprovementAreas" class="text-danger"></span>
+                    <label for="Form_ImprovementAreas" class="form-label">Improvement areas</label>
+                    <textarea id="Form_ImprovementAreas" name="Form.ImprovementAreas" class="form-control" rows="3" maxlength="2000">@Model.Form.ImprovementAreas</textarea>
+                    <span class="text-danger small">@Error("Form.ImprovementAreas")</span>
                 </div>
-
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-primary btn-lg"><i class="bi bi-check2" aria-hidden="true"></i>@(Model.HasEvaluation ? "Save changes" : "Save evaluation")</button>
-                </div>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg" aria-hidden="true"></i>Save my grade</button>
             </form>
         }
         else if (Model.HasEvaluation)
         {
-            @* Read only (GRADED): comments are encoded by Razor, line breaks kept *@
             <dl class="details">
-                <dt>Rating</dt>
-                <dd><span class="tag tag-@Model.Form.Rating">@Model.Form.Rating</span></dd>
-                <dt>Positive points</dt>
-                <dd style="white-space: pre-line">@(Model.Form.PositivePoints ?? "–")</dd>
-                <dt>Negative points</dt>
-                <dd style="white-space: pre-line">@(Model.Form.NegativePoints ?? "–")</dd>
-                <dt>Improvement areas</dt>
-                <dd style="white-space: pre-line">@(Model.Form.ImprovementAreas ?? "–")</dd>
+                @if (Model.Form.Disqualified)
+                {
+                    <dt>Result</dt><dd><span class="tag tag-DISQUALIFIED">Disqualified</span></dd>
+                }
+                @foreach (var s in Model.Form.Scores.Where(s => criteria.ContainsKey(s.CompetitionCriterionId)))
+                {
+                    <dt>@criteria[s.CompetitionCriterionId].Name</dt>
+                    <dd><span class="num">@(s.Score?.ToString("0.##", inv) ?? "–")</span>@if (s.Comment != null) { <span class="text-muted"> – @s.Comment</span> }</dd>
+                }
+                <dt>Positive points</dt><dd style="white-space: pre-line">@(Model.Form.PositivePoints ?? "–")</dd>
+                <dt>Negative points</dt><dd style="white-space: pre-line">@(Model.Form.NegativePoints ?? "–")</dd>
+                <dt>Improvement areas</dt><dd style="white-space: pre-line">@(Model.Form.ImprovementAreas ?? "–")</dd>
             </dl>
-        }
-        else
-        {
-            <p class="text-muted">Not evaluated yet.</p>
         }
 
         @if (Model.CanDelete)
         {
-            @* POST with anti-forgery token; a confirmation dialog asks first *@
             <form asp-action="Delete" asp-route-submissionId="@Model.SubmissionId" method="post" class="mt-3"
-                  data-confirm="Delete this evaluation?" data-confirm-ok="Delete">
-                <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash" aria-hidden="true"></i>Delete evaluation</button>
+                  data-confirm="Delete your grade of this entry?" data-confirm-ok="Delete">
+                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash" aria-hidden="true"></i>Delete my grade</button>
             </form>
         }
-        else if (Model.HasEvaluation && Model.DeleteBlockedReason != null && Model.CompetitionStatus != CompetitionStatus.GRADED)
-        {
-            <p class="form-text mt-3">@Model.DeleteBlockedReason</p>
-        }
+
+        <div class="section-head mt-4"><h2 class="h3">Jury</h2></div>
+        <p class="small text-muted">Each judge grades on their own; the scores of the others are shown after the results are published.</p>
+        <ul class="list-unstyled jury-progress">
+            @foreach (var j in Model.Jury)
+            {
+                <li>
+                    <i class="bi @(j.Done ? "bi-check-circle-fill text-success" : "bi-circle text-muted")" aria-hidden="true"></i>
+                    @j.Name@(j.IsMe ? " (you)" : "")@(j.IsChair ? ", chair" : "")
+                    <span class="visually-hidden">@(j.Done ? "has graded" : "has not graded yet")</span>
+                </li>
+            }
+        </ul>
     </div>
 </div>
 
+@if (Model.ScoreSheet is { } sheet)
+{
+    <section class="section" aria-labelledby="sheet-title">
+        <div class="section-head"><h2 id="sheet-title">Score sheet of the jury</h2></div>
+        <partial name="_ScoreSheet" model="sheet" />
+    </section>
+}
+
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/grading-form.js" asp-append-version="true"></script>
 }

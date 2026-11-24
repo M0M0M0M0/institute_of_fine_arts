@@ -148,165 +148,17 @@ public class AwardIssuedServiceTests
 
     // ------------------------------------------------------------------ Issue
 
-    /// <summary>TC-M08-01: BEST entry of a CLOSED competition → award issued with date, trimmed remarks and issuer.</summary>
+    /// <summary>BR-30 (11/2026): awards are never issued by hand – the ranking gives them when the results are published.</summary>
     [Fact]
-    public async Task Create_BestEntry_Saved()
+    public async Task Create_ByHand_Refused()
     {
         var d = Seed();
-        using var db = d.Db;
-
-        var id = await Service(db).CreateAsync(Form(d), _staffId);
-
-        var issued = await db.AwardsIssued.SingleAsync();
-        Assert.Equal(id, issued.Id);
-        Assert.Equal(d.First.Id, issued.CompetitionAwardId);
-        Assert.Equal(d.Entries["best1"].Id, issued.SubmissionId);
-        Assert.Equal(_staffId, issued.IssuedBy);
-        Assert.Equal(Today, issued.IssuedDate);
-        Assert.Equal("Outstanding use of light.", issued.Remarks);
-
-        // M12 event 3: the winner is told once
-        _notifications.Verify(n => n.AwardIssuedAsync(id), Times.Once);
-    }
-
-    /// <summary>BR-32 decision: a GRADED competition still accepts awards.</summary>
-    [Fact]
-    public async Task Create_Graded_Allowed()
-    {
-        var d = Seed(CompetitionStatus.GRADED);
-        using var db = d.Db;
-
-        await Service(db).CreateAsync(Form(d, remarks: null), _staffId);
-        Assert.Null((await db.AwardsIssued.SingleAsync()).Remarks);
-    }
-
-    /// <summary>TC-M08-02: UPCOMING / ONGOING → "Awards can only be issued after the competition has closed."</summary>
-    [Theory]
-    [InlineData(CompetitionStatus.UPCOMING)]
-    [InlineData(CompetitionStatus.ONGOING)]
-    public async Task Create_NotClosed_Refused(CompetitionStatus status)
-    {
-        var d = Seed(status);
         using var db = d.Db;
 
         var ex = await Assert.ThrowsAsync<BusinessException>(() => Service(db).CreateAsync(Form(d), _staffId));
-        Assert.Equal(AwardIssuedService.NotClosedMessage, ex.Message);
-        Assert.Null(ex.Field);
-        var page = await Assert.ThrowsAsync<BusinessException>(() => Service(db).GetForCreateAsync(d.Competition.Id));
-        Assert.Equal(AwardIssuedService.NotClosedMessage, page.Message);
-        Assert.Equal(0, await db.AwardsIssued.CountAsync());
-    }
 
-    /// <summary>US-11 AC1 / TC-M08-04: First Prize (quantity 1) already given → "No award slots left."</summary>
-    [Fact]
-    public async Task Create_NoSlotsLeft_Refused()
-    {
-        var d = Seed();
-        using var db = d.Db;
-        Issue(db, d.First, d.Entries["best1"]);
-
-        var ex = await Assert.ThrowsAsync<BusinessException>(() => Service(db).CreateAsync(Form(d, entry: "best2"), _staffId));
-        Assert.Equal(AwardIssuedService.NoSlotsMessage, ex.Message);
-        Assert.Equal(nameof(AwardIssuedFormVm.CompetitionAwardId), ex.Field);
-
-        // An award with quantity 2 can be given twice, not three times
-        await Service(db).CreateAsync(Form(d, d.Mention, "best2"), _staffId);
-        await Service(db).CreateAsync(Form(d, d.Mention, "best3"), _staffId);
-        Assert.Equal(3, await db.AwardsIssued.CountAsync());
-    }
-
-    /// <summary>BR-30 / US-11 AC2 / TC-M08-03: GOOD or not evaluated → only BEST; DISQUALIFIED → never.</summary>
-    [Theory]
-    [InlineData("good", AwardIssuedService.NotBestMessage)]
-    [InlineData("none", AwardIssuedService.NotBestMessage)]
-    [InlineData("dq", AwardIssuedService.DisqualifiedMessage)]
-    public async Task Create_NotBest_Refused(string entry, string message)
-    {
-        var d = Seed();
-        using var db = d.Db;
-
-        var ex = await Assert.ThrowsAsync<BusinessException>(() => Service(db).CreateAsync(Form(d, entry: entry), _staffId));
-        Assert.Equal(message, ex.Message);
-        Assert.Equal(nameof(AwardIssuedFormVm.SubmissionId), ex.Field);
-        Assert.Equal(0, await db.AwardsIssued.CountAsync());
-    }
-
-    /// <summary>US-11 AC3 / BR-31: an entry that already has Second Prize cannot also receive another award.</summary>
-    [Fact]
-    public async Task Create_SameEntryTwice_Refused()
-    {
-        var d = Seed();
-        using var db = d.Db;
-        Issue(db, d.Mention, d.Entries["best1"]);
-
-        var ex = await Assert.ThrowsAsync<BusinessException>(() => Service(db).CreateAsync(Form(d, d.First, "best1"), _staffId));
-        Assert.Equal(AwardIssuedService.AlreadyAwardedMessage, ex.Message);
-        Assert.Equal(nameof(AwardIssuedFormVm.SubmissionId), ex.Field);
-        Assert.Equal(1, await db.AwardsIssued.CountAsync());
-    }
-
-    /// <summary>An award or an entry of another competition, or a missing / unknown competition → refused on the field.</summary>
-    [Fact]
-    public async Task Create_OtherCompetitionOrMissingValues_Refused()
-    {
-        var d = Seed();
-        using var db = d.Db;
-        var other = AddCompetition(db, "Wildlife", CompetitionStatus.CLOSED);
-        var otherAward = new CompetitionAward { CompetitionId = other.Id, AwardName = "First Prize", Rank = 1, PrizeValue = 300m, Quantity = 1 };
-        db.CompetitionAwards.Add(otherAward);
-        db.SaveChanges();
-        var otherEntry = AddEntry(db, other, d.Entries["best1"].StudentId, "Tiger", Rating.BEST);
-        var service = Service(db);
-
-        var wrongAward = await Assert.ThrowsAsync<BusinessException>(() => service.CreateAsync(Form(d, otherAward), _staffId));
-        Assert.Equal(AwardIssuedService.AwardNotInCompetitionMessage, wrongAward.Message);
-        var wrongEntry = Form(d);
-        wrongEntry.SubmissionId = otherEntry.Id;
-        var ex = await Assert.ThrowsAsync<BusinessException>(() => service.CreateAsync(wrongEntry, _staffId));
-        Assert.Equal(AwardIssuedService.SubmissionNotInCompetitionMessage, ex.Message);
-
-        var noCompetition = Form(d);
-        noCompetition.CompetitionId = null;
-        Assert.Equal(nameof(AwardIssuedFormVm.CompetitionId),
-            (await Assert.ThrowsAsync<BusinessException>(() => service.CreateAsync(noCompetition, _staffId))).Field);
-        var unknown = Form(d);
-        unknown.CompetitionId = 999;
-        Assert.Equal(AwardIssuedService.UnknownCompetitionMessage,
-            (await Assert.ThrowsAsync<BusinessException>(() => service.CreateAsync(unknown, _staffId))).Message);
-        var noAward = Form(d);
-        noAward.CompetitionAwardId = null;
-        Assert.Equal(nameof(AwardIssuedFormVm.CompetitionAwardId),
-            (await Assert.ThrowsAsync<BusinessException>(() => service.CreateAsync(noAward, _staffId))).Field);
-        var noEntry = Form(d);
-        noEntry.SubmissionId = null;
-        Assert.Equal(nameof(AwardIssuedFormVm.SubmissionId),
-            (await Assert.ThrowsAsync<BusinessException>(() => service.CreateAsync(noEntry, _staffId))).Field);
-        Assert.Equal(0, await db.AwardsIssued.CountAsync());
-    }
-
-    /// <summary>Issued date: required, not in the future, after the competition end date; remarks at most 1000 characters.</summary>
-    [Fact]
-    public async Task Create_InvalidDateOrRemarks_Refused()
-    {
-        var d = Seed();
-        using var db = d.Db;
-        var service = Service(db);
-
-        var future = await Assert.ThrowsAsync<BusinessException>(() => service.CreateAsync(Form(d, date: Today.AddDays(1)), _staffId));
-        Assert.Equal(AwardIssuedService.FutureDateMessage, future.Message);
-        Assert.Equal(nameof(AwardIssuedFormVm.IssuedDate), future.Field);
-        var onEnd = await Assert.ThrowsAsync<BusinessException>(() => service.CreateAsync(Form(d, date: d.Competition.EndDate), _staffId));
-        Assert.Equal(AwardIssuedService.DateBeforeEndMessage, onEnd.Message);
-        var noDate = Form(d);
-        noDate.IssuedDate = null;
-        Assert.Equal(nameof(AwardIssuedFormVm.IssuedDate),
-            (await Assert.ThrowsAsync<BusinessException>(() => service.CreateAsync(noDate, _staffId))).Field);
-        var longRemarks = await Assert.ThrowsAsync<BusinessException>(() => service.CreateAsync(Form(d, remarks: new string('a', 1001)), _staffId));
-        Assert.Equal(nameof(AwardIssuedFormVm.Remarks), longRemarks.Field);
-
-        // The day after the end date is the first valid day
-        await service.CreateAsync(Form(d, date: d.Competition.EndDate.AddDays(1)), _staffId);
-        Assert.Equal(1, await db.AwardsIssued.CountAsync());
+        Assert.Equal(AwardIssuedService.AutomaticAwardsMessage, ex.Message);
+        Assert.Empty(db.AwardsIssued);
     }
 
     /// <summary>UC-06 2a/2b, US-11 AC2: the form offers only awards with slots and BEST entries without an award.</summary>
@@ -338,51 +190,46 @@ public class AwardIssuedServiceTests
 
     // ------------------------------------------------------------------ Edit
 
-    /// <summary>F-M08-02: edit keeps its own slot and entry selectable, and can move to another eligible entry.</summary>
+    /// <summary>F-M08-02 (11/2026): only the date and the remarks of a given award change.</summary>
     [Fact]
-    public async Task Update_ChangeEntryDateRemarks_Saved()
+    public async Task Update_DateAndRemarks_Saved()
     {
         var d = Seed();
         using var db = d.Db;
         var issued = Issue(db, d.First, d.Entries["best1"], Today.AddDays(-1), "Old");
         var service = Service(db);
 
-        // The current award (full, quantity 1) and the current entry stay in the options
         var form = await service.GetForEditAsync(issued.Id);
-        Assert.Contains(form.Awards, a => a.Id == d.First.Id);
-        Assert.Contains(form.Submissions, s => s.Id == d.Entries["best1"].Id);
         Assert.Equal("Old", form.Remarks);
-
-        form.SubmissionId = d.Entries["best2"].Id;
         form.IssuedDate = Today;
-        form.Remarks = "New remarks";
+        form.Remarks = "  New remarks  ";
         var competitionId = await service.UpdateAsync(issued.Id, form);
 
         Assert.Equal(d.Competition.Id, competitionId);
         var saved = await db.AwardsIssued.AsNoTracking().SingleAsync();
-        Assert.Equal(d.Entries["best2"].Id, saved.SubmissionId);
+        Assert.Equal(d.Entries["best1"].Id, saved.SubmissionId);
         Assert.Equal(d.First.Id, saved.CompetitionAwardId);
         Assert.Equal(Today, saved.IssuedDate);
         Assert.Equal("New remarks", saved.Remarks);
     }
 
-    /// <summary>Edit with the same rules: a full award, a GOOD entry or another winner's entry are refused.</summary>
+    /// <summary>Another winner or another award is refused (they come from the scores); so are a bad date and long remarks.</summary>
     [Fact]
     public async Task Update_BreaksRules_Refused()
     {
         var d = Seed();
         using var db = d.Db;
-        Issue(db, d.First, d.Entries["best1"]);
         var mine = Issue(db, d.Mention, d.Entries["best2"]);
         var service = Service(db);
 
-        var toFull = Form(d, d.First, "best2");
-        Assert.Equal(AwardIssuedService.NoSlotsMessage,
-            (await Assert.ThrowsAsync<BusinessException>(() => service.UpdateAsync(mine.Id, toFull))).Message);
-        Assert.Equal(AwardIssuedService.NotBestMessage,
-            (await Assert.ThrowsAsync<BusinessException>(() => service.UpdateAsync(mine.Id, Form(d, d.Mention, "good")))).Message);
-        Assert.Equal(AwardIssuedService.AlreadyAwardedMessage,
-            (await Assert.ThrowsAsync<BusinessException>(() => service.UpdateAsync(mine.Id, Form(d, d.Mention, "best1")))).Message);
+        async Task<string> Refused(AwardIssuedFormVm form)
+            => (await Assert.ThrowsAsync<BusinessException>(() => service.UpdateAsync(mine.Id, form))).Message;
+
+        Assert.Equal(AwardIssuedService.AutomaticAwardsMessage, await Refused(Form(d, d.Mention, "best1")));
+        Assert.Equal(AwardIssuedService.AutomaticAwardsMessage, await Refused(Form(d, d.First, "best2")));
+        Assert.Equal(AwardIssuedService.FutureDateMessage, await Refused(Form(d, d.Mention, "best2", Today.AddDays(1))));
+        Assert.Equal(AwardIssuedService.DateBeforeEndMessage, await Refused(Form(d, d.Mention, "best2", d.Competition.EndDate)));
+        Assert.Equal(AwardIssuedFormVm.RemarksTooLongMessage, await Refused(Form(d, d.Mention, "best2", remarks: new string('a', 1001))));
 
         var saved = await db.AwardsIssued.AsNoTracking().SingleAsync(a => a.Id == mine.Id);
         Assert.Equal(d.Entries["best2"].Id, saved.SubmissionId);

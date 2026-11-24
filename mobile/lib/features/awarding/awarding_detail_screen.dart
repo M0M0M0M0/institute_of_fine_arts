@@ -66,49 +66,21 @@ class _BodyState extends ConsumerState<_Body> {
     }
   }
 
-  // ---- Issue a new award ----
-  Future<void> _issue(AwardSlot slot) async {
-    final input = await showDialog<_IssueInput>(
-      context: context,
-      builder: (context) => _IssueDialog(
-        competitionId: _d.id,
-        title: 'Award ${slot.name}',
-        needReason: _d.isPublished,
-      ),
-    );
-    if (input == null || !mounted) return;
-    await _run(
-      () => ref.read(awardingRepositoryProvider).issue(
-            _d.id,
-            awardId: slot.id,
-            submissionId: input.submissionId,
-            remarks: input.remarks,
-            reason: input.reason,
-          ),
-      success: '${slot.name} awarded.',
-    );
-  }
-
-  // ---- Edit an award (before publishing only) ----
+  // ---- Remarks of a given award (the winner and the award come from the ranking, BR-30) ----
   Future<void> _edit(AwardSlot slot, IssuedAward award) async {
-    final input = await showDialog<_IssueInput>(
+    final remarks = await showDialog<String>(
       context: context,
-      builder: (context) => _IssueDialog(
-        competitionId: _d.id,
-        title: 'Edit ${slot.name}',
-        needReason: false,
-        current: award,
-      ),
+      builder: (context) => _RemarksDialog(title: '${slot.name} – remarks', initial: award.remarks ?? ''),
     );
-    if (input == null || !mounted) return;
+    if (remarks == null || !mounted) return;
     await _run(
       () => ref.read(awardingRepositoryProvider).update(
             award,
             awardId: slot.id,
-            submissionId: input.submissionId,
-            remarks: input.remarks,
+            submissionId: award.submissionId,
+            remarks: remarks.isEmpty ? null : remarks,
           ),
-      success: 'Award updated.',
+      success: 'Remarks saved.',
     );
   }
 
@@ -136,17 +108,16 @@ class _BodyState extends ConsumerState<_Body> {
         success: award.isDelivered ? 'Delivery mark removed.' : 'Delivery recorded.',
       );
 
-  // ---- Publish results (UC-06 step 5) ----
+  // ---- Publish results (UC-06 step 5): the awards are given from the ranking (BR-30) ----
   Future<void> _publish() async {
-    final confirmEmpty = await showDialog<bool>(
-      context: context,
-      builder: (context) => _PublishDialog(detail: _d),
+    final ok = await _confirm(
+      'Publish results?',
+      'The awards are given from the jury ranking shown on this page (equal scores share an award). '
+          'Students and visitors see the results, and grades can no longer be changed.',
+      'Publish',
     );
-    if (confirmEmpty == null || !mounted) return;
-    await _run(
-      () => ref.read(awardingRepositoryProvider).publish(_d.id, confirmEmptySlots: confirmEmpty),
-      success: 'Results published.',
-    );
+    if (ok != true || !mounted) return;
+    await _run(() => ref.read(awardingRepositoryProvider).publish(_d.id), success: 'Results published.');
   }
 
   Future<bool?> _confirm(String title, String text, String action) => showDialog<bool>(
@@ -170,8 +141,6 @@ class _BodyState extends ConsumerState<_Body> {
   Widget build(BuildContext context) {
     final d = _d;
     final text = Theme.of(context).textTheme;
-    // Adding: free before publishing; after publishing it is an extra award (reason required)
-    final canAdd = d.canAward || d.isPublished;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -208,7 +177,7 @@ class _BodyState extends ConsumerState<_Body> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Results are published. From now on every change is an adjustment and needs a reason.'),
+                  const Text('Results are published and the awards were given from the ranking. An award can only be revoked, with a reason.'),
                   // Evaluations are changed per entry; go to the entry list of the competition
                   if (d.canAdjustEvaluation) ...[
                     const SizedBox(height: AppSpacing.sm),
@@ -223,6 +192,9 @@ class _BodyState extends ConsumerState<_Body> {
             ),
           const SizedBox(height: AppSpacing.sm),
 
+          if (d.ranking.isNotEmpty) _RankingCard(detail: d),
+          const SizedBox(height: AppSpacing.sm),
+
           for (final slot in d.awards)
             _SlotCard(
               slot: slot,
@@ -230,13 +202,13 @@ class _BodyState extends ConsumerState<_Body> {
               canMarkDelivered: d.canMarkDelivered,
               canAdjustEvaluation: d.canAdjustEvaluation,
               busy: _busy,
-              canAdd: canAdd && slot.remaining > 0,
-              onAdd: () => _issue(slot),
+              canAdd: false,
+              onAdd: () {},
               onEdit: (a) => _edit(slot, a),
               onDelete: (a) => _delete(slot, a),
               onRevoke: (a) => _revoke(slot, a),
               onDelivery: _toggleDelivery,
-              onAdjust: (a) => context.push('/staff/awarding/submissions/${a.submissionId}/adjust'),
+              onAdjust: (_) {},
             ),
           if (d.awards.isEmpty)
             const EmptyState(
@@ -250,7 +222,7 @@ class _BodyState extends ConsumerState<_Body> {
   }
 }
 
-/// Checklist before publishing: everything graded, how many slots are still empty (BR-08, BR-32).
+/// Checklist before publishing: every entry graded by the whole jury (BR-08).
 class _Checklist extends StatelessWidget {
   const _Checklist({required this.detail, required this.busy, required this.onPublish});
 
@@ -290,12 +262,7 @@ class _Checklist extends StatelessWidget {
                   ? 'All ${d.submissionCount} entries are graded'
                   : '${d.pendingEvaluations} entries still to grade (${d.evaluatedCount}/${d.submissionCount})',
             ),
-            line(
-              d.emptySlots == 0,
-              d.emptySlots == 0
-                  ? 'Every award slot is filled'
-                  : '${d.emptySlots} award ${d.emptySlots == 1 ? 'slot' : 'slots'} still empty (leaving them empty needs confirmation)',
-            ),
+            line(true, 'The awards are given from the jury ranking when you publish'),
             const SizedBox(height: AppSpacing.sm),
             FilledButton.icon(
               onPressed: (d.canPublish && !busy) ? onPublish : null,
@@ -520,203 +487,6 @@ class _IssuedTile extends StatelessWidget {
 
 // ---------------- Dialogs ----------------
 
-/// Result of the issue dialog.
-class _IssueInput {
-  const _IssueInput(this.submissionId, this.remarks, this.reason);
-
-  final int submissionId;
-  final String? remarks;
-  final String? reason;
-}
-
-/// Pick the entry that receives the award from the eligible candidates (BEST first, BR-30),
-/// with a note and, after publishing, a reason. When editing, [current] is also selectable.
-class _IssueDialog extends ConsumerStatefulWidget {
-  const _IssueDialog({required this.competitionId, required this.title, required this.needReason, this.current});
-
-  final int competitionId;
-  final String title;
-  final bool needReason;
-  final IssuedAward? current;
-
-  @override
-  ConsumerState<_IssueDialog> createState() => _IssueDialogState();
-}
-
-class _IssueDialogState extends ConsumerState<_IssueDialog> {
-  late final TextEditingController _remarks;
-  final _reason = TextEditingController();
-  int? _selected;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    _remarks = TextEditingController(text: widget.current?.remarks ?? '');
-    _selected = widget.current?.submissionId;
-  }
-
-  @override
-  void dispose() {
-    _remarks.dispose();
-    _reason.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    if (_selected == null) {
-      setState(() => _error = 'Please choose the winning entry');
-      return;
-    }
-    if (widget.needReason && validateReason(_reason.text) != null) {
-      setState(() => _error = 'A reason is required for an extra award after publishing');
-      return;
-    }
-    Navigator.pop(
-      context,
-      _IssueInput(_selected!, _remarks.text.trim().isEmpty ? null : _remarks.text.trim(),
-          widget.needReason ? _reason.text.trim() : null),
-    );
-  }
-
-  Widget _thumb(int submissionId, bool hasThumbnail, String title) => SizedBox(
-        width: 56,
-        height: 56,
-        child: ArtworkFrame(
-          aspectRatio: null,
-          matWidth: 3,
-          child: hasThumbnail
-              ? AuthImage(submissionId: submissionId, semanticLabel: title)
-              : const ImagePlaceholder(),
-        ),
-      );
-
-  @override
-  Widget build(BuildContext context) {
-    final candidates = ref.watch(awardCandidatesProvider(widget.competitionId));
-    final current = widget.current;
-    return AlertDialog(
-      title: Text(widget.title),
-      content: SizedBox(
-        width: double.maxFinite,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              switch (candidates) {
-                AsyncData(:final value) => RadioGroup<int>(
-                    groupValue: _selected,
-                    onChanged: (v) => setState(() {
-                      _selected = v;
-                      _error = null;
-                    }),
-                    child: Column(
-                      children: [
-                        // When editing, the current winner is no longer a candidate, so list it first
-                        if (current != null)
-                          RadioListTile<int>(
-                            contentPadding: EdgeInsets.zero,
-                            value: current.submissionId,
-                            title: Text(current.submissionTitle, maxLines: 2, overflow: TextOverflow.ellipsis),
-                            subtitle: Text('${current.studentName} (${current.studentCode}) · current'),
-                            secondary: _thumb(current.submissionId, current.hasThumbnail, current.submissionTitle),
-                          ),
-                        for (final c in value)
-                          RadioListTile<int>(
-                            contentPadding: EdgeInsets.zero,
-                            value: c.submissionId,
-                            title: Text(c.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-                            subtitle: Text('${c.studentName} (${c.studentCode}) · ${ratingName(c.rating)}'),
-                            secondary: _thumb(c.submissionId, c.hasThumbnail, c.title),
-                          ),
-                        if (value.isEmpty && current == null)
-                          const Padding(
-                            padding: EdgeInsets.all(AppSpacing.sm),
-                            child: Text('No eligible entries left (graded, not disqualified and without an award).'),
-                          ),
-                      ],
-                    ),
-                  ),
-                AsyncError(:final error) => Text(ApiException.from(error).message),
-                _ => const Padding(
-                    padding: EdgeInsets.all(AppSpacing.md),
-                    child: Center(child: CircularProgressIndicator()),
-                  ),
-              },
-              const SizedBox(height: AppSpacing.sm),
-              TextField(
-                controller: _remarks,
-                maxLength: 1000,
-                maxLines: 2,
-                decoration: const InputDecoration(labelText: 'Note / comment'),
-              ),
-              if (widget.needReason)
-                TextField(
-                  controller: _reason,
-                  maxLength: 1000,
-                  maxLines: 2,
-                  decoration: const InputDecoration(labelText: 'Reason for the extra award *'),
-                ),
-              if (_error != null) Text(_error!, style: const TextStyle(color: AppColors.danger)),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        FilledButton(onPressed: _submit, child: const Text('Save')),
-      ],
-    );
-  }
-}
-
-/// Confirms publishing: if slots are empty the staff must tick "leave empty" (BR-32). Returns the ticked value; null = cancelled.
-class _PublishDialog extends StatefulWidget {
-  const _PublishDialog({required this.detail});
-
-  final AwardingDetail detail;
-
-  @override
-  State<_PublishDialog> createState() => _PublishDialogState();
-}
-
-class _PublishDialogState extends State<_PublishDialog> {
-  bool _confirmEmpty = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final empty = widget.detail.emptySlots;
-    final canConfirm = empty == 0 || _confirmEmpty;
-    return AlertDialog(
-      title: const Text('Publish results?'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Ratings, comments and awards become visible to students and on the public pages. '
-              'Afterwards they are locked and can only change through "Adjust result", with a reason.'),
-          if (empty > 0) ...[
-            const SizedBox(height: AppSpacing.md),
-            Text(emptySlotsMessage(empty)),
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              value: _confirmEmpty,
-              onChanged: (v) => setState(() => _confirmEmpty = v ?? false),
-              title: Text('Leave $empty ${empty == 1 ? 'slot' : 'slots'} empty'),
-            ),
-          ],
-        ],
-      ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-        FilledButton(onPressed: canConfirm ? () => Navigator.pop(context, _confirmEmpty) : null, child: const Text('Publish')),
-      ],
-    );
-  }
-}
-
 /// Mandatory reason dialog (revoke...). Returns the trimmed reason; null = cancelled.
 class _ReasonDialog extends StatefulWidget {
   const _ReasonDialog({required this.title, required this.label});
@@ -762,6 +532,98 @@ class _ReasonDialogState extends State<_ReasonDialog> {
           child: const Text('Confirm'),
         ),
       ],
+    );
+  }
+}
+
+/// Optional remarks of a given award. Returns the trimmed text ("" = none); null = cancelled.
+class _RemarksDialog extends StatefulWidget {
+  const _RemarksDialog({required this.title, required this.initial});
+
+  final String title;
+  final String initial;
+
+  @override
+  State<_RemarksDialog> createState() => _RemarksDialogState();
+}
+
+class _RemarksDialogState extends State<_RemarksDialog> {
+  late final _controller = TextEditingController(text: widget.initial);
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+        title: Text(widget.title),
+        content: TextField(
+          controller: _controller,
+          maxLength: 1000,
+          maxLines: 3,
+          decoration: const InputDecoration(labelText: 'Remarks'),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          FilledButton(onPressed: () => Navigator.pop(context, _controller.text.trim()), child: const Text('Save')),
+        ],
+      );
+}
+
+/// The jury ranking (BR-30, BR-31): place, entry, average and the award it gets (a preview before publishing).
+class _RankingCard extends StatelessWidget {
+  const _RankingCard({required this.detail});
+
+  final AwardingDetail detail;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Semantics(
+              header: true,
+              child: Text(detail.isPublished ? 'Ranking' : 'Ranking preview', style: text.titleMedium),
+            ),
+            if (!detail.isPublished)
+              Text('Only entries graded by the whole jury are ranked. Equal scores share a place.', style: text.bodySmall),
+            const SizedBox(height: AppSpacing.xs),
+            for (final r in detail.ranking)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(width: 32, child: Text(r.place == null ? '–' : '${r.place}', style: text.titleSmall)),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(r.title, style: text.bodyMedium),
+                          Text(
+                            '${r.studentName}${r.awardName != null ? ' · ${r.awardName}' : ''}',
+                            style: text.bodySmall!.copyWith(color: r.awardName != null ? AppColors.brassText : AppColors.muted),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Text(
+                      r.average == null ? 'Disqualified' : r.average!.toStringAsFixed(2),
+                      style: text.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

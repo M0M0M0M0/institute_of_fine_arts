@@ -126,19 +126,28 @@ void main() {
   });
 
   group('validateImageFile', () {
-    test('chấp nhận jpg/jpeg không phân biệt hoa thường', () {
+    test('chấp nhận jpg/jpeg/png/webp không phân biệt hoa thường', () {
       expect(validateImageFile('a.jpg', 100), isNull);
       expect(validateImageFile('A.JPEG', 100), isNull);
+      expect(validateImageFile('a.PNG', 100), isNull);
+      expect(validateImageFile('a.webp', 100), isNull);
     });
 
     test('từ chối định dạng khác', () {
-      expect(validateImageFile('a.png', 100), 'Only JPEG images are accepted');
-      expect(validateImageFile('jpg', 100), 'Only JPEG images are accepted');
+      expect(validateImageFile('a.gif', 100), 'Only JPG, PNG or WebP pictures are accepted');
+      expect(validateImageFile('jpg', 100), 'Only JPG, PNG or WebP pictures are accepted');
     });
 
-    test('giới hạn 5 MB: đúng 5 MB được, hơn 1 byte thì không', () {
+    test('giới hạn 10 MB: đúng 10 MB được, hơn 1 byte thì không', () {
+      expect(maxImageBytes, 10 * 1024 * 1024);
       expect(validateImageFile('a.jpg', maxImageBytes), isNull);
-      expect(validateImageFile('a.jpg', maxImageBytes + 1), 'The image is larger than 5 MB');
+      expect(validateImageFile('a.jpg', maxImageBytes + 1), 'The image is larger than 10 MB');
+    });
+
+    test('content type follows the extension', () {
+      expect(imageMediaType('a.png').toString(), 'image/png');
+      expect(imageMediaType('a.WEBP').toString(), 'image/webp');
+      expect(imageMediaType('a.jpg').toString(), 'image/jpeg');
     });
 
     test('từ chối file rỗng', () {

@@ -1,0 +1,35 @@
+@model InstituteOfFineArts.Web.ViewModels.Common.EntryImagesVm
+@*
+    Pictures of an entry (BR-18: up to 5 pictures of the same artwork): the first (cover) large on the stone mat with
+    zoom, the others as thumbnails below; clicking a thumbnail shows it large (site.js, [data-entry-images]).
+    Files: /files/submission-images/{id} (+ /thumb, ?download=true), same access rules as the entry.
+*@
+@{
+    var ids = Model.ImageIds;
+    string Full(long id) => $"/files/submission-images/{id}";
+    var first = ids.Count > 0 ? Full(ids[0]) : $"/files/submissions/{Model.SubmissionId}";
+    var download = ids.Count > 0 ? Full(ids[0]) + "?download=true" : $"/files/submissions/{Model.SubmissionId}?download=true";
+}
+<div class="entry-images" data-entry-images>
+    <div class="artwork-frame" data-zoom data-zoom-download="@(Model.AllowDownload ? download : null)">
+        <img src="@first" alt="@Model.Alt" data-entry-main />
+    </div>
+    @if (ids.Count > 1)
+    {
+        <ul class="entry-thumbs" aria-label="Pictures of this entry">
+            @for (var i = 0; i < ids.Count; i++)
+            {
+                <li>
+                    <button type="button" class="entry-thumb @(i == 0 ? "is-current" : "")" data-src="@Full(ids[i])" data-download="@(Full(ids[i]) + "?download=true")"
+                            aria-label="Show picture @(i + 1) of @ids.Count" aria-pressed="@(i == 0 ? "true" : "false")">
+                        <img src="@(Full(ids[i]) + "/thumb")" alt="" loading="lazy" />
+                    </button>
+                </li>
+            }
+        </ul>
+    }
+    @if (Model.AllowDownload)
+    {
+        <a href="@download" class="btn btn-sm btn-outline-primary mt-2" data-entry-download><i class="bi bi-download" aria-hidden="true"></i>Download original</a>
+    }
+</div>

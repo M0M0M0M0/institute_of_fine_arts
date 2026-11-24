@@ -29,7 +29,7 @@
         <div class="page-actions">
             <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary"><i class="bi bi-pencil" aria-hidden="true"></i>Edit</a>
             <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="m-0"
-                  data-confirm="Delete this entry and its image?" data-confirm-ok="Delete" data-confirm-title="Delete entry">
+                  data-confirm="Delete this entry and its pictures?" data-confirm-ok="Delete" data-confirm-title="Delete entry">
                 <button type="submit" class="btn btn-outline-danger"><i class="bi bi-trash" aria-hidden="true"></i>Delete</button>
             </form>
         </div>
@@ -40,12 +40,11 @@
 
 <div class="artwork-stage">
     <figure class="artwork m-0">
-        <div class="artwork-frame" data-zoom data-zoom-download="/files/submissions/@Model.Id?download=true">
-            <img src="/files/submissions/@Model.Id" alt="@Model.Title – @User.GetFullName()" />
-        </div>
+        @* 1 to 5 pictures of the artwork (BR-18); the download button follows the picture shown *@
+        @{ var entryImages = new InstituteOfFineArts.Web.ViewModels.Common.EntryImagesVm(Model.Id, Model.ImageIds, $"{Model.Title} – {User.GetFullName()}", true); }
+        <partial name="_EntryImages" model="entryImages" />
         <figcaption class="small mt-2 text-muted">
-            <a href="/files/submissions/@Model.Id?download=true"><i class="bi bi-download me-1" aria-hidden="true"></i>Download original</a>
-            <span class="ms-2">@Model.OriginalFileName (@((Model.FileSize / 1024.0).ToString("#,##0")) KB)</span>
+            @(Model.ImageIds.Count > 1 ? $"{Model.ImageIds.Count} pictures · cover: " : "")@Model.OriginalFileName (@((Model.FileSize / 1024.0).ToString("#,##0")) KB)
         </figcaption>
     </figure>
 
@@ -83,7 +82,12 @@
 
 <section class="section" aria-labelledby="evaluation-title">
     <div class="section-head"><h2 id="evaluation-title">Evaluation</h2></div>
-    @if (Model.Evaluation is { } e)
+    @if (ViewBag.ScoreSheet is InstituteOfFineArts.Web.ViewModels.Staff.Evaluations.ScoreSheetVm sheet && !sheet.Legacy)
+    {
+        @* Published: the whole score sheet of the jury – every judge's score per criterion and their comments *@
+        <partial name="_ScoreSheet" model="sheet" />
+    }
+    else if (Model.Evaluation is { } e)
     {
         <div class="evaluation">
             <p class="d-flex flex-wrap align-items-center gap-2">

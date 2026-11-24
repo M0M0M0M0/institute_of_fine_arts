@@ -1,11 +1,13 @@
 @model InstituteOfFineArts.Web.ViewModels.Student.Submissions.SubmissionFormVm
 @*
     Student – submit an entry (/student/submissions/new?competitionId={id}, SCR-43, F-M06-01).
-    Created by BE1 (BE1-07); styled by FE1-05: form sheet, live preview of the chosen JPEG (upload-preview.js),
+    Created by BE1 (BE1-07); styled by FE1-05: form sheet, live preview of the chosen pictures with the cover choice
+    (upload-preview.js, BR-16..18: 1 to 5 JPG / PNG / WebP of up to 10 MB each),
     text type pills and the deadline countdown (countdown.js).
 *@
 @using System.Globalization
 @using InstituteOfFineArts.Web.Helpers
+@using InstituteOfFineArts.Web.Infrastructure.FileStorage
 @{
     ViewData["Title"] = "Submit an entry";
     var deadlineIso = CompetitionStatusResolver.SubmissionDeadline(Model.Deadline).ToString("yyyy-MM-dd'T'HH:mm:ss", CultureInfo.InvariantCulture);
@@ -31,26 +33,23 @@
 
 <partial name="_Alerts" />
 
-@* multipart/form-data is required to upload the image; the competition id goes back in the query string *@
+@* multipart/form-data is required to upload the pictures; the competition id goes back in the query string *@
 <form asp-action="Create" asp-route-competitionId="@Model.CompetitionId" method="post" enctype="multipart/form-data" novalidate class="form-sheet">
     <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
     <input type="hidden" asp-for="CompetitionId" />
 
     <div class="mb-4">
-        <label asp-for="Image" class="form-label"></label>
-        <input asp-for="Image" type="file" accept=".jpg,.jpeg,image/jpeg" class="form-control" data-upload-preview="image-preview" />
-        <div class="form-text">JPEG only (.jpg, .jpeg), up to 5 MB. At least 600 px on the shortest side is recommended.</div>
-        <span asp-validation-for="Image" class="text-danger"></span>
-
-        @* Filled by upload-preview.js once a file is chosen; it only informs, the server checks the file *@
-        <div id="image-preview" class="upload-preview" hidden>
-            <div class="artwork-frame is-contain"><img alt="" /></div>
-            <div class="wall-label" aria-live="polite">
-                <span class="wl-title" data-preview-name></span>
-                <span class="wl-meta" data-preview-meta></span>
-                <span class="wl-note" data-preview-warn hidden></span>
-            </div>
+        <label asp-for="Images" class="form-label"></label>
+        <input asp-for="Images" type="file" multiple accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" class="form-control"
+               data-upload-multi="image-list" data-cover-name="CoverIndex" data-max-files="@UploadOptions.MaxImagesPerSubmission" />
+        <div class="form-text">
+            Choose all pictures at once: the same artwork from another angle, in another light, a close-up. JPG, PNG or WebP,
+            up to 10 MB each. At least 600 px on the shortest side is recommended. Pick the cover below.
         </div>
+        <span asp-validation-for="Images" class="text-danger d-block"></span>
+
+        @* Filled by upload-preview.js once files are chosen; it only informs, the server checks every file *@
+        <ul id="image-list" class="upload-list" aria-live="polite" hidden></ul>
     </div>
 
     <partial name="_Form" model="Model" />

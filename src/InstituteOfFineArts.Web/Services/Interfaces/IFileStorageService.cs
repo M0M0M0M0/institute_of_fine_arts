@@ -10,8 +10,9 @@ namespace InstituteOfFineArts.Web.Services.Interfaces;
 /// <param name="Width">Image width in pixels</param>
 /// <param name="Height">Image height in pixels</param>
 /// <param name="Warning">Non-blocking advice for the user (small image), or null</param>
+/// <param name="ContentType">image/jpeg, image/png or image/webp</param>
 public record StoredImage(string RelativePath, string? ThumbnailPath, string OriginalFileName, long FileSize,
-    int Width, int Height, string? Warning);
+    int Width, int Height, string? Warning, string ContentType = "image/jpeg");
 
 /// <summary>
 /// Stores uploaded images on disk with File I/O, outside wwwroot (BR-16..BR-18, docs/plan/02 section 4.3).

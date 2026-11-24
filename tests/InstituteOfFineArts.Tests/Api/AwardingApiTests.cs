@@ -6,7 +6,6 @@ using InstituteOfFineArts.Web.Controllers.Api.Dto;
 using InstituteOfFineArts.Web.Data;
 using InstituteOfFineArts.Web.Exceptions;
 using InstituteOfFineArts.Web.Helpers;
-using InstituteOfFineArts.Web.Infrastructure.Api;
 using InstituteOfFineArts.Web.Infrastructure.Security;
 using InstituteOfFineArts.Web.Models.Entities;
 using InstituteOfFineArts.Web.Models.Enums;
@@ -20,7 +19,10 @@ using Moq;
 
 namespace InstituteOfFineArts.Tests.Api;
 
-/// <summary>Mobile awarding API (AwardingApiController): JSON shape, issue / edit / delete / revoke / publish rules.</summary>
+/// <summary>
+/// Mobile awarding API (AwardingApiController, 11/2026): JSON shape, the jury ranking, publishing gives the awards from
+/// the ranking (BR-30, BR-31), hand issuing refused, remarks edit / revoke after publishing, publish checklist.
+/// </summary>
 public class AwardingApiTests
 {
     private static readonly DateOnly Today = DateTimeHelper.Today;
@@ -33,8 +35,11 @@ public class AwardingApiTests
     private sealed record Ctx(AwardingApiController Api, AppDbContext Db, Competition Competition,
         CompetitionAward First, CompetitionAward Mention, Dictionary<string, Submission> Entries);
 
-    /// <summary>CLOSED (or GRADED) competition with First Prize x1, Mention x2, entries best1, best2, good, none.</summary>
-    private static Ctx Seed(bool graded = false, bool withUnevaluated = false)
+    /// <summary>
+    /// CLOSED (or GRADED) competition with First Prize x1 and Honorable Mention x2, a jury of one teacher and one criterion;
+    /// entries graded best1 = 95, best2 = 91, good = 70 (and "none" not graded when asked).
+    /// </summary>
+    private static async Task<Ctx> SeedAsync(bool graded = false, bool withUnevaluated = false)
     {
         var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var staff = new StaffProfile
@@ -42,26 +47,35 @@ public class AwardingApiTests
             StaffCode = "NV0003", JoinedDate = new DateOnly(2024, 1, 1),
             Account = new Account { Username = "staff01", FullName = "Le Minh Hoang", Email = "s1@ifa.local", Role = Role.STAFF, PasswordHash = "x" },
         };
-        db.StaffProfiles.Add(staff);
+        var judge = new StaffProfile
+        {
+            StaffCode = "NV0005", JoinedDate = new DateOnly(2024, 1, 1),
+            Account = new Account { Username = "teacher01", FullName = "Pham Thu Ha", Email = "t1@ifa.local", Role = Role.TEACHER, PasswordHash = "x" },
+        };
+        db.StaffProfiles.AddRange(staff, judge);
         db.SaveChanges();
         var c = new Competition
         {
             Code = "X1", Title = "City at Night", StartDate = Today.AddDays(-30), EndDate = Today.AddDays(-5), CreatedBy = staff.Id,
-            Status = graded ? CompetitionStatus.GRADED : CompetitionStatus.UPCOMING,
-            PublishedAt = graded ? DateTime.Now : null,
+            Status = CompetitionStatus.UPCOMING,
         };
         db.Competitions.Add(c);
+        var criterion = new GradingCriterion { Name = "Overall" };
+        db.GradingCriteria.Add(criterion);
         db.SaveChanges();
         var first = new CompetitionAward { CompetitionId = c.Id, AwardName = "First Prize", Rank = 1, PrizeValue = 250m, Quantity = 1, PrizeDescription = "Trophy" };
         var mention = new CompetitionAward { CompetitionId = c.Id, AwardName = "Honorable Mention", Rank = 4, PrizeValue = 50m, Quantity = 2 };
         db.CompetitionAwards.AddRange(first, mention);
+        var cc = new CompetitionCriterion { CompetitionId = c.Id, CriterionId = criterion.Id, WeightPercent = 100m };
+        db.CompetitionCriteria.Add(cc);
+        db.CompetitionJudges.Add(new CompetitionJudge { CompetitionId = c.Id, JudgeId = judge.Id, IsChair = true });
         db.SaveChanges();
 
         var entries = new Dictionary<string, Submission>();
-        var specs = new List<(string Key, Rating? Rating)> { ("best1", Rating.BEST), ("best2", Rating.BEST), ("good", Rating.GOOD) };
+        var specs = new List<(string Key, decimal? Score)> { ("best1", 95m), ("best2", 91m), ("good", 70m) };
         if (withUnevaluated) specs.Add(("none", null));
         var n = 0;
-        foreach (var (key, rating) in specs)
+        foreach (var (key, score) in specs)
         {
             n++;
             var student = new StudentProfile
@@ -78,18 +92,21 @@ public class AwardingApiTests
             };
             db.Submissions.Add(s);
             db.SaveChanges();
-            if (rating is { } r)
+            if (score is { } value)
             {
-                db.Evaluations.Add(new Evaluation { SubmissionId = s.Id, EvaluatedBy = staff.Id, Rating = r, PositivePoints = "Nice", EvaluatedAt = DateTime.Now.AddDays(-1) });
+                var grade = new JudgeEvaluation { SubmissionId = s.Id, JudgeId = judge.Id, PositivePoints = "Nice", TotalScore = value, EvaluatedAt = DateTime.Now };
+                grade.Scores.Add(new JudgeScore { CompetitionCriterionId = cc.Id, Score = value });
+                db.JudgeEvaluations.Add(grade);
                 db.SaveChanges();
             }
             entries[key] = s;
         }
+        await JuryResults.RecomputeAsync(db, c.Id);
 
         var notifications = new Mock<INotificationService>();
+        var results = new CompetitionResultService(db, NullLogger<CompetitionResultService>.Instance, notifications.Object);
         var api = new AwardingApiController(db,
-            new AwardIssuedService(db, NullLogger<AwardIssuedService>.Instance, notifications.Object),
-            new CompetitionResultService(db, NullLogger<CompetitionResultService>.Instance, notifications.Object))
+            new AwardIssuedService(db, NullLogger<AwardIssuedService>.Instance, notifications.Object), results)
         {
             ControllerContext = new ControllerContext
             {
@@ -100,30 +117,31 @@ public class AwardingApiTests
                 },
             },
         };
+        if (graded)
+        {
+            await results.PublishAsync(c.Id, null, staff.Id);
+        }
         return new Ctx(api, db, c, first, mention, entries);
     }
 
     private static T Value<T>(ActionResult<T> result) => result.Value ?? throw new InvalidOperationException("no value");
 
-    private static AwardingDetailDto Detail(Ctx c) => Value(c.Api.Detail(c.Competition.Id).Result);
-
-    private static async Task<AwardingDetailDto> Issue(Ctx c, CompetitionAward award, string entry)
-        => Value(await c.Api.Issue(c.Competition.Id, new IssueAwardRequest
-        { CompetitionAwardId = award.Id, SubmissionId = c.Entries[entry].Id, Remarks = "Great" }));
+    private static async Task<AwardingDetailDto> DetailAsync(Ctx c) => Value(await c.Api.Detail(c.Competition.Id));
 
     [Fact]
     public async Task Detail_json_uses_the_keys_of_the_app()
     {
-        var c = Seed();
-        var detail = await Issue(c, c.First, "best1");
+        var c = await SeedAsync(graded: true);
+        var detail = await DetailAsync(c);
         using var doc = JsonDocument.Parse(JsonSerializer.Serialize(detail, Json));
         var root = doc.RootElement;
         foreach (var key in new[] { "id", "title", "status", "submissionCount", "evaluatedCount", "pendingEvaluations", "emptySlots",
-            "canAward", "canPublish", "publishBlockReason", "isPublished", "publishedAt", "adjustedAt", "awards" })
+            "canAward", "canPublish", "publishBlockReason", "isPublished", "publishedAt", "adjustedAt", "awards", "ranking" })
         {
             Assert.True(root.TryGetProperty(key, out _), key);
         }
-        Assert.Equal("CLOSED", root.GetProperty("status").GetString());
+        Assert.Equal("GRADED", root.GetProperty("status").GetString());
+        Assert.False(root.GetProperty("canAward").GetBoolean());
         var slot = root.GetProperty("awards")[0];
         Assert.Equal(1, slot.GetProperty("activeCount").GetInt32());
         Assert.Equal(0, slot.GetProperty("remaining").GetInt32());
@@ -134,108 +152,100 @@ public class AwardingApiTests
         Assert.False(issued.GetProperty("isDelivered").GetBoolean());
         Assert.True(issued.TryGetProperty("rowVersion", out var rv) && rv.GetString()!.Length > 0);
         Assert.Equal(250m, issued.GetProperty("prizeValue").GetDecimal());
+        var top = root.GetProperty("ranking")[0];
+        Assert.Equal(1, top.GetProperty("place").GetInt32());
+        Assert.Equal("First Prize", top.GetProperty("awardName").GetString());
     }
 
     [Fact]
     public async Task Competitions_lists_closed_and_graded_with_slot_counts()
     {
-        var c = Seed();
-        await Issue(c, c.Mention, "best1");
-        var list = Value(await c.Api.Competitions());
-        var row = Assert.Single(list);
+        var c = await SeedAsync(graded: true);
+        var row = Assert.Single(Value(await c.Api.Competitions()));
         Assert.Equal(3, row.TotalSlots);
-        Assert.Equal(1, row.IssuedSlots);
+        Assert.Equal(3, row.IssuedSlots);
         Assert.Equal(3, row.SubmissionCount);
         Assert.Equal(3, row.EvaluatedCount);
         Assert.Null(row.AdjustedAt);
     }
 
+    /// <summary>Before publishing the ranking previews the awards; nothing is given yet.</summary>
     [Fact]
-    public async Task Candidates_are_best_entries_without_an_award()
+    public async Task Ranking_and_candidates_preview_the_awards()
     {
-        var c = Seed();
-        await Issue(c, c.First, "best1");
-        var list = Value(await c.Api.Candidates(c.Competition.Id));
-        var one = Assert.Single(list);
-        Assert.Equal(c.Entries["best2"].Id, one.SubmissionId);
-        Assert.Equal(Rating.BEST, one.Rating);
+        var c = await SeedAsync();
+        var d = await DetailAsync(c);
+        Assert.Equal(["First Prize", "Honorable Mention", "Honorable Mention"], d.Ranking.Select(r => r.AwardName));
+        Assert.Equal([1, 2, 3], d.Ranking.Select(r => r.Place!.Value));
+        Assert.Empty(d.Awards.SelectMany(a => a.Issued));
+
+        var candidates = Value(await c.Api.Candidates(c.Competition.Id));
+        Assert.Equal(3, candidates.Count);
+        Assert.Equal(c.Entries["best1"].Id, candidates[0].SubmissionId);
+        Assert.Equal(Rating.BEST, candidates[0].Rating);
     }
 
+    /// <summary>BR-30: awards are not issued by hand.</summary>
     [Fact]
-    public async Task Issue_rejects_a_non_best_entry_and_a_full_award()
+    public async Task Issue_by_hand_is_refused()
     {
-        var c = Seed();
-        var ex = await Assert.ThrowsAsync<BusinessException>(() => Issue(c, c.First, "good"));
-        Assert.Equal(AwardIssuedService.NotBestMessage, ex.Message);
-        await Issue(c, c.First, "best1");
-        var full = await Assert.ThrowsAsync<BusinessException>(() => Issue(c, c.First, "best2"));
-        Assert.Equal(AwardIssuedService.NoSlotsMessage, full.Message);
+        var c = await SeedAsync();
+        var ex = await Assert.ThrowsAsync<BusinessException>(() => c.Api.Issue(c.Competition.Id,
+            new IssueAwardRequest { CompetitionAwardId = c.First.Id, SubmissionId = c.Entries["best1"].Id }));
+        Assert.Equal(AwardIssuedService.AutomaticAwardsMessage, ex.Message);
+        Assert.Empty(c.Db.AwardsIssued);
     }
 
+    /// <summary>Only the remarks change; another winner is refused; a stale row version is 409.</summary>
     [Fact]
-    public async Task Issue_after_publishing_is_allowed_without_a_reason()
+    public async Task Update_changes_the_remarks_only_and_stale_row_version_is_409()
     {
-        var c = Seed(graded: true);
-        var detail = await Issue(c, c.First, "best1");
-        Assert.True(detail.IsPublished);
-        Assert.Single(detail.Awards[0].Issued);
-    }
-
-    [Fact]
-    public async Task Update_changes_the_award_and_stale_row_version_is_409()
-    {
-        var c = Seed();
-        var detail = await Issue(c, c.First, "best1");
-        var issued = detail.Awards[0].Issued[0];
+        var c = await SeedAsync(graded: true);
+        var issued = (await DetailAsync(c)).Awards.Single(a => a.Id == c.First.Id).Issued[0];
 
         var stale = await c.Api.Update(issued.Id, new UpdateAwardRequest
-        { CompetitionAwardId = c.Mention.Id, SubmissionId = c.Entries["best1"].Id, RowVersion = "1" });
+        { CompetitionAwardId = c.First.Id, SubmissionId = issued.SubmissionId, RowVersion = "1" });
         Assert.Equal(409, Assert.IsType<ObjectResult>(stale.Result).StatusCode);
 
+        var moved = await Assert.ThrowsAsync<BusinessException>(() => c.Api.Update(issued.Id, new UpdateAwardRequest
+        { CompetitionAwardId = c.First.Id, SubmissionId = c.Entries["good"].Id, RowVersion = issued.RowVersion }));
+        Assert.Equal(AwardIssuedService.AutomaticAwardsMessage, moved.Message);
+
         var ok = Value(await c.Api.Update(issued.Id, new UpdateAwardRequest
-        { CompetitionAwardId = c.Mention.Id, SubmissionId = c.Entries["best2"].Id, Remarks = "Moved", RowVersion = issued.RowVersion }));
-        Assert.Empty(ok.Awards.Single(a => a.Id == c.First.Id).Issued);
-        Assert.Equal("Moved", ok.Awards.Single(a => a.Id == c.Mention.Id).Issued[0].Remarks);
+        { CompetitionAwardId = c.First.Id, SubmissionId = issued.SubmissionId, Remarks = "Outstanding", RowVersion = issued.RowVersion }));
+        Assert.Equal("Outstanding", ok.Awards.Single(a => a.Id == c.First.Id).Issued[0].Remarks);
     }
 
     [Fact]
     public async Task Unknown_award_is_404()
     {
-        var c = Seed();
+        var c = await SeedAsync();
         await Assert.ThrowsAsync<NotFoundException>(() => c.Api.Delete(999, null));
         await Assert.ThrowsAsync<NotFoundException>(() => c.Api.Detail(999));
     }
 
-    [Fact]
-    public async Task Delete_before_publishing_removes_the_award()
-    {
-        var c = Seed();
-        var issued = (await Issue(c, c.First, "best1")).Awards[0].Issued[0];
-        var result = Value(await c.Api.Delete(issued.Id, issued.RowVersion));
-        Assert.Empty(result.Awards.SelectMany(a => a.Issued));
-        Assert.Equal(0, await c.Db.AwardsIssued.CountAsync());
-    }
-
+    /// <summary>BR-33: after publishing an award is revoked with a reason (deleted, slot left empty), not deleted.</summary>
     [Fact]
     public async Task Delete_is_refused_after_publishing_but_revoke_needs_a_reason_and_works()
     {
-        var c = Seed(graded: true);
-        var issued = (await Issue(c, c.First, "best1")).Awards[0].Issued[0];
+        var c = await SeedAsync(graded: true);
+        var issued = (await DetailAsync(c)).Awards.Single(a => a.Id == c.First.Id).Issued[0];
         await Assert.ThrowsAsync<BusinessException>(() => c.Api.Delete(issued.Id, issued.RowVersion));
         await Assert.ThrowsAsync<BusinessException>(() => c.Api.Revoke(issued.Id, new RevokeRequest { Reason = " ", RowVersion = issued.RowVersion }));
 
         var stale = await c.Api.Revoke(issued.Id, new RevokeRequest { Reason = "Wrong", RowVersion = "1" });
         Assert.Equal(409, Assert.IsType<ObjectResult>(stale.Result).StatusCode);
 
-        var result = Value(await c.Api.Revoke(issued.Id, new RevokeRequest { Reason = "Wrong entry", RowVersion = issued.RowVersion }));
-        Assert.Empty(result.Awards.SelectMany(a => a.Issued));
+        var result = Value(await c.Api.Revoke(issued.Id, new RevokeRequest { Reason = "Copied work", RowVersion = issued.RowVersion }));
+        Assert.Empty(result.Awards.Single(a => a.Id == c.First.Id).Issued);
+        Assert.Equal(1, result.EmptySlots);
     }
 
     [Fact]
-    public void Checklist_blocks_publishing_while_entries_are_not_evaluated()
+    public async Task Checklist_blocks_publishing_while_entries_are_not_evaluated()
     {
-        var c = Seed(withUnevaluated: true);
-        var d = Detail(c);
+        var c = await SeedAsync(withUnevaluated: true);
+        var d = await DetailAsync(c);
         Assert.Equal(1, d.PendingEvaluations);
         Assert.False(d.CanPublish);
         Assert.Equal(CompetitionResultService.NotGradedMessage(1), d.PublishBlockReason);
@@ -244,45 +254,33 @@ public class AwardingApiTests
     [Fact]
     public async Task Publish_blocked_when_not_all_graded()
     {
-        var c = Seed(withUnevaluated: true);
-        var ex = await Assert.ThrowsAsync<BusinessException>(() => c.Api.Publish(c.Competition.Id, new PublishRequest { ConfirmEmptySlots = true }));
+        var c = await SeedAsync(withUnevaluated: true);
+        var ex = await Assert.ThrowsAsync<BusinessException>(() => c.Api.Publish(c.Competition.Id, new PublishRequest()));
         Assert.Equal(CompetitionResultService.NotGradedMessage(1), ex.Message);
     }
 
+    /// <summary>Publishing grades the competition and gives the awards from the ranking, no confirmation needed.</summary>
     [Fact]
-    public async Task Publish_needs_confirmation_for_empty_slots_then_grades_the_competition()
+    public async Task Publish_grades_the_competition_and_gives_the_awards()
     {
-        var c = Seed();
-        Assert.Equal(3, Detail(c).EmptySlots);
-        Assert.True(Detail(c).CanPublish);
+        var c = await SeedAsync();
+        Assert.True((await DetailAsync(c)).CanPublish);
 
-        var ex = await Assert.ThrowsAsync<BusinessException>(() => c.Api.Publish(c.Competition.Id, new PublishRequest { ConfirmEmptySlots = false }));
-        Assert.Contains("3 award slot", ex.Message);
-        Assert.Equal(CompetitionStatus.UPCOMING, (await c.Db.Competitions.FindAsync(c.Competition.Id))!.Status);
+        var published = Value(await c.Api.Publish(c.Competition.Id, new PublishRequest()));
 
-        var published = Value(await c.Api.Publish(c.Competition.Id, new PublishRequest { ConfirmEmptySlots = true }));
         Assert.True(published.IsPublished);
         Assert.Equal(CompetitionStatus.GRADED, published.Status);
         Assert.NotNull(published.PublishedAt);
         Assert.False(published.CanPublish);
-        Assert.True(published.CanAward);
+        Assert.Equal(0, published.EmptySlots);
+        Assert.Equal(c.Entries["best1"].Id, published.Awards.Single(a => a.Id == c.First.Id).Issued.Single().SubmissionId);
+        Assert.Equal(2, published.Awards.Single(a => a.Id == c.Mention.Id).Issued.Count);
     }
 
     [Fact]
-    public async Task Publish_after_issuing_awards_reduces_empty_slots()
+    public async Task Delivery_and_adjust_are_not_supported_409()
     {
-        var c = Seed();
-        await Issue(c, c.First, "best1");
-        var d = await Issue(c, c.Mention, "best2");
-        Assert.Equal(1, d.EmptySlots);
-        var published = Value(await c.Api.Publish(c.Competition.Id, new PublishRequest { ConfirmEmptySlots = true }));
-        Assert.True(published.IsPublished);
-    }
-
-    [Fact]
-    public void Delivery_and_adjust_are_not_supported_409()
-    {
-        var c = Seed();
+        var c = await SeedAsync();
         Assert.Equal(409, Assert.IsType<ObjectResult>(c.Api.SetDelivery(1)).StatusCode);
         Assert.Equal(409, Assert.IsType<ObjectResult>(c.Api.AdjustEvaluation(1)).StatusCode);
     }

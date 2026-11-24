@@ -54,4 +54,10 @@ public class Competition : BaseEntity
 
     /// <summary>Submissions.</summary>
     public ICollection<Submission> Submissions { get; set; } = new List<Submission>();
+
+    /// <summary>Jury: the teachers who grade the entries.</summary>
+    public ICollection<CompetitionJudge> Judges { get; set; } = new List<CompetitionJudge>();
+
+    /// <summary>Grading criteria with their weights (adding up to 100 %).</summary>
+    public ICollection<CompetitionCriterion> Criteria { get; set; } = new List<CompetitionCriterion>();
 }

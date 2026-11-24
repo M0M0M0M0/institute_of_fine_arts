@@ -13,32 +13,35 @@ using Moq;
 namespace InstituteOfFineArts.Tests.Services;
 
 /// <summary>
-/// CompetitionResultService (task BE1-11, F-M05-08): publish only a CLOSED competition whose entries are all
-/// evaluated (BR-08, US-10 AC1), store GRADED + who / when / remarks, no award required (decision), read only
-/// afterwards (BR-10, BR-21); plus the publish / issued-award data of the staff competition details page.
+/// CompetitionResultService (F-M05-08, steps 4–5 of 11/2026): publish only a CLOSED competition with a jury whose
+/// entries are all graded by every judge (BR-08), awards handed out from the ranking (BR-30, BR-31: dense places, tied
+/// entries share an award even beyond its quantity, disqualified entries never win), hand-given awards replaced,
+/// GRADED + who / when / remarks stored, read only afterwards; the ranking preview; and the details page flags.
 /// </summary>
 public class CompetitionResultServiceTests
 {
-    /// <summary>Today in the institute time zone.</summary>
     private static readonly DateOnly Today = DateTimeHelper.Today;
 
-    /// <summary>staff_profile.id of staff01 in the test database.</summary>
     private long _staffId;
-
-    /// <summary>student_profile.id values in the test database.</summary>
+    private long _judgeId;
     private readonly List<long> _students = new();
 
-    /// <summary>Empty in-memory database with one staff member and three students.</summary>
+    /// <summary>Empty in-memory database with one staff member, one teacher and four students.</summary>
     private AppDbContext CreateDb()
     {
         var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var staff = new StaffProfile
         {
-            StaffCode = "NV0003", JoinedDate = new DateOnly(2024, 1, 1),
+            StaffCode = "NV0001", JoinedDate = new DateOnly(2024, 1, 1),
             Account = new Account { Username = "staff01", FullName = "Le Minh Hoang", Email = "s1@ifa.local", Role = Role.STAFF, PasswordHash = "x" },
         };
-        db.StaffProfiles.Add(staff);
-        for (var n = 1; n <= 3; n++)
+        var judge = new StaffProfile
+        {
+            StaffCode = "NV0003", JoinedDate = new DateOnly(2024, 1, 1),
+            Account = new Account { Username = "teacher01", FullName = "Pham Thu Ha", Email = "t1@ifa.local", Role = Role.TEACHER, PasswordHash = "x" },
+        };
+        db.StaffProfiles.AddRange(staff, judge);
+        for (var n = 1; n <= 4; n++)
         {
             db.StudentProfiles.Add(new StudentProfile
             {
@@ -48,21 +51,21 @@ public class CompetitionResultServiceTests
         }
         db.SaveChanges();
         _staffId = staff.Id;
+        _judgeId = judge.Id;
         _students.AddRange(db.StudentProfiles.Select(s => s.Id).OrderBy(id => id));
         return db;
     }
 
-    /// <summary>Fake notification service (M12): the tests check which event is raised.</summary>
     private readonly Mock<INotificationService> _notifications = new();
 
-    /// <summary>Service under test.</summary>
     private CompetitionResultService Service(AppDbContext db) => new(db, NullLogger<CompetitionResultService>.Instance, _notifications.Object);
 
     /// <summary>
-    /// Adds a competition in the given calculated status with three entries; the first <paramref name="evaluated"/>
-    /// are evaluated (the first one BEST), and a First Prize award (quantity 1).
+    /// A competition in the given status with one entry per score (null = not graded yet, -1 = disqualified), a jury of
+    /// one teacher and one criterion (100 %), and the awards First Prize (1) and Second Prize (<paramref name="secondQuantity"/>).
+    /// The entries' results are computed as the service would.
     /// </summary>
-    private Competition Add(AppDbContext db, CompetitionStatus status = CompetitionStatus.CLOSED, int evaluated = 3)
+    private async Task<Competition> AddAsync(AppDbContext db, CompetitionStatus status, decimal?[] scores, bool jury = true, int secondQuantity = 1)
     {
         var (start, end) = status switch
         {
@@ -76,77 +79,149 @@ public class CompetitionResultServiceTests
             Status = status == CompetitionStatus.GRADED ? CompetitionStatus.GRADED : CompetitionStatus.UPCOMING,
         };
         c.Awards.Add(new CompetitionAward { AwardName = "First Prize", Rank = 1, PrizeValue = 250m, Quantity = 1 });
+        c.Awards.Add(new CompetitionAward { AwardName = "Second Prize", Rank = 2, PrizeValue = 100m, Quantity = secondQuantity });
         db.Competitions.Add(c);
+        var criterion = new GradingCriterion { Name = "Overall " + Guid.NewGuid().ToString("N")[..6] };
+        db.GradingCriteria.Add(criterion);
+        db.SaveChanges();
+        var cc = new CompetitionCriterion { CompetitionId = c.Id, CriterionId = criterion.Id, WeightPercent = 100m };
+        db.CompetitionCriteria.Add(cc);
+        if (jury)
+        {
+            db.CompetitionJudges.Add(new CompetitionJudge { CompetitionId = c.Id, JudgeId = _judgeId, IsChair = true });
+        }
         db.SaveChanges();
 
-        for (var i = 0; i < 3; i++)
+        for (var i = 0; i < scores.Length; i++)
         {
             var s = new Submission
             {
                 CompetitionId = c.Id, StudentId = _students[i], Title = $"Night {i + 1}", ImagePath = "p.jpg", OriginalFileName = "p.jpg",
                 FileSize = 10, TextContent = "A poem", Description = "Why", SubmittedAt = start.ToDateTime(new TimeOnly(10, i)),
             };
-            if (i < evaluated)
-            {
-                s.Evaluation = new Evaluation
-                {
-                    EvaluatedBy = _staffId, Rating = i == 0 ? Rating.BEST : Rating.GOOD, PositivePoints = "Nice", EvaluatedAt = DateTime.Now,
-                };
-            }
             db.Submissions.Add(s);
+            db.SaveChanges();
+            if (scores[i] is { } score)
+            {
+                var grade = new JudgeEvaluation
+                {
+                    SubmissionId = s.Id, JudgeId = _judgeId, Disqualified = score < 0, EvaluatedAt = DateTime.Now,
+                    PositivePoints = score < 0 ? null : "Nice", NegativePoints = score < 0 ? "Copied" : null,
+                    TotalScore = score < 0 ? null : score,
+                };
+                if (score >= 0)
+                {
+                    grade.Scores.Add(new JudgeScore { CompetitionCriterionId = cc.Id, Score = score });
+                }
+                db.JudgeEvaluations.Add(grade);
+                db.SaveChanges();
+            }
         }
-        db.SaveChanges();
+        await JuryResults.RecomputeAsync(db, c.Id);
         return c;
     }
 
-    /// <summary>Gives the First Prize to the BEST entry.</summary>
-    private void IssueFirstPrize(AppDbContext db, Competition c)
-    {
-        var award = db.CompetitionAwards.Single(a => a.CompetitionId == c.Id);
-        var best = db.Submissions.Single(s => s.CompetitionId == c.Id && s.Evaluation != null && s.Evaluation.Rating == Rating.BEST);
-        db.AwardsIssued.Add(new AwardIssued { CompetitionAwardId = award.Id, SubmissionId = best.Id, IssuedBy = _staffId, IssuedDate = Today });
-        db.SaveChanges();
-    }
+    /// <summary>Award name → titles of the winning entries.</summary>
+    private static Dictionary<string, List<string>> Winners(AppDbContext db, long competitionId)
+        => db.AwardsIssued.Include(a => a.CompetitionAward).Include(a => a.Submission)
+            .Where(a => a.CompetitionAward.CompetitionId == competitionId).AsEnumerable()
+            .GroupBy(a => a.CompetitionAward.AwardName)
+            .ToDictionary(g => g.Key, g => g.Select(a => a.Submission.Title).OrderBy(t => t).ToList());
 
-    /// <summary>UC-06 step 5 / BR-08: CLOSED and 100% evaluated → GRADED with publish time, publisher and trimmed remarks.</summary>
+    /// <summary>BR-08 / BR-30: everything graded → GRADED with publisher and trimmed remarks; awards from the ranking.</summary>
     [Fact]
-    public async Task Publish_AllGraded_Graded()
+    public async Task Publish_AllGraded_GradedAndAwarded()
     {
         using var db = CreateDb();
-        var c = Add(db);
-        IssueFirstPrize(db, c);
+        var c = await AddAsync(db, CompetitionStatus.CLOSED, [70m, 95m, 82m]);
         var before = DateTimeHelper.Now.AddSeconds(-1);
 
-        var awards = await Service(db).PublishAsync(c.Id, "  Congratulations to the winners.  ", _staffId);
+        var count = await Service(db).PublishAsync(c.Id, "  Congratulations to the winners.  ", _staffId);
 
-        Assert.Equal(1, awards);
+        Assert.Equal(2, count);
         var saved = await db.Competitions.AsNoTracking().SingleAsync();
         Assert.Equal(CompetitionStatus.GRADED, saved.Status);
         Assert.True(saved.PublishedAt >= before);
         Assert.Equal(_staffId, saved.PublishedBy);
         Assert.Equal("Congratulations to the winners.", saved.ResultRemarks);
-
-        // M12 event 2: the participants are told once
+        var winners = Winners(db, c.Id);
+        Assert.Equal(["Night 2"], winners["First Prize"]);
+        Assert.Equal(["Night 3"], winners["Second Prize"]);
         _notifications.Verify(n => n.ResultsPublishedAsync(c.Id), Times.Once);
     }
 
-    /// <summary>US-10 AC1: two entries not evaluated → "2 submissions have not been graded yet."; nothing changes.</summary>
+    /// <summary>BR-31: tied entries share the award even beyond its quantity; the next award goes to the next place.</summary>
+    [Fact]
+    public async Task Publish_Tie_SharesAwardBeyondQuantity()
+    {
+        using var db = CreateDb();
+        var c = await AddAsync(db, CompetitionStatus.CLOSED, [91m, 91m, 85m, 60m]);
+
+        Assert.Equal(3, await Service(db).PublishAsync(c.Id, null, _staffId));
+
+        var winners = Winners(db, c.Id);
+        Assert.Equal(["Night 1", "Night 2"], winners["First Prize"]);
+        Assert.Equal(["Night 3"], winners["Second Prize"]);
+    }
+
+    /// <summary>BR-30: a disqualified entry never wins, whatever the others scored.</summary>
+    [Fact]
+    public async Task Publish_DisqualifiedNeverWins()
+    {
+        using var db = CreateDb();
+        var c = await AddAsync(db, CompetitionStatus.CLOSED, [-1m, 40m, 30m]);
+
+        await Service(db).PublishAsync(c.Id, null, _staffId);
+
+        var winners = Winners(db, c.Id);
+        Assert.Equal(["Night 2"], winners["First Prize"]);
+        Assert.Equal(["Night 3"], winners["Second Prize"]);
+        Assert.DoesNotContain(winners.Values.SelectMany(v => v), t => t == "Night 1");
+    }
+
+    /// <summary>An award given by hand before publishing is replaced by the ranking.</summary>
+    [Fact]
+    public async Task Publish_ReplacesHandGivenAwards()
+    {
+        using var db = CreateDb();
+        var c = await AddAsync(db, CompetitionStatus.CLOSED, [70m, 95m]);
+        var first = db.CompetitionAwards.Single(a => a.CompetitionId == c.Id && a.Rank == 1);
+        var lower = db.Submissions.Single(s => s.Title == "Night 1");
+        db.AwardsIssued.Add(new AwardIssued { CompetitionAwardId = first.Id, SubmissionId = lower.Id, IssuedBy = _staffId, IssuedDate = Today });
+        db.SaveChanges();
+
+        await Service(db).PublishAsync(c.Id, null, _staffId);
+
+        var winners = Winners(db, c.Id);
+        Assert.Equal(["Night 2"], winners["First Prize"]);
+        Assert.Equal(["Night 1"], winners["Second Prize"]);
+    }
+
+    /// <summary>BR-08: entries not graded by the whole jury block publishing; nothing changes.</summary>
     [Fact]
     public async Task Publish_NotAllGraded_Refused()
     {
         using var db = CreateDb();
-        var c = Add(db, evaluated: 1);
+        var c = await AddAsync(db, CompetitionStatus.CLOSED, [80m, null, null]);
 
         var ex = await Assert.ThrowsAsync<BusinessException>(() => Service(db).PublishAsync(c.Id, null, _staffId));
 
-        Assert.Equal("2 submissions have not been graded yet.", ex.Message);
         Assert.Equal(CompetitionResultService.NotGradedMessage(2), ex.Message);
-        Assert.Equal("1 submission has not been graded yet.", CompetitionResultService.NotGradedMessage(1));
+        Assert.Equal("1 submission has not been graded by the whole jury yet.", CompetitionResultService.NotGradedMessage(1));
         _notifications.Verify(n => n.ResultsPublishedAsync(It.IsAny<long>()), Times.Never);
         var saved = await db.Competitions.AsNoTracking().SingleAsync();
-        Assert.NotEqual(CompetitionStatus.GRADED, saved.Status);
         Assert.Null(saved.PublishedAt);
-        Assert.Null(saved.PublishedBy);
+        Assert.Empty(db.AwardsIssued);
+    }
+
+    /// <summary>BR-25: a competition without a jury cannot be published.</summary>
+    [Fact]
+    public async Task Publish_NoJury_Refused()
+    {
+        using var db = CreateDb();
+        var c = await AddAsync(db, CompetitionStatus.CLOSED, [80m], jury: false);
+        var ex = await Assert.ThrowsAsync<BusinessException>(() => Service(db).PublishAsync(c.Id, null, _staffId));
+        Assert.Equal(CompetitionResultService.NoJuryMessage, ex.Message);
     }
 
     /// <summary>BR-08: UPCOMING / ONGOING → only after closing; GRADED → already published.</summary>
@@ -157,24 +232,10 @@ public class CompetitionResultServiceTests
     public async Task Publish_NotClosed_Refused(CompetitionStatus status, string message)
     {
         using var db = CreateDb();
-        var c = Add(db, status);
-
+        var c = await AddAsync(db, status, []);
         var ex = await Assert.ThrowsAsync<BusinessException>(() => Service(db).PublishAsync(c.Id, null, _staffId));
         Assert.Equal(message, ex.Message);
         Assert.Null((await db.Competitions.AsNoTracking().SingleAsync()).PublishedBy);
-    }
-
-    /// <summary>Decision: no issued award is required to publish (the count 0 lets the page warn); blank remarks → null.</summary>
-    [Fact]
-    public async Task Publish_WithoutAwards_Allowed()
-    {
-        using var db = CreateDb();
-        var c = Add(db);
-
-        Assert.Equal(0, await Service(db).PublishAsync(c.Id, "   ", _staffId));
-        var saved = await db.Competitions.AsNoTracking().SingleAsync();
-        Assert.Equal(CompetitionStatus.GRADED, saved.Status);
-        Assert.Null(saved.ResultRemarks);
     }
 
     /// <summary>Remarks over 2000 characters → refused; unknown competition → not found.</summary>
@@ -182,64 +243,74 @@ public class CompetitionResultServiceTests
     public async Task Publish_InvalidInput_Refused()
     {
         using var db = CreateDb();
-        var c = Add(db);
+        var c = await AddAsync(db, CompetitionStatus.CLOSED, [80m]);
 
         var ex = await Assert.ThrowsAsync<BusinessException>(() => Service(db).PublishAsync(c.Id, new string('a', 2001), _staffId));
         Assert.Equal(CompetitionResultService.RemarksTooLongMessage, ex.Message);
         await Assert.ThrowsAsync<NotFoundException>(() => Service(db).PublishAsync(999, null, _staffId));
     }
 
-    /// <summary>BR-21 / BR-10: after publishing, evaluations and the defined awards are read only.</summary>
+    /// <summary>BR-21 / BR-10: after publishing, grades and the defined awards are read only.</summary>
     [Fact]
-    public async Task Publish_ThenEvaluationsAndAwardDefinitionsReadOnly()
+    public async Task Publish_ThenGradesAndAwardDefinitionsReadOnly()
     {
         using var db = CreateDb();
-        var c = Add(db);
+        var c = await AddAsync(db, CompetitionStatus.CLOSED, [80m]);
         await Service(db).PublishAsync(c.Id, null, _staffId);
         var entry = await db.Submissions.FirstAsync(s => s.CompetitionId == c.Id);
         var award = await db.CompetitionAwards.FirstAsync(a => a.CompetitionId == c.Id);
 
         var evaluations = new EvaluationService(db, NullLogger<EvaluationService>.Instance);
         var evalEx = await Assert.ThrowsAsync<BusinessException>(() =>
-            evaluations.SaveAsync(entry.Id, _staffId, new EvaluationFormVm { Rating = Rating.NORMAL, PositivePoints = "x" }));
+            evaluations.SaveAsync(entry.Id, _judgeId, new EvaluationFormVm { Disqualified = true, NegativePoints = "x" }));
         Assert.Equal(EvaluationService.GradedReadOnlyMessage, evalEx.Message);
         var awards = new CompetitionAwardService(db, NullLogger<CompetitionAwardService>.Instance);
         var awardEx = await Assert.ThrowsAsync<BusinessException>(() => awards.DeleteAsync(c.Id, award.Id));
         Assert.Equal(CompetitionAwardService.GradedReadOnlyMessage, awardEx.Message);
     }
 
-    /// <summary>
-    /// SCR-25 (CompetitionService.GetDetailsAsync): grading progress, the publish flag with the US-10 reason,
-    /// winners per award and the issue flag (CLOSED with a free slot).
-    /// </summary>
+    /// <summary>BR-32: before publishing the ranking preview shows places and the awards publishing would give.</summary>
     [Fact]
-    public async Task Details_ProgressWinnersAndPublishFlags()
+    public async Task Ranking_PreviewPlacesAndAwards()
+    {
+        using var db = CreateDb();
+        var c = await AddAsync(db, CompetitionStatus.CLOSED, [91m, 91m, 85m, -1m]);
+
+        var rows = await Service(db).GetRankingAsync(c.Id);
+
+        Assert.Equal(4, rows.Count);
+        Assert.Equal([1, 1, 2], rows.Take(3).Select(r => r.Place!.Value));
+        Assert.Equal("First Prize", rows[0].AwardName);
+        Assert.Equal("First Prize", rows[1].AwardName);
+        Assert.Equal("Second Prize", rows[2].AwardName);
+        Assert.Equal(Rating.DISQUALIFIED, rows[3].Rating);
+        Assert.Null(rows[3].Place);
+        Assert.Empty(db.AwardsIssued); // a preview gives nothing
+    }
+
+    /// <summary>SCR-25: grading progress, the publish flag with its reason, and no hand issuing any more.</summary>
+    [Fact]
+    public async Task Details_ProgressAndPublishFlags()
     {
         using var db = CreateDb();
         var details = new CompetitionService(db, new Mock<IFileStorageService>().Object, NullLogger<CompetitionService>.Instance, _notifications.Object);
-        var c = Add(db, evaluated: 2);
+        var c = await AddAsync(db, CompetitionStatus.CLOSED, [80m, 70m, null]);
 
-        // CLOSED, 2/3 graded, no award yet
         var vm = await details.GetDetailsAsync(c.Id);
         Assert.Equal(2, vm.EvaluatedCount);
         Assert.Equal(3, vm.SubmissionCount);
         Assert.True(vm.CanPublish);
-        Assert.Equal("1 submission has not been graded yet.", vm.PublishBlockedReason);
-        Assert.True(vm.CanIssueAwards);
-        Assert.Empty(vm.Awards[0].Winners);
-
-        // First Prize given → its row lists the winner; no slot left → no issue link
-        IssueFirstPrize(db, c);
-        vm = await details.GetDetailsAsync(c.Id);
-        var winner = Assert.Single(vm.Awards[0].Winners);
-        Assert.Equal("Night 1", winner.SubmissionTitle);
-        Assert.Equal("Student 1", winner.StudentName);
+        Assert.NotNull(vm.PublishBlockedReason);
         Assert.False(vm.CanIssueAwards);
 
-        // Everything graded → publish allowed; after publishing → GRADED, publisher shown, no publish form
-        var last = await db.Submissions.SingleAsync(s => s.CompetitionId == c.Id && s.Evaluation == null);
-        db.Evaluations.Add(new Evaluation { SubmissionId = last.Id, EvaluatedBy = _staffId, Rating = Rating.NORMAL, PositivePoints = "Ok", EvaluatedAt = DateTime.Now });
-        db.SaveChanges();
+        // The last entry graded → publish allowed; after publishing → GRADED, publisher shown, winners listed
+        var last = await db.Submissions.SingleAsync(s => s.CompetitionId == c.Id && s.Title == "Night 3");
+        var evaluations = new EvaluationService(db, NullLogger<EvaluationService>.Instance);
+        var cc = await db.CompetitionCriteria.SingleAsync(x => x.CompetitionId == c.Id);
+        await evaluations.SaveAsync(last.Id, _judgeId, new EvaluationFormVm
+        {
+            PositivePoints = "Ok", Scores = [new CriterionScoreVm { CompetitionCriterionId = cc.Id, Score = 60m }],
+        });
         Assert.Null((await details.GetDetailsAsync(c.Id)).PublishBlockedReason);
         await Service(db).PublishAsync(c.Id, "Well done", _staffId);
         vm = await details.GetDetailsAsync(c.Id);
@@ -247,18 +318,6 @@ public class CompetitionResultServiceTests
         Assert.False(vm.CanPublish);
         Assert.Equal("Le Minh Hoang", vm.PublishedByName);
         Assert.Equal("Well done", vm.ResultRemarks);
-    }
-
-    /// <summary>An ONGOING competition shows neither the publish form nor the issue link.</summary>
-    [Fact]
-    public async Task Details_Ongoing_NoPublishNoIssue()
-    {
-        using var db = CreateDb();
-        var details = new CompetitionService(db, new Mock<IFileStorageService>().Object, NullLogger<CompetitionService>.Instance, _notifications.Object);
-        var c = Add(db, CompetitionStatus.ONGOING, evaluated: 0);
-
-        var vm = await details.GetDetailsAsync(c.Id);
-        Assert.False(vm.CanPublish);
-        Assert.False(vm.CanIssueAwards);
+        Assert.Equal("Night 1", Assert.Single(vm.Awards.Single(a => a.Rank == 1).Winners).SubmissionTitle);
     }
 }

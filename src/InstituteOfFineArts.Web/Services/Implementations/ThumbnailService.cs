@@ -28,8 +28,14 @@ public class ThumbnailService : IThumbnailService
                                 new SKSamplingOptions(SKFilterMode.Linear, SKMipmapMode.Linear))
             ?? throw new InvalidOperationException("The image could not be resized.");
 
-        // 3. Encode as JPEG and write it to disk with a FileStream
-        using var image = SKImage.FromBitmap(resized);
+        // 3. Flatten on white (a transparent PNG / WebP would turn black in a JPEG), encode as JPEG and write it
+        using var flat = new SKBitmap(resized.Width, resized.Height, SKColorType.Rgba8888, SKAlphaType.Opaque);
+        using (var canvas = new SKCanvas(flat))
+        {
+            canvas.Clear(SKColors.White);
+            canvas.DrawBitmap(resized, 0, 0);
+        }
+        using var image = SKImage.FromBitmap(flat);
         using var data = image.Encode(SKEncodedImageFormat.Jpeg, Quality);
         Directory.CreateDirectory(Path.GetDirectoryName(targetPath)!);
         await using var output = new FileStream(targetPath, FileMode.Create, FileAccess.Write);

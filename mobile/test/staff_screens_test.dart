@@ -76,6 +76,15 @@ Map<String, dynamic> _gradingDetail({bool canEvaluate = true, String? lockReason
       'nextUnevaluatedId': 8,
       'total': 5,
       'evaluated': 2,
+      'criteria': [
+        {'id': 1, 'name': 'Creativity', 'description': 'Original idea', 'weight': 60},
+        {'id': 2, 'name': 'Technique', 'description': null, 'weight': 40},
+      ],
+      'jury': [
+        {'name': 'Tran Thi Lan', 'isChair': true, 'done': evaluation != null, 'isMe': true},
+        {'name': 'Vo Quoc Bao', 'isChair': false, 'done': true, 'isMe': false},
+      ],
+      'imageIds': <int>[],
     };
 
 Map<String, dynamic> _awardingDetail({bool published = false, bool canMarkDelivered = true}) => {
@@ -94,6 +103,10 @@ Map<String, dynamic> _awardingDetail({bool published = false, bool canMarkDelive
       'adjustedAt': null,
       'canMarkDelivered': canMarkDelivered,
       'canAdjustEvaluation': false,
+      'ranking': [
+        {'submissionId': 11, 'title': 'Still Sea', 'studentName': 'Le Hoang Nam', 'average': 91.5, 'rating': 'Best', 'place': 1, 'awardName': 'First Prize'},
+        {'submissionId': 12, 'title': 'Harbour', 'studentName': 'Pham An', 'average': null, 'rating': 'Disqualified', 'place': null, 'awardName': null},
+      ],
       'awards': [
         {
           'id': 1,
@@ -289,30 +302,48 @@ void main() {
   });
 
   group('M-T3 Grade entry', () {
-    testWidgets('shows entry info, rating chips and the three comment fields', (tester) async {
+    testWidgets('shows entry info, the jury, one score field per criterion and the comment fields', (tester) async {
       await _pump(tester, const GradingDetailScreen(id: 7), [
         gradingDetailProvider.overrideWith((ref, id) async => GradingDetail.fromJson(_gradingDetail())),
       ]);
       expect(find.text('Still Sea'), findsOneWidget);
       expect(find.text('Le Hoang Nam (HV001)'), findsOneWidget);
       expect(find.text('Poem'), findsOneWidget);
-      expect(find.byType(ChoiceChip), findsNWidgets(6));
+      expect(find.textContaining('Vo Quoc Bao'), findsOneWidget);
+      expect(find.text('Creativity · 60%'), findsOneWidget);
+      expect(find.text('Technique · 40%'), findsOneWidget);
+      expect(find.text('Score *'), findsNWidgets(2));
       expect(find.text('Strengths *'), findsOneWidget);
       expect(find.text('Weaknesses'), findsOneWidget);
       expect(find.text('Areas to improve'), findsOneWidget);
       expect(find.text('Save & next'), findsOneWidget);
-      expect(find.text('Delete evaluation'), findsNothing);
+      expect(find.text('Delete my grade'), findsNothing);
     });
 
-    testWidgets('Disqualified turns the weaknesses field into the required reason', (tester) async {
+    testWidgets('the weighted total updates as the scores are typed', (tester) async {
       await _pump(tester, const GradingDetailScreen(id: 7), [
         gradingDetailProvider.overrideWith((ref, id) async => GradingDetail.fromJson(_gradingDetail())),
       ]);
-      await tester.ensureVisible(find.text('Disqualified'));
-      await tester.tap(find.text('Disqualified'));
+      final scores = find.widgetWithText(TextFormField, 'Score *');
+      await tester.ensureVisible(scores.first);
+      await tester.enterText(scores.at(0), '90');
+      await tester.pump();
+      expect(find.text('Total: enter every score'), findsOneWidget);
+      await tester.enterText(scores.at(1), '80');
+      await tester.pump();
+      expect(find.text('Total: 86.00 / 100'), findsOneWidget);
+    });
+
+    testWidgets('Disqualify hides the scores and turns the weaknesses field into the required reason', (tester) async {
+      await _pump(tester, const GradingDetailScreen(id: 7), [
+        gradingDetailProvider.overrideWith((ref, id) async => GradingDetail.fromJson(_gradingDetail())),
+      ]);
+      await tester.ensureVisible(find.text('Disqualify this entry'));
+      await tester.tap(find.text('Disqualify this entry'));
       await tester.pump();
       expect(find.text('Reason for disqualification *'), findsOneWidget);
-      expect(find.text('Strengths'), findsOneWidget);
+      expect(find.text('Strengths *'), findsNothing);
+      expect(find.text('Score *'), findsNothing);
     });
 
     testWidgets('not open for grading: no form, no rule banner, just "Not graded yet"', (tester) async {
@@ -328,7 +359,12 @@ void main() {
 
     testWidgets('existing evaluation is prefilled and can be deleted', (tester) async {
       final evaluation = {
-        'rating': 'Better',
+        'disqualified': false,
+        'scores': [
+          {'criterionId': 1, 'score': 90, 'comment': 'Fresh'},
+          {'criterionId': 2, 'score': 85.5},
+        ],
+        'totalScore': 88.2,
         'positivePoints': 'Lovely colours',
         'negativePoints': null,
         'improvementAreas': null,
@@ -340,8 +376,12 @@ void main() {
         gradingDetailProvider.overrideWith((ref, id) async => GradingDetail.fromJson(_gradingDetail(evaluation: evaluation))),
       ]);
       expect(find.text('Lovely colours'), findsOneWidget);
-      expect(find.textContaining('Graded by Tran Thi Lan'), findsOneWidget);
-      expect(find.text('Delete evaluation'), findsOneWidget);
+      expect(find.text('90'), findsOneWidget);
+      expect(find.text('85.5'), findsOneWidget);
+      expect(find.text('Fresh'), findsOneWidget);
+      expect(find.textContaining('total 88.20'), findsOneWidget);
+      await tester.ensureVisible(find.text('Delete my grade'));
+      expect(find.text('Delete my grade'), findsOneWidget);
     });
   });
 
@@ -365,16 +405,19 @@ void main() {
       expect(find.textContaining('2 entries are not graded yet'), findsNothing);
     });
 
-    testWidgets('before publishing: checklist, publish button and award slot with edit/delete', (tester) async {
+    testWidgets('before publishing: checklist, ranking preview, publish button and award slots', (tester) async {
       await _pump(tester, const AwardingDetailScreen(competitionId: 7), [
         awardingDetailProvider.overrideWith((ref, id) async => AwardingDetail.fromJson(_awardingDetail())),
       ]);
       expect(find.text('Before publishing'), findsOneWidget);
       expect(find.text('All 5 entries are graded'), findsOneWidget);
-      expect(find.textContaining('2 award slots still empty'), findsOneWidget);
+      expect(find.text('The awards are given from the jury ranking when you publish'), findsOneWidget);
       expect(find.text('Publish results'), findsOneWidget);
+      expect(find.text('Ranking preview'), findsOneWidget);
+      expect(find.textContaining('· First Prize'), findsOneWidget);
+      expect(find.text('Disqualified'), findsOneWidget);
       expect(find.text('First Prize · \$2,000,000'), findsOneWidget);
-      expect(find.text('Still Sea'), findsOneWidget);
+      expect(find.text('Still Sea'), findsNWidgets(2));
 
       await tester.tap(find.byTooltip('Award actions'));
       await tester.pumpAndSettle();

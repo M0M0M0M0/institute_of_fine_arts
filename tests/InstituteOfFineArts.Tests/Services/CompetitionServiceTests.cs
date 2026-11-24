@@ -161,7 +161,7 @@ public class CompetitionServiceTests
     {
         using var db = CreateDb();
         _files.Setup(f => f.SaveCompetitionCoverAsync(It.IsAny<IFormFile>(), It.IsAny<long>(), It.IsAny<string>()))
-              .ThrowsAsync(new BusinessException(JpegValidator.NotJpegMessage, "CoverImage"));
+              .ThrowsAsync(new BusinessException(ImageValidator.NotImageMessage, "CoverImage"));
         var form = Form();
         form.CoverImage = TestImages.AsFormFile(new byte[] { 1 }, "x.png", "image/png");
 
@@ -247,7 +247,8 @@ public class CompetitionServiceTests
         Assert.Equal("Le Minh Hoang", vm.CreatedByName);
         Assert.True(vm.CanEdit);
         Assert.False(vm.CanDelete);
-        Assert.Empty(vm.Warnings);
+        // Awards are there; the jury and the criteria are still missing (BR-25, BR-26)
+        Assert.Equal([CompetitionService.NoJuryWarning, CompetitionService.NoCriteriaWarning], vm.Warnings);
     }
 
     /// <summary>BR-09: an upcoming competition without awards shows a warning.</summary>

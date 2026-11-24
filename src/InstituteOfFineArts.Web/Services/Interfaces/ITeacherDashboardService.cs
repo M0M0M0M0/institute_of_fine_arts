@@ -6,6 +6,7 @@ namespace InstituteOfFineArts.Web.Services.Interfaces;
 public interface ITeacherDashboardService
 {
     /// <summary>Builds the dashboard.</summary>
+    /// <param name="judgeId">staff_profile.id of the teacher: only the competitions they judge</param>
     /// <param name="today">Current date (default: today in the institute time zone); tests pass a fixed date</param>
-    Task<TeacherDashboardVm> GetAsync(DateOnly? today = null);
+    Task<TeacherDashboardVm> GetAsync(long judgeId, DateOnly? today = null);
 }

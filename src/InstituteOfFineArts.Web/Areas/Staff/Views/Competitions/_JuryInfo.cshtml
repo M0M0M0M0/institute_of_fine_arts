@@ -1,0 +1,54 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.Competitions.CompetitionDetailsVm
+@*
+    Jury and grading criteria of a competition (details pages of the Staff and Teacher areas): who grades, how many
+    entries each judge has graded, and the criteria with their weights.
+*@
+@{
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+}
+<section class="section" aria-labelledby="jury-title">
+    <div class="section-head"><h2 id="jury-title">Jury and criteria</h2></div>
+    <div class="row g-4">
+        <div class="col-md-5">
+            <h3 class="h5">Jury</h3>
+            @if (Model.Jury.Count == 0)
+            {
+                <p class="text-muted">No judge yet.</p>
+            }
+            else
+            {
+                <ul class="list-unstyled">
+                    @foreach (var j in Model.Jury)
+                    {
+                        <li class="mb-1">
+                            <strong>@j.Name</strong>@(j.IsChair ? ", chair" : "")
+                            <span class="text-muted small num">– graded @j.Graded / @Model.SubmissionCount</span>
+                        </li>
+                    }
+                </ul>
+            }
+        </div>
+        <div class="col-md-7">
+            <h3 class="h5">Criteria</h3>
+            @if (Model.Criteria.Count == 0)
+            {
+                <p class="text-muted">No criteria yet.</p>
+            }
+            else
+            {
+                <table class="table table-sm align-middle">
+                    <thead><tr><th scope="col">Criterion</th><th scope="col" class="text-end">Weight</th></tr></thead>
+                    <tbody>
+                        @foreach (var c in Model.Criteria)
+                        {
+                            <tr>
+                                <td>@c.Name@if (!string.IsNullOrWhiteSpace(c.Description)) { <span class="small text-muted d-block">@c.Description</span> }</td>
+                                <td class="text-end num">@c.Weight.ToString("0.##", inv) %</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</section>

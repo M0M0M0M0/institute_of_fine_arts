@@ -8,8 +8,8 @@ namespace InstituteOfFineArts.Web.Helpers;
 /// <summary>
 /// Who may see or download the image of a submission (BR-20, role matrix in docs/plan/01 section 3):
 /// STAFF: every image, view + download (they run the competitions and help the students, also while it is open).
-/// TEACHER: every image of a competition whose submission period is over (CLOSED or GRADED), view + download;
-/// before the deadline only what is public, so no painting leaks to the jury early.
+/// TEACHER: every image of a competition they judge whose submission period is over (CLOSED or GRADED), view +
+/// download; otherwise only what is public, so no painting leaks to the jury before the deadline.
 /// STUDENT: own images, view + download.
 /// Everyone else (GUEST, other students, ADMIN): only public images – BEST or awarded entries of a GRADED
 /// competition – view only.
@@ -48,7 +48,10 @@ public static class SubmissionImagePolicy
         }
         if (user.IsInRole(RoleNames.Teacher))
         {
-            return IsClosedForEntries(submission);
+            // The jury of this competition only (Competition.Judges must be loaded), once it is closed for entries
+            return IsClosedForEntries(submission)
+                   && long.TryParse(user.FindFirstValue(ClaimsPrincipalExtensions.ProfileIdClaim), out var judgeId)
+                   && submission.Competition!.Judges.Any(j => j.JudgeId == judgeId);
         }
         return user.IsInRole(RoleNames.Student)
                && long.TryParse(user.FindFirstValue(ClaimsPrincipalExtensions.ProfileIdClaim), out var profileId)

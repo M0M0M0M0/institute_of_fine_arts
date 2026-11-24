@@ -1,3 +1,5 @@
+using InstituteOfFineArts.Web.Infrastructure.Security;
+using InstituteOfFineArts.Web.Helpers;
 using InstituteOfFineArts.Web.ViewModels.Admin.AuditLog;
 using InstituteOfFineArts.Web.Infrastructure.Audit;
 using InstituteOfFineArts.Web.Exceptions;
@@ -23,11 +25,15 @@ public class SubmissionsController : StaffBaseController
     /// <summary>History of the entry (audit log).</summary>
     private readonly IAuditLogService _audit;
 
+    /// <summary>The jury's score sheet.</summary>
+    private readonly IEvaluationService _evaluations;
+
     /// <summary>Receives the services through Dependency Injection.</summary>
-    public SubmissionsController(IStaffSubmissionService submissions, IAuditLogService audit)
+    public SubmissionsController(IStaffSubmissionService submissions, IAuditLogService audit, IEvaluationService evaluations)
     {
         _submissions = submissions;
         _audit = audit;
+        _evaluations = evaluations;
     }
 
     /// <summary>List with filters and paging; with a competition chosen, also its evaluation progress.</summary>
@@ -62,6 +68,7 @@ public class SubmissionsController : StaffBaseController
         try
         {
             var details = await _submissions.GetDetailsAsync(id);
+            ViewBag.ScoreSheet = await _evaluations.GetScoreSheetAsync(id, new ScoreSheetViewer(RoleNames.Staff, User.GetProfileId()));
             // The entry's own history: submitted, edited, opened by staff / teachers, graded, awarded, exhibited, sold
             ViewBag.History = new HistoryVm(
                 await _audit.GetHistoryAsync(new AuditHistoryQuery { SubmissionId = id, Page = page, PageSize = 10 }),

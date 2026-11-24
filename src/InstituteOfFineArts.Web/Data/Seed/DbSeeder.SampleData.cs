@@ -44,7 +44,7 @@ public static partial class DbSeeder
         // ------------------------------------------------------------ (1) competitions + awards
         var hometown = NewCompetition("Hometown Landscapes", -60, -30, staff01,
             "Paint the landscape of the place where you grew up: rivers, rice fields, hills or streets.",
-            "One painting per student. JPEG, up to 5 MB. A short poem, quotation or story must accompany the painting.",
+            "One artwork per student: 1 to 5 pictures (JPG, PNG or WebP, up to 10 MB each). A short poem, quotation or story must accompany the painting.",
             ("First Prize", 1, 300m, 1, "Certificate and art supplies voucher"),
             ("Second Prize", 2, 200m, 1, "Certificate and sketchbook set"),
             ("Third Prize", 3, 100m, 1, "Certificate"));

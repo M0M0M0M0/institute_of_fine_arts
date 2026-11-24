@@ -213,15 +213,20 @@ public class ArtworkCatalogService : IArtworkCatalogService
 
     /// <inheritdoc />
     public async Task<ArtworkDetailVm> GetArtworkAsync(long submissionId)
-        => await PublicSubmissions()
-               .Where(s => s.Id == submissionId)
-               .Select(s => new ArtworkDetailVm(
-                   s.Id, s.Title, s.Student.Account.FullName, s.CompetitionId, s.Competition.Title, s.Competition.Description,
-                   s.AwardIssued != null ? s.AwardIssued.CompetitionAward.AwardName : null,
-                   s.AwardIssued != null ? s.AwardIssued.CompetitionAward.Rank : null,
-                   s.Evaluation != null && s.Evaluation.Rating == Rating.BEST, s.SubmittedAt))
-               .FirstOrDefaultAsync()
-           ?? throw new NotFoundException($"Artwork {submissionId} was not found or is not public.");
+    {
+        var artwork = await PublicSubmissions()
+                          .Where(s => s.Id == submissionId)
+                          .Select(s => new ArtworkDetailVm(
+                              s.Id, s.Title, s.Student.Account.FullName, s.CompetitionId, s.Competition.Title, s.Competition.Description,
+                              s.AwardIssued != null ? s.AwardIssued.CompetitionAward.AwardName : null,
+                              s.AwardIssued != null ? s.AwardIssued.CompetitionAward.Rank : null,
+                              s.Evaluation != null && s.Evaluation.Rating == Rating.BEST, s.SubmittedAt))
+                          .FirstOrDefaultAsync()
+                      ?? throw new NotFoundException($"Artwork {submissionId} was not found or is not public.");
+        var images = await _db.SubmissionImages.AsNoTracking().Where(i => i.SubmissionId == submissionId)
+            .OrderByDescending(i => i.IsCover).ThenBy(i => i.SortOrder).ThenBy(i => i.Id).Select(i => i.Id).ToListAsync();
+        return artwork with { ImageIds = images };
+    }
 
     /// <summary>Public paintings (BR-20, same rule as SubmissionImagePolicy.IsPublic): BEST or awarded, competition GRADED.</summary>
     private IQueryable<Models.Entities.Submission> PublicSubmissions()

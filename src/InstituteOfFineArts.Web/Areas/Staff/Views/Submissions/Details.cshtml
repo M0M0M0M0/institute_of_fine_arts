@@ -32,10 +32,11 @@
 
 <div class="artwork-stage">
     <figure class="artwork @(awarded ? "is-awarded" : "") m-0">
-        <div class="artwork-frame" data-zoom data-zoom-download="/files/submissions/@Model.Id?download=true"><img src="/files/submissions/@Model.Id" alt="@Model.Title – @Model.StudentName" /></div>
-        <figcaption class="mt-2 d-flex flex-wrap align-items-center gap-2">
-            <a href="/files/submissions/@Model.Id?download=true" class="btn btn-sm btn-outline-primary"><i class="bi bi-download" aria-hidden="true"></i>Download original</a>
-            <span class="text-muted small">@Model.OriginalFileName, @((Model.FileSize / 1024.0).ToString("#,##0")) KB</span>
+        @* 1 to 5 pictures of the artwork (BR-18); the download button follows the picture shown *@
+        @{ var entryImages = new InstituteOfFineArts.Web.ViewModels.Common.EntryImagesVm(Model.Id, Model.ImageIds, $"{Model.Title} – {Model.StudentName}", true); }
+        <partial name="_EntryImages" model="entryImages" />
+        <figcaption class="mt-2 text-muted small">
+            @(Model.ImageIds.Count > 1 ? $"{Model.ImageIds.Count} pictures · cover: " : "")@Model.OriginalFileName, @((Model.FileSize / 1024.0).ToString("#,##0")) KB
         </figcaption>
     </figure>
 
@@ -106,6 +107,14 @@
         <p class="text-muted">Not evaluated yet. @(Model.CanEvaluate ? "The teachers are grading this competition." : "")</p>
     }
 </section>
+
+@if (ViewBag.ScoreSheet is InstituteOfFineArts.Web.ViewModels.Staff.Evaluations.ScoreSheetVm sheet && !sheet.Legacy)
+{
+    <section class="section" aria-labelledby="sheet-title">
+        <div class="section-head"><h2 id="sheet-title">Score sheet of the jury</h2></div>
+        <partial name="_ScoreSheet" model="sheet" />
+    </section>
+}
 
 <section class="section" aria-labelledby="award-title">
     <div class="section-head"><h2 id="award-title">Award</h2></div>

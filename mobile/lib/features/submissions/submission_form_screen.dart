@@ -61,9 +61,11 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
   late TextType _textType;
   late bool _publicConsent;
 
-  // Ảnh mới người dùng vừa chọn (null khi sửa mà không đổi ảnh)
-  Uint8List? _imageBytes;
-  String? _imageName;
+  // Pictures (BR-18): new ones chosen on the device, current ones to remove, the cover
+  final List<PickedPicture> _picked = [];
+  int _coverIndex = 0; // among [_picked] (new entry)
+  final Set<int> _remove = {}; // current picture ids (edit)
+  int? _coverImageId; // current picture chosen as the cover (edit)
   String? _imageError;
   String? _imageWarning; // cảnh báo ảnh nhỏ, không chặn nộp
   bool _submitting = false;
@@ -91,35 +93,50 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
     super.dispose();
   }
 
-  // Mở hộp chọn file (web: trình duyệt), kiểm tra JPEG ≤ 5 MB rồi đọc byte để xem trước
-  Future<void> _pickImage() async {
+  /// Current pictures of the entry being edited (cover first).
+  List<int> get _current => widget.initial?.imageIds ?? const [];
+
+  /// Pictures the entry will have after saving.
+  int get _count =>
+      (_editing ? (_current.isEmpty ? 1 : _current.length) - _remove.length : 0) + _picked.length;
+
+  // Opens the file chooser (web: the browser), checks each picture (JPG / PNG / WebP ≤ 10 MB) and keeps the bytes
+  Future<void> _pickImages() async {
     try {
-      final file = await FilePicker.pickFile(
+      final files = await FilePicker.pickFiles(
         type: FileType.custom,
-        allowedExtensions: const ['jpg', 'jpeg'],
+        allowedExtensions: imageExtensions,
       );
-      if (file == null) return;
-      final bytes = await file.readAsBytes();
-      final error = validateImageFile(file.name, bytes.length);
-      // Đọc kích thước ảnh để cảnh báo nếu quá nhỏ (BR-17, chỉ nhắc, không chặn)
+      if (files.isEmpty) return;
+      final errors = <String>[];
+      final added = <PickedPicture>[];
       String? warning;
-      if (error == null) {
+      for (final file in files) {
+        if (_count + added.length >= maxImagesPerEntry) {
+          errors.add('An entry has at most $maxImagesPerEntry pictures');
+          break;
+        }
+        final bytes = await file.readAsBytes();
+        final error = validateImageFile(file.name, bytes.length);
+        if (error != null) {
+          errors.add('${file.name}: $error');
+          continue;
+        }
+        // Small pictures are accepted with a warning (BR-17)
         try {
           final decoded = await decodeImageFromList(bytes);
-          warning = smallImageWarning(decoded.width, decoded.height);
+          warning ??= smallImageWarning(decoded.width, decoded.height);
           decoded.dispose();
         } catch (_) {
-          // Không giải mã được thì bỏ qua cảnh báo; server vẫn kiểm tra JPEG ở bước nộp
+          // Not decodable here: the server checks the file anyway
         }
+        added.add(PickedPicture(name: file.name, bytes: bytes));
       }
       if (!mounted) return;
       setState(() {
-        _imageError = error;
-        if (error == null) {
-          _imageBytes = bytes;
-          _imageName = file.name;
-          _imageWarning = warning;
-        }
+        _picked.addAll(added);
+        _imageError = errors.isEmpty ? null : errors.join('\n');
+        _imageWarning = warning ?? _imageWarning;
       });
     } catch (e) {
       setState(() => _imageError = 'Could not read the picture: $e');
@@ -133,11 +150,10 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
   Future<void> _submit() async {
     final formOk = _formKey.currentState!.validate();
     // A new entry needs a picture; show that error together with the field errors
-    final missingImage = !_editing && _imageBytes == null;
-    if (missingImage)
-      setState(
-        () => _imageError = _imageError ?? 'Please choose a JPEG picture',
-      );
+    final missingImage = _count < 1;
+    if (missingImage) {
+      setState(() => _imageError = 'Choose at least one picture (JPG, PNG or WebP)');
+    }
     if (!formOk || missingImage) return;
 
     final input = SubmissionInput(
@@ -146,8 +162,10 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
       textType: _textType,
       textContent: _textContent.text.trim(),
       publicConsent: _publicConsent,
-      imageBytes: _imageBytes,
-      imageName: _imageName,
+      pictures: List.of(_picked),
+      coverIndex: _coverIndex.clamp(0, _picked.isEmpty ? 0 : _picked.length - 1),
+      removeImageIds: _remove.toList(),
+      coverImageId: _coverImageId,
     );
 
     setState(() => _submitting = true);
@@ -211,54 +229,66 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
             // Competition + deadline notice (F-M06-10)
             if (competition != null) _DeadlineBanner(detail: competition),
             const SizedBox(height: AppSpacing.md),
-            // ---- Picture first: pick + immediate preview ----
+            // ---- Pictures first (BR-18: 1 to 5 of the same artwork) ----
+            Text(_editing ? 'Pictures' : 'Pictures *', style: text.titleSmall),
+            const SizedBox(height: AppSpacing.xs),
             Text(
-              _editing
-                  ? 'Picture (only choose one to replace it)'
-                  : 'Picture *',
-              style: text.titleSmall,
+              'The same artwork from other angles, in other light, or a close-up. JPG, PNG or WebP, up to 10 MB each, '
+              'at most $maxImagesPerEntry pictures. Pick the cover.',
+              style: text.bodySmall,
             ),
             const SizedBox(height: AppSpacing.sm),
-            if (_imageBytes != null)
-              Semantics(
-                label: 'Preview of the chosen picture',
-                child: ArtworkFrame(
-                  aspectRatio: null,
-                  child: SizedBox(
-                    height: 260,
-                    child: Image.memory(_imageBytes!, fit: BoxFit.contain),
-                  ),
-                ),
-              )
-            else if (_editing)
+            // Current pictures (edit): cover / remove
+            if (_editing && _current.isEmpty)
               ArtworkFrame(
                 aspectRatio: null,
                 child: SizedBox(
-                  height: 260,
-                  child: AuthImage(
-                    submissionId: widget.initial!.id,
-                    thumb: false,
-                    fit: BoxFit.contain,
-                    semanticLabel: widget.initial!.title,
-                  ),
+                  height: 200,
+                  child: AuthImage(submissionId: widget.initial!.id, thumb: false, fit: BoxFit.contain, semanticLabel: widget.initial!.title),
                 ),
-              )
-            else
+              ),
+            for (final (i, id) in _current.indexed)
+              _PictureRow(
+                image: PictureImage(imageId: id),
+                label: 'Picture ${i + 1}${i == 0 ? ' (current cover)' : ''}',
+                removed: _remove.contains(id),
+                cover: !_remove.contains(id) && (_coverImageId == null ? i == 0 : _coverImageId == id),
+                onCover: _submitting || _remove.contains(id) ? null : () => setState(() => _coverImageId = id),
+                onRemove: _submitting
+                    ? null
+                    : () => setState(() {
+                          if (!_remove.remove(id)) _remove.add(id);
+                          if (_coverImageId == id) _coverImageId = null;
+                        }),
+              ),
+            // Newly chosen pictures
+            for (final (i, p) in _picked.indexed)
+              _PictureRow(
+                image: Image.memory(p.bytes, fit: BoxFit.cover),
+                label: p.name,
+                removed: false,
+                // On a new entry one of them is the cover; on edit a new picture can become the cover after saving
+                cover: !_editing && i == _coverIndex,
+                onCover: _editing || _submitting ? null : () => setState(() => _coverIndex = i),
+                onRemove: _submitting
+                    ? null
+                    : () => setState(() {
+                          _picked.removeAt(i);
+                          if (_coverIndex >= _picked.length) _coverIndex = 0;
+                        }),
+              ),
+            if (!_editing && _picked.isEmpty)
               ArtworkFrame(
                 aspectRatio: null,
                 child: SizedBox(
-                  height: 160,
+                  height: 140,
                   child: ColoredBox(
                     color: AppColors.mist,
                     child: Center(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(
-                            Icons.add_photo_alternate_outlined,
-                            size: 40,
-                            color: AppColors.muted,
-                          ),
+                          const Icon(Icons.add_photo_alternate_outlined, size: 40, color: AppColors.muted),
                           const SizedBox(height: AppSpacing.xs),
                           Text('No picture chosen yet', style: text.bodyMedium),
                         ],
@@ -271,17 +301,10 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
             Align(
               alignment: Alignment.centerLeft,
               child: OutlinedButton.icon(
-                onPressed: _submitting ? null : _pickImage,
-                icon: const Icon(Icons.image_search_outlined),
-                label: Text(
-                  _imageName ??
-                      (_editing ? 'Choose a new picture' : 'Choose a picture'),
-                ),
+                onPressed: _submitting || _count >= maxImagesPerEntry ? null : _pickImages,
+                icon: const Icon(Icons.add_photo_alternate_outlined),
+                label: Text(_count == 0 ? 'Choose pictures' : 'Add pictures ($_count/$maxImagesPerEntry)'),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.xs),
-              child: Text('JPEG only, up to 5 MB', style: text.bodySmall),
             ),
             if (_imageError != null)
               Padding(
@@ -297,15 +320,9 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
-                      Icons.warning_amber,
-                      size: 18,
-                      color: AppColors.brassText,
-                    ),
+                    const Icon(Icons.warning_amber, size: 18, color: AppColors.brassText),
                     const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(_imageWarning!, style: text.bodySmall),
-                    ),
+                    Expanded(child: Text(_imageWarning!, style: text.bodySmall)),
                   ],
                 ),
               ),
@@ -425,6 +442,56 @@ class _DeadlineBanner extends StatelessWidget {
                 color: expired ? AppColors.danger : AppColors.brassText,
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One picture on the form: thumbnail, name, "Cover" and "Remove" (or "Undo" for a current one marked for removal).
+class _PictureRow extends StatelessWidget {
+  const _PictureRow({
+    required this.image,
+    required this.label,
+    required this.removed,
+    required this.cover,
+    required this.onCover,
+    required this.onRemove,
+  });
+
+  final Widget image;
+  final String label;
+  final bool removed;
+  final bool cover;
+  final VoidCallback? onCover;
+  final VoidCallback? onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: Row(
+        children: [
+          Opacity(
+            opacity: removed ? 0.4 : 1,
+            child: SizedBox(width: 64, height: 64, child: ClipRRect(borderRadius: AppRadius.mdAll, child: image)),
+          ),
+          const SizedBox(width: AppSpacing.sm),
+          Expanded(
+            child: Text(
+              label,
+              style: text.bodyMedium!.copyWith(decoration: removed ? TextDecoration.lineThrough : null),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (onCover != null || cover)
+            ChoiceChip(label: const Text('Cover'), selected: cover, onSelected: onCover == null ? null : (_) => onCover!()),
+          IconButton(
+            tooltip: removed ? 'Keep this picture' : 'Remove this picture',
+            onPressed: onRemove,
+            icon: Icon(removed ? Icons.undo : Icons.close),
+          ),
         ],
       ),
     );

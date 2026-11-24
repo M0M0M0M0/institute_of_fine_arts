@@ -64,6 +64,24 @@ public class CompetitionFormVm : IValidatableObject
     /// </summary>
     public List<CompetitionAwardRowVm> Awards { get; set; } = new();
 
+    /// <summary>Jury: staff_profile.id of the teachers who grade the entries.</summary>
+    public List<long> JudgeIds { get; set; } = new();
+
+    /// <summary>Chair of the jury (one of <see cref="JudgeIds"/>; the only member is the chair).</summary>
+    public long? ChairId { get; set; }
+
+    /// <summary>Grading criteria with their weights (adding up to 100 %), in display order. Blank rows are ignored.</summary>
+    public List<CompetitionCriterionRowVm> Criteria { get; set; } = new();
+
+    /// <summary>Display only: teachers that can be put on the jury.</summary>
+    public IReadOnlyList<JudgeOptionVm> JudgeOptions { get; set; } = [];
+
+    /// <summary>Display only: criteria of the library.</summary>
+    public IReadOnlyList<CriterionOptionVm> CriterionOptions { get; set; } = [];
+
+    /// <summary>Display only: entries were graded, so the criteria cannot change.</summary>
+    public bool CriteriaLocked { get; set; }
+
     /// <summary>Checks rules that involve two fields.</summary>
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {

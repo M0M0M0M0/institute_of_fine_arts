@@ -15,7 +15,7 @@ namespace InstituteOfFineArts.Web.Services.Implementations;
 /// the status calculated from the dates (CompetitionStatusResolver), so they are right even before the
 /// nightly status job (BE2-05) runs.
 /// </summary>
-public class CompetitionService : ICompetitionService
+public partial class CompetitionService : ICompetitionService
 {
     /// <summary>Message when a competition with entries is deleted (TC-M05-06).</summary>
     public const string HasSubmissionsDeleteMessage = "A competition with submissions cannot be deleted.";
@@ -41,6 +41,12 @@ public class CompetitionService : ICompetitionService
 
     /// <summary>Advice shown until at least one award exists (BR-09).</summary>
     public const string NoAwardsWarning = "No awards yet. Add at least one award before the competition starts.";
+
+    /// <summary>Warning on the details page: nobody can grade without a jury.</summary>
+    public const string NoJuryWarning = "This competition has no jury yet: choose the teachers who will grade it on the edit page.";
+
+    /// <summary>Warning on the details page: grading needs criteria.</summary>
+    public const string NoCriteriaWarning = "This competition has no grading criteria yet: choose them and their weights on the edit page.";
 
     /// <summary>Database access.</summary>
     private readonly AppDbContext _db;
@@ -175,8 +181,31 @@ public class CompetitionService : ICompetitionService
                 ? CompetitionResultService.NotGradedMessage(submissionCount - evaluatedCount)
                 : null,
         };
-        vm.CanIssueAwards = status is CompetitionStatus.CLOSED or CompetitionStatus.GRADED
-            && vm.Awards.Any(a => a.IssuedCount < a.Quantity);
+        // Winners come from the jury's scores when the results are published: nobody issues an award by hand
+        vm.CanIssueAwards = false;
+
+        // Jury (with how many entries each judge graded) and criteria
+        vm.Jury = await _db.CompetitionJudges.AsNoTracking().Where(j => j.CompetitionId == id)
+            .OrderByDescending(j => j.IsChair).ThenBy(j => j.Judge.Account.FullName)
+            .Select(j => new JudgeRowVm(j.Judge.Account.FullName, j.IsChair,
+                _db.JudgeEvaluations.Count(e => e.JudgeId == j.JudgeId && e.Submission.CompetitionId == id)))
+            .ToListAsync();
+        vm.Criteria = await _db.CompetitionCriteria.AsNoTracking().Where(c => c.CompetitionId == id)
+            .OrderBy(c => c.SortOrder).ThenBy(c => c.Id)
+            .Select(c => new CriterionRowVm(c.Criterion.Name, c.Criterion.Description, c.WeightPercent))
+            .ToListAsync();
+        if (status != CompetitionStatus.GRADED && vm.Jury.Count == 0)
+        {
+            vm.Warnings.Add(NoJuryWarning);
+        }
+        if (status != CompetitionStatus.GRADED && vm.Criteria.Count == 0)
+        {
+            vm.Warnings.Add(NoCriteriaWarning);
+        }
+        if (status == CompetitionStatus.CLOSED && vm.Jury.Count == 0)
+        {
+            vm.PublishBlockedReason = CompetitionResultService.NoJuryMessage;
+        }
 
         // BR-09: awards must exist before the competition opens
         if (vm.Awards.Count == 0 && status is CompetitionStatus.UPCOMING or CompetitionStatus.ONGOING)
@@ -191,7 +220,7 @@ public class CompetitionService : ICompetitionService
     {
         var c = await FindAsync(id);
         EnsureEditable(c);
-        return new CompetitionFormVm
+        var form = new CompetitionFormVm
         {
             Id = c.Id,
             Code = c.Code,
@@ -204,6 +233,9 @@ public class CompetitionService : ICompetitionService
             HasSubmissions = await _db.Submissions.AnyAsync(s => s.CompetitionId == id),
             Awards = await AwardRowsAsync(id),
         };
+        await LoadJuryAndCriteriaAsync(form);
+        await FillJuryOptionsAsync(form);
+        return form;
     }
 
     /// <inheritdoc />
@@ -243,6 +275,8 @@ public class CompetitionService : ICompetitionService
             CreatedBy = staffProfileId,
         };
         competition.Status = CompetitionStatusResolver.Resolve(competition);
+        // Jury and criteria typed on the same form, checked and inserted with the competition
+        await AddJuryAndCriteriaAsync(competition, form);
         foreach (var a in awards)
         {
             competition.Awards.Add(new CompetitionAward
@@ -338,6 +372,10 @@ public class CompetitionService : ICompetitionService
         // Awards of the form (added, changed, removed): checked first, saved in the same SaveChanges as the competition
         changes.AddRange(await SyncAwardsAsync(c.Id, form.Awards));
 
+        // Jury and criteria (criteria locked once grading started)
+        var juryChanges = await SyncJuryAndCriteriaAsync(c.Id, form);
+        changes.AddRange(juryChanges);
+
         // Cover: a new file replaces the old one; "remove" clears it. Old files are deleted only after saving.
         var oldCover = c.CoverImagePath;
         string? newCover = null;
@@ -358,6 +396,11 @@ public class CompetitionService : ICompetitionService
         if (oldCover != null && oldCover != c.CoverImagePath)
         {
             _files.Delete(oldCover);
+        }
+        // A jury change while grading changes which entries are complete: recalculate their results
+        if (juryChanges.Count > 0 && CompetitionStatusResolver.Resolve(c) == CompetitionStatus.CLOSED)
+        {
+            await JuryResults.RecomputeAsync(_db, c.Id);
         }
         _logger.LogInformation("Competition {Code} updated", c.Code);
         return changes;

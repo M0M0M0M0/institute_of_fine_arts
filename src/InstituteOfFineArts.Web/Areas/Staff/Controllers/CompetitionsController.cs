@@ -23,11 +23,15 @@ public class CompetitionsController : StaffBaseController
     /// <summary>History of the competition (audit log).</summary>
     private readonly IAuditLogService _audit;
 
+    /// <summary>Ranking and awards from the jury's scores.</summary>
+    private readonly ICompetitionResultService _results;
+
     /// <summary>Receives the competition service through Dependency Injection.</summary>
-    public CompetitionsController(ICompetitionService competitions, IAuditLogService audit)
+    public CompetitionsController(ICompetitionService competitions, IAuditLogService audit, ICompetitionResultService results)
     {
         _competitions = competitions;
         _audit = audit;
+        _results = results;
     }
 
     /// <summary>List with filters (keyword, status, date range) and paging.</summary>
@@ -39,18 +43,28 @@ public class CompetitionsController : StaffBaseController
         return View(await _competitions.SearchAsync(search));
     }
 
-    /// <summary>Empty create form, with one empty award row to start with (rank 1, one winner).</summary>
+    /// <summary>Empty create form: one empty award row (rank 1, one winner), one empty criterion row, the teachers to choose the jury from.</summary>
     [HttpGet("new")]
-    public IActionResult Create() => View(new CompetitionFormVm { Awards = [new CompetitionAwardRowVm { Rank = 1, Quantity = 1 }] });
+    public async Task<IActionResult> Create()
+    {
+        var form = new CompetitionFormVm
+        {
+            Awards = [new CompetitionAwardRowVm { Rank = 1, Quantity = 1 }],
+            Criteria = [new CompetitionCriterionRowVm()],
+        };
+        await _competitions.FillJuryOptionsAsync(form);
+        return View(form);
+    }
 
     /// <summary>Creates the competition with the awards typed on the form, then opens its details.</summary>
     /// <param name="form">Form data</param>
     [HttpPost("new")]
-    [RequestSizeLimit(6 * 1024 * 1024)]
+    [RequestSizeLimit(11 * 1024 * 1024)]
     public async Task<IActionResult> Create(CompetitionFormVm form)
     {
         if (!ModelState.IsValid)
         {
+            await _competitions.FillJuryOptionsAsync(form);
             return View(form);
         }
         try
@@ -66,6 +80,7 @@ public class CompetitionsController : StaffBaseController
         catch (BusinessException ex)
         {
             ModelState.AddModelError(ex.Field ?? string.Empty, ex.Message);
+            await _competitions.FillJuryOptionsAsync(form);
             return View(form);
         }
     }
@@ -78,6 +93,10 @@ public class CompetitionsController : StaffBaseController
         try
         {
             var details = await _competitions.GetDetailsAsync(id);
+            if (details.Status is CompetitionStatus.CLOSED or CompetitionStatus.GRADED)
+            {
+                ViewBag.Ranking = await _results.GetRankingAsync(id);
+            }
             ViewBag.History = new HistoryVm(
                 await _audit.GetHistoryAsync(new AuditHistoryQuery { CompetitionId = id, PageSize = 8 }),
                 "History", $"/staff/competitions/{id}/history");
@@ -143,7 +162,7 @@ public class CompetitionsController : StaffBaseController
     /// <param name="id">Competition id</param>
     /// <param name="form">Form data</param>
     [HttpPost("{id:long}/edit")]
-    [RequestSizeLimit(6 * 1024 * 1024)]
+    [RequestSizeLimit(11 * 1024 * 1024)]
     public async Task<IActionResult> Edit(long id, CompetitionFormVm form)
     {
         try
@@ -173,6 +192,9 @@ public class CompetitionsController : StaffBaseController
             form.Code = current.Code;
             form.HasCover = current.HasCover;
             form.HasSubmissions = current.HasSubmissions;
+            form.JudgeOptions = current.JudgeOptions;
+            form.CriterionOptions = current.CriterionOptions;
+            form.CriteriaLocked = current.CriteriaLocked;
             // How many times each award was given comes from the database, never from the browser
             var given = current.Awards.ToDictionary(a => a.Id, a => a.IssuedCount);
             foreach (var row in form.Awards)

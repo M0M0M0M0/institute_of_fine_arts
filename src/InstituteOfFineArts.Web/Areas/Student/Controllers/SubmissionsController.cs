@@ -1,3 +1,4 @@
+using InstituteOfFineArts.Web.Helpers;
 using InstituteOfFineArts.Web.Exceptions;
 using InstituteOfFineArts.Web.Infrastructure.Security;
 using InstituteOfFineArts.Web.Services.Interfaces;
@@ -15,16 +16,20 @@ namespace InstituteOfFineArts.Web.Areas.Student.Controllers;
 [Route("student/submissions")]
 public class SubmissionsController : StudentBaseController
 {
-    /// <summary>Largest accepted request: a 5 MB image plus 1 MB for the other fields (BR-17).</summary>
-    private const long MaxRequestBytes = 6 * 1024 * 1024;
+    /// <summary>Largest accepted request: 5 pictures of 10 MB plus 1 MB for the other fields (BR-17).</summary>
+    private const long MaxRequestBytes = 51 * 1024 * 1024; // 5 pictures × 10 MB + 1 MB of fields
 
     /// <summary>Submission service.</summary>
     private readonly ISubmissionService _submissions;
 
+    /// <summary>The jury's score sheet once the results are published.</summary>
+    private readonly IEvaluationService _evaluations;
+
     /// <summary>Receives the submission service through Dependency Injection.</summary>
-    public SubmissionsController(ISubmissionService submissions)
+    public SubmissionsController(ISubmissionService submissions, IEvaluationService evaluations)
     {
         _submissions = submissions;
+        _evaluations = evaluations;
     }
 
     /// <summary>My entries with filters (competition, title, submitted date range) and paging.</summary>
@@ -122,7 +127,10 @@ public class SubmissionsController : StudentBaseController
     {
         try
         {
-            return View(await _submissions.GetDetailsAsync(id, User.GetProfileId()));
+            var me = User.GetProfileId();
+            var details = await _submissions.GetDetailsAsync(id, me);
+            ViewBag.ScoreSheet = await _evaluations.GetScoreSheetAsync(id, new ScoreSheetViewer(RoleNames.Student, me));
+            return View(details);
         }
         catch (NotFoundException)
         {
@@ -130,7 +138,7 @@ public class SubmissionsController : StudentBaseController
         }
     }
 
-    /// <summary>Edit form (texts + optional new image) while the competition is ongoing.</summary>
+    /// <summary>Edit form (texts and pictures) while the competition is ongoing.</summary>
     /// <param name="id">Submission id</param>
     [HttpGet("{id:long}/edit")]
     public async Task<IActionResult> Edit(long id)
@@ -151,7 +159,7 @@ public class SubmissionsController : StudentBaseController
         }
     }
 
-    /// <summary>Saves the changes and replaces the image when a new one was chosen.</summary>
+    /// <summary>Saves the changes: texts, pictures added or removed, the cover.</summary>
     /// <param name="id">Submission id</param>
     /// <param name="form">Form data</param>
     [HttpPost("{id:long}/edit")]
@@ -196,6 +204,7 @@ public class SubmissionsController : StudentBaseController
             form.CompetitionTitle = current.CompetitionTitle;
             form.Deadline = current.Deadline;
             form.OriginalFileName = current.OriginalFileName;
+            form.CurrentImages = current.CurrentImages;
         }
         catch (NotFoundException)
         {

@@ -48,15 +48,16 @@ public class StaffSubmissionService : IStaffSubmissionService
     }
 
     /// <inheritdoc />
-    public async Task<PagedResult<SubmissionListItemVm>> SearchAsync(SubmissionSearchVm search, int pageSize = 10, bool closedOnly = false)
+    public async Task<PagedResult<SubmissionListItemVm>> SearchAsync(SubmissionSearchVm search, int pageSize = 10, long? judgeId = null)
     {
         var query = _db.Submissions.AsNoTracking().AsQueryable();
 
-        // Teacher view: entries only once the submission period is over (no leak before the deadline)
-        if (closedOnly)
+        // Teacher view: entries of the competitions they judge, once the submission period is over (no leak before the deadline)
+        if (judgeId is { } judge)
         {
             var today = DateTimeHelper.Today;
-            query = query.Where(s => s.Competition.Status == CompetitionStatus.GRADED || s.Competition.EndDate < today);
+            query = query.Where(s => (s.Competition.Status == CompetitionStatus.GRADED || s.Competition.EndDate < today)
+                                     && s.Competition.Judges.Any(j => j.JudgeId == judge));
         }
 
         // Competition
@@ -72,10 +73,19 @@ public class StaffSubmissionService : IStaffSubmissionService
             query = query.Where(s => competitions.Any(c => c.Id == s.CompetitionId));
         }
 
-        // Evaluated / not evaluated
+        // Evaluated / not evaluated: for a judge, graded by them (the result needs the whole jury)
         if (search.Evaluated is { } evaluated)
         {
-            query = evaluated ? query.Where(s => s.Evaluation != null) : query.Where(s => s.Evaluation == null);
+            if (judgeId is { } me)
+            {
+                query = evaluated
+                    ? query.Where(s => s.JudgeEvaluations.Any(j => j.JudgeId == me))
+                    : query.Where(s => !s.JudgeEvaluations.Any(j => j.JudgeId == me));
+            }
+            else
+            {
+                query = evaluated ? query.Where(s => s.Evaluation != null) : query.Where(s => s.Evaluation == null);
+            }
         }
 
         // Rating (implies evaluated)
@@ -104,15 +114,29 @@ public class StaffSubmissionService : IStaffSubmissionService
         }
 
         var rows = query.OrderByDescending(s => s.SubmittedAt).ThenByDescending(s => s.Id).Select(ListRow);
-        return WithLateFlags(await PagedResult<SubmissionListItemVm>.CreateAsync(rows, search.Page, pageSize));
+        var page = WithLateFlags(await PagedResult<SubmissionListItemVm>.CreateAsync(rows, search.Page, pageSize));
+        if (judgeId is { } judgeProfile)
+        {
+            // Which of the listed entries the judge has graded
+            var ids = page.Items.Select(i => i.Id).ToList();
+            var mine = (await _db.JudgeEvaluations.AsNoTracking()
+                .Where(j => j.JudgeId == judgeProfile && ids.Contains(j.SubmissionId))
+                .Select(j => j.SubmissionId).ToListAsync()).ToHashSet();
+            foreach (var item in page.Items)
+            {
+                item.GradedByMe = mine.Contains(item.Id);
+            }
+        }
+        return page;
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<CompetitionOptionVm>> GetCompetitionOptionsAsync(bool closedOnly = false)
+    public async Task<IReadOnlyList<CompetitionOptionVm>> GetCompetitionOptionsAsync(long? judgeId = null)
     {
         var today = DateTimeHelper.Today;
         return await _db.Competitions.AsNoTracking()
-            .Where(c => !closedOnly || c.Status == CompetitionStatus.GRADED || c.EndDate < today)
+            .Where(c => judgeId == null
+                        || ((c.Status == CompetitionStatus.GRADED || c.EndDate < today) && c.Judges.Any(j => j.JudgeId == judgeId)))
             .OrderByDescending(c => c.StartDate).ThenByDescending(c => c.Id)
             .Select(c => new CompetitionOptionVm(c.Id, c.Code, c.Title))
             .ToListAsync();
@@ -140,7 +164,7 @@ public class StaffSubmissionService : IStaffSubmissionService
     }
 
     /// <inheritdoc />
-    public async Task<SubmissionDetailsVm> GetDetailsAsync(long id, bool closedOnly = false)
+    public async Task<SubmissionDetailsVm> GetDetailsAsync(long id, long? judgeId = null)
     {
         var row = await _db.Submissions.AsNoTracking()
             .Where(s => s.Id == id)
@@ -157,6 +181,8 @@ public class StaffSubmissionService : IStaffSubmissionService
                     Description = s.Description,
                     OriginalFileName = s.OriginalFileName,
                     FileSize = s.FileSize,
+                    ImageIds = s.Images.OrderByDescending(i => i.IsCover).ThenBy(i => i.SortOrder).ThenBy(i => i.Id)
+                        .Select(i => i.Id).ToList(),
                     StudentId = s.StudentId,
                     StudentName = s.Student.Account.FullName,
                     StudentCode = s.Student.StudentCode,
@@ -208,8 +234,10 @@ public class StaffSubmissionService : IStaffSubmissionService
             new Competition { Status = row.Status, StartDate = row.StartDate, EndDate = vm.CompetitionEndDate });
         vm.IsLate = CompetitionStatusResolver.IsLateSubmission(vm.SubmittedAt, vm.CompetitionEndDate);
 
-        // Teacher view: an entry of a competition that still takes entries is not shown at all
-        if (closedOnly && vm.CompetitionStatus is CompetitionStatus.UPCOMING or CompetitionStatus.ONGOING)
+        // Teacher view: only entries of a competition they judge, and never while it still takes entries
+        if (judgeId is { } judge
+            && (vm.CompetitionStatus is CompetitionStatus.UPCOMING or CompetitionStatus.ONGOING
+                || !await _db.CompetitionJudges.AnyAsync(j => j.CompetitionId == vm.CompetitionId && j.JudgeId == judge)))
         {
             throw new NotFoundException($"Submission {id} was not found.");
         }

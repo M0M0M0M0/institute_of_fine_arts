@@ -170,7 +170,11 @@ class AwardingDetail {
     required this.awards,
     this.canMarkDelivered = true,
     this.canAdjustEvaluation = true,
+    this.ranking = const [],
   });
+
+  /// The jury ranking (BR-30, BR-31): before publishing, the awards publishing would give; afterwards the ones given.
+  final List<AwardingRank> ranking;
 
   final int id;
   final String title;
@@ -215,6 +219,38 @@ class AwardingDetail {
         awards: (json['awards'] as List).map((e) => AwardSlot.fromJson(e as Map<String, dynamic>)).toList(),
         canMarkDelivered: json['canMarkDelivered'] as bool? ?? true,
         canAdjustEvaluation: json['canAdjustEvaluation'] as bool? ?? true,
+        ranking: ((json['ranking'] as List?) ?? const []).map((e) => AwardingRank.fromJson(e as Map<String, dynamic>)).toList(),
+      );
+}
+
+/// One row of the jury ranking: dense [place] (equal averages share it), null for a disqualified entry.
+class AwardingRank {
+  const AwardingRank({
+    required this.submissionId,
+    required this.title,
+    required this.studentName,
+    required this.average,
+    required this.rating,
+    required this.place,
+    required this.awardName,
+  });
+
+  final int submissionId;
+  final String title;
+  final String studentName;
+  final double? average;
+  final SubmissionRating? rating;
+  final int? place;
+  final String? awardName;
+
+  factory AwardingRank.fromJson(Map<String, dynamic> json) => AwardingRank(
+        submissionId: json['submissionId'] as int,
+        title: json['title'] as String,
+        studentName: json['studentName'] as String,
+        average: (json['average'] as num?)?.toDouble(),
+        rating: json['rating'] == null ? null : ratingFromJson(json['rating'] as String),
+        place: json['place'] as int?,
+        awardName: json['awardName'] as String?,
       );
 }
 
@@ -321,7 +357,7 @@ class AwardingRepository {
       });
 
   /// POST .../competitions/{id}/publish
-  Future<AwardingDetail> publish(int competitionId, {required bool confirmEmptySlots}) => guardApi(() async {
+  Future<AwardingDetail> publish(int competitionId, {bool confirmEmptySlots = true}) => guardApi(() async {
         final res = await _dio.post<Map<String, dynamic>>('$_base/competitions/$competitionId/publish',
             data: {'confirmEmptySlots': confirmEmptySlots});
         return AwardingDetail.fromJson(res.data!);
@@ -338,14 +374,6 @@ class AwardingRepository {
   Future<AwardingDetail> setDelivery(IssuedAward award, bool delivered) => guardApi(() async {
         final res = await _dio.put<Map<String, dynamic>>('$_base/awards/${award.id}/delivery',
             data: {'delivered': delivered, 'rowVersion': award.rowVersion});
-        return AwardingDetail.fromJson(res.data!);
-      });
-
-  /// PUT .../submissions/{id}/adjust-evaluation: sửa đánh giá sau công bố, bắt buộc lý do.
-  Future<AwardingDetail> adjustEvaluation(int submissionId, EvaluationInput input, String reason) =>
-      guardApi(() async {
-        final res = await _dio.put<Map<String, dynamic>>('$_base/submissions/$submissionId/adjust-evaluation',
-            data: {...input.toJson(), 'reason': reason});
         return AwardingDetail.fromJson(res.data!);
       });
 

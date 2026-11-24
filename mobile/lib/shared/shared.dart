@@ -6,6 +6,7 @@ export 'artwork.dart';
 export 'artwork_viewer.dart';
 export 'auth_image.dart';
 export 'competition_card.dart';
+export 'entry_pictures.dart';
 export 'hero_header.dart';
 export 'layout_widgets.dart';
 export 'natural_image.dart';

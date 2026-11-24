@@ -12,7 +12,8 @@ namespace InstituteOfFineArts.Web.Services.Interfaces;
 /// True when the image must be sent with the institute watermark (F-M13-02): the viewer is neither the owner
 /// nor STAFF / TEACHER (after the deadline) / ADMIN
 /// </param>
-public record ImageFile(string RelativePath, string? DownloadName, bool IsPublic, bool Watermark = false);
+/// <param name="ContentType">image/jpeg, image/png or image/webp (from the file extension)</param>
+public record ImageFile(string RelativePath, string? DownloadName, bool IsPublic, bool Watermark = false, string? ContentType = null);
 
 /// <summary>
 /// Finds stored images and applies the viewing rules (BR-20) before FilesController streams them,
@@ -29,6 +30,15 @@ public interface IImageAccessService
     /// <param name="thumbnail">True for the small version (falls back to the original when there is none)</param>
     /// <param name="download">True to download the original with its file name</param>
     Task<ImageFile?> GetSubmissionImageAsync(long submissionId, ClaimsPrincipal user, bool thumbnail, bool download);
+
+    /// <summary>
+    /// One picture of an entry (submission_image, BR-18) with the same rules as the entry's image, or null.
+    /// </summary>
+    /// <param name="imageId">submission_image id</param>
+    /// <param name="user">Current user (may be anonymous)</param>
+    /// <param name="thumbnail">True for the small version</param>
+    /// <param name="download">True to download the original with its file name</param>
+    Task<ImageFile?> GetPictureAsync(long imageId, ClaimsPrincipal user, bool thumbnail, bool download);
 
     /// <summary>Cover image of a competition (public), or null when there is none.</summary>
     /// <param name="competitionId">Competition id</param>

@@ -1,0 +1,47 @@
+@model IReadOnlyList<InstituteOfFineArts.Web.ViewModels.Staff.Competitions.RankingRowVm>
+@*
+    Ranking of a competition from the jury's averages (CompetitionResultService.GetRankingAsync): place (equal averages
+    share it), entry, student, average, rating and the award. While CLOSED it is the preview of what publishing will
+    give; once GRADED, the awards that were given. ViewData["Preview"] = true shows the preview wording.
+*@
+@{
+    var preview = ViewData["Preview"] is true;
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+}
+<section class="section" aria-labelledby="ranking-title">
+    <div class="section-head"><h2 id="ranking-title">@(preview ? "Ranking preview" : "Ranking")</h2></div>
+    @if (preview)
+    {
+        <p class="text-muted small">
+            Entries graded by the whole jury, highest average first. Equal averages share a place and the same award; every winner
+            receives the full prize. These awards are given when you publish the results.
+        </p>
+    }
+    @if (Model.Count == 0)
+    {
+        <p class="text-muted">No entry has been graded by the whole jury yet.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-sm table-hover align-middle">
+                <thead>
+                    <tr><th scope="col">Place</th><th scope="col">Entry</th><th scope="col">Student</th><th scope="col" class="text-end">Average</th><th scope="col">Rating</th><th scope="col">Award</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var r in Model)
+                    {
+                        <tr>
+                            <td class="num">@(r.Place?.ToString() ?? "–")</td>
+                            <td><a href="/staff/submissions/@r.SubmissionId">@r.Title</a></td>
+                            <td>@r.StudentName</td>
+                            <td class="text-end num">@(r.Average?.ToString("0.00", inv) ?? "–")</td>
+                            <td>@if (r.Rating is { } rating) { <span class="tag tag-@rating">@rating</span> }</td>
+                            <td>@if (r.AwardName != null) { <span class="tag tag-award"><i class="bi bi-award-fill" aria-hidden="true"></i>@r.AwardName</span> }</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>

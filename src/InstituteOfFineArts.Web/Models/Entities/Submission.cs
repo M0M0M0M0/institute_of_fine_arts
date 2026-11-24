@@ -55,4 +55,10 @@ public class Submission : BaseEntity
 
     /// <summary>Times the painting was sent to an exhibition.</summary>
     public ICollection<ExhibitionEntry> ExhibitionEntries { get; set; } = new List<ExhibitionEntry>();
+
+    /// <summary>The grade of each judge (the result in <see cref="Evaluation"/> is their average).</summary>
+    public ICollection<JudgeEvaluation> JudgeEvaluations { get; set; } = new List<JudgeEvaluation>();
+
+    /// <summary>Pictures of the artwork (1–5); the cover is also in ImagePath / ThumbnailPath.</summary>
+    public ICollection<SubmissionImage> Images { get; set; } = new List<SubmissionImage>();
 }

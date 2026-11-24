@@ -78,6 +78,12 @@ public class CompetitionDetailsVm
 
     /// <summary>Advice for staff, e.g. missing awards before the start (BR-09).</summary>
     public List<string> Warnings { get; set; } = new();
+
+    /// <summary>Jury: chair first, with the number of entries each judge graded.</summary>
+    public List<JudgeRowVm> Jury { get; set; } = new();
+
+    /// <summary>Grading criteria with their weights, in display order.</summary>
+    public List<CriterionRowVm> Criteria { get; set; } = new();
 }
 
 /// <summary>One defined award of a competition.</summary>

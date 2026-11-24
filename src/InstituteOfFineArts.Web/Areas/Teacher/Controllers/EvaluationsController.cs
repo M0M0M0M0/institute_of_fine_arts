@@ -33,7 +33,7 @@ public class EvaluationsController : TeacherBaseController
     {
         try
         {
-            return View(await _evaluations.GetPageAsync(submissionId));
+            return View(await _evaluations.GetPageAsync(submissionId, User.GetProfileId()));
         }
         catch (NotFoundException)
         {
@@ -75,7 +75,7 @@ public class EvaluationsController : TeacherBaseController
         // Show the form again: entry data comes from the database, the typed values from the browser
         try
         {
-            var page = await _evaluations.GetPageAsync(submissionId);
+            var page = await _evaluations.GetPageAsync(submissionId, User.GetProfileId());
             page.Form = form;
             return View(page);
         }
@@ -92,7 +92,7 @@ public class EvaluationsController : TeacherBaseController
     {
         try
         {
-            await _evaluations.DeleteAsync(submissionId);
+            await _evaluations.DeleteAsync(submissionId, User.GetProfileId());
             TempData["Success"] = "Evaluation deleted.";
         }
         catch (NotFoundException)

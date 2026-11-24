@@ -231,14 +231,14 @@ public sealed class SubmissionServiceTests : IDisposable
         var c = AddCompetition(db, "Colors of Autumn", -10, 10);
         var file = kind switch
         {
-            "png" => TestImages.AsFormFile(TestImages.Create(800, 600, SKEncodedImageFormat.Png), "image.png", "image/png"),
+            "png" => TestImages.AsFormFile(TestImages.Create(800, 600, SKEncodedImageFormat.Png), "renamed.jpg", "image/jpeg"), // a PNG renamed to .jpg
             "fake" => TestImages.AsFormFile("this is not an image"u8.ToArray(), "fake_jpg.jpg"),
             _ => TestImages.AsFormFile(Array.Empty<byte>(), "empty.jpg"),
         };
 
         var ex = await Assert.ThrowsAsync<BusinessException>(() => Service(db).CreateAsync(Form(c.Id, file), Me));
 
-        Assert.Equal(nameof(SubmissionFormVm.Image), ex.Field);
+        Assert.Equal(nameof(SubmissionFormVm.Images), ex.Field);
         Assert.Empty(db.Submissions);
         Assert.Empty(StoredFiles());
     }
@@ -463,11 +463,11 @@ public sealed class SubmissionServiceTests : IDisposable
         var s = AddSubmission(db, c, Me, withFiles: true);
         var service = Service(db);
         var form = await service.GetForEditAsync(s.Id, Me);
-        form.NewImage = TestImages.AsFormFile(TestImages.Create(800, 600, SKEncodedImageFormat.Png), "image.png", "image/png");
+        form.NewImage = TestImages.AsFormFile(TestImages.Create(800, 600, SKEncodedImageFormat.Png), "renamed.jpg", "image/jpeg");
 
         var ex = await Assert.ThrowsAsync<BusinessException>(() => service.UpdateAsync(s.Id, form, Me));
 
-        Assert.Equal(nameof(SubmissionEditVm.NewImage), ex.Field);
+        Assert.Equal(nameof(SubmissionEditVm.NewImages), ex.Field);
         Assert.Equal(2, StoredFiles().Length);
         Assert.True(File.Exists(_files.ResolvePath(s.ImagePath)));
     }

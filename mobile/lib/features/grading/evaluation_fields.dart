@@ -1,36 +1,82 @@
 import 'package:flutter/material.dart';
 
 import '../../app/tokens.dart';
-import '../submissions/submissions.dart';
 import 'grading.dart';
 
-/// Rating picker as ChoiceChips (used by the grading form and the "adjust result" form).
-class RatingChips extends StatelessWidget {
-  const RatingChips({super.key, required this.value, required this.onChanged});
+/// One score field per criterion (0–100, at most 2 decimals) with its weight and an optional comment (BR-23).
+class CriterionScoreFields extends StatelessWidget {
+  const CriterionScoreFields({
+    super.key,
+    required this.criteria,
+    required this.scores,
+    required this.comments,
+    required this.enabled,
+    required this.onChanged,
+  });
 
-  /// Current rating; [onChanged] null = read-only.
-  final SubmissionRating? value;
-  final ValueChanged<SubmissionRating>? onChanged;
+  final List<GradingCriterion> criteria;
+
+  /// criterion id → score controller / comment controller
+  final Map<int, TextEditingController> scores;
+  final Map<int, TextEditingController> comments;
+  final bool enabled;
+  final VoidCallback onChanged;
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: AppSpacing.sm,
-      runSpacing: AppSpacing.xs,
+    final text = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final r in SubmissionRating.values)
-          ChoiceChip(
-            label: Text(ratingName(r)),
-            selected: value == r,
-            selectedColor: r == SubmissionRating.disqualified ? AppColors.danger.withValues(alpha: 0.18) : AppColors.mist,
-            onSelected: onChanged == null ? null : (_) => onChanged!(r),
+        for (final c in criteria)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('${c.name} · ${c.weight.toStringAsFixed(c.weight % 1 == 0 ? 0 : 2)}%', style: text.titleSmall),
+                          if (c.description != null && c.description!.isNotEmpty)
+                            Text(c.description!, style: text.bodySmall!.copyWith(color: AppColors.muted)),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.sm),
+                    SizedBox(
+                      width: 96,
+                      child: TextFormField(
+                        controller: scores[c.id],
+                        enabled: enabled,
+                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        textAlign: TextAlign.end,
+                        decoration: const InputDecoration(labelText: 'Score *', hintText: '0–100', isDense: true),
+                        onChanged: (_) => onChanged(),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                TextFormField(
+                  controller: comments[c.id],
+                  enabled: enabled,
+                  maxLength: 1000,
+                  decoration: InputDecoration(labelText: 'Comment on ${c.name}', isDense: true, counterText: ''),
+                ),
+              ],
+            ),
           ),
       ],
     );
   }
 }
 
-/// The three comment fields of an evaluation. For "Disqualified" the weaknesses field becomes the required reason.
+/// The three comment fields of a grade. When the entry is disqualified the weaknesses field becomes the required reason.
 class EvaluationTextFields extends StatelessWidget {
   const EvaluationTextFields({
     super.key,
@@ -61,10 +107,78 @@ class EvaluationTextFields extends StatelessWidget {
         );
     return Column(
       children: [
-        field(positive, disqualified ? 'Strengths' : 'Strengths *'),
-        // BR-23: for DISQUALIFIED this field carries the mandatory reason
+        if (!disqualified) field(positive, 'Strengths *'),
+        // BR-23: for a disqualification this field carries the mandatory reason
         field(negative, disqualified ? 'Reason for disqualification *' : 'Weaknesses'),
-        field(improvement, 'Areas to improve'),
+        if (!disqualified) field(improvement, 'Areas to improve'),
+      ],
+    );
+  }
+}
+
+/// The jury's score sheet (BR-24): one card per judge with their scores, then the averages, total and rating.
+class ScoreSheetView extends StatelessWidget {
+  const ScoreSheetView({super.key, required this.sheet});
+
+  final ScoreSheet sheet;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    String name(int criterionId) =>
+        sheet.criteria.where((c) => c.id == criterionId).map((c) => c.name).firstOrNull ?? 'Criterion';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            if (sheet.rating case final r?) Text(ratingName(r), style: text.titleMedium),
+            const Spacer(),
+            if (sheet.totalScore case final t?) Text('Total ${formatScore(t)}', style: text.titleMedium),
+          ],
+        ),
+        if (sheet.averages.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.xs),
+          for (final a in sheet.averages)
+            Text('${name(a.criterionId)}: average ${formatScore(a.score ?? 0)}', style: text.bodySmall),
+        ],
+        for (final j in sheet.judges)
+          Card(
+            margin: const EdgeInsets.only(top: AppSpacing.sm),
+            child: Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(child: Text('${j.name}${j.isChair ? ' (chair)' : ''}', style: text.titleSmall)),
+                      Text(j.disqualified ? 'Disqualified' : formatScore(j.totalScore ?? 0), style: text.titleSmall),
+                    ],
+                  ),
+                  for (final s in j.scores)
+                    Padding(
+                      padding: const EdgeInsets.only(top: AppSpacing.xs),
+                      child: Text(
+                        '${name(s.criterionId)}: ${formatScore(s.score ?? 0)}'
+                        '${s.comment != null && s.comment!.isNotEmpty ? ' – ${s.comment}' : ''}',
+                        style: text.bodySmall,
+                      ),
+                    ),
+                  for (final (label, value) in [
+                    ('Strengths', j.positivePoints),
+                    (j.disqualified ? 'Reason' : 'Weaknesses', j.negativePoints),
+                    ('To improve', j.improvementAreas),
+                  ])
+                    if (value != null && value.trim().isNotEmpty) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(label, style: text.labelMedium),
+                      Text(value),
+                    ],
+                ],
+              ),
+            ),
+          ),
       ],
     );
   }

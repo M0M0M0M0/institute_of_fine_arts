@@ -24,6 +24,8 @@ public class EvaluationConfiguration : IEntityTypeConfiguration<Evaluation>
         // Column types
         b.Property(x => x.Rating).HasConversion<string>().HasMaxLength(20).IsUnicode(false);
         b.Property(x => x.EvaluatedAt).HasPrecision(0).HasDefaultValueSql("SYSDATETIME()");
+        // Average of the jury, kept with 4 decimals (shown with 2)
+        b.Property(x => x.TotalScore).HasPrecision(9, 4);
 
         // Filter submissions by rating (problem statement requirement)
         b.HasIndex(x => x.Rating).HasDatabaseName("IX_evaluation_rating");

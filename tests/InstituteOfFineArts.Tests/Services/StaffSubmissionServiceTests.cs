@@ -176,6 +176,47 @@ public class StaffSubmissionServiceTests
         Assert.All(page.Items.Where(r => r.Title != "Painting gLate"), r => Assert.False(r.IsLate));
     }
 
+    /// <summary>
+    /// Teacher view: only the closed / graded competitions they judge; "evaluated" means graded by them (the result
+    /// needs the whole jury), and every row says whether they graded it.
+    /// </summary>
+    [Fact]
+    public async Task Search_Judge_GradedByMe()
+    {
+        var d = CreateData();
+        var judge = new StaffProfile
+        {
+            StaffCode = "NV0009", JoinedDate = new DateOnly(2024, 1, 1),
+            Account = new Account { Username = "teacher01", FullName = "Pham Thu Ha", Email = "t@ifa.local", Role = Role.TEACHER, PasswordHash = "x" },
+        };
+        d.Db.StaffProfiles.Add(judge);
+        d.Db.SaveChanges();
+        d.Db.CompetitionJudges.AddRange(
+            new CompetitionJudge { CompetitionId = d.Closed.Id, JudgeId = judge.Id, IsChair = true },
+            new CompetitionJudge { CompetitionId = d.Ongoing.Id, JudgeId = judge.Id });
+        // The judge graded c2 only (c2 also has an older single evaluation, c1 has none)
+        d.Db.JudgeEvaluations.Add(new JudgeEvaluation
+        {
+            SubmissionId = d.Entries["c2"].Id, JudgeId = judge.Id, PositivePoints = "Nice", TotalScore = 90m, EvaluatedAt = DateTime.Now,
+        });
+        d.Db.SaveChanges();
+        var service = new StaffSubmissionService(d.Db);
+
+        var all = await service.SearchAsync(new SubmissionSearchVm(), judgeId: judge.Id);
+        var mine = await service.SearchAsync(new SubmissionSearchVm { Evaluated = true }, judgeId: judge.Id);
+        var toGrade = await service.SearchAsync(new SubmissionSearchVm { Evaluated = false }, judgeId: judge.Id);
+
+        // Not the ongoing competition (no peeking), not the graded one (not on that jury)
+        Assert.Equal(new[] { "Painting c1", "Painting c2" }, Titles(all.Items).OrderBy(t => t));
+        Assert.True(all.Items.Single(i => i.Title == "Painting c2").GradedByMe);
+        Assert.False(all.Items.Single(i => i.Title == "Painting c1").GradedByMe);
+        Assert.Equal(new[] { "Painting c2" }, Titles(mine.Items));
+        Assert.Equal(new[] { "Painting c1" }, Titles(toGrade.Items));
+
+        // Staff view: no per-judge column
+        Assert.All((await service.SearchAsync(new SubmissionSearchVm())).Items, i => Assert.Null(i.GradedByMe));
+    }
+
     /// <summary>Evaluated / not evaluated filter.</summary>
     [Fact]
     public async Task Search_EvaluatedOrNot()

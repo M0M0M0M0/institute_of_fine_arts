@@ -9,6 +9,7 @@ import '../../core/file_download.dart';
 import '../../core/format.dart';
 import '../../shared/shared.dart';
 import '../competitions/competitions.dart';
+import '../grading/evaluation_fields.dart';
 import '../student/dashboard.dart';
 import 'submissions.dart';
 
@@ -44,6 +45,9 @@ class _DetailBody extends ConsumerStatefulWidget {
 
 class _DetailBodyState extends ConsumerState<_DetailBody> {
   bool _busy = false;
+
+  /// Picture shown large ("Download" saves it); null = the entry's own image.
+  int? _pictureId;
 
   void _toast(String text) => ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
 
@@ -87,8 +91,10 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
     final d = widget.detail;
     setState(() => _busy = true);
     try {
-      final bytes = await ref.read(submissionRepositoryProvider).imageBytes(d.id, download: true);
-      final saved = await saveBytesAsFile(bytes, d.originalFileName);
+      final picture = _pictureId ?? (d.imageIds.isEmpty ? null : d.imageIds.first);
+      final repo = ref.read(submissionRepositoryProvider);
+      final bytes = picture == null ? await repo.imageBytes(d.id, download: true) : await repo.pictureBytes(picture, download: true);
+      final saved = await saveBytesAsFile(bytes, picture == null ? d.originalFileName : 'entry-${d.id}-$picture.jpg');
       if (mounted) _toast(saved ? 'Picture saved to your device.' : 'Saving is not supported on this platform (use Chrome).');
     } catch (e) {
       if (mounted) _toast(ApiException.from(e).message);
@@ -107,31 +113,14 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(AppSpacing.gutter, AppSpacing.md, AppSpacing.gutter, AppSpacing.xl),
       children: [
-        // The picture, framed; tap to zoom
-        Semantics(
-          button: true,
-          label: 'Zoom the picture "${d.title}"',
-          child: GestureDetector(
-            onTap: () => ArtworkViewer.open(
-              context,
-              ArtworkViewer.private(submissionId: d.id, title: d.title, subtitle: d.competitionTitle),
-            ),
-            child: ArtworkFrame(
-              awarded: awarded,
-              aspectRatio: null,
-              // The frame hugs the painting at its own proportions
-              child: Stack(
-                children: [
-                  NaturalArtworkImage.private(submissionId: d.id, semanticLabel: d.title),
-                  const Positioned(
-                    right: AppSpacing.sm,
-                    bottom: AppSpacing.sm,
-                    child: Icon(Icons.zoom_out_map, size: 20, color: AppColors.muted),
-                  ),
-                ],
-              ),
-            ),
-          ),
+        // The pictures (1 to 5 of the same artwork, BR-18), framed; tap to zoom, tap a thumbnail to switch
+        EntryPictures(
+          submissionId: d.id,
+          imageIds: d.imageIds,
+          title: d.title,
+          subtitle: d.competitionTitle,
+          awarded: awarded,
+          onSelected: (id) => setState(() => _pictureId = id),
         ),
         const SizedBox(height: AppSpacing.md),
         Text(d.title, style: text.headlineSmall!.copyWith(fontStyle: FontStyle.italic)),
@@ -196,6 +185,11 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
               ),
             ),
           ),
+        ],
+        // The jury's score sheet once the results are published (BR-24)
+        if (d.scoreSheet case final sheet?) ...[
+          const SectionHeader('Score sheet', padding: EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.sm)),
+          ScoreSheetView(sheet: sheet),
         ],
         if (awarded) ...[
           const SectionHeader('Award', padding: EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.xs)),

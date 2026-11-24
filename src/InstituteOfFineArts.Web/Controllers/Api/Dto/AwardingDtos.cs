@@ -24,13 +24,25 @@ public sealed record AwardSlotDto(
     long Id, string Name, int Rank, decimal PrizeValue, int Quantity, string? Description, int ActiveCount,
     int Remaining, List<IssuedAwardDto> Issued);
 
-/// <summary>Awarding page of one competition with the publish checklist (mobile AwardingDetail).</summary>
+/// <summary>
+/// Awarding page of one competition with the publish checklist (mobile AwardingDetail). Since 11/2026 awards are given
+/// by the ranking when the results are published (BR-30), so CanAward is always false and <see cref="Ranking"/> shows
+/// the jury ranking: before publishing, the awards publishing would give; afterwards, the awards given.
+/// </summary>
 public sealed record AwardingDetailDto(
     long Id, string Title, CompetitionStatus Status, int SubmissionCount, int EvaluatedCount, int PendingEvaluations,
     int EmptySlots, bool CanAward, bool CanPublish, string? PublishBlockReason, bool IsPublished, DateTime? PublishedAt,
     DateTime? AdjustedAt, List<AwardSlotDto> Awards,
     // Not supported by this system (no column / rule): the app hides "mark as delivered" and "adjust evaluation"
-    bool CanMarkDelivered = false, bool CanAdjustEvaluation = false, bool HasCover = false);
+    bool CanMarkDelivered = false, bool CanAdjustEvaluation = false, bool HasCover = false)
+{
+    /// <summary>Entries graded by the whole jury, best first (dense places; disqualified ones last without a place).</summary>
+    public List<AwardingRankDto> Ranking { get; init; } = [];
+}
+
+/// <summary>One row of the jury ranking (BR-30, BR-31).</summary>
+public sealed record AwardingRankDto(long SubmissionId, string Title, string StudentName, decimal? Average, Rating? Rating,
+    int? Place, string? AwardName);
 
 /// <summary>Entry that may receive an award (mobile AwardCandidate).</summary>
 public sealed record AwardCandidateDto(long SubmissionId, string Title, string StudentName, string StudentCode, Rating Rating, bool HasThumbnail = false);
@@ -133,7 +145,7 @@ public static class AwardingQueries
         }
         return new AwardingDetailDto(
             competition.Id, competition.Title, status, submissionCount, evaluatedCount, pending,
-            slots.Sum(s => s.Remaining), true, !isPublished && pending == 0, blockReason, isPublished,
+            slots.Sum(s => s.Remaining), false, !isPublished && pending == 0, blockReason, isPublished,
             isPublished ? competition.PublishedAt : null, null, slots, HasCover: competition.CoverImagePath != null);
     }
 }

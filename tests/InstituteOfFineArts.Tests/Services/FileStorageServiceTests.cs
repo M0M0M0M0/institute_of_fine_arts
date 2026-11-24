@@ -108,7 +108,7 @@ public sealed class FileStorageServiceTests : IDisposable
         var png = TestImages.Create(800, 600, SKEncodedImageFormat.Png);
         var ex = await Assert.ThrowsAsync<BusinessException>(
             () => _service.SaveSubmissionImageAsync(TestImages.AsFormFile(png), 7, "NewImage"));
-        Assert.Equal(JpegValidator.CorruptMessage, ex.Message);
+        Assert.Equal(ImageValidator.CorruptMessage, ex.Message);
         Assert.Equal("NewImage", ex.Field);
         Assert.False(Directory.Exists(Path.Combine(_contentRoot, "uploads", "submissions", "7")));
     }

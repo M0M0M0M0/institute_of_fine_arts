@@ -26,18 +26,21 @@ public class TeacherDashboardService : ITeacherDashboardService
     }
 
     /// <inheritdoc />
-    public async Task<TeacherDashboardVm> GetAsync(DateOnly? today = null)
+    public async Task<TeacherDashboardVm> GetAsync(long judgeId, DateOnly? today = null)
     {
         var day = today ?? DateTimeHelper.Today;
 
+        // Only the competitions this teacher judges; "graded" = the entries they graded themselves
         var closed = await _db.Competitions.AsNoTracking()
             .WhereStatus(CompetitionStatus.CLOSED, day)
+            .Where(c => c.Judges.Any(j => j.JudgeId == judgeId))
             .Select(c => new GradingCompetitionVm(c.Id, c.Code, c.Title, c.EndDate,
-                c.Submissions.Count, c.Submissions.Count(s => s.Evaluation != null)))
+                c.Submissions.Count, c.Submissions.Count(s => s.JudgeEvaluations.Any(e => e.JudgeId == judgeId))))
             .ToListAsync();
 
         var closing = await _db.Competitions.AsNoTracking()
             .WhereStatus(CompetitionStatus.ONGOING, day)
+            .Where(c => c.Judges.Any(j => j.JudgeId == judgeId))
             .OrderBy(c => c.EndDate).ThenBy(c => c.Id)
             .Take(ClosingSoonCount)
             .Select(c => new ClosingCompetitionVm(c.Id, c.Title, c.EndDate))

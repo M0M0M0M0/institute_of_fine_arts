@@ -53,11 +53,11 @@
         </select>
     </div>
     <div class="filter">
-        <label class="form-label" for="Evaluated">Evaluation</label>
+        <label class="form-label" for="Evaluated">Your grade</label>
         <select class="form-select" id="Evaluated" name="Evaluated">
             <option value="">All</option>
-            <option value="true" selected="@(search.Evaluated == true)">Evaluated</option>
-            <option value="false" selected="@(search.Evaluated == false)">Not evaluated</option>
+            <option value="true" selected="@(search.Evaluated == true)">Graded by me</option>
+            <option value="false" selected="@(search.Evaluated == false)">To grade</option>
         </select>
     </div>
     <div class="filter">
@@ -102,7 +102,7 @@
         </span>
         <span class="d-flex align-items-center gap-3">
             <progress class="meter progress-inline" max="100" value="@percent" aria-label="Grading progress">@percent%</progress>
-            <strong class="num">Evaluated @progress.Evaluated / total @progress.Total</strong>
+            <strong class="num">Graded by the whole jury @progress.Evaluated / total @progress.Total</strong>
         </span>
     </div>
 }

@@ -122,6 +122,13 @@ public class CompetitionShowcaseListVm
     public List<CompetitionShowcaseVm> Results { get; set; } = new();
 }
 
-/// <summary>One public painting (FE101 artwork detail). Students' texts and evaluations stay private (BR-20).</summary>
+/// <summary>
+/// One public painting (FE101 artwork detail). Students' texts and evaluations stay private (BR-20).
+/// <see cref="ImageIds"/>: its pictures (submission_image ids, cover first; BR-18), empty for older entries.
+/// </summary>
 public record ArtworkDetailVm(long SubmissionId, string Title, string StudentName, long CompetitionId, string CompetitionTitle,
-    string? CompetitionDescription, string? AwardName, int? AwardRank, bool IsBest, DateTime SubmittedAt);
+    string? CompetitionDescription, string? AwardName, int? AwardRank, bool IsBest, DateTime SubmittedAt)
+{
+    /// <summary>Pictures of the artwork, cover first.</summary>
+    public IReadOnlyList<long> ImageIds { get; init; } = [];
+}

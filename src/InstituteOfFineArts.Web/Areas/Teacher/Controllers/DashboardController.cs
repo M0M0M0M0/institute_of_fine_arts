@@ -1,3 +1,4 @@
+using InstituteOfFineArts.Web.Infrastructure.Security;
 using InstituteOfFineArts.Web.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,6 +22,6 @@ public class DashboardController : TeacherBaseController
     /// <summary>Shows the home page of the area.</summary>
     public async Task<IActionResult> Index()
     {
-        return View(await _dashboard.GetAsync());
+        return View(await _dashboard.GetAsync(User.GetProfileId()));
     }
 }

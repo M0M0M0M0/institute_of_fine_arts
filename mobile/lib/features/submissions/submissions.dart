@@ -3,6 +3,8 @@ import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../grading/grading.dart' show ScoreSheet;
+
 import '../../core/api_client.dart';
 import '../../shared/auth_image.dart';
 import '../competitions/competitions.dart';
@@ -143,7 +145,15 @@ class SubmissionDetail {
     required this.canEdit,
     required this.evaluation,
     required this.awards,
+    this.imageIds = const [],
+    this.scoreSheet,
   });
+
+  /// Pictures of the entry (submission_image ids, cover first; BR-18). Empty for older entries.
+  final List<int> imageIds;
+
+  /// The jury's score sheet, once the results are published (BR-24).
+  final ScoreSheet? scoreSheet;
 
   final int id;
   final int competitionId;
@@ -183,6 +193,8 @@ class SubmissionDetail {
         awards: ((json['awards'] as List?) ?? const [])
             .map((e) => SubmissionAward.fromJson(e as Map<String, dynamic>))
             .toList(),
+        imageIds: ((json['imageIds'] as List?) ?? const []).map((e) => e as int).toList(),
+        scoreSheet: ScoreSheet.fromJsonOrNull(json['scoreSheet']),
       );
 }
 
@@ -223,16 +235,30 @@ DateTime? _dateOrNull(Object? v) => v == null ? null : DateTime.parse(v as Strin
 // ---------------- Hàm thuần: kiểm tra ảnh & nhãn hạn nộp ----------------
 
 /// Dung lượng ảnh tối đa 5 MB (BR-17).
-const maxImageBytes = 5 * 1024 * 1024;
+const maxImageBytes = 10 * 1024 * 1024;
 
-/// Kiểm tra ảnh phía client (BR-16, BR-17). Trả về thông báo lỗi, hoặc null nếu hợp lệ.
+/// Most pictures one entry may have (BR-18).
+const maxImagesPerEntry = 5;
+
+/// Accepted picture extensions (BR-16).
+const imageExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+
+/// Kiểm tra ảnh phía client (BR-16, BR-17): JPG, PNG hoặc WebP, tối đa 10 MB. Trả về thông báo lỗi, hoặc null nếu hợp lệ.
 /// Máy chủ vẫn là nơi quyết định cuối cùng (kiểm tra cả magic bytes).
 String? validateImageFile(String fileName, int sizeBytes) {
   final lower = fileName.toLowerCase();
-  if (!lower.endsWith('.jpg') && !lower.endsWith('.jpeg')) return 'Only JPEG images are accepted';
+  if (!imageExtensions.any((e) => lower.endsWith('.$e'))) return 'Only JPG, PNG or WebP pictures are accepted';
   if (sizeBytes <= 0) return 'The image file is empty, please choose another';
-  if (sizeBytes > maxImageBytes) return 'The image is larger than 5 MB';
+  if (sizeBytes > maxImageBytes) return 'The image is larger than 10 MB';
   return null;
+}
+
+/// Content type sent for a picture, from its extension.
+DioMediaType imageMediaType(String fileName) {
+  final lower = fileName.toLowerCase();
+  if (lower.endsWith('.png')) return DioMediaType('image', 'png');
+  if (lower.endsWith('.webp')) return DioMediaType('image', 'webp');
+  return DioMediaType('image', 'jpeg');
 }
 
 /// Cạnh ngắn tối thiểu khuyến nghị của ảnh (BR-17), đơn vị pixel.
@@ -320,7 +346,18 @@ String formatQueryDate(DateTime d) => _ymd(d);
 
 // ---------------- Repository: gọi API ----------------
 
+/// A picture chosen on the device, not uploaded yet.
+class PickedPicture {
+  const PickedPicture({required this.name, required this.bytes});
+
+  final String name;
+  final Uint8List bytes;
+}
+
 /// Dữ liệu một lần nộp/sửa bài gửi lên server (multipart).
+/// Pictures (BR-18): [pictures] are the new ones (submit: 1 to 5, [coverIndex] picks the cover; edit: the ones to add),
+/// [removeImageIds] / [coverImageId] change the current ones. [imageBytes] is the older single picture (on edit it
+/// replaces all the current ones).
 class SubmissionInput {
   const SubmissionInput({
     required this.title,
@@ -330,6 +367,10 @@ class SubmissionInput {
     required this.publicConsent,
     this.imageBytes,
     this.imageName,
+    this.pictures = const [],
+    this.coverIndex = 0,
+    this.removeImageIds = const [],
+    this.coverImageId,
   });
 
   final String title;
@@ -339,9 +380,13 @@ class SubmissionInput {
   final bool publicConsent;
   final Uint8List? imageBytes;
   final String? imageName;
+  final List<PickedPicture> pictures;
+  final int coverIndex;
+  final List<int> removeImageIds;
+  final int? coverImageId;
 }
 
-/// Thời gian chờ dài hơn cho lời gọi chuyển ảnh (tối đa 5 MB) trên đường truyền chậm.
+/// Thời gian chờ dài hơn cho lời gọi chuyển ảnh (tối đa 5 ảnh × 10 MB) trên đường truyền chậm.
 /// Trên web, Dio đặt xhr.timeout = connectTimeout + receiveTimeout cho CẢ request (gồm lúc tải lên),
 /// nên mặc định 10 + 20 giây sẽ cắt ngang ảnh 5 MB khi mạng dưới ~1,4 Mbps.
 final _transferOptions = Options(receiveTimeout: const Duration(minutes: 2));
@@ -352,19 +397,31 @@ class SubmissionRepository {
   final Dio _dio;
 
   /// Tạo FormData đúng tên trường theo hợp đồng API; ảnh chỉ đính kèm khi có.
-  Future<FormData> _form(SubmissionInput input) async => FormData.fromMap({
-        'title': input.title,
-        'description': input.description,
-        'textType': input.textType.apiValue,
-        'textContent': input.textContent,
-        'publicConsent': input.publicConsent ? 'true' : 'false',
-        if (input.imageBytes != null)
-          'image': MultipartFile.fromBytes(
-            input.imageBytes!,
-            filename: input.imageName ?? 'image.jpg',
-            contentType: DioMediaType('image', 'jpeg'),
-          ),
-      });
+  Future<FormData> _form(SubmissionInput input) async {
+    final form = FormData.fromMap({
+      'title': input.title,
+      'description': input.description,
+      'textType': input.textType.apiValue,
+      'textContent': input.textContent,
+      'publicConsent': input.publicConsent ? 'true' : 'false',
+      if (input.pictures.isNotEmpty) 'coverIndex': '${input.coverIndex}',
+      if (input.coverImageId != null) 'coverImageId': '${input.coverImageId}',
+      if (input.imageBytes != null)
+        'image': MultipartFile.fromBytes(
+          input.imageBytes!,
+          filename: input.imageName ?? 'image.jpg',
+          contentType: imageMediaType(input.imageName ?? 'image.jpg'),
+        ),
+    });
+    // Repeated fields bind to the lists of the API form (images, removeImageIds)
+    for (final p in input.pictures) {
+      form.files.add(MapEntry('images', MultipartFile.fromBytes(p.bytes, filename: p.name, contentType: imageMediaType(p.name))));
+    }
+    for (final id in input.removeImageIds) {
+      form.fields.add(MapEntry('removeImageIds', '$id'));
+    }
+    return form;
+  }
 
   /// POST /api/competitions/{id}/submissions → 201 chi tiết bài (UC-03).
   Future<SubmissionDetail> create(int competitionId, SubmissionInput input) => guardApi(() async {
@@ -407,6 +464,16 @@ class SubmissionRepository {
   Future<Uint8List> imageBytes(int id, {bool download = false}) => guardApi(() async {
         final res = await _dio.get<List<int>>(
           '/api/submissions/$id/image',
+          queryParameters: {'download': download},
+          options: Options(responseType: ResponseType.bytes, receiveTimeout: _transferOptions.receiveTimeout),
+        );
+        return Uint8List.fromList(res.data!);
+      });
+
+  /// GET /api/submission-images/{id} → bytes of one picture of an entry (BR-18).
+  Future<Uint8List> pictureBytes(int imageId, {bool download = false}) => guardApi(() async {
+        final res = await _dio.get<List<int>>(
+          '/api/submission-images/$imageId',
           queryParameters: {'download': download},
           options: Options(responseType: ResponseType.bytes, receiveTimeout: _transferOptions.receiveTimeout),
         );

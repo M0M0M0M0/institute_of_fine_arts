@@ -274,7 +274,7 @@ void main() {
   });
 
   group('Submit / edit entry (M-S3)', () {
-    testWidgets('shows the JPEG note, text type chips and field errors', (tester) async {
+    testWidgets('shows the pictures note, text type chips and field errors', (tester) async {
       await _pump(tester, const SubmissionFormScreen(competitionId: 1), overrides: [
         competitionDetailProvider.overrideWith((ref, id) => CompetitionDetail(
               summary: _competition(1, CompetitionStatus.ongoing),
@@ -284,7 +284,8 @@ void main() {
               awards: const [],
             )),
       ]);
-      expect(find.text('JPEG only, up to 5 MB'), findsOneWidget);
+      expect(find.textContaining('JPG, PNG or WebP, up to 10 MB each'), findsOneWidget);
+      expect(find.text('Choose pictures'), findsOneWidget);
       expect(find.text('Deadline: 20 Dec 2026 23:59'), findsOneWidget);
       await tester.scrollUntilVisible(find.widgetWithText(ChoiceChip, 'Story'), 200, scrollable: find.byType(Scrollable).first);
       await tester.tap(find.widgetWithText(ChoiceChip, 'Story'));
@@ -298,7 +299,7 @@ void main() {
       await tester.drag(find.byType(Scrollable).first, const Offset(0, 3000));
       await tester.pumpAndSettle();
       expect(find.text('Please enter a title'), findsOneWidget);
-      expect(find.text('Please choose a JPEG picture'), findsOneWidget);
+      expect(find.text('Choose at least one picture (JPG, PNG or WebP)'), findsOneWidget);
     });
   });
 

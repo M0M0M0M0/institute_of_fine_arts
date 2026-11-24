@@ -40,16 +40,18 @@ public class FileStorageService : IFileStorageService
     /// <inheritdoc />
     public async Task<StoredImage> SaveSubmissionImageAsync(IFormFile file, long competitionId, string field = "Image")
     {
-        // 1. Reject anything that is not a JPEG within the limit (BR-16, BR-17)
+        // 1. Reject anything that is not a JPG / PNG / WebP within the limit (BR-16, BR-17)
         var check = await ValidateAsync(file, field);
 
-        // 2. New random name – never the user's file name (BR-18, prevents path traversal and clashes)
-        var fileName = $"{Guid.NewGuid()}.jpg";
+        // 2. New random name – never the user's file name (BR-18, prevents path traversal and clashes); the
+        //    extension follows the checked format, the thumbnail is always a JPEG
+        var name = Guid.NewGuid().ToString();
+        var fileName = name + check.Extension;
         var relative = $"submissions/{competitionId}/{fileName}";
         var fullPath = await WriteAsync(file, relative);
 
         // 3. Thumbnail for list pages; a failure here must not lose the upload
-        string? thumbRelative = $"thumbnails/{competitionId}/{fileName}";
+        string? thumbRelative = $"thumbnails/{competitionId}/{name}.jpg";
         try
         {
             await _thumbnails.CreateAsync(fullPath, ResolvePath(thumbRelative), _options.ThumbnailWidth);
@@ -62,14 +64,14 @@ public class FileStorageService : IFileStorageService
 
         _logger.LogInformation("Stored submission image {Path} ({Size} bytes)", relative, file.Length);
         return new StoredImage(relative, thumbRelative, CleanFileName(file.FileName), file.Length,
-            check.Width, check.Height, check.Warning);
+            check.Width, check.Height, check.Warning, check.ContentType);
     }
 
     /// <inheritdoc />
     public async Task<string> SaveCompetitionCoverAsync(IFormFile file, long competitionId, string field = "CoverImage")
     {
-        await ValidateAsync(file, field);
-        var relative = $"competitions/{competitionId}/cover-{Guid.NewGuid()}.jpg";
+        var check = await ValidateAsync(file, field);
+        var relative = $"competitions/{competitionId}/cover-{Guid.NewGuid()}{check.Extension}";
         await WriteAsync(file, relative);
         _logger.LogInformation("Stored competition cover {Path}", relative);
         return relative;
@@ -134,9 +136,9 @@ public class FileStorageService : IFileStorageService
     }
 
     /// <summary>Runs the JPEG checks and turns a failure into a BusinessException on the given field.</summary>
-    private async Task<JpegCheckResult> ValidateAsync(IFormFile file, string field)
+    private async Task<ImageCheckResult> ValidateAsync(IFormFile file, string field)
     {
-        var check = await JpegValidator.ValidateAsync(file, _options.MaxFileSizeBytes);
+        var check = await ImageValidator.ValidateAsync(file, _options.MaxFileSizeBytes);
         if (!check.IsValid)
         {
             throw new BusinessException(check.Error!, field);

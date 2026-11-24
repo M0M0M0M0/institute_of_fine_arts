@@ -39,8 +39,9 @@ public sealed record SubmissionListItemDto(long Id, long CompetitionId, string C
     string Title, DateTime SubmittedAt, DateTime? UpdatedAt, bool CanEdit, Rating? Rating, long SubmissionId = 0, bool HasThumbnail = false);
 
 /// <summary>Evaluation shown to the owner once the competition is GRADED (BR-24).</summary>
+/// TotalScore = the jury's average (null when disqualified or graded before criteria existed).
 public sealed record SubmissionEvaluationDto(Rating Rating, string? PositivePoints, string? NegativePoints, string? ImprovementAreas,
-    DateTime EvaluatedAt);
+    DateTime EvaluatedAt, decimal? TotalScore = null);
 
 /// <summary>Award won by a submission.</summary>
 public sealed record SubmissionAwardDto(string AwardName, int Rank);
@@ -49,7 +50,14 @@ public sealed record SubmissionAwardDto(string AwardName, int Rank);
 public sealed record SubmissionDetailDto(long Id, long CompetitionId, string CompetitionTitle, CompetitionStatus CompetitionStatus,
     string Title, string Description, TextType TextType, string TextContent, bool PublicConsent, string OriginalFileName,
     DateTime SubmittedAt, DateTime? UpdatedAt, bool CanEdit, SubmissionEvaluationDto? Evaluation,
-    IReadOnlyList<SubmissionAwardDto> Awards, long SubmissionId = 0, bool HasThumbnail = false);
+    IReadOnlyList<SubmissionAwardDto> Awards, long SubmissionId = 0, bool HasThumbnail = false)
+{
+    /// <summary>The jury's full score sheet (once GRADED): every judge's scores and comments.</summary>
+    public ScoreSheetDto? ScoreSheet { get; init; }
+
+    /// <summary>Pictures of the entry (ids for /api/submissions/{id}/images/{imageId}), cover first.</summary>
+    public IReadOnlyList<long> ImageIds { get; init; } = [];
+}
 
 /// <summary>
 /// Multipart body of POST /api/competitions/{id}/submissions and PUT /api/submissions/{id}. Everything is nullable so
@@ -68,7 +76,20 @@ public sealed class SubmissionApiForm
     /// <summary>Accepted for compatibility; there is no column for it.</summary>
     public string? PublicConsent { get; set; }
 
+    /// <summary>One picture (older app). On edit it replaces all the current pictures.</summary>
     public IFormFile? Image { get; set; }
+
+    /// <summary>Pictures of the artwork (BR-18): 1 to 5 on submit; on edit the pictures to add.</summary>
+    public List<IFormFile> Images { get; set; } = new();
+
+    /// <summary>Submit: which of <see cref="Images"/> is the cover (0 = the first).</summary>
+    public int CoverIndex { get; set; }
+
+    /// <summary>Edit: current pictures to remove (submission_image ids).</summary>
+    public List<long> RemoveImageIds { get; set; } = new();
+
+    /// <summary>Edit: current picture to make the cover.</summary>
+    public long? CoverImageId { get; set; }
 
     /// <summary>Parsed text type, or null when missing/invalid (the service then rejects it).</summary>
     public TextType? ParsedTextType
@@ -200,7 +221,8 @@ public static class PublicAndSubmissionQueries
         return new SubmissionDetailDto(s.Id, s.CompetitionId, s.Competition.Title, status, s.Title, s.Description, s.TextType,
             s.TextContent, true, s.OriginalFileName, s.SubmittedAt, s.UpdatedAt, status == CompetitionStatus.ONGOING,
             graded && s.Evaluation is { } e
-                ? new SubmissionEvaluationDto(e.Rating, e.PositivePoints, e.NegativePoints, e.ImprovementAreas, e.EvaluatedAt)
+                ? new SubmissionEvaluationDto(e.Rating, e.PositivePoints, e.NegativePoints, e.ImprovementAreas, e.EvaluatedAt,
+                    e.TotalScore is { } total ? Math.Round(total, 2, MidpointRounding.AwayFromZero) : null)
                 : null,
             graded && s.AwardIssued is { } a
                 ? new[] { new SubmissionAwardDto(a.CompetitionAward.AwardName, a.CompetitionAward.Rank) }

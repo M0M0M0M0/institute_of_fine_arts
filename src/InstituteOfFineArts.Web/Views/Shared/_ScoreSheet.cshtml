@@ -1,0 +1,83 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.Evaluations.ScoreSheetVm
+@*
+    The jury's score sheet of one entry (EvaluationService.GetScoreSheetAsync decides who may see it: the student who
+    owns the entry and the judges once GRADED, staff once fully graded). Rows = criteria with their weight, columns =
+    judges, last column = average; then the weighted totals, the rating, and each judge's comments.
+*@
+@{
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+    string Num(decimal? v) => v?.ToString("0.##", inv) ?? "–";
+}
+@if (Model.Legacy)
+{
+    <p class="text-muted">This entry was graded before criteria were introduced: only its rating (<span class="tag tag-@Model.Rating">@Model.Rating</span>) is kept.</p>
+}
+else if (Model.Judges.Count == 0)
+{
+    <p class="text-muted">No judge has graded this entry yet.</p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm align-middle score-sheet">
+            <caption class="visually-hidden">Scores of each judge per criterion, with the average</caption>
+            <thead>
+                <tr>
+                    <th scope="col">Criterion</th>
+                    <th scope="col" class="text-end">Weight</th>
+                    @foreach (var j in Model.Judges)
+                    {
+                        <th scope="col" class="text-end">@j.Name@(j.IsChair ? " (chair)" : "")</th>
+                    }
+                    <th scope="col" class="text-end">Average</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var c in Model.Criteria)
+                {
+                    <tr>
+                        <th scope="row">@c.Name</th>
+                        <td class="text-end num">@c.Weight.ToString("0.##", inv) %</td>
+                        @foreach (var j in Model.Judges)
+                        {
+                            var has = j.Scores.TryGetValue(c.CompetitionCriterionId, out var s);
+                            <td class="text-end num" title="@(has ? s.Comment : null)">@(j.Disqualified ? "DQ" : has ? Num(s.Score) : "–")</td>
+                        }
+                        <td class="text-end num"><strong>@(Model.CriterionAverages.TryGetValue(c.CompetitionCriterionId, out var avg) ? Num(avg) : "–")</strong></td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th scope="row" colspan="2">Weighted total</th>
+                    @foreach (var j in Model.Judges)
+                    {
+                        <td class="text-end num">@(j.Disqualified ? "Disqualified" : j.Total?.ToString("0.00", inv) ?? "–")</td>
+                    }
+                    <td class="text-end num"><strong>@(Model.Total?.ToString("0.00", inv) ?? "–")</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    @if (Model.Rating is { } rating)
+    {
+        <p>Result: <span class="tag tag-@rating">@rating</span>@(Model.Total is { } total ? $" – {total.ToString("0.00", inv)} / 100" : "")</p>
+    }
+
+    <h3 class="h5 mt-4">Comments of the judges</h3>
+    @foreach (var j in Model.Judges)
+    {
+        <div class="mb-3">
+            <p class="mb-1"><strong>@j.Name</strong>@(j.IsChair ? ", chair" : "") <span class="text-muted small">@j.EvaluatedAt.ToString("dd MMM yyyy HH:mm")</span></p>
+            <dl class="details">
+                @foreach (var c in Model.Criteria.Where(c => j.Scores.TryGetValue(c.CompetitionCriterionId, out var x) && x.Comment != null))
+                {
+                    <dt>@c.Name</dt><dd style="white-space: pre-line">@j.Scores[c.CompetitionCriterionId].Comment</dd>
+                }
+                @if (j.PositivePoints != null) { <dt>Positive points</dt><dd style="white-space: pre-line">@j.PositivePoints</dd> }
+                @if (j.NegativePoints != null) { <dt>@(j.Disqualified ? "Reason for disqualification" : "Negative points")</dt><dd style="white-space: pre-line">@j.NegativePoints</dd> }
+                @if (j.ImprovementAreas != null) { <dt>Improvement areas</dt><dd style="white-space: pre-line">@j.ImprovementAreas</dd> }
+            </dl>
+        </div>
+    }
+}

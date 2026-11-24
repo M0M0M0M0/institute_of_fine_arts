@@ -88,6 +88,9 @@ public class MySubmissionDetailsVm
     /// <summary>Submission id.</summary>
     public long Id { get; set; }
 
+    /// <summary>Pictures of the entry (submission_image ids), cover first.</summary>
+    public IReadOnlyList<long> ImageIds { get; set; } = [];
+
     /// <summary>Painting title.</summary>
     public string Title { get; set; } = string.Empty;
 

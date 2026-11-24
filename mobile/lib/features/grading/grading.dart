@@ -56,7 +56,11 @@ class GradingItem {
     required this.submittedAt,
     required this.rating,
     this.hasThumbnail = true,
+    this.gradedByMe = false,
   });
+
+  /// The signed-in judge has graded this entry (the result [rating] needs the whole jury).
+  final bool gradedByMe;
 
   /// Whether a thumbnail exists; defaults to true when the API does not say (a submission always has an image).
   final bool hasThumbnail;
@@ -77,6 +81,7 @@ class GradingItem {
         submittedAt: DateTime.parse(json['submittedAt'] as String),
         rating: json['rating'] == null ? null : ratingFromJson(json['rating'] as String),
         hasThumbnail: (json['hasThumbnail'] as bool?) ?? true,
+        gradedByMe: (json['gradedByMe'] as bool?) ?? false,
       );
 }
 
@@ -108,10 +113,135 @@ class GradingList {
       );
 }
 
-/// Đánh giá hiện có; [rowVersion] gửi lại khi sửa/xóa để server phát hiện xung đột (BR-52).
+/// A grading criterion of the competition with its weight in percent (BR-26).
+class GradingCriterion {
+  const GradingCriterion({required this.id, required this.name, this.description, required this.weight});
+
+  /// competition_criterion id (what a score refers to).
+  final int id;
+  final String name;
+  final String? description;
+  final double weight;
+
+  factory GradingCriterion.fromJson(Map<String, dynamic> json) => GradingCriterion(
+        id: json['id'] as int,
+        name: json['name'] as String,
+        description: json['description'] as String?,
+        weight: (json['weight'] as num).toDouble(),
+      );
+}
+
+/// One criterion score (0–100) with an optional comment.
+class GradingScore {
+  const GradingScore({required this.criterionId, required this.score, this.comment});
+
+  final int criterionId;
+  final double? score;
+  final String? comment;
+
+  factory GradingScore.fromJson(Map<String, dynamic> json) => GradingScore(
+        criterionId: json['criterionId'] as int,
+        score: (json['score'] as num?)?.toDouble(),
+        comment: json['comment'] as String?,
+      );
+
+  Map<String, dynamic> toJson() => {
+        'criterionId': criterionId,
+        'score': score,
+        if (comment != null && comment!.trim().isNotEmpty) 'comment': comment!.trim(),
+      };
+}
+
+/// A member of the jury and whether they graded this entry (never their scores before publishing).
+class JuryMember {
+  const JuryMember({required this.name, required this.isChair, required this.done, required this.isMe});
+
+  final String name;
+  final bool isChair;
+  final bool done;
+  final bool isMe;
+
+  factory JuryMember.fromJson(Map<String, dynamic> json) => JuryMember(
+        name: json['name'] as String,
+        isChair: (json['isChair'] as bool?) ?? false,
+        done: (json['done'] as bool?) ?? false,
+        isMe: (json['isMe'] as bool?) ?? false,
+      );
+}
+
+/// One judge's column of the score sheet.
+class ScoreSheetJudge {
+  const ScoreSheetJudge({
+    required this.name,
+    required this.isChair,
+    required this.disqualified,
+    required this.totalScore,
+    required this.scores,
+    this.positivePoints,
+    this.negativePoints,
+    this.improvementAreas,
+  });
+
+  final String name;
+  final bool isChair;
+  final bool disqualified;
+  final double? totalScore;
+  final List<GradingScore> scores;
+  final String? positivePoints;
+  final String? negativePoints;
+  final String? improvementAreas;
+
+  factory ScoreSheetJudge.fromJson(Map<String, dynamic> json) => ScoreSheetJudge(
+        name: json['name'] as String,
+        isChair: (json['isChair'] as bool?) ?? false,
+        disqualified: (json['disqualified'] as bool?) ?? false,
+        totalScore: (json['totalScore'] as num?)?.toDouble(),
+        scores: ((json['scores'] as List?) ?? const []).map((e) => GradingScore.fromJson(e as Map<String, dynamic>)).toList(),
+        positivePoints: json['positivePoints'] as String?,
+        negativePoints: json['negativePoints'] as String?,
+        improvementAreas: json['improvementAreas'] as String?,
+      );
+}
+
+/// The jury's full score sheet of an entry (BR-24): every judge's scores, the averages, the total and the rating.
+class ScoreSheet {
+  const ScoreSheet({
+    required this.criteria,
+    required this.judges,
+    required this.averages,
+    required this.totalScore,
+    required this.rating,
+    this.legacy = false,
+  });
+
+  final List<GradingCriterion> criteria;
+  final List<ScoreSheetJudge> judges;
+  final List<GradingScore> averages;
+  final double? totalScore;
+  final SubmissionRating? rating;
+
+  /// Graded before the jury existed: only the rating and the comments.
+  final bool legacy;
+
+  static ScoreSheet? fromJsonOrNull(Object? json) =>
+      json == null ? null : ScoreSheet.fromJson(json as Map<String, dynamic>);
+
+  factory ScoreSheet.fromJson(Map<String, dynamic> json) => ScoreSheet(
+        criteria: ((json['criteria'] as List?) ?? const []).map((e) => GradingCriterion.fromJson(e as Map<String, dynamic>)).toList(),
+        judges: ((json['judges'] as List?) ?? const []).map((e) => ScoreSheetJudge.fromJson(e as Map<String, dynamic>)).toList(),
+        averages: ((json['averages'] as List?) ?? const []).map((e) => GradingScore.fromJson(e as Map<String, dynamic>)).toList(),
+        totalScore: (json['totalScore'] as num?)?.toDouble(),
+        rating: json['rating'] == null ? null : ratingFromJson(json['rating'] as String),
+        legacy: (json['legacy'] as bool?) ?? false,
+      );
+}
+
+/// The signed-in judge's grade; [rowVersion] is sent back to edit / delete it (conflict detection, BR-52).
 class StaffEvaluation {
   const StaffEvaluation({
-    required this.rating,
+    required this.disqualified,
+    required this.scores,
+    required this.totalScore,
     required this.positivePoints,
     required this.negativePoints,
     required this.improvementAreas,
@@ -120,7 +250,9 @@ class StaffEvaluation {
     required this.rowVersion,
   });
 
-  final SubmissionRating rating;
+  final bool disqualified;
+  final List<GradingScore> scores;
+  final double? totalScore;
   final String? positivePoints;
   final String? negativePoints;
   final String? improvementAreas;
@@ -129,7 +261,9 @@ class StaffEvaluation {
   final String rowVersion;
 
   factory StaffEvaluation.fromJson(Map<String, dynamic> json) => StaffEvaluation(
-        rating: ratingFromJson(json['rating'] as String),
+        disqualified: (json['disqualified'] as bool?) ?? false,
+        scores: ((json['scores'] as List?) ?? const []).map((e) => GradingScore.fromJson(e as Map<String, dynamic>)).toList(),
+        totalScore: (json['totalScore'] as num?)?.toDouble(),
         positivePoints: json['positivePoints'] as String?,
         negativePoints: json['negativePoints'] as String?,
         improvementAreas: json['improvementAreas'] as String?,
@@ -161,7 +295,29 @@ class GradingDetail {
     required this.nextUnevaluatedId,
     required this.total,
     required this.evaluated,
+    this.criteria = const [],
+    this.jury = const [],
+    this.resultRating,
+    this.resultScore,
+    this.scoreSheet,
+    this.imageIds = const [],
   });
+
+  /// Criteria of the competition with their weights.
+  final List<GradingCriterion> criteria;
+
+  /// Who is on the jury and who already graded this entry.
+  final List<JuryMember> jury;
+
+  /// The entry's result once the whole jury graded it (average of the judges' totals and its rating).
+  final SubmissionRating? resultRating;
+  final double? resultScore;
+
+  /// Every judge's scores (after publishing).
+  final ScoreSheet? scoreSheet;
+
+  /// Pictures of the entry (submission_image ids, cover first).
+  final List<int> imageIds;
 
   final int id;
   final int competitionId;
@@ -209,27 +365,36 @@ class GradingDetail {
         nextUnevaluatedId: json['nextUnevaluatedId'] as int?,
         total: json['total'] as int,
         evaluated: json['evaluated'] as int,
+        criteria: ((json['criteria'] as List?) ?? const []).map((e) => GradingCriterion.fromJson(e as Map<String, dynamic>)).toList(),
+        jury: ((json['jury'] as List?) ?? const []).map((e) => JuryMember.fromJson(e as Map<String, dynamic>)).toList(),
+        resultRating: json['resultRating'] == null ? null : ratingFromJson(json['resultRating'] as String),
+        resultScore: (json['resultScore'] as num?)?.toDouble(),
+        scoreSheet: ScoreSheet.fromJsonOrNull(json['scoreSheet']),
+        imageIds: ((json['imageIds'] as List?) ?? const []).map((e) => e as int).toList(),
       );
 }
 
-/// Dữ liệu chấm bài gửi lên; [rowVersion] bắt buộc khi bài đã có đánh giá.
+/// The judge's grade sent to the API; [rowVersion] is required when the judge already graded the entry.
 class EvaluationInput {
   const EvaluationInput({
-    required this.rating,
+    this.disqualified = false,
+    this.scores = const [],
     required this.positivePoints,
     required this.negativePoints,
     required this.improvementAreas,
     this.rowVersion,
   });
 
-  final SubmissionRating rating;
+  final bool disqualified;
+  final List<GradingScore> scores;
   final String positivePoints;
   final String negativePoints;
   final String improvementAreas;
   final String? rowVersion;
 
   Map<String, dynamic> toJson() => {
-        'rating': rating.apiValue,
+        'disqualified': disqualified,
+        'scores': disqualified ? const [] : scores.map((s) => s.toJson()).toList(),
         'positivePoints': positivePoints,
         'negativePoints': negativePoints,
         'improvementAreas': improvementAreas,
@@ -239,15 +404,49 @@ class EvaluationInput {
 
 // ---------------- Hàm thuần ----------------
 
-/// Kiểm tra phía client theo BR-23; server vẫn là nơi quyết định cuối cùng.
-/// DISQUALIFIED bắt buộc lý do (ở ô "điểm yếu"); xếp loại khác bắt buộc điểm mạnh.
-String? validateEvaluation(SubmissionRating? rating, String positive, String negative) {
-  if (rating == null) return 'Please choose a rating';
-  if (rating == SubmissionRating.disqualified) {
-    return negative.trim().isEmpty ? 'The Disqualified rating needs a reason' : null;
+/// Parses a score typed by the judge: 0–100 with at most 2 decimals (comma or dot); null when invalid or empty.
+double? parseScore(String text) {
+  final t = text.trim().replaceAll(',', '.');
+  if (!RegExp(r'^\d{1,3}(\.\d{1,2})?$').hasMatch(t)) return null;
+  final v = double.parse(t);
+  return v <= 100 ? v : null;
+}
+
+/// Weighted total of one judge (Σ score × weight / 100), null until every criterion has a valid score.
+double? judgeTotal(List<GradingCriterion> criteria, Map<int, double?> scores) {
+  if (criteria.isEmpty) return null;
+  var total = 0.0;
+  for (final c in criteria) {
+    final s = scores[c.id];
+    if (s == null) return null;
+    total += s * c.weight / 100;
+  }
+  return total;
+}
+
+/// Client-side check of BR-23; the server still decides. A disqualification needs its reason (weaknesses field);
+/// otherwise every criterion needs a score from 0 to 100 and the strengths are required.
+String? validateEvaluation({
+  required bool disqualified,
+  required List<GradingCriterion> criteria,
+  required Map<int, String> scoreTexts,
+  required String positive,
+  required String negative,
+}) {
+  if (disqualified) {
+    return negative.trim().isEmpty ? 'A disqualification needs a reason' : null;
+  }
+  if (criteria.isEmpty) return 'This competition has no grading criteria yet';
+  for (final c in criteria) {
+    if (parseScore(scoreTexts[c.id] ?? '') == null) {
+      return 'Give ${c.name} a score from 0 to 100 (at most 2 decimals)';
+    }
   }
   return positive.trim().isEmpty ? 'Please enter the strengths' : null;
 }
+
+/// "86.40" – a score with 2 decimals.
+String formatScore(double value) => value.toStringAsFixed(2);
 
 /// Staff-facing rating name ("Best", "Better", ...), the same wording as the chips.
 String ratingName(SubmissionRating rating) => switch (rating) {
