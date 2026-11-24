@@ -6,7 +6,8 @@ import '../core/rich_text.dart';
 /// Shows a description written with the rich text editor (HTML) or before it existed (plain text).
 ///
 /// The HTML is only drawn, never run: no scripts, no images, no styles from the text. Only the tags the editor
-/// and TinyMCE produce (paragraphs, bold, italic, underline, lists, links) have an effect.
+/// and TinyMCE produce (paragraphs, headings, bold, italic, underline, strike, lists, quotes, links, tables) have an
+/// effect. Used for entry descriptions and a competition's Description / Rules (sanitized by the server, BR-30).
 class RichTextView extends StatelessWidget {
   const RichTextView(this.stored, {super.key, this.style});
 
@@ -34,7 +35,12 @@ class RichTextView extends StatelessWidget {
       // Paragraphs close together, like in the editor
       customStylesBuilder: (element) => switch (element.localName) {
         'p' => {'margin': '0 0 0.6em 0'},
-        'ul' || 'ol' => {'margin': '0 0 0.6em 0'},
+        'ul' || 'ol' || 'blockquote' || 'table' => {'margin': '0 0 0.6em 0'},
+        // Headings inside a text: a little larger than the text, not page titles
+        'h2' => {'font-size': '1.25em', 'font-weight': '600', 'margin': '0.8em 0 0.3em 0'},
+        'h3' => {'font-size': '1.12em', 'font-weight': '600', 'margin': '0.8em 0 0.3em 0'},
+        'h4' => {'font-size': '1em', 'font-weight': '600', 'margin': '0.8em 0 0.3em 0'},
+        'td' || 'th' => {'border': '1px solid #c9d3d6', 'padding': '4px 8px'},
         _ => null,
       },
     );

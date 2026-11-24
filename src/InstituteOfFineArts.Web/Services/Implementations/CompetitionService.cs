@@ -225,8 +225,9 @@ public partial class CompetitionService : ICompetitionService
             Id = c.Id,
             Code = c.Code,
             Title = c.Title,
-            Description = c.Description,
-            Rules = c.Rules,
+            // For the editor: older plain text becomes paragraphs, so its line breaks are not lost
+            Description = RichText.ToHtml(c.Description),
+            Rules = RichText.ToHtml(c.Rules),
             StartDate = c.StartDate,
             EndDate = c.EndDate,
             HasCover = c.CoverImagePath != null,
@@ -269,8 +270,8 @@ public partial class CompetitionService : ICompetitionService
         {
             Code = await NextCodeAsync(start),
             Title = form.Title.Trim(),
-            Description = Clean(form.Description),
-            Rules = Clean(form.Rules),
+            Description = CleanRich(form.Description, nameof(CompetitionFormVm.Description), "Description"),
+            Rules = CleanRich(form.Rules, nameof(CompetitionFormVm.Rules), "Rules & conditions"),
             StartDate = start,
             EndDate = end,
             CreatedBy = staffProfileId,
@@ -362,12 +363,14 @@ public partial class CompetitionService : ICompetitionService
         Changed("Title", c.Title, form.Title.Trim());
         Changed("Start date", c.StartDate.ToString(ChangeDate), start.ToString(ChangeDate));
         Changed("End date", c.EndDate.ToString(ChangeDate), end.ToString(ChangeDate));
-        if (c.Description != Clean(form.Description)) changes.Add("Description changed");
-        if (c.Rules != Clean(form.Rules)) changes.Add("Rules changed");
+        var description = CleanRich(form.Description, nameof(CompetitionFormVm.Description), "Description");
+        var rules = CleanRich(form.Rules, nameof(CompetitionFormVm.Rules), "Rules & conditions");
+        if (!RichText.SameContent(c.Description, description)) changes.Add("Description changed");
+        if (!RichText.SameContent(c.Rules, rules)) changes.Add("Rules changed");
 
         c.Title = form.Title.Trim();
-        c.Description = Clean(form.Description);
-        c.Rules = Clean(form.Rules);
+        c.Description = description;
+        c.Rules = rules;
         c.StartDate = start;
         c.EndDate = end;
         c.Status = CompetitionStatusResolver.Resolve(c);
@@ -492,6 +495,24 @@ public partial class CompetitionService : ICompetitionService
 
     /// <summary>Trims text; blank becomes null.</summary>
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    /// <summary>
+    /// Description / Rules from the rich text editor (BR-30): sanitized HTML, null when there is no text; at most
+    /// <see cref="RichText.MaxTextLength"/> characters of text and <see cref="RichText.MaxHtmlLength"/> of HTML.
+    /// </summary>
+    private static string? CleanRich(string? posted, string field, string label)
+    {
+        var html = RichText.Clean(posted);
+        if (RichText.ToPlainText(html).Length > RichText.MaxTextLength)
+        {
+            throw new BusinessException($"{label} must be at most {RichText.MaxTextLength} characters of text.", field);
+        }
+        if (html?.Length > RichText.MaxHtmlLength)
+        {
+            throw new BusinessException($"{label} has too much formatting. Remove some of it or shorten the text.", field);
+        }
+        return html;
+    }
 
     /// <summary>A valid award row: position in the form (for the error key), id (0 = new) and the cleaned values.</summary>
     private sealed record AwardRow(int Index, long Id, string Name, int Rank, decimal Prize, int Quantity, string? Description);

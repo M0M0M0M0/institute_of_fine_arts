@@ -192,8 +192,9 @@ public sealed class PublicAndSubmissionsApiTests : IDisposable
         Assert.Equal(4, list[0].GetProperty("daysLeft").GetInt32());
 
         var detail = ToJson((await PublicApi().Details(c.Id)).Value);
-        Assert.Equal("About", detail.GetProperty("description").GetString());
-        Assert.Equal("Rules text", detail.GetProperty("conditions").GetString());
+        // Sent as sanitized HTML (BR-30); older plain text becomes a paragraph
+        Assert.Equal("<p>About</p>", detail.GetProperty("description").GetString());
+        Assert.Equal("<p>Rules text</p>", detail.GetProperty("conditions").GetString());
         Assert.Equal(Today.AddDays(4).ToString("yyyy-MM-dd") + "T23:59:59", detail.GetProperty("deadline").GetString());
         var awards = detail.GetProperty("awards");
         Assert.Equal("First", awards[0].GetProperty("name").GetString());

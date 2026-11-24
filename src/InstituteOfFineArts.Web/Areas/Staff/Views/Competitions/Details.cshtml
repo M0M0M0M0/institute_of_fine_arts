@@ -1,4 +1,5 @@
 @model InstituteOfFineArts.Web.ViewModels.Staff.Competitions.CompetitionDetailsVm
+@using InstituteOfFineArts.Web.Helpers
 @*
     Staff – competition details (/staff/competitions/{id}, SCR-25): information, rules, awards, entries, status.
     Created by BE1 (BE1-05, award controls BE1-06, issued awards + publish BE1-11); styled by FE1-03 / FE1-07:
@@ -87,12 +88,12 @@
     </div>
 </div>
 
-@* white-space: pre-line keeps the line breaks typed by staff; Razor still encodes the text (no HTML/XSS) *@
+@* Rich text (BR-30): RichText.Show writes HTML that was sanitized (allowed tags only); older plain text becomes paragraphs *@
 <section class="section" aria-labelledby="about-title">
     <div class="section-head"><h2 id="about-title">Description</h2></div>
-    <p style="white-space: pre-line">@(Model.Description ?? "–")</p>
+    @RichText.Show(Model.Description)
     <h3>Rules &amp; conditions</h3>
-    <p style="white-space: pre-line">@(Model.Rules ?? "–")</p>
+    @RichText.Show(Model.Rules)
 </section>
 
 <section class="section">@await Component.InvokeAsync("CompetitionTimeline", new { competitionId = Model.Id })</section>

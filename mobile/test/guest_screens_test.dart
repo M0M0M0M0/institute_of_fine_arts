@@ -98,7 +98,8 @@ CompetitionSummary _comp(
 CompetitionDetail _detail(CompetitionStatus status) => CompetitionDetail(
       summary: _comp(7, 'Spring Colours', status),
       description: 'Paint the spring.',
-      conditions: 'One painting per student.',
+      // Rules written with the web's rich text editor (HTML); the overview is older plain text
+      conditions: '<ol><li>One painting per student.</li></ol><p><strong>Original</strong> work only.</p>',
       deadline: DateTime(2026, 12, 20, 23, 59),
       awards: const [
         CompetitionAward(name: 'First Prize', rank: 1, prizeValue: 300, quantity: 1, description: 'Certificate'),
@@ -278,6 +279,14 @@ void main() {
       await tester.scrollUntilVisible(find.text('PRIZES'), 300, scrollable: find.byType(Scrollable).first);
       expect(find.text('RULES'), findsOneWidget);
       expect(find.text('First Prize'), findsOneWidget);
+    });
+
+    testWidgets('rules from the rich text editor: drawn formatted, no tags shown', (tester) async {
+      await _pump(tester, const CompetitionDetailScreen(id: 7), overrides: detailOverrides(CompetitionStatus.ongoing));
+      await tester.scrollUntilVisible(find.text('PRIZES'), 300, scrollable: find.byType(Scrollable).first);
+      expect(find.textContaining('One painting per student.', findRichText: true), findsOneWidget);
+      expect(find.textContaining('Original work only.', findRichText: true), findsOneWidget);
+      expect(find.textContaining('<strong>', findRichText: true), findsNothing);
     });
 
     testWidgets('timeline: dates in order, the current one marked NOW', (tester) async {

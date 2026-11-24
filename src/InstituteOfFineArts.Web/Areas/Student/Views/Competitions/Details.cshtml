@@ -35,15 +35,15 @@
             </div>
         }
 
-        @* white-space: pre-line keeps the line breaks typed by staff; Razor still encodes the text (no HTML/XSS) *@
+        @* Rich text (BR-30): RichText.Show writes HTML that was sanitized (allowed tags only); older plain text becomes paragraphs *@
         <section class="section" aria-labelledby="description-title">
             <div class="section-head"><h2 id="description-title">Description</h2></div>
-            <p style="white-space: pre-line">@(Model.Description ?? "–")</p>
+            @RichText.Show(Model.Description)
         </section>
 
         <section class="section" aria-labelledby="rules-title">
             <div class="section-head"><h2 id="rules-title">Rules &amp; conditions</h2></div>
-            <p style="white-space: pre-line">@(Model.Rules ?? "–")</p>
+            @RichText.Show(Model.Rules)
         </section>
 
         <section class="section">@await Component.InvokeAsync("CompetitionTimeline", new { competitionId = Model.Id })</section>

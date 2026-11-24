@@ -229,6 +229,7 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 | TC-M05-06 | Xóa cuộc thi ĐÃ có bài nộp | "Colors of Autumn" có 6 bài | Xóa → xác nhận | | **Bị chặn**: "A competition with submissions cannot be deleted"; dữ liệu và file ảnh còn nguyên | C |
 | TC-M05-07 | Tìm kiếm cuộc thi theo tên/trạng thái | Seed chuẩn | Lọc trạng thái CLOSED; tìm "autumn" | | Kết quả đúng | T |
 | TC-M05-09 | Tổng trọng số khác 100% / trùng tiêu chí | `staff01`, form cuộc thi | Tiêu chí 40% + 40% + 10%; hoặc chọn 1 tiêu chí 2 lần → Lưu | | "The weights of the criteria must add up to exactly 100 %." / "This criterion is already on the list."; không lưu | C |
+| TC-M05-12 | Rich text Description / Rules | `staff01`, form sửa cuộc thi "Lunar New Year 2027" | Trong Description: thêm tiêu đề "Theme", 1 chữ đậm, danh sách 2 dòng, 1 link; trong Rules: danh sách đánh số và 1 bảng → Lưu. Mở trang Staff, trang công khai `/gallery/competitions/{id}`, danh sách `/gallery/competitions`, app mobile. Thử gửi thẳng `<script>alert(1)</script>` và `<img src=x onerror=alert(1)>` (sửa ô ẩn bằng DevTools) | | Định dạng hiện đúng trên mọi trang và app; danh sách cuộc thi chỉ hiện chữ thuần, không có thẻ; link mở tab mới; `<script>`, `<img>`, `onerror` bị loại, không có hộp thoại alert; đếm ký tự "n / 4000" dưới ô | T |
 | TC-M05-11 | Timeline cuộc thi | `staff01`, form sửa cuộc thi "Colors of Autumn" | Thêm mốc "Award ceremony" (ngày sau hạn nộp, nội dung "Main hall, 17:00"); thêm 1 mốc thiếu tiêu đề → Lưu; sửa lại → Lưu; mở trang công khai `/competitions/{id}` và app mobile | | Mốc thiếu tiêu đề bị báo lỗi tại dòng đó; sau khi lưu, timeline hiện theo thứ tự ngày cùng "Submissions open / close", mốc hiện tại có nhãn "Now"; lịch sử cuộc thi ghi "Milestone added: …" | T |
 | TC-M05-10 | Khóa tiêu chí & giám khảo khi đã chấm | Cuộc thi CLOSED đã có giám khảo chấm | Sửa trọng số; bỏ giám khảo đã chấm khỏi ban → Lưu | | Bị từ chối, báo rõ lý do; lịch sử không có thay đổi | C |
 | TC-M05-08 | XSS trong mô tả cuộc thi | Đăng nhập `staff01` | Mô tả = `<script>alert('XSS')</script>` → Lưu → mở trang chi tiết (cả khi GUEST) | | Không có hộp thoại alert; chuỗi hiển thị dạng chữ thường (Razor tự mã hóa HTML) | C |
@@ -326,8 +327,8 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 
 | Module | M01 | M02 | M03 | M04 | M05 | M06 | M07 | M08 | M09 | M10 | M11 | **Tổng** |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Số TC | 10 | 6 | 6 | 5 | 11 | 14 | 12 | 7 | 9 | 5 | 10 | **95** |
-| Người chạy chính | QA | QA | QA | QA | QA | QA | QA | QA | QA | QA | QA | QA: 95 (theo 3 vòng – xem Phan_cong_task.xlsx) |
+| Số TC | 10 | 6 | 6 | 5 | 12 | 14 | 12 | 7 | 9 | 5 | 10 | **96** |
+| Người chạy chính | QA | QA | QA | QA | QA | QA | QA | QA | QA | QA | QA | QA: 96 (theo 3 vòng – xem Phan_cong_task.xlsx) |
 
 > Sau khi QA chạy xong một vòng, **người làm chức năng** (BE/FE phụ trách module) chạy lại các TC ưu tiên Cao của module mình để kiểm tra chéo.
 
@@ -725,7 +726,7 @@ Người A (QA) đóng gói, người B (FE2) kiểm tra **trên máy khác**; s
 | 5:30–9:00 | STAFF | BE1 | Tạo cuộc thi + giải + ban giám khảo + tiêu chí (tổng 100%) → **thử xóa cuộc thi có bài (bị chặn)** → xem xếp hạng dự kiến "City at Night" → công bố (hệ thống tự trao giải) → xem lịch sử cuộc thi → gửi tranh BEST đi triển lãm với giá học viên → đánh dấu đã bán + khách hàng → đã trả tiền → báo cáo BEST theo khoảng ngày | `staff01` |
 | 9:00–10:30 | ADMIN | FE2 | Thêm nhân viên/học viên, tìm kiếm, khóa tài khoản | `admin01` |
 | 10:30–12:00 | TEACHER | QA | Dashboard giám khảo → chấm "City at Night" theo tiêu chí (tổng tính ngay) → thấy ai trong ban đã chấm (không thấy điểm) → **mở link bài của cuộc thi đang mở (404)** | `teacher01`, `teacher02` |
-| 12:00–13:30 | Bảo mật & chất lượng | QA + BE1 | STUDENT mở URL `/staff/...` → 403; mật khẩu BCrypt trong DB; upload đổi tên Guid; `dotnet test` xanh; số liệu test (95 TC) | — |
+| 12:00–13:30 | Bảo mật & chất lượng | QA + BE1 | STUDENT mở URL `/staff/...` → 403; mật khẩu BCrypt trong DB; upload đổi tên Guid; `dotnet test` xanh; số liệu test (96 TC) | — |
 | 13:30–15:00 | Kết luận | BE1 | Hạn chế & hướng phát triển (thanh toán online, email thông báo, phân trang nâng cao); cảm ơn | — |
 
 **Chuẩn bị trước buổi demo:** reset DB bằng seed; mở sẵn 3 trình duyệt/tab ẩn danh cho 3 vai trò; tắt thông báo Windows; zoom trình duyệt 110–125%; có **video quay sẵn demo** (OBS/Xbox Game Bar) phòng khi máy lỗi; kiểm tra máy chiếu.

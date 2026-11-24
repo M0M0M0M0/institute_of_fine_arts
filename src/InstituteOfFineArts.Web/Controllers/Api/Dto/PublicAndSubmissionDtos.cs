@@ -17,7 +17,8 @@ public sealed record CompetitionSummaryDto(long Id, string Title, string? Topic,
 /// <summary>Award definition of a competition.</summary>
 public sealed record CompetitionAwardDto(string Name, int Rank, decimal PrizeValue, int Quantity, string? Description);
 
-/// <summary>CompetitionDetail of the app: the summary fields plus description, conditions (= rules), deadline and awards.</summary>
+/// <summary>CompetitionDetail of the app: the summary fields plus description, conditions (= rules), deadline and awards.
+/// Description and conditions are sanitized HTML (BR-30; older plain text is sent as paragraphs).</summary>
 public sealed record CompetitionDetailDto(long Id, string Title, string? Topic, DateOnly StartDate, DateOnly EndDate,
     CompetitionStatus Status, int DaysLeft, int DaysUntilStart, int SubmissionCount,
     string? Description, string? Conditions, DateTime Deadline, IReadOnlyList<CompetitionAwardDto> Awards, bool HasCover = false)
@@ -153,7 +154,7 @@ public static class PublicAndSubmissionQueries
         var count = await db.Submissions.CountAsync(s => s.CompetitionId == id);
         var s = Summary(c.Id, c.Title, c.StartDate, c.EndDate, c.Status, count, today);
         return new CompetitionDetailDto(s.Id, s.Title, null, s.StartDate, s.EndDate, s.Status, s.DaysLeft, s.DaysUntilStart,
-            s.SubmissionCount, c.Description, c.Rules, CompetitionStatusResolver.SubmissionDeadline(c.EndDate),
+            s.SubmissionCount, RichText.ToHtml(c.Description), RichText.ToHtml(c.Rules), CompetitionStatusResolver.SubmissionDeadline(c.EndDate),
             c.Awards.OrderBy(a => a.Rank).ThenBy(a => a.AwardName)
                 .Select(a => new CompetitionAwardDto(a.AwardName, a.Rank, a.PrizeValue, a.Quantity, a.PrizeDescription)).ToList(),
             c.CoverImagePath != null)

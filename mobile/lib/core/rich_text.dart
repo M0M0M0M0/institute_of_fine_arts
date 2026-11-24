@@ -12,7 +12,7 @@ import 'package:vsc_quill_delta_to_html/vsc_quill_delta_to_html.dart';
 
 // An HTML tag the editor can produce (or TinyMCE's default output has); plain text does not contain one
 final _knownTag = RegExp(
-  r'</?(p|br|strong|b|em|i|u|ul|ol|li|h[1-6]|blockquote)\b',
+  r'</?(p|br|strong|b|em|i|u|s|ul|ol|li|h[1-6]|blockquote|a|table|tr|td|th)\b',
   caseSensitive: false,
 );
 

@@ -1,4 +1,5 @@
 @model (InstituteOfFineArts.Web.ViewModels.Public.CompetitionShowcaseVm Competition, bool Reverse)
+@using InstituteOfFineArts.Web.Helpers
 @using InstituteOfFineArts.Web.Models.Enums
 @*
     One competition of /gallery/competitions (FE101 Commissions design): cover image and text side by side,
@@ -43,9 +44,10 @@
             }
         </div>
         <h2 class="art-title fs-2 mb-3"><a href="/gallery/competitions/@c.Id" class="text-reset text-decoration-none">@c.Title</a></h2>
-        @if (!string.IsNullOrWhiteSpace(c.Description))
+        @* A card shows the text without formatting (BR-30) *@
+        @if (RichText.Excerpt(c.Description, 400) is { } excerpt)
         {
-            <p class="text-muted lh-lg mb-4">@c.Description</p>
+            <p class="text-muted lh-lg mb-4">@excerpt</p>
         }
         @switch (c.Status)
         {

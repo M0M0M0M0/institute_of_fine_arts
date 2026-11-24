@@ -75,13 +75,13 @@
         <dd class="num">@Model.SubmissionCount</dd>
     </dl>
 
-    @* white-space: pre-line keeps the line breaks typed by staff; Razor still encodes the text (no HTML/XSS) *@
+    @* Rich text (BR-30): RichText.Show writes HTML that was sanitized (allowed tags only); older plain text becomes paragraphs *@
     <div class="read">
         <h2>Description</h2>
-        <p style="white-space: pre-line">@(Model.Description ?? "–")</p>
+        @RichText.Show(Model.Description)
 
         <h2>Rules &amp; conditions</h2>
-        <p style="white-space: pre-line">@(Model.Rules ?? "–")</p>
+        @RichText.Show(Model.Rules)
     </div>
 
     @* Timeline: submission period, results and the staff's milestones (step 7) *@

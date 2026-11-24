@@ -1,4 +1,5 @@
 @model InstituteOfFineArts.Web.ViewModels.Public.ArtworkDetailVm
+@using InstituteOfFineArts.Web.Helpers
 @*
     One public painting (/gallery/artworks/{id}, FE101 artwork detail design, real data): large image,
     title, student, competition and award. The student's text and the evaluation stay private (BR-20); there is no
@@ -66,10 +67,10 @@
                 </li>
             </ul>
 
-            @if (!string.IsNullOrWhiteSpace(Model.CompetitionDescription))
+            @if (RichText.Excerpt(Model.CompetitionDescription, 500) is { } about)
             {
                 <h2 class="h6 fw-bold mb-2">About the Competition</h2>
-                <p class="text-muted small lh-lg">@Model.CompetitionDescription</p>
+                <p class="text-muted small lh-lg">@about</p>
             }
         </div>
     </div>

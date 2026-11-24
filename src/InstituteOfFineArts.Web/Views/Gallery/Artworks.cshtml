@@ -1,4 +1,5 @@
 @model InstituteOfFineArts.Web.ViewModels.Public.ArtworkListVm
+@using InstituteOfFineArts.Web.Helpers
 @inject InstituteOfFineArts.Web.Services.Interfaces.IArtworkCatalogService Catalog
 @*
     Public paintings (FE101 gallery listing design, real data): a category (/gallery/{subject|style|medium}/{key}),
@@ -15,9 +16,9 @@
 <div class="gallery-hero bg-cream py-5 mb-5 text-center">
     <div class="container" style="max-width: 850px;">
         <h1 class="art-title display-5 mb-4">@Model.Title</h1>
-        @if (!string.IsNullOrWhiteSpace(Model.Intro))
+        @if (RichText.Excerpt(Model.Intro, 600) is { } intro)
         {
-            <p class="text-muted lh-lg mb-0" style="font-size: 0.95rem;">@Model.Intro</p>
+            <p class="text-muted lh-lg mb-0" style="font-size: 0.95rem;">@intro</p>
         }
     </div>
 </div>

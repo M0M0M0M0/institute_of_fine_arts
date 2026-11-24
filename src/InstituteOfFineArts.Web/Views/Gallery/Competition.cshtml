@@ -4,7 +4,7 @@
 @*
     One competition (/gallery/competitions/{id}, FE101 competition detail design, real data): cover banner, overview,
     eligibility, rules, prizes, winners once published, and a sticky summary. Entering goes through the real student
-    submit page (/student/submissions/new), which checks the deadline, one entry per student, JPEG ≤ 5 MB and the text.
+    submit page (/student/submissions/new), which checks the deadline, one entry per student, 1–5 pictures (JPG / PNG / WebP ≤ 10 MB each) and the text.
 *@
 @{
     ViewData["Title"] = Model.Title + " - Competition Details";
@@ -57,7 +57,7 @@
 
             <!-- 1. Description -->
             <h2 class="art-title h4 mb-3 mt-5">1. Overview &amp; Theme</h2>
-            <p class="text-muted lh-lg" style="white-space: pre-line;">@(Model.Description ?? "The organisers have not written an overview yet.")</p>
+            @RichText.Show(Model.Description, "The organisers have not written an overview yet.", "text-muted lh-lg")
 
             <!-- 2. Eligibility -->
             <h2 class="art-title h4 mb-3 mt-5">2. Eligibility</h2>
@@ -69,14 +69,14 @@
 
             <!-- 3. Rules / requirements -->
             <h2 class="art-title h4 mb-3 mt-5">3. Rules &amp; Requirements</h2>
+            @if (!string.IsNullOrWhiteSpace(Model.Rules))
+            {
+                @RichText.Show(Model.Rules, cssClass: "text-muted lh-lg mb-3")
+            }
             <ul class="list-unstyled text-muted lh-lg">
-                @if (!string.IsNullOrWhiteSpace(Model.Rules))
-                {
-                    <li class="mb-3" style="white-space: pre-line;">@Model.Rules</li>
-                }
                 <li class="mb-3">
                     <strong class="text-dark"><i class="bi bi-file-earmark-image me-2" aria-hidden="true"></i> File:</strong><br />
-                    One JPEG image of the painting, up to 5 MB.
+                    1 to 5 pictures of the painting (the first is the cover): JPG, PNG or WebP, up to 10 MB each.
                 </li>
                 <li class="mb-3">
                     <strong class="text-dark"><i class="bi bi-quote me-2" aria-hidden="true"></i> Accompanying text:</strong><br />

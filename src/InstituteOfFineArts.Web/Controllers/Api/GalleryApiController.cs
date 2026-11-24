@@ -1,5 +1,6 @@
 using InstituteOfFineArts.Web.Data;
 using InstituteOfFineArts.Web.Exceptions;
+using InstituteOfFineArts.Web.Helpers;
 using InstituteOfFineArts.Web.Infrastructure.Api;
 using InstituteOfFineArts.Web.Services.Interfaces;
 using InstituteOfFineArts.Web.ViewModels.Public;
@@ -85,7 +86,7 @@ public class GalleryApiController : ApiControllerBase
     {
         var a = await _catalog.GetArtworkAsync(id);
         var hasThumb = await _db.Submissions.AsNoTracking().AnyAsync(s => s.Id == id && s.ThumbnailPath != null);
-        return new GalleryArtworkDto(a.SubmissionId, a.Title, a.StudentName, a.CompetitionId, a.CompetitionTitle, a.CompetitionDescription,
+        return new GalleryArtworkDto(a.SubmissionId, a.Title, a.StudentName, a.CompetitionId, a.CompetitionTitle, RichText.Excerpt(a.CompetitionDescription, 500),
             a.AwardName, a.AwardRank, a.IsBest, a.SubmittedAt, hasThumb);
     }
 }

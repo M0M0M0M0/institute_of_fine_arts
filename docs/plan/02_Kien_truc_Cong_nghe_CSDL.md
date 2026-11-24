@@ -712,8 +712,8 @@ Index: `IX_student_profile_class_name`.
 | id | BIGINT IDENTITY | ✘ | **PK** | |
 | code | VARCHAR(20) | ✘ | **UNIQUE** | VD: `CT2026-01` |
 | title | NVARCHAR(200) | ✘ | | |
-| description | NVARCHAR(MAX) | ✔ | | Chi tiết |
-| rules | NVARCHAR(MAX) | ✔ | | Thể lệ/điều kiện |
+| description | NVARCHAR(MAX) | ✔ | | Chi tiết – HTML đã lọc từ trình soạn thảo rich text (BR-30), ≤ 4000 ký tự chữ; dữ liệu cũ có thể là chữ thường |
+| rules | NVARCHAR(MAX) | ✔ | | Thể lệ/điều kiện – như `description` |
 | start_date | DATE | ✘ | | Mở nhận bài từ 00:00 |
 | end_date | DATE | ✘ | CHECK (`end_date >= start_date`) (BR-06) | **Hạn nộp = 23:59:59 ngày này** |
 | status | VARCHAR(20) | ✘ | DEFAULT `UPCOMING`, CHECK (`UPCOMING`,`ONGOING`,`CLOSED`,`GRADED`) | UPCOMING/ONGOING/CLOSED **tính từ ngày** (BR-07), `StatusSyncBackgroundService` chỉ đồng bộ cột; **GRADED** chỉ đặt khi Staff công bố (BR-08) |

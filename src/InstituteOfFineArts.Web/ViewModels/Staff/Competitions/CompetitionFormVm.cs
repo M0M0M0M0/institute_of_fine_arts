@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using InstituteOfFineArts.Web.Helpers;
 
 namespace InstituteOfFineArts.Web.ViewModels.Staff.Competitions;
 
@@ -22,13 +23,14 @@ public class CompetitionFormVm : IValidatableObject
     [Display(Name = "Title")]
     public string Title { get; set; } = string.Empty;
 
-    /// <summary>Description / theme of the competition.</summary>
-    [StringLength(4000, ErrorMessage = "Description must be at most 4000 characters")]
+    /// <summary>Description / theme of the competition: HTML from the rich text editor (BR-30). The service checks the
+    /// text length (4000 characters without the tags); this limit is for the HTML.</summary>
+    [StringLength(RichText.MaxHtmlLength, ErrorMessage = "Description is too long")]
     [Display(Name = "Description")]
     public string? Description { get; set; }
 
-    /// <summary>Rules and conditions.</summary>
-    [StringLength(4000, ErrorMessage = "Rules must be at most 4000 characters")]
+    /// <summary>Rules and conditions: HTML from the rich text editor, like <see cref="Description"/>.</summary>
+    [StringLength(RichText.MaxHtmlLength, ErrorMessage = "Rules & conditions is too long")]
     [Display(Name = "Rules & conditions")]
     public string? Rules { get; set; }
 

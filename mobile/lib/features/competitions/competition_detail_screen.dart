@@ -233,7 +233,8 @@ class _TextBlock extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _Eyebrow(title),
-          Text(body, style: Theme.of(context).textTheme.bodyLarge),
+          // Written with the web's rich text editor (BR-30): sanitized HTML; older competitions have plain text
+          RichTextView(body, style: Theme.of(context).textTheme.bodyLarge),
         ],
       ),
     );
