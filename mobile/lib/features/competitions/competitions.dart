@@ -124,7 +124,11 @@ class CompetitionDetail {
     required this.conditions,
     required this.deadline,
     required this.awards,
+    this.timeline = const [],
   });
+
+  /// Timeline: submission period, results and the staff's milestones, in date order (empty from an older API).
+  final List<TimelineItem> timeline;
 
   final CompetitionSummary summary;
   final String? description;
@@ -140,6 +144,42 @@ class CompetitionDetail {
         awards: (json['awards'] as List)
             .map((e) => CompetitionAward.fromJson(e as Map<String, dynamic>))
             .toList(),
+        timeline: ((json['timeline'] as List?) ?? const [])
+            .map((e) => TimelineItem.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      );
+}
+
+/// Where a milestone stands compared with today.
+enum TimelineState { past, current, upcoming }
+
+/// One line of a competition's timeline. [isSystem]: a date the system works with (submissions open / close,
+/// results published); otherwise a milestone written by the staff (information only).
+class TimelineItem {
+  const TimelineItem({
+    required this.date,
+    required this.title,
+    this.content,
+    this.isSystem = false,
+    this.state = TimelineState.upcoming,
+  });
+
+  final DateTime date;
+  final String title;
+  final String? content;
+  final bool isSystem;
+  final TimelineState state;
+
+  factory TimelineItem.fromJson(Map<String, dynamic> json) => TimelineItem(
+        date: DateTime.parse(json['date'] as String),
+        title: json['title'] as String,
+        content: json['content'] as String?,
+        isSystem: (json['isSystem'] as bool?) ?? false,
+        state: switch ((json['state'] as String? ?? '').toLowerCase()) {
+          'past' => TimelineState.past,
+          'current' => TimelineState.current,
+          _ => TimelineState.upcoming,
+        },
       );
 }
 

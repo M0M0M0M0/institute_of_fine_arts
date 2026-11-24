@@ -88,6 +88,8 @@
     <p class="pre-line">@(Model.Rules ?? "–")</p>
 </section>
 
+<section class="section">@await Component.InvokeAsync("CompetitionTimeline", new { competitionId = Model.Id })</section>
+
 @* Awards defined and their winners, read only *@
 <section class="section" aria-labelledby="awards-heading">
     <div class="section-head"><h2 id="awards-heading">Awards</h2></div>

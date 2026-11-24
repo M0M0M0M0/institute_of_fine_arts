@@ -45,6 +45,8 @@
             <div class="section-head"><h2 id="rules-title">Rules &amp; conditions</h2></div>
             <p style="white-space: pre-line">@(Model.Rules ?? "–")</p>
         </section>
+
+        <section class="section">@await Component.InvokeAsync("CompetitionTimeline", new { competitionId = Model.Id })</section>
     </div>
 
     <aside aria-labelledby="entry-title">

@@ -71,6 +71,7 @@ class _DetailViewState extends ConsumerState<_DetailView> {
     final story = <Widget>[
       if ((d.description ?? '').isNotEmpty) _TextBlock(title: 'Overview', body: d.description!),
       if ((d.conditions ?? '').isNotEmpty) _TextBlock(title: 'Rules', body: d.conditions!),
+      if (d.timeline.isNotEmpty) _Timeline(items: d.timeline),
     ];
     final practical = <Widget>[
       _DatesPanel(detail: d),
@@ -234,6 +235,103 @@ class _TextBlock extends StatelessWidget {
           _Eyebrow(title),
           Text(body, style: Theme.of(context).textTheme.bodyLarge),
         ],
+      ),
+    );
+  }
+}
+
+/// Timeline (step 7): a line of dots, the current one filled and marked "Now", past ones muted.
+class _Timeline extends StatelessWidget {
+  const _Timeline({required this.items});
+
+  final List<TimelineItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.xl),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _Eyebrow('Timeline'),
+          for (var i = 0; i < items.length; i++)
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Dot and the line to the next one
+                  SizedBox(
+                    width: 24,
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 4),
+                        _Dot(state: items[i].state),
+                        if (i < items.length - 1) Expanded(child: Container(width: 2, color: AppColors.line)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(bottom: i < items.length - 1 ? AppSpacing.md : 0),
+                      child: Semantics(
+                        label: items[i].state == TimelineState.current ? 'Now' : null,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(formatDate(items[i].date), style: text.bodySmall!.copyWith(color: AppColors.muted)),
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    items[i].title,
+                                    style: text.titleSmall!.copyWith(
+                                      color: items[i].state == TimelineState.past ? AppColors.muted : AppColors.ink,
+                                    ),
+                                  ),
+                                ),
+                                if (items[i].state == TimelineState.current) ...[
+                                  const SizedBox(width: AppSpacing.xs),
+                                  Text('NOW', style: text.labelSmall!.copyWith(color: AppColors.ink, letterSpacing: 1.2)),
+                                ],
+                              ],
+                            ),
+                            if ((items[i].content ?? '').isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 2),
+                                child: Text(items[i].content!, style: text.bodyMedium),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Dot extends StatelessWidget {
+  const _Dot({required this.state});
+
+  final TimelineState state;
+
+  @override
+  Widget build(BuildContext context) {
+    final filled = state != TimelineState.upcoming;
+    final color = state == TimelineState.current ? AppColors.ink : AppColors.muted;
+    return Container(
+      width: 14,
+      height: 14,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: filled ? color : AppColors.wall,
+        border: Border.all(color: color, width: 2),
       ),
     );
   }

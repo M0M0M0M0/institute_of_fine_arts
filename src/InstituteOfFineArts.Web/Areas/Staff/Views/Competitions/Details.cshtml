@@ -95,6 +95,8 @@
     <p style="white-space: pre-line">@(Model.Rules ?? "–")</p>
 </section>
 
+<section class="section">@await Component.InvokeAsync("CompetitionTimeline", new { competitionId = Model.Id })</section>
+
 <partial name="_JuryInfo" model="Model" />
 
 @* Awards (F-M05-06, BE1-06): add / edit / delete while the competition is not GRADED *@

@@ -988,6 +988,25 @@ h1, .h1, .hero-title, .band-title { letter-spacing: -0.02em; }
 .award-row.is-removed > input:not([type=hidden]) { opacity: .45; text-decoration: line-through; pointer-events: none; }
 .award-given { font-size: .75rem; color: var(--ifa-gilt-text); white-space: nowrap; }
 .award-given .bi { margin-right: .2rem; }
+/* Timeline milestones of the competition form (_MilestoneRows.cshtml) */
+.milestone-rows { border: 0; padding: 0; margin-top: 1.5rem; min-width: 0; }
+.milestone-row { display: grid; grid-template-columns: 10.5rem minmax(0, 1fr) 2.5rem; gap: .5rem; align-items: center; padding: .6rem 0; border-top: 1px solid var(--ifa-line); }
+.milestone-row .milestone-content, .milestone-row .milestone-error { grid-column: 1 / -1; }
+.milestone-row.is-removed > input:not([type=hidden]), .milestone-row.is-removed > textarea { opacity: .45; text-decoration: line-through; pointer-events: none; }
+@media (max-width: 575.98px) { .milestone-row { grid-template-columns: minmax(0, 1fr) 2.5rem; } .milestone-row > input[type=date] { grid-column: 1 / -1; } }
+/* Timeline of a competition (Views/Shared/Components/CompetitionTimeline) */
+.timeline { list-style: none; margin: 0; padding: 0; position: relative; }
+.timeline::before { content: ""; position: absolute; left: .45rem; top: .4rem; bottom: .4rem; width: 2px; background: var(--ifa-line); }
+.timeline-item { position: relative; padding: 0 0 1.1rem 1.9rem; }
+.timeline-item:last-child { padding-bottom: 0; }
+.timeline-dot { position: absolute; left: 0; top: .3rem; width: 1rem; height: 1rem; border-radius: 50%; background: var(--ifa-wall); border: 2px solid var(--ifa-muted); }
+.timeline-item.is-past .timeline-dot { background: var(--ifa-muted); }
+.timeline-item.is-current .timeline-dot { background: var(--ifa-ink); border-color: var(--ifa-ink); box-shadow: 0 0 0 4px rgba(11, 42, 51, .15); }
+.timeline-date { display: block; font-size: .8125rem; color: var(--ifa-muted); letter-spacing: .02em; }
+.timeline-title { display: block; font-weight: 600; }
+.timeline-item.is-past .timeline-title { color: var(--ifa-muted); font-weight: 500; }
+.timeline-now { margin-left: .4rem; font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--ifa-ink); }
+.timeline-content { margin: .15rem 0 0; white-space: pre-line; font-size: .9375rem; }
 @media (max-width: 575.98px) {
     .award-head { display: none; }
     .award-row { grid-template-columns: 4rem minmax(0, 1fr) 4rem; }

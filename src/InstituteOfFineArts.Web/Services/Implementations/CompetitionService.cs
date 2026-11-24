@@ -232,6 +232,7 @@ public partial class CompetitionService : ICompetitionService
             HasCover = c.CoverImagePath != null,
             HasSubmissions = await _db.Submissions.AnyAsync(s => s.CompetitionId == id),
             Awards = await AwardRowsAsync(id),
+            Milestones = await MilestoneRowsAsync(id),
         };
         await LoadJuryAndCriteriaAsync(form);
         await FillJuryOptionsAsync(form);
@@ -275,6 +276,8 @@ public partial class CompetitionService : ICompetitionService
             CreatedBy = staffProfileId,
         };
         competition.Status = CompetitionStatusResolver.Resolve(competition);
+        // Timeline milestones typed on the same form (information only)
+        AddMilestones(competition, form.Milestones);
         // Jury and criteria typed on the same form, checked and inserted with the competition
         await AddJuryAndCriteriaAsync(competition, form);
         foreach (var a in awards)
@@ -371,6 +374,9 @@ public partial class CompetitionService : ICompetitionService
 
         // Awards of the form (added, changed, removed): checked first, saved in the same SaveChanges as the competition
         changes.AddRange(await SyncAwardsAsync(c.Id, form.Awards));
+
+        // Timeline milestones (information only, BR-29)
+        changes.AddRange(await SyncMilestonesAsync(c.Id, form.Milestones, start, end));
 
         // Jury and criteria (criteria locked once grading started)
         var juryChanges = await SyncJuryAndCriteriaAsync(c.Id, form);

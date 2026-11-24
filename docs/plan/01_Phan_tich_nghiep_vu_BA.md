@@ -217,6 +217,7 @@ Ký hiệu: **C** = Create, **R** = Read/xem, **U** = Update, **D** = Delete, **
 | F-M05-07 | Tự động xác định trạng thái | UPCOMING/ONGOING/CLOSED theo ngày hệ thống; GRADED khi công bố kết quả (BR-07) | SYSTEM | Must |
 | F-M05-08 | Công bố kết quả cuộc thi | Chuyển CLOSED → GRADED khi mọi bài đã được **cả ban giám khảo** chấm (BR-08); hệ thống tính lại kết quả, **tự trao giải** theo xếp hạng (BR-30); kết quả hiển thị cho học viên & trang chủ. Trước khi công bố Staff xem "Ranking preview" | STAFF | Must |
 | F-M05-09 | Student xem cuộc thi sắp tới / đang diễn ra | Kèm giải thưởng, chi tiết, thể lệ | STUDENT | Must |
+| F-M05-11 | Timeline cuộc thi (cập nhật 11/2026) | Staff thêm / sửa / xóa các **mốc** ngay trên form cuộc thi: ngày, tiêu đề, nội dung (công bố cuộc thi, dự kiến kết quả, lễ trao giải…). Timeline hiện trên trang cuộc thi công khai, gallery, trang cuộc thi của Staff / Teacher / học viên và app mobile; gồm cả mốc hệ thống "Submissions open" (ngày bắt đầu), "Submissions close" (ngày kết thúc, 23:59:59), "Results published" (khi công bố); mốc hiện tại được đánh dấu "Now" (BR-29) | STAFF (sửa); tất cả (xem) | Should |
 
 ### M06 – Bài dự thi (Student)
 
@@ -376,6 +377,7 @@ Ký hiệu: **C** = Create, **R** = Read/xem, **U** = Update, **D** = Delete, **
 | BR-23 | Giám khảo cho **điểm 0–100 (tối đa 2 số lẻ) cho mọi tiêu chí** của cuộc thi, kèm nhận xét riêng từng tiêu chí (tùy chọn) và nhận xét chung: `positivePoints` bắt buộc, `negativePoints`, `improvementAreas` khuyến nghị. Điểm tổng của giám khảo = Σ(điểm × trọng số)/100, hệ thống tính lại ở server. Hoặc giám khảo **loại bài** (DISQUALIFIED): bắt buộc lý do, không chấm điểm. Chỉ cần **1 giám khảo loại** → kết quả bài là DISQUALIFIED. Bài nộp trễ chỉ được loại (BR-14). |
 | BR-24 | Học viên chỉ thấy kết quả của mình **sau khi cuộc thi GRADED**: bảng điểm đầy đủ (điểm từng tiêu chí của từng giám khảo, trung bình, tổng, xếp loại, nhận xét từng giám khảo). Bảng điểm chỉ dành cho chủ bài, giám khảo của cuộc thi (sau GRADED) và STAFF (khi bài đã được chấm đủ); học viên khác và khách không thấy điểm, kể cả với tranh đã công khai. |
 | BR-27 | **Ngưỡng xếp loại** chung toàn hệ thống, Admin cấu hình (mặc định BEST ≥ 90, BETTER ≥ 80, GOOD ≥ 65, MODERATE ≥ 50, dưới đó NORMAL); mỗi ngưỡng 0–100, giảm dần nghiêm ngặt. Đổi ngưỡng không đổi kết quả của cuộc thi đã GRADED. |
+| BR-29 | **Timeline chỉ để thông tin** (cập nhật 11/2026): các mốc do Staff nhập không đổi trạng thái cuộc thi – thời gian nhận bài vẫn là ngày bắt đầu / kết thúc (BR-06, BR-07, BR-10), kết quả vẫn do Staff công bố (BR-08). Mỗi mốc bắt buộc ngày và tiêu đề (≤ 100 ký tự), nội dung tùy chọn (≤ 1000 ký tự), ngày trong khoảng 1 năm trước ngày bắt đầu đến 1 năm sau ngày kết thúc; tối đa 12 mốc; không sửa được khi cuộc thi đã GRADED (như các trường khác). Thêm / sửa / xóa mốc được ghi vào lịch sử cuộc thi. |
 | BR-28 | **Không làm tròn trước khi so sánh**: điểm trung bình dùng để xếp loại và xếp hạng được tính đủ độ chính xác (`decimal`) từ điểm gốc; chỉ làm tròn 2 chữ số khi hiển thị. |
 
 ### 4.5 Trao giải (AwardIssued)

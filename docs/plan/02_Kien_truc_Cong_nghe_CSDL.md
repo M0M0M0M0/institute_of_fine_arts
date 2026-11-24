@@ -935,6 +935,19 @@ Index: **UNIQUE (`judge_evaluation_id`, `competition_criterion_id`)**.
 
 **`audit_log`** – nhật ký (Entity `AuditLog`): `account_id` (FK SET NULL), `username`, `action`, **`category`** (`LOGIN`,`ACCOUNT`,`COMPETITION`,`SUBMISSION`,`GRADING`,`AWARD`,`EXHIBITION`,`SALE`,`OTHER`), **`summary`** (câu mô tả), `entity`, `entity_id`, **`competition_id`**, **`exhibition_id`**, **`submission_id`**, **`target_account_id`** (không FK – nhật ký còn sau khi xóa đối tượng), `details` (≤ 1000, có "Changes: cũ → mới"), `ip_address`. Index theo (`competition_id`, `created_at`), (`exhibition_id`, …), (`submission_id`, …), (`target_account_id`, …), (`account_id`, …).
 
+**`competition_milestone`** – mốc timeline của cuộc thi, chỉ để thông tin (Entity `CompetitionMilestone`, BR-29, migration `CompetitionTimeline`)
+| Cột | Kiểu | Null | Ràng buộc | Ghi chú |
+|---|---|---|---|---|
+| id | BIGINT IDENTITY | ✘ | **PK** | |
+| competition_id | BIGINT | ✘ | **FK → competition(id)** ON DELETE CASCADE | Index `(competition_id, date, sort_order)` |
+| date | DATE | ✘ | | Ngày của mốc |
+| title | NVARCHAR(100) | ✘ | | Vd "Award ceremony" |
+| content | NVARCHAR(1000) | ✔ | | Nội dung, tùy chọn |
+| sort_order | INT | ✘ | | Thứ tự trong cùng ngày |
+| created_at, updated_at | DATETIME2(0) | | | |
+
+Mốc "Submissions open / close" và "Results published" **không lưu** trong bảng này: chúng lấy từ `competition.start_date`, `end_date`, `published_at` (`Helpers/CompetitionTimeline`), nên không thể lệch với trạng thái cuộc thi.
+
 ### 6.3. Trích đoạn script tạo bảng (mẫu – 2 bảng)
 
 > Schema được tạo bằng **EF Core Code-First Migrations**. Script SQL dưới đây là kết quả mong muốn (xuất bằng `dotnet ef migrations script` → `database/01_schema.sql` để nộp).

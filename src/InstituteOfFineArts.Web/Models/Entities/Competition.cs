@@ -60,4 +60,7 @@ public class Competition : BaseEntity
 
     /// <summary>Grading criteria with their weights (adding up to 100 %).</summary>
     public ICollection<CompetitionCriterion> Criteria { get; set; } = new List<CompetitionCriterion>();
+
+    /// <summary>Milestones written by the staff (timeline, information only).</summary>
+    public ICollection<CompetitionMilestone> Milestones { get; set; } = new List<CompetitionMilestone>();
 }

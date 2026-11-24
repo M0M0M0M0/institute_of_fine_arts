@@ -20,7 +20,14 @@ public sealed record CompetitionAwardDto(string Name, int Rank, decimal PrizeVal
 /// <summary>CompetitionDetail of the app: the summary fields plus description, conditions (= rules), deadline and awards.</summary>
 public sealed record CompetitionDetailDto(long Id, string Title, string? Topic, DateOnly StartDate, DateOnly EndDate,
     CompetitionStatus Status, int DaysLeft, int DaysUntilStart, int SubmissionCount,
-    string? Description, string? Conditions, DateTime Deadline, IReadOnlyList<CompetitionAwardDto> Awards, bool HasCover = false);
+    string? Description, string? Conditions, DateTime Deadline, IReadOnlyList<CompetitionAwardDto> Awards, bool HasCover = false)
+{
+    /// <summary>Timeline (step 7): submission period, results and the staff's milestones, in date order.</summary>
+    public IReadOnlyList<TimelineItemDto> Timeline { get; init; } = [];
+}
+
+/// <summary>One line of a competition's timeline. State: "Past", "Current" or "Upcoming".</summary>
+public sealed record TimelineItemDto(DateOnly Date, string Title, string? Content, bool IsSystem, string State);
 
 /// <summary>Winner of the home page.</summary>
 public sealed record WinnerDto(string StudentName, string AwardName, int Rank, string PaintingTitle, long SubmissionId = 0,
@@ -141,7 +148,7 @@ public static class PublicAndSubmissionQueries
     public static async Task<CompetitionDetailDto> CompetitionAsync(AppDbContext db, long id)
     {
         var today = DateTimeHelper.Today;
-        var c = await db.Competitions.AsNoTracking().Include(x => x.Awards).FirstOrDefaultAsync(x => x.Id == id)
+        var c = await db.Competitions.AsNoTracking().Include(x => x.Awards).Include(x => x.Milestones).FirstOrDefaultAsync(x => x.Id == id)
                 ?? throw new NotFoundException($"Competition {id} was not found.");
         var count = await db.Submissions.CountAsync(s => s.CompetitionId == id);
         var s = Summary(c.Id, c.Title, c.StartDate, c.EndDate, c.Status, count, today);
@@ -149,7 +156,11 @@ public static class PublicAndSubmissionQueries
             s.SubmissionCount, c.Description, c.Rules, CompetitionStatusResolver.SubmissionDeadline(c.EndDate),
             c.Awards.OrderBy(a => a.Rank).ThenBy(a => a.AwardName)
                 .Select(a => new CompetitionAwardDto(a.AwardName, a.Rank, a.PrizeValue, a.Quantity, a.PrizeDescription)).ToList(),
-            c.CoverImagePath != null);
+            c.CoverImagePath != null)
+        {
+            Timeline = CompetitionTimeline.Of(c, today)
+                .Select(t => new TimelineItemDto(t.Date, t.Title, t.Content, t.IsSystem, t.State.ToString())).ToList(),
+        };
     }
 
     /// <summary>Issued awards of a competition; empty until its results are published (GRADED).</summary>

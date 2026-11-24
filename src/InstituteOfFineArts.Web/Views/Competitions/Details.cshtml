@@ -84,6 +84,9 @@
         <p style="white-space: pre-line">@(Model.Rules ?? "–")</p>
     </div>
 
+    @* Timeline: submission period, results and the staff's milestones (step 7) *@
+    <div class="section">@await Component.InvokeAsync("CompetitionTimeline", new { competitionId = Model.Id })</div>
+
     <section class="section" aria-labelledby="awards-title">
         <div class="section-head"><h2 id="awards-title">Awards</h2></div>
         @if (Model.Awards.Count == 0)

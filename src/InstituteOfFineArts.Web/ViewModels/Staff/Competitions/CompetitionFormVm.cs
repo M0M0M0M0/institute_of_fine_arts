@@ -64,6 +64,9 @@ public class CompetitionFormVm : IValidatableObject
     /// </summary>
     public List<CompetitionAwardRowVm> Awards { get; set; } = new();
 
+    /// <summary>Timeline: dates written by the staff (announcement, expected results, ceremony…). Blank rows are ignored.</summary>
+    public List<CompetitionMilestoneRowVm> Milestones { get; set; } = new();
+
     /// <summary>Jury: staff_profile.id of the teachers who grade the entries.</summary>
     public List<long> JudgeIds { get; set; } = new();
 

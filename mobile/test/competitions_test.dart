@@ -15,6 +15,25 @@ Map<String, dynamic> _json({String status = 'Upcoming', Object? daysUntilStart =
     };
 
 void main() {
+  test('CompetitionDetail reads the timeline (older API without it: empty)', () {
+    final base = {
+      'id': 7, 'title': 'Spring', 'startDate': '2026-11-01', 'endDate': '2026-12-20', 'status': 'Ongoing',
+      'daysLeft': 3, 'daysUntilStart': 0, 'submissionCount': 2, 'deadline': '2026-12-20T23:59:59', 'awards': <dynamic>[],
+    };
+    expect(CompetitionDetail.fromJson(base).timeline, isEmpty);
+    final d = CompetitionDetail.fromJson({
+      ...base,
+      'timeline': [
+        {'date': '2026-11-01', 'title': 'Submissions open', 'content': null, 'isSystem': true, 'state': 'Past'},
+        {'date': '2026-11-25', 'title': 'Award ceremony', 'content': 'Main hall', 'isSystem': false, 'state': 'Current'},
+        {'date': '2026-12-20', 'title': 'Submissions close', 'isSystem': true, 'state': 'Upcoming'},
+      ],
+    });
+    expect(d.timeline.map((t) => t.state), [TimelineState.past, TimelineState.current, TimelineState.upcoming]);
+    expect(d.timeline[1].content, 'Main hall');
+    expect(d.timeline.first.isSystem, isTrue);
+  });
+
   test('parse daysUntilStart từ JSON', () {
     final c = CompetitionSummary.fromJson(_json());
     expect(c.daysUntilStart, 5);

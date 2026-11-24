@@ -1,0 +1,36 @@
+@model IReadOnlyList<InstituteOfFineArts.Web.Helpers.TimelineItem>
+@using InstituteOfFineArts.Web.Helpers
+@*
+    Timeline of a competition (CompetitionTimelineViewComponent): one line per date, the current one marked "Now".
+    Dates come from the competition (open / close / published) and from the staff's milestones.
+*@
+@{
+    var heading = ViewData["Heading"] as string;
+}
+<section class="competition-timeline" aria-labelledby="@(heading != null ? "timeline-heading" : null)">
+    @if (heading != null)
+    {
+        <h2 class="h4" id="timeline-heading">@heading</h2>
+    }
+    <ol class="timeline">
+        @foreach (var item in Model)
+        {
+            var state = item.State switch { MilestoneState.Past => "is-past", MilestoneState.Current => "is-current", _ => "is-upcoming" };
+            <li class="timeline-item @state" aria-current="@(item.State == MilestoneState.Current ? "step" : null)">
+                <span class="timeline-dot" aria-hidden="true"></span>
+                <time class="timeline-date" datetime="@item.Date.ToString("yyyy-MM-dd")">@item.Date.ToString("dddd, dd MMM yyyy")</time>
+                <span class="timeline-title">
+                    @item.Title
+                    @if (item.State == MilestoneState.Current)
+                    {
+                        <span class="timeline-now">Now</span>
+                    }
+                </span>
+                @if (item.Content != null)
+                {
+                    <p class="timeline-content">@item.Content</p>
+                }
+            </li>
+        }
+    </ol>
+</section>

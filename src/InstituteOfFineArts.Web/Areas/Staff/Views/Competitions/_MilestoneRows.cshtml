@@ -1,0 +1,63 @@
+@model InstituteOfFineArts.Web.ViewModels.Staff.Competitions.CompetitionFormVm
+@*
+    Timeline milestones of the competition create / edit form (step 7, BR-29), saved with the competition.
+    The submission period (start / end date) and the publishing of the results appear on the timeline by themselves;
+    these rows are the other dates: announcement, expected results, award ceremony, exhibition…
+    Rows use the "Milestones.Index" key so wwwroot/js/milestone-rows.js can add / remove rows without renumbering.
+*@
+@{
+    string? RowError(int i, string field)
+        => ViewData.ModelState.TryGetValue($"Milestones[{i}].{field}", out var entry) && entry.Errors.Count > 0 ? entry.Errors[0].ErrorMessage : null;
+    var fields = new[] { "Date", "Title", "Content" };
+}
+<fieldset class="milestone-rows mb-3" data-milestone-rows>
+    <legend class="form-label fw-semibold mb-1">Timeline</legend>
+    <p class="form-text mt-0 mb-2">
+        "Submissions open", "Submissions close" and "Results published" are added from the dates above. Add the other
+        dates people should know: when the competition is announced, when results are expected, the award ceremony…
+        These dates are information only. A new row left empty is skipped.
+    </p>
+    <div data-milestone-list>
+        @for (var i = 0; i < Model.Milestones.Count; i++)
+        {
+            var m = Model.Milestones[i];
+            var key = $"Milestones[{i}]";
+            <div class="milestone-row @(m.Remove ? "is-removed" : "")" data-milestone-row>
+                <input type="hidden" name="Milestones.Index" value="@i" />
+                <input type="hidden" name="@(key).Id" value="@m.Id" />
+                @if (m.Id != 0)
+                {
+                    <input type="hidden" name="@(key).Remove" value="@(m.Remove ? "true" : "false")" data-milestone-remove-flag />
+                }
+                <input class="form-control" name="@(key).Date" value="@m.Date?.ToString("yyyy-MM-dd")" type="date" aria-label="Date of the milestone" />
+                <input class="form-control" name="@(key).Title" value="@m.Title" maxlength="100" placeholder="e.g. Award ceremony" aria-label="Title of the milestone" />
+                <button type="button" class="btn btn-sm btn-link text-danger" data-milestone-remove aria-label="@(m.Remove ? "Keep this milestone" : "Remove this milestone")">
+                    <i class="bi @(m.Remove ? "bi-arrow-counterclockwise" : "bi-x-lg")" aria-hidden="true"></i>
+                </button>
+                <textarea class="form-control form-control-sm milestone-content" name="@(key).Content" rows="2" maxlength="1000"
+                          placeholder="What happens that day (optional)" aria-label="Description of the milestone">@m.Content</textarea>
+                @foreach (var field in fields)
+                {
+                    if (RowError(i, field) is { } error)
+                    {
+                        <span class="text-danger small milestone-error">@error</span>
+                    }
+                }
+            </div>
+        }
+    </div>
+    <button type="button" class="btn btn-sm btn-outline-primary mt-1" data-milestone-add><i class="bi bi-plus-lg" aria-hidden="true"></i>Add milestone</button>
+
+    @* Template of a new row: __i__ is replaced by a unique key *@
+    <template data-milestone-template>
+        <div class="milestone-row" data-milestone-row>
+            <input type="hidden" name="Milestones.Index" value="__i__" />
+            <input type="hidden" name="Milestones[__i__].Id" value="0" />
+            <input class="form-control" name="Milestones[__i__].Date" type="date" aria-label="Date of the milestone" />
+            <input class="form-control" name="Milestones[__i__].Title" maxlength="100" placeholder="e.g. Results announced" aria-label="Title of the milestone" />
+            <button type="button" class="btn btn-sm btn-link text-danger" data-milestone-remove aria-label="Remove this milestone"><i class="bi bi-x-lg" aria-hidden="true"></i></button>
+            <textarea class="form-control form-control-sm milestone-content" name="Milestones[__i__].Content" rows="2" maxlength="1000"
+                      placeholder="What happens that day (optional)" aria-label="Description of the milestone"></textarea>
+        </div>
+    </template>
+</fieldset>

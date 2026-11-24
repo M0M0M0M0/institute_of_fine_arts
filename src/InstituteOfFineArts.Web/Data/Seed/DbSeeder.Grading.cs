@@ -124,6 +124,24 @@ public static partial class DbSeeder
                 db.CompetitionJudges.Add(new CompetitionJudge { CompetitionId = competition.Id, JudgeId = jury[i], IsChair = i == 0 });
             }
 
+            // ---- timeline milestones (information only, BR-29): announcement, expected results, award ceremony
+            db.CompetitionMilestones.AddRange(
+                new CompetitionMilestone
+                {
+                    CompetitionId = competition.Id, Date = competition.StartDate.AddDays(-14), Title = "Competition announced", SortOrder = 0,
+                    Content = "The theme, the rules and the prizes are published on the website and the notice board.",
+                },
+                new CompetitionMilestone
+                {
+                    CompetitionId = competition.Id, Date = competition.EndDate.AddDays(7), Title = "Results expected", SortOrder = 0,
+                    Content = "The jury aims to publish the results about a week after the deadline.",
+                },
+                new CompetitionMilestone
+                {
+                    CompetitionId = competition.Id, Date = competition.EndDate.AddDays(14), Title = "Award ceremony", SortOrder = 0,
+                    Content = "Main hall of the institute, 17:00. Winners and their families are invited.",
+                });
+
             // ---- weighted criteria (sum 100)
             var set = CriteriaSets[k % CriteriaSets.Length];
             var rows = set.Select((c, i) => new CompetitionCriterion

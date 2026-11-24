@@ -571,6 +571,59 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                     b.ToTable("competition_judge", (string)null);
                 });
 
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.CompetitionMilestone", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("id");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<long>("CompetitionId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("competition_id");
+
+                    b.Property<string>("Content")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)")
+                        .HasColumnName("content");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("SYSDATETIME()");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("date")
+                        .HasColumnName("date");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int")
+                        .HasColumnName("sort_order");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasPrecision(0)
+                        .HasColumnType("datetime2(0)")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_competition_milestone");
+
+                    b.HasIndex("CompetitionId", "Date", "SortOrder")
+                        .HasDatabaseName("IX_competition_milestone_date");
+
+                    b.ToTable("competition_milestone", (string)null);
+                });
+
             modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.Customer", b =>
                 {
                     b.Property<long>("Id")
@@ -1699,6 +1752,18 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                     b.Navigation("Judge");
                 });
 
+            modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.CompetitionMilestone", b =>
+                {
+                    b.HasOne("InstituteOfFineArts.Web.Models.Entities.Competition", "Competition")
+                        .WithMany("Milestones")
+                        .HasForeignKey("CompetitionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_competition_milestone_competition_competition_id");
+
+                    b.Navigation("Competition");
+                });
+
             modelBuilder.Entity("InstituteOfFineArts.Web.Models.Entities.Evaluation", b =>
                 {
                     b.HasOne("InstituteOfFineArts.Web.Models.Entities.StaffProfile", "EvaluatedByStaff")
@@ -1915,6 +1980,8 @@ namespace InstituteOfFineArts.Web.Data.Migrations
                     b.Navigation("Criteria");
 
                     b.Navigation("Judges");
+
+                    b.Navigation("Milestones");
 
                     b.Navigation("Submissions");
                 });

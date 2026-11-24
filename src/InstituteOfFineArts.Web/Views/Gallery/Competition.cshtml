@@ -89,7 +89,10 @@
             </ul>
 
             <!-- 4. Prizes -->
-            <h2 class="art-title h4 mb-3 mt-5">4. Prizes &amp; Recognition</h2>
+            <h2 class="art-title h4 mb-3 mt-5">4. Timeline</h2>
+            @await Component.InvokeAsync("CompetitionTimeline", new { competitionId = Model.Id, heading = (string?)null })
+
+            <h2 class="art-title h4 mb-3 mt-5">5. Prizes &amp; Recognition</h2>
             @if (Model.Awards.Count == 0)
             {
                 <p class="text-muted">The prizes will be announced soon.</p>
@@ -121,7 +124,7 @@
             @if (Model.Status == CompetitionStatus.GRADED && Model.Winners.Count > 0)
             {
                 <!-- 5. Winners -->
-                <h2 class="art-title h4 mb-3 mt-5">5. Winners</h2>
+                <h2 class="art-title h4 mb-3 mt-5">6. Winners</h2>
                 @if (!string.IsNullOrWhiteSpace(Model.ResultRemarks))
                 {
                     <p class="text-muted lh-lg">@Model.ResultRemarks</p>

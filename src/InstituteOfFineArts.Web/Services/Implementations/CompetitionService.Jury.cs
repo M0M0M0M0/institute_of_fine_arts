@@ -153,8 +153,10 @@ public partial class CompetitionService
         var changes = new List<string>();
         var graded = await _db.JudgeEvaluations.Where(e => e.Submission.CompetitionId == competitionId)
             .Select(e => e.JudgeId).Distinct().ToListAsync();
+        // Projected first: ToDictionaryAsync runs its selectors in memory, where Account is not loaded
         var names = await _db.StaffProfiles.Where(s => s.Account.Role == Role.TEACHER)
-            .ToDictionaryAsync(s => s.Id, s => s.Account.FullName);
+            .Select(s => new { s.Id, s.Account.FullName })
+            .ToDictionaryAsync(s => s.Id, s => s.FullName);
 
         // ---- jury
         var (judges, chair) = await CheckJuryAsync(form);

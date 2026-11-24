@@ -66,6 +66,9 @@ public class AppDbContext : DbContext
     /// <summary>Criteria chosen for each competition with their weights.</summary>
     public DbSet<CompetitionCriterion> CompetitionCriteria => Set<CompetitionCriterion>();
 
+    /// <summary>Table competition_milestone (timeline of a competition).</summary>
+    public DbSet<CompetitionMilestone> CompetitionMilestones => Set<CompetitionMilestone>();
+
     /// <summary>The grade of each judge for each entry.</summary>
     public DbSet<JudgeEvaluation> JudgeEvaluations => Set<JudgeEvaluation>();
 

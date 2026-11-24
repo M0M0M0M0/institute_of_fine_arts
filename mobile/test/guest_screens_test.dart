@@ -103,6 +103,11 @@ CompetitionDetail _detail(CompetitionStatus status) => CompetitionDetail(
       awards: const [
         CompetitionAward(name: 'First Prize', rank: 1, prizeValue: 300, quantity: 1, description: 'Certificate'),
       ],
+      timeline: [
+        TimelineItem(date: DateTime(2026, 11, 1), title: 'Submissions open', isSystem: true, state: TimelineState.past),
+        TimelineItem(date: DateTime(2026, 11, 20), title: 'Half-way workshop', content: 'Room 3, 14:00', state: TimelineState.current),
+        TimelineItem(date: DateTime(2026, 12, 20), title: 'Submissions close', isSystem: true),
+      ],
     );
 
 final _awards = [
@@ -273,6 +278,16 @@ void main() {
       await tester.scrollUntilVisible(find.text('PRIZES'), 300, scrollable: find.byType(Scrollable).first);
       expect(find.text('RULES'), findsOneWidget);
       expect(find.text('First Prize'), findsOneWidget);
+    });
+
+    testWidgets('timeline: dates in order, the current one marked NOW', (tester) async {
+      await _pump(tester, const CompetitionDetailScreen(id: 7), overrides: detailOverrides(CompetitionStatus.ongoing));
+      await tester.scrollUntilVisible(find.text('TIMELINE'), 300, scrollable: find.byType(Scrollable).first);
+      expect(find.text('Submissions open'), findsOneWidget);
+      expect(find.text('Half-way workshop'), findsOneWidget);
+      expect(find.text('Room 3, 14:00'), findsOneWidget);
+      expect(find.text('NOW'), findsOneWidget);
+      expect(find.text('Submissions close'), findsOneWidget);
     });
 
     testWidgets('guest, open: sign in to enter', (tester) async {
