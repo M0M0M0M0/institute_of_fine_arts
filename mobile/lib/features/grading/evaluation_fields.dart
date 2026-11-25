@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/tokens.dart';
+import '../../shared/shared.dart';
 import 'grading.dart';
 
 /// One score field per criterion (0–100, at most 2 decimals) with its weight and an optional comment (BR-23).
@@ -76,7 +77,8 @@ class CriterionScoreFields extends StatelessWidget {
   }
 }
 
-/// The three comment fields of a grade. When the entry is disqualified the weaknesses field becomes the required reason.
+/// The three comment fields of a grade, written with the rich text editor (BR-50). When the entry is disqualified the
+/// weaknesses field becomes the required reason (checked by [validateEvaluation]).
 class EvaluationTextFields extends StatelessWidget {
   const EvaluationTextFields({
     super.key,
@@ -87,22 +89,27 @@ class EvaluationTextFields extends StatelessWidget {
     required this.enabled,
   });
 
-  final TextEditingController positive;
-  final TextEditingController negative;
-  final TextEditingController improvement;
+  final RichTextController positive;
+  final RichTextController negative;
+  final RichTextController improvement;
   final bool disqualified;
   final bool enabled;
 
   @override
   Widget build(BuildContext context) {
-    Widget field(TextEditingController c, String label) => Padding(
+    Widget field(RichTextController c, String label) => Padding(
           padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-          child: TextFormField(
+          child: RichTextFormField(
+            // A new field when the label changes (disqualified), so the box is rebuilt with its controller
+            key: ValueKey(label),
             controller: c,
+            label: label,
+            requiredMessage: '',
+            isRequired: false,
             enabled: enabled,
             maxLength: 2000,
-            maxLines: 3,
-            decoration: InputDecoration(labelText: label, alignLabelWithHint: true),
+            minHeight: 100,
+            compact: true,
           ),
         );
     return Column(
@@ -173,7 +180,7 @@ class ScoreSheetView extends StatelessWidget {
                     if (value != null && value.trim().isNotEmpty) ...[
                       const SizedBox(height: AppSpacing.xs),
                       Text(label, style: text.labelMedium),
-                      Text(value),
+                      RichTextView(value),
                     ],
                 ],
               ),

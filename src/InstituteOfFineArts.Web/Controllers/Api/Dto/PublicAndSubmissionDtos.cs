@@ -18,7 +18,7 @@ public sealed record CompetitionSummaryDto(long Id, string Title, string? Topic,
 public sealed record CompetitionAwardDto(string Name, int Rank, decimal PrizeValue, int Quantity, string? Description);
 
 /// <summary>CompetitionDetail of the app: the summary fields plus description, conditions (= rules), deadline and awards.
-/// Description and conditions are sanitized HTML (BR-30; older plain text is sent as paragraphs).</summary>
+/// Description and conditions are sanitized HTML (BR-50; older plain text is sent as paragraphs).</summary>
 public sealed record CompetitionDetailDto(long Id, string Title, string? Topic, DateOnly StartDate, DateOnly EndDate,
     CompetitionStatus Status, int DaysLeft, int DaysUntilStart, int SubmissionCount,
     string? Description, string? Conditions, DateTime Deadline, IReadOnlyList<CompetitionAwardDto> Awards, bool HasCover = false)

@@ -246,6 +246,11 @@ public class CompetitionReportService : ICompetitionReportService
             })
             .ToListAsync();
         Number(rows, (row, no) => row.No = no);
+        // Remarks are rich text (BR-50): the report and its PDF / Excel show the text only
+        foreach (var row in rows)
+        {
+            row.Remarks = string.IsNullOrWhiteSpace(row.Remarks) ? null : RichText.ToPlainText(row.Remarks);
+        }
 
         return new Rpt03ResultVm { Rows = rows, TotalCount = totalCount, TotalPrizeValue = totalValue };
     }
@@ -313,7 +318,7 @@ public class CompetitionReportService : ICompetitionReportService
         Number(rows, (row, no) => row.No = no);
         foreach (var row in rows)
         {
-            row.CommentSummary = Summarize(row.CommentSummary);
+            row.CommentSummary = Summarize(RichText.ToPlainText(row.CommentSummary)); // rich text → text only (BR-50)
         }
         vm.Rows = rows;
         return vm;

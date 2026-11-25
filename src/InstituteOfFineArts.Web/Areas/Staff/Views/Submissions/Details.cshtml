@@ -1,4 +1,5 @@
 @model InstituteOfFineArts.Web.ViewModels.Staff.Submissions.SubmissionDetailsVm
+@using InstituteOfFineArts.Web.Helpers
 @*
     Staff – submission details (/staff/submissions/{id}, SCR-27; F-M07-02, F-M06-06): painting + download, texts,
     student, competition, dates, evaluation, award, exhibition entries. Read only for the evaluation: teachers grade
@@ -77,10 +78,10 @@
 
         @* .artwork-text keeps the student's line breaks (pre-line); Razor still encodes the text (no HTML/XSS, TC-M07-06) *@
         <h2 class="h3">@Model.TextType</h2>
-        <p class="artwork-text">@Model.TextContent</p>
+        @RichText.Show(Model.TextContent, cssClass: "artwork-text")
 
         <h2 class="h3">Description</h2>
-        <p style="white-space: pre-line">@Model.Description</p>
+        @RichText.Show(Model.Description)
     </div>
 </div>
 
@@ -94,11 +95,11 @@
             <p class="d-flex flex-wrap align-items-center gap-2"><span class="tag tag-@e.Rating">@e.Rating</span> <span class="text-muted small">by @e.EvaluatorName, @e.EvaluatedAt.ToString("dd MMM yyyy HH:mm")</span></p>
             <dl class="details">
                 <dt>Positive points</dt>
-                <dd style="white-space: pre-line">@(e.PositivePoints ?? "–")</dd>
+                <dd>@RichText.Show(e.PositivePoints)</dd>
                 <dt>Negative points</dt>
-                <dd style="white-space: pre-line">@(e.NegativePoints ?? "–")</dd>
+                <dd>@RichText.Show(e.NegativePoints)</dd>
                 <dt>Improvement areas</dt>
-                <dd style="white-space: pre-line">@(e.ImprovementAreas ?? "–")</dd>
+                <dd>@RichText.Show(e.ImprovementAreas)</dd>
             </dl>
         </div>
     }
@@ -125,7 +126,7 @@
             <span>(rank @a.Rank, <span class="num">@a.PrizeValue.ToString("$#,##0.00")</span>), given @a.IssuedDate.ToString("dd MMM yyyy")</span>
             @if (a.Remarks != null)
             {
-                <br /><span class="text-muted">@a.Remarks</span>
+                <br /><span class="text-muted">@RichText.Excerpt(a.Remarks, 500)</span>
             }
         </p>
     }

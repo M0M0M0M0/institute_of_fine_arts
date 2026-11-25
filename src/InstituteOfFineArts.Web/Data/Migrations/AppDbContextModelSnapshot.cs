@@ -1479,8 +1479,7 @@ namespace InstituteOfFineArts.Web.Data.Migrations
 
                     b.Property<string>("Description")
                         .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("description");
 
                     b.Property<long>("FileSize")
@@ -1513,8 +1512,7 @@ namespace InstituteOfFineArts.Web.Data.Migrations
 
                     b.Property<string>("TextContent")
                         .IsRequired()
-                        .HasMaxLength(4000)
-                        .HasColumnType("nvarchar(4000)")
+                        .HasColumnType("nvarchar(max)")
                         .HasColumnName("text_content");
 
                     b.Property<string>("TextType")

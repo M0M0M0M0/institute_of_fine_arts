@@ -878,7 +878,7 @@ html.has-zoom-viewer { overflow: hidden; }
 /* Text typed by staff that keeps its line breaks (instead of an inline white-space style) */
 .pre-line { white-space: pre-line; }
 
-/* Rich text of a competition's Description / Rules (BR-30): headings sized for the page, tables ruled */
+/* Rich text of a competition's Description / Rules (BR-50): headings sized for the page, tables ruled */
 .rich-text { overflow-wrap: anywhere; }
 .rich-text > :last-child { margin-bottom: 0; }
 .rich-text p, .rich-text ul, .rich-text ol, .rich-text blockquote, .rich-text table { margin: 0 0 .8em; }
@@ -1064,3 +1064,7 @@ h1, .h1, .hero-title, .band-title { letter-spacing: -0.02em; }
 .jury-progress li { padding: .2rem 0; }
 .score-sheet th, .score-sheet td { white-space: nowrap; }
 .score-sheet td.sheet-comment { white-space: normal; min-width: 12rem; }
+
+/* Rich text replaces a pre-line block: the editor's line breaks between tags must not show as blank lines */
+.rich-text, .rich-text.artwork-text { white-space: normal; }
+.artwork-text.rich-text p { margin-bottom: .6em; }

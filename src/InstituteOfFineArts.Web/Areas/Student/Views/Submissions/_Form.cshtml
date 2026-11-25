@@ -27,14 +27,14 @@
 
 <div class="mb-4">
     <label asp-for="TextContent" class="form-label"></label>
-    <textarea asp-for="TextContent" class="form-control" rows="6" maxlength="4000"></textarea>
-    <div class="form-text">Up to 4000 characters.</div>
+    <textarea asp-for="TextContent" class="form-control" rows="6" maxlength="4000" data-rich-text="4000" data-rich-text-mode="simple"></textarea>
+    <div class="form-text">Up to 4000 characters. Press Shift+Enter for a new line within the same verse.</div>
     <span asp-validation-for="TextContent" class="text-danger"></span>
 </div>
 
 <div class="mb-4">
     <label asp-for="Description" class="form-label"></label>
-    <textarea asp-for="Description" class="form-control" rows="4" maxlength="2000"></textarea>
+    <textarea asp-for="Description" class="form-control" rows="4" maxlength="2000" data-rich-text="2000" data-rich-text-mode="simple"></textarea>
     <div class="form-text">Why you painted it and why it deserves to win. Up to 2000 characters.</div>
     <span asp-validation-for="Description" class="text-danger"></span>
 </div>

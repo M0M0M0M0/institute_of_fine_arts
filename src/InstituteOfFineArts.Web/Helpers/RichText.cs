@@ -7,7 +7,8 @@ using Microsoft.AspNetCore.Html;
 namespace InstituteOfFineArts.Web.Helpers;
 
 /// <summary>
-/// Rich text of a competition's Description and Rules (TODO step 8, BR-30): HTML written with the TinyMCE editor.
+/// Rich text written with the TinyMCE editor (BR-50): a competition's Description, Rules and result remarks, an entry's
+/// description and poem / story, the judges' comments, an exhibition's description and an award's remarks.
 /// <list type="bullet">
 /// <item>Only a short list of tags is kept (paragraphs, headings, bold / italic / underline / strike, lists, quotes,
 /// links, tables); everything else (scripts, styles, event attributes, images, iframes, <c>javascript:</c> links) is
@@ -25,6 +26,33 @@ public static partial class RichText
 
     /// <summary>Most characters of HTML stored for a Description or Rules (the text plus its formatting).</summary>
     public const int MaxHtmlLength = 20000;
+
+    /// <summary>Most characters of HTML kept for a rich text of at most <paramref name="maxText"/> characters of text.</summary>
+    public static int HtmlLimit(int maxText) => maxText * 5 + 1000;
+
+    /// <summary>
+    /// What to save for a rich text posted by a form or the app: sanitized HTML (or older plain text, trimmed), null when
+    /// there is no text. Throws on <paramref name="field"/> when the text is missing (<paramref name="requiredMessage"/>
+    /// given) or longer than <paramref name="maxText"/> characters (the tags do not count).
+    /// </summary>
+    public static string? CleanChecked(string? posted, int maxText, string field, string tooLongMessage, string? requiredMessage = null)
+    {
+        var html = Clean(posted);
+        if (html == null)
+        {
+            if (requiredMessage != null) throw new Exceptions.BusinessException(requiredMessage, field);
+            return null;
+        }
+        if (ToPlainText(html).Length > maxText)
+        {
+            throw new Exceptions.BusinessException(tooLongMessage, field);
+        }
+        if (html.Length > HtmlLimit(maxText))
+        {
+            throw new Exceptions.BusinessException("This text has too much formatting. Remove some of it or shorten the text.", field);
+        }
+        return html;
+    }
 
     private static readonly HtmlSanitizer Sanitizer = CreateSanitizer();
 

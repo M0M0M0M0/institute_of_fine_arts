@@ -3,7 +3,7 @@ using InstituteOfFineArts.Web.Helpers;
 namespace InstituteOfFineArts.Tests.Helpers;
 
 /// <summary>
-/// Rich text of a competition's Description / Rules (TODO step 8, BR-30): what the editor may keep, what is removed
+/// Rich text of a competition's Description / Rules (TODO step 8, BR-50): what the editor may keep, what is removed
 /// (scripts, event attributes, dangerous links, styles, pictures), older plain text, plain text for cards.
 /// </summary>
 public class RichTextTests

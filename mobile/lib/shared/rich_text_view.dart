@@ -7,7 +7,7 @@ import '../core/rich_text.dart';
 ///
 /// The HTML is only drawn, never run: no scripts, no images, no styles from the text. Only the tags the editor
 /// and TinyMCE produce (paragraphs, headings, bold, italic, underline, strike, lists, quotes, links, tables) have an
-/// effect. Used for entry descriptions and a competition's Description / Rules (sanitized by the server, BR-30).
+/// effect. Used for entry descriptions and a competition's Description / Rules (sanitized by the server, BR-50).
 class RichTextView extends StatelessWidget {
   const RichTextView(this.stored, {super.key, this.style});
 

@@ -497,7 +497,7 @@ public partial class CompetitionService : ICompetitionService
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     /// <summary>
-    /// Description / Rules from the rich text editor (BR-30): sanitized HTML, null when there is no text; at most
+    /// Description / Rules from the rich text editor (BR-50): sanitized HTML, null when there is no text; at most
     /// <see cref="RichText.MaxTextLength"/> characters of text and <see cref="RichText.MaxHtmlLength"/> of HTML.
     /// </summary>
     private static string? CleanRich(string? posted, string field, string label)

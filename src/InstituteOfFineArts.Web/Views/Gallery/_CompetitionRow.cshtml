@@ -44,7 +44,7 @@
             }
         </div>
         <h2 class="art-title fs-2 mb-3"><a href="/gallery/competitions/@c.Id" class="text-reset text-decoration-none">@c.Title</a></h2>
-        @* A card shows the text without formatting (BR-30) *@
+        @* A card shows the text without formatting (BR-50) *@
         @if (RichText.Excerpt(c.Description, 400) is { } excerpt)
         {
             <p class="text-muted lh-lg mb-4">@excerpt</p>

@@ -480,7 +480,7 @@ class _StaffExhibitionDetailScreenState extends ConsumerState<StaffExhibitionDet
                 '${e.entryCount} (${e.pendingCount} to review, ${e.acceptedCount} accepted, ${e.soldCount} sold)'),
             if (e.description != null) ...[
               const SectionHeader('About', padding: EdgeInsets.fromLTRB(0, AppSpacing.md, 0, AppSpacing.xs)),
-              Text(e.description!),
+              RichTextView(e.description!),
             ],
             if (e.status == ExhibitionStatus.cancelled && e.cancelReason != null)
               NoticeCard(text: 'Cancelled: ${e.cancelReason}', error: true),
@@ -570,16 +570,18 @@ class _ExhibitionFormState extends ConsumerState<_ExhibitionForm> {
   late final _venue = TextEditingController(text: widget.detail?.venue ?? '');
   late final _city = TextEditingController(text: widget.detail?.city ?? '');
   late final _organizer = TextEditingController(text: widget.detail?.organizer ?? '');
-  late final _description = TextEditingController(text: widget.detail?.description ?? '');
+  // Rich text (BR-50), like the web's editor; older exhibitions have plain text
+  late final _description = RichTextController(stored: widget.detail?.description);
   late DateTime? _start = widget.detail?.startDate;
   late DateTime? _end = widget.detail?.endDate;
   bool _busy = false;
 
   @override
   void dispose() {
-    for (final c in [_name, _venue, _city, _organizer, _description]) {
+    for (final c in [_name, _venue, _city, _organizer]) {
       c.dispose();
     }
+    _description.dispose();
     super.dispose();
   }
 
@@ -608,7 +610,7 @@ class _ExhibitionFormState extends ConsumerState<_ExhibitionForm> {
       venue: _venue.text,
       city: _city.text,
       organizer: _organizer.text,
-      description: _description.text,
+      description: _description.html,
       startDate: _start!,
       endDate: _end!,
       rowVersion: widget.detail?.rowVersion,
@@ -665,11 +667,12 @@ class _ExhibitionFormState extends ConsumerState<_ExhibitionForm> {
           onChanged: (d) => setState(() => _end = d),
         ),
         const SizedBox(height: AppSpacing.md),
-        TextField(
+        RichTextFormField(
           controller: _description,
+          label: 'Description',
+          requiredMessage: '',
+          isRequired: false,
           maxLength: 4000,
-          maxLines: 4,
-          decoration: const InputDecoration(labelText: 'Description', alignLabelWithHint: true),
         ),
         const SizedBox(height: AppSpacing.sm),
         FilledButton.icon(

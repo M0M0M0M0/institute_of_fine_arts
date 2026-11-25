@@ -189,7 +189,7 @@ public class AwardIssuedService : IAwardIssuedService
             CompetitionAwardId = issued.CompetitionAwardId,
             SubmissionId = issued.SubmissionId,
             IssuedDate = issued.IssuedDate,
-            Remarks = issued.Remarks,
+            Remarks = RichText.ToHtml(issued.Remarks),
         };
         await FillCompetitionAsync(form, issued.CompetitionAward.Competition, exceptIssuedId: id);
         return form;
@@ -248,11 +248,8 @@ public class AwardIssuedService : IAwardIssuedService
         {
             throw new BusinessException(DateBeforeEndMessage, nameof(AwardIssuedFormVm.IssuedDate));
         }
-        var remarks = string.IsNullOrWhiteSpace(form.Remarks) ? null : form.Remarks.Trim();
-        if (remarks?.Length > AwardIssuedFormVm.MaxRemarksLength)
-        {
-            throw new BusinessException(AwardIssuedFormVm.RemarksTooLongMessage, nameof(AwardIssuedFormVm.Remarks));
-        }
+        // Rich text (BR-50): sanitized HTML, the limit counts the text
+        var remarks = RichText.CleanChecked(form.Remarks, AwardIssuedFormVm.MaxRemarksLength, nameof(AwardIssuedFormVm.Remarks), AwardIssuedFormVm.RemarksTooLongMessage);
 
         issued.IssuedDate = date;
         issued.Remarks = remarks;
@@ -372,11 +369,7 @@ public class AwardIssuedService : IAwardIssuedService
         }
 
         // Remarks: optional, limited length
-        var remarks = Clean(form.Remarks);
-        if (remarks?.Length > AwardIssuedFormVm.MaxRemarksLength)
-        {
-            throw new BusinessException(AwardIssuedFormVm.RemarksTooLongMessage, nameof(AwardIssuedFormVm.Remarks));
-        }
+        var remarks = RichText.CleanChecked(form.Remarks, AwardIssuedFormVm.MaxRemarksLength, nameof(AwardIssuedFormVm.Remarks), AwardIssuedFormVm.RemarksTooLongMessage);
         return (award, submission, date, remarks);
     }
 

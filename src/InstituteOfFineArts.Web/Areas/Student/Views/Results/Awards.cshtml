@@ -1,4 +1,5 @@
 @model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Student.Results.IssuedAwardItemVm>
+@using InstituteOfFineArts.Web.Helpers
 @*
     Student – awards issued (/student/awards, SCR-47, F-M06-09, F-M08-04 pub, US-11 AC4, TC-M08-05): awards of
     GRADED competitions; search by competition, student name, award and issued date; paged.
@@ -101,7 +102,7 @@ else
                     }
                     @if (a.Remarks != null)
                     {
-                        <span class="wl-note" style="white-space: pre-line">@a.Remarks</span>
+                        <span class="wl-note">@RichText.Excerpt(a.Remarks, 500)</span>
                     }
                 </figcaption>
             </figure>

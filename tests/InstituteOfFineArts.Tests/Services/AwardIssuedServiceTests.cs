@@ -200,7 +200,8 @@ public class AwardIssuedServiceTests
         var service = Service(db);
 
         var form = await service.GetForEditAsync(issued.Id);
-        Assert.Equal("Old", form.Remarks);
+        // Loaded for the rich text editor: older plain text becomes a paragraph (BR-50)
+        Assert.Equal("<p>Old</p>", form.Remarks);
         form.IssuedDate = Today;
         form.Remarks = "  New remarks  ";
         var competitionId = await service.UpdateAsync(issued.Id, form);

@@ -68,7 +68,7 @@
                 <dt>Results published</dt>
                 <dd>@published.ToString("dd MMM yyyy HH:mm")@(Model.PublishedByName != null ? $" by {Model.PublishedByName}" : "")</dd>
                 <dt>Result remarks</dt>
-                <dd style="white-space: pre-line">@(Model.ResultRemarks ?? "–")</dd>
+                <dd>@RichText.Show(Model.ResultRemarks)</dd>
             }
         </dl>
 
@@ -88,7 +88,7 @@
     </div>
 </div>
 
-@* Rich text (BR-30): RichText.Show writes HTML that was sanitized (allowed tags only); older plain text becomes paragraphs *@
+@* Rich text (BR-50): RichText.Show writes HTML that was sanitized (allowed tags only); older plain text becomes paragraphs *@
 <section class="section" aria-labelledby="about-title">
     <div class="section-head"><h2 id="about-title">Description</h2></div>
     @RichText.Show(Model.Description)
@@ -219,7 +219,7 @@
                   data-confirm-title="Publish results" data-confirm-tone="neutral">
                 <div class="mb-3">
                     <label for="ResultRemarks" class="form-label">Result remarks (optional)</label>
-                    <textarea id="ResultRemarks" name="ResultRemarks" class="form-control" rows="3" maxlength="2000"></textarea>
+                    <textarea id="ResultRemarks" name="ResultRemarks" class="form-control" rows="3" maxlength="2000" data-rich-text="2000" data-rich-text-mode="simple"></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary" disabled="@(Model.PublishBlockedReason != null)"><i class="bi bi-megaphone" aria-hidden="true"></i>Publish results</button>
             </form>

@@ -1,4 +1,5 @@
 @model Rpt03PageVm
+@using InstituteOfFineArts.Web.Helpers
 @*
     RPT-03 – Awards issued (/reports/rpt-03; F-M10-03): awards by competition, issued date range and student, with
     the number of awards and the total prize value (Financial). Read only; Print button.
@@ -97,7 +98,7 @@
                             <td><a href="@(detailsBase + row.SubmissionId)">@row.SubmissionTitle</a></td>
                             <td class="text-end text-nowrap">@row.IssuedDate.ToString("dd MMM yyyy")</td>
                             <td>@row.IssuedByName</td>
-                            <td style="white-space: pre-line">@row.Remarks</td>
+                            <td style="white-space: pre-line">@RichText.ToPlainText(row.Remarks)</td>
                         </tr>
                     }
                 </tbody>

@@ -119,11 +119,7 @@ public class CompetitionResultService : ICompetitionResultService
         }
 
         // Remarks: optional, limited length
-        var remarks = string.IsNullOrWhiteSpace(resultRemarks) ? null : resultRemarks.Trim();
-        if (remarks?.Length > PublishResultsVm.MaxRemarksLength)
-        {
-            throw new BusinessException(RemarksTooLongMessage, nameof(PublishResultsVm.ResultRemarks));
-        }
+        var remarks = RichText.CleanChecked(resultRemarks, PublishResultsVm.MaxRemarksLength, nameof(PublishResultsVm.ResultRemarks), RemarksTooLongMessage);
 
         // Every result again with today's thresholds, then BR-08: every entry graded by every judge
         await JuryResults.RecomputeAsync(_db, competitionId);

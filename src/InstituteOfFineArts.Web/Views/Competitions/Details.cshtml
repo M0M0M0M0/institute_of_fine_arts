@@ -75,7 +75,7 @@
         <dd class="num">@Model.SubmissionCount</dd>
     </dl>
 
-    @* Rich text (BR-30): RichText.Show writes HTML that was sanitized (allowed tags only); older plain text becomes paragraphs *@
+    @* Rich text (BR-50): RichText.Show writes HTML that was sanitized (allowed tags only); older plain text becomes paragraphs *@
     <div class="read">
         <h2>Description</h2>
         @RichText.Show(Model.Description)
@@ -122,7 +122,7 @@
             <div class="section-head"><h2 id="winners-title">Winners</h2></div>
             @if (Model.ResultRemarks != null)
             {
-                <p class="artwork-text mb-4">@Model.ResultRemarks</p>
+                @RichText.Show(Model.ResultRemarks, cssClass: "artwork-text mb-4")
             }
             @if (Model.Winners.Count == 0)
             {

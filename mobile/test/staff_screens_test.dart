@@ -378,7 +378,8 @@ void main() {
       await _pump(tester, const GradingDetailScreen(id: 7), [
         gradingDetailProvider.overrideWith((ref, id) async => GradingDetail.fromJson(_gradingDetail(evaluation: evaluation))),
       ]);
-      expect(find.text('Lovely colours'), findsOneWidget);
+      // The comments open in the rich text editor (BR-50)
+      expect(find.textContaining('Lovely colours', findRichText: true), findsWidgets);
       expect(find.text('90'), findsOneWidget);
       expect(find.text('85.5'), findsOneWidget);
       expect(find.text('Fresh'), findsOneWidget);

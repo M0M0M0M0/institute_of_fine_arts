@@ -264,7 +264,7 @@ class StudentExhibitionDetailScreen extends ConsumerWidget {
             if (e.organizer != null) InfoRow('Organizer', e.organizer!),
             if (e.description != null) ...[
               const SectionHeader('About', padding: EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.xs)),
-              Text(e.description!),
+              RichTextView(e.description!),
             ],
             if (e.status == ExhibitionStatus.cancelled && e.cancelReason != null)
               NoticeCard(text: 'This exhibition was cancelled: ${e.cancelReason}', error: true),

@@ -157,7 +157,7 @@ void main() {
     );
 
     testWidgets(
-      'a text whose HTML is longer than the limit is refused, even if the written text is short',
+      'the limit counts the written text, not the formatting (the server counts the same way, BR-50)',
       (tester) async {
         final controller = RichTextController();
         addTearDown(controller.dispose);
@@ -175,12 +175,17 @@ void main() {
             ),
           ),
         );
-        // 20 characters written, all bold: the tags push the HTML over 40
+        // 20 characters written, all bold: the tags push the HTML over 40, which is fine
         controller.quill.document.insert(0, 'abcdefghijklmnopqrst');
         controller.quill.formatText(0, 20, Attribute.bold);
         await tester.pump();
         expect(controller.plainText.length, 20);
         expect(controller.html.length, greaterThan(40));
+        expect(key.currentState!.validate(), isTrue);
+        // 41 characters of text: too long
+        controller.quill.document.insert(20, 'abcdefghijklmnopqrstu');
+        await tester.pump();
+        expect(controller.plainText.length, 41);
         expect(key.currentState!.validate(), isFalse);
         await _unmount(tester);
       },

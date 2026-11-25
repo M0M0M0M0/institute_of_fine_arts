@@ -75,13 +75,13 @@
                 <dt>Results published</dt>
                 <dd>@published.ToString("dd MMM yyyy HH:mm")@(Model.PublishedByName != null ? $" by {Model.PublishedByName}" : "")</dd>
                 <dt>Result remarks</dt>
-                <dd class="pre-line">@(Model.ResultRemarks ?? "–")</dd>
+                <dd>@RichText.Show(Model.ResultRemarks)</dd>
             }
         </dl>
     </div>
 </div>
 
-@* Rich text (BR-30): RichText.Show writes HTML that was sanitized (allowed tags only); older plain text becomes paragraphs *@
+@* Rich text (BR-50): RichText.Show writes HTML that was sanitized (allowed tags only); older plain text becomes paragraphs *@
 <section class="section" aria-labelledby="about-heading">
     <div class="section-head"><h2 id="about-heading">Description</h2></div>
     @RichText.Show(Model.Description)

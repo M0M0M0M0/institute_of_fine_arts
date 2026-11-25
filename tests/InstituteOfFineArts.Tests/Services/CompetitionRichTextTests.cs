@@ -13,7 +13,7 @@ using Moq;
 namespace InstituteOfFineArts.Tests.Services;
 
 /// <summary>
-/// Description and Rules of the competition form written with the rich text editor (TODO step 8, BR-30): sanitized
+/// Description and Rules of the competition form written with the rich text editor (TODO step 8, BR-50): sanitized
 /// when saved, at most 4000 characters of text, older plain text loaded as paragraphs without a false history entry.
 /// </summary>
 public class CompetitionRichTextTests

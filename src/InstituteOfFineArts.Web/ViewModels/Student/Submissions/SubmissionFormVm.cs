@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using InstituteOfFineArts.Web.Models.Enums;
+using InstituteOfFineArts.Web.Validation;
 
 namespace InstituteOfFineArts.Web.ViewModels.Student.Submissions;
 
@@ -35,7 +36,7 @@ public abstract class SubmissionFieldsVm
 
     /// <summary>Why it was painted, why it deserves to win…</summary>
     [Required(ErrorMessage = "Please enter a description")]
-    [StringLength(DescriptionMaxLength, ErrorMessage = "Description must be at most 2000 characters")]
+    [RichTextLength(DescriptionMaxLength, ErrorMessage = "Description must be at most 2000 characters")]
     [Display(Name = "Description")]
     public string Description { get; set; } = string.Empty;
 
@@ -46,7 +47,7 @@ public abstract class SubmissionFieldsVm
 
     /// <summary>Poem / quotation / story that goes with the painting.</summary>
     [Required(ErrorMessage = "Please enter the poem, quotation or story")]
-    [StringLength(TextMaxLength, ErrorMessage = "The text must be at most 4000 characters")]
+    [RichTextLength(TextMaxLength, ErrorMessage = "The text must be at most 4000 characters")]
     [Display(Name = "Poem / quotation / story")]
     public string TextContent { get; set; } = string.Empty;
 }

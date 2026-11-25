@@ -252,6 +252,7 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 | TC-M06-12 | Sửa bài trước hạn (thêm/xóa ảnh, đổi ảnh đại diện + thơ) | `student01` có bài 3 ảnh ở cuộc thi ONGOING | Bài của tôi → Sửa → xóa 1 ảnh, thêm 1 ảnh, chọn ảnh khác làm đại diện, sửa thơ → Lưu; thử xóa hết ảnh | | Ảnh mới hiển thị, ảnh đại diện đúng; file ảnh bị xóa không còn trong `uploads/`; thơ mới được lưu; xóa hết ảnh bị từ chối | C |
 | TC-M06-13 | Sửa/xóa bài sau hạn | `student02` có bài ở cuộc thi CLOSED | Mở bài → tìm nút Sửa/Xóa; thử POST trực tiếp `/student/submissions/{id}/edit` và `/delete` | | Không có nút; request trực tiếp bị từ chối; dữ liệu không đổi | C |
 | TC-M06-14 | Sửa/xóa bài của người khác (IDOR) | `student01` đăng nhập; biết id bài của `student03` | Đổi id trên URL `/student/submissions/{id}/edit` | id bài của student03 | 403 hoặc "Not found"; không xem/sửa được bài người khác | C |
+| TC-M06-15 | Rich text bài dự thi và nhận xét | `student01` có bài ở cuộc thi đang mở; `teacher01` là giám khảo một cuộc thi CLOSED | Học viên sửa bài: bài thơ có 2 dòng (Shift+Enter), 1 chữ nghiêng, 1 chữ đậm; mô tả có danh sách → Lưu (không chọn ảnh mới). Giáo viên chấm: "Positive points" có chữ đậm và danh sách → Lưu. Mở chi tiết bài ở cả 3 vai trò và app mobile | | Lưu được khi không chọn thêm ảnh; bài thơ giữ xuống dòng và định dạng; nhận xét hiện đúng định dạng, mở lại form vẫn giữ; báo cáo / Excel chỉ có chữ thuần; dưới mỗi ô có "n / 2000" hoặc "n / 4000 characters" | T |
 
 > Bổ sung (không đánh số riêng, gộp vào TC-M06-01 khi chạy): XSS/SQL trong ô thơ/trích dẫn – xem TC-M07-06. Một học viên chỉ được 1 bài/1 cuộc thi (nếu nhóm chọn quy tắc này) – nộp lần 2 phải báo "You have already submitted to this competition. Use Edit instead.".
 
@@ -327,8 +328,8 @@ Vào repo → tab **Issues** → **New issue** → dán template dưới đây. 
 
 | Module | M01 | M02 | M03 | M04 | M05 | M06 | M07 | M08 | M09 | M10 | M11 | **Tổng** |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Số TC | 10 | 6 | 6 | 5 | 12 | 14 | 12 | 7 | 9 | 5 | 10 | **96** |
-| Người chạy chính | QA | QA | QA | QA | QA | QA | QA | QA | QA | QA | QA | QA: 96 (theo 3 vòng – xem Phan_cong_task.xlsx) |
+| Số TC | 10 | 6 | 6 | 5 | 12 | 15 | 12 | 7 | 9 | 5 | 10 | **97** |
+| Người chạy chính | QA | QA | QA | QA | QA | QA | QA | QA | QA | QA | QA | QA: 97 (theo 3 vòng – xem Phan_cong_task.xlsx) |
 
 > Sau khi QA chạy xong một vòng, **người làm chức năng** (BE/FE phụ trách module) chạy lại các TC ưu tiên Cao của module mình để kiểm tra chéo.
 
@@ -726,7 +727,7 @@ Người A (QA) đóng gói, người B (FE2) kiểm tra **trên máy khác**; s
 | 5:30–9:00 | STAFF | BE1 | Tạo cuộc thi + giải + ban giám khảo + tiêu chí (tổng 100%) → **thử xóa cuộc thi có bài (bị chặn)** → xem xếp hạng dự kiến "City at Night" → công bố (hệ thống tự trao giải) → xem lịch sử cuộc thi → gửi tranh BEST đi triển lãm với giá học viên → đánh dấu đã bán + khách hàng → đã trả tiền → báo cáo BEST theo khoảng ngày | `staff01` |
 | 9:00–10:30 | ADMIN | FE2 | Thêm nhân viên/học viên, tìm kiếm, khóa tài khoản | `admin01` |
 | 10:30–12:00 | TEACHER | QA | Dashboard giám khảo → chấm "City at Night" theo tiêu chí (tổng tính ngay) → thấy ai trong ban đã chấm (không thấy điểm) → **mở link bài của cuộc thi đang mở (404)** | `teacher01`, `teacher02` |
-| 12:00–13:30 | Bảo mật & chất lượng | QA + BE1 | STUDENT mở URL `/staff/...` → 403; mật khẩu BCrypt trong DB; upload đổi tên Guid; `dotnet test` xanh; số liệu test (96 TC) | — |
+| 12:00–13:30 | Bảo mật & chất lượng | QA + BE1 | STUDENT mở URL `/staff/...` → 403; mật khẩu BCrypt trong DB; upload đổi tên Guid; `dotnet test` xanh; số liệu test (97 TC) | — |
 | 13:30–15:00 | Kết luận | BE1 | Hạn chế & hướng phát triển (thanh toán online, email thông báo, phân trang nâng cao); cảm ơn | — |
 
 **Chuẩn bị trước buổi demo:** reset DB bằng seed; mở sẵn 3 trình duyệt/tab ẩn danh cho 3 vai trò; tắt thông báo Windows; zoom trình duyệt 110–125%; có **video quay sẵn demo** (OBS/Xbox Game Bar) phòng khi máy lỗi; kiểm tra máy chiếu.

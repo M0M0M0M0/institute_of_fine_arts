@@ -166,7 +166,7 @@ class _DetailBodyState extends ConsumerState<_DetailBody> {
             color: AppColors.mist,
             borderRadius: AppRadius.mdAll,
           ),
-          child: Text(d.textContent, style: text.bodyLarge!.copyWith(fontStyle: FontStyle.italic)),
+          child: RichTextView(d.textContent, style: text.bodyLarge!.copyWith(fontStyle: FontStyle.italic)),
         ),
         // Evaluation card (only once there is an evaluation)
         if (ev != null) ...[

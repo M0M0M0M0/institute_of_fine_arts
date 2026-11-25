@@ -169,7 +169,7 @@ public class ExhibitionService : IExhibitionService
         {
             Id = e.Id,
             Name = e.Name,
-            Description = e.Description,
+            Description = RichText.ToHtml(e.Description),
             Venue = e.Venue,
             City = e.City,
             Organizer = e.Organizer,
@@ -195,7 +195,7 @@ public class ExhibitionService : IExhibitionService
         var exhibition = new Exhibition
         {
             Name = form.Name.Trim(),
-            Description = Clean(form.Description),
+            Description = CleanDescription(form.Description),
             Venue = form.Venue.Trim(),
             City = form.City.Trim(),
             Organizer = Clean(form.Organizer),
@@ -239,10 +239,10 @@ public class ExhibitionService : IExhibitionService
         Changed("Organizer", e.Organizer, Clean(form.Organizer));
         Changed("Start date", e.StartDate.ToString("dd MMM yyyy"), start.ToString("dd MMM yyyy"));
         Changed("End date", e.EndDate.ToString("dd MMM yyyy"), end.ToString("dd MMM yyyy"));
-        if (e.Description != Clean(form.Description)) changes.Add("Description changed");
+        if (!RichText.SameContent(e.Description, CleanDescription(form.Description))) changes.Add("Description changed");
 
         e.Name = form.Name.Trim();
-        e.Description = Clean(form.Description);
+        e.Description = CleanDescription(form.Description);
         e.Venue = form.Venue.Trim();
         e.City = form.City.Trim();
         e.Organizer = Clean(form.Organizer);
@@ -325,4 +325,8 @@ public class ExhibitionService : IExhibitionService
 
     /// <summary>Trims text; blank becomes null.</summary>
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+
+    /// <summary>The description from the rich text editor (BR-50): sanitized HTML, at most 4000 characters of text.</summary>
+    private static string? CleanDescription(string? posted)
+        => RichText.CleanChecked(posted, 4000, nameof(ExhibitionFormVm.Description), "Description must be at most 4000 characters");
 }

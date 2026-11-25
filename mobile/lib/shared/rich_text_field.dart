@@ -27,8 +27,8 @@ class RichTextController {
 /// A text field with a small formatting toolbar (bold, italic, underline, lists, undo / redo) that looks like the
 /// other outlined fields of the app. The value is HTML, see [RichTextController.html].
 ///
-/// Valid when there is some text and the HTML (tags included: the server counts them) is not longer than
-/// [maxLength]. The counter shows the characters the user wrote.
+/// Valid when there is some text of at most [maxLength] characters (the server counts the text, not the tags, BR-50)
+/// and the HTML stays within the server's limit. The counter shows the characters the user wrote.
 class RichTextFormField extends FormField<String> {
   RichTextFormField({
     super.key,
@@ -52,8 +52,11 @@ class RichTextFormField extends FormField<String> {
            if (isRequired && controller.plainText.isEmpty) {
              return requiredMessage;
            }
-           if (controller.html.length > maxLength) {
-             return 'This text is too long once its formatting is counted. Please shorten it.';
+           if (controller.plainText.length > maxLength) {
+             return 'At most $maxLength characters, please shorten the text.';
+           }
+           if (controller.html.length > maxLength * 5 + 1000) {
+             return 'This text has too much formatting. Remove some of it or shorten the text.';
            }
            return null;
          },

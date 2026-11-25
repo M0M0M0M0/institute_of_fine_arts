@@ -26,8 +26,10 @@ public class SubmissionConfiguration : IEntityTypeConfiguration<Submission>
         b.Property(x => x.ThumbnailPath).HasMaxLength(500).IsUnicode(false);
         b.Property(x => x.OriginalFileName).HasMaxLength(255);
         b.Property(x => x.TextType).HasConversion<string>().HasMaxLength(20).IsUnicode(false);
-        b.Property(x => x.TextContent).HasMaxLength(4000);
-        b.Property(x => x.Description).HasMaxLength(2000);
+        // Rich text (BR-50): HTML from the editor, NVARCHAR(MAX); the limits (4000 / 2000 characters of text, tags not
+        // counted) are checked by SubmissionService
+        b.Property(x => x.TextContent);
+        b.Property(x => x.Description);
         b.Property(x => x.SubmittedAt).HasPrecision(0).HasDefaultValueSql("SYSDATETIME()");
 
         // At most one submission per student per competition (BR-15)

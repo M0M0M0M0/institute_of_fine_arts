@@ -56,8 +56,8 @@ class _SubmissionForm extends ConsumerStatefulWidget {
 class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _title;
-  late final TextEditingController _description;
-  late final TextEditingController _textContent;
+  late final RichTextController _description;
+  late final RichTextController _textContent;
   late TextType _textType;
   late bool _publicConsent;
 
@@ -78,9 +78,9 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
     final i = widget.initial;
     // Điền sẵn khi sửa; nộp mới thì để trống, đồng ý công khai mặc định false
     _title = TextEditingController(text: i?.title ?? '');
-    // Plain text: the web shows the description as text (rich text comes later for web and app together)
-    _description = TextEditingController(text: i?.description ?? '');
-    _textContent = TextEditingController(text: i?.textContent ?? '');
+    // Rich text (BR-50): HTML like the web's editor; older entries have plain text, read as paragraphs
+    _description = RichTextController(stored: i?.description);
+    _textContent = RichTextController(stored: i?.textContent);
     _textType = i?.textType ?? TextType.poem;
     // The institute does not record a publishing consent (BR-20 decides what is public), so it is always sent as true
     _publicConsent = true;
@@ -159,9 +159,9 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
 
     final input = SubmissionInput(
       title: _title.text.trim(),
-      description: _description.text.trim(),
+      description: _description.html,
       textType: _textType,
-      textContent: _textContent.text.trim(),
+      textContent: _textContent.html,
       publicConsent: _publicConsent,
       pictures: List.of(_picked),
       coverIndex: _coverIndex.clamp(0, _picked.isEmpty ? 0 : _picked.length - 1),
@@ -333,16 +333,12 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
                   : null,
             ),
             const SizedBox(height: AppSpacing.sm),
-            TextFormField(
+            RichTextFormField(
               controller: _description,
+              label: 'Description *',
+              placeholder: 'Why you made it, why it deserves to win…',
+              requiredMessage: 'Please enter a description',
               maxLength: 2000,
-              maxLines: 4,
-              decoration: const InputDecoration(
-                labelText: 'Description *',
-                hintText: 'Why you made it, why it deserves to win…',
-                alignLabelWithHint: true,
-              ),
-              validator: (v) => (v == null || v.trim().isEmpty) ? 'Please enter a description' : null,
             ),
             const SizedBox(height: AppSpacing.md),
             Text('Accompanying text', style: text.titleSmall),
@@ -360,17 +356,12 @@ class _SubmissionFormState extends ConsumerState<_SubmissionForm> {
               ],
             ),
             const SizedBox(height: AppSpacing.md),
-            TextFormField(
+            RichTextFormField(
               controller: _textContent,
+              label: '${_textType.label} *',
+              requiredMessage: 'Please enter the accompanying text',
               maxLength: 4000,
-              maxLines: 6,
-              decoration: InputDecoration(
-                labelText: '${_textType.label} *',
-                alignLabelWithHint: true,
-              ),
-              validator: (v) => (v == null || v.trim().isEmpty)
-                  ? 'Please enter the accompanying text'
-                  : null,
+              minHeight: 180,
             ),
             const SizedBox(height: AppSpacing.lg),
             FilledButton.icon(

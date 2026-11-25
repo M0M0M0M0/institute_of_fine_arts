@@ -1,4 +1,5 @@
 @model InstituteOfFineArts.Web.ViewModels.Staff.Submissions.StudentHistoryVm
+@using InstituteOfFineArts.Web.Helpers
 @*
     Staff – study history of one student (/staff/students/{studentId}/history, SCR-22; F-M07-07): every entry with
     rating, comments, award and exhibition entries.
@@ -74,11 +75,11 @@
                     @* Comments keep their line breaks; Razor encodes the text *@
                     <dl class="details">
                         <dt>Positive points</dt>
-                        <dd style="white-space: pre-line">@(e.PositivePoints ?? "–")</dd>
+                        <dd>@RichText.Show(e.PositivePoints)</dd>
                         <dt>Negative points</dt>
-                        <dd style="white-space: pre-line">@(e.NegativePoints ?? "–")</dd>
+                        <dd>@RichText.Show(e.NegativePoints)</dd>
                         <dt>Improvement areas</dt>
-                        <dd style="white-space: pre-line">@(e.ImprovementAreas ?? "–")</dd>
+                        <dd>@RichText.Show(e.ImprovementAreas)</dd>
                     </dl>
                 }
                 else

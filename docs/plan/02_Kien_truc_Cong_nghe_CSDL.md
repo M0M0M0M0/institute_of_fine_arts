@@ -348,7 +348,7 @@ Mã luật lấy **đúng theo tài liệu BA** (`01_Phan_tich_nghiep_vu_BA.md`,
 | BR-13, BR-14 | Chỉ nộp/sửa/thay ảnh/xóa khi cuộc thi **ONGOING** (kiểm tra ở server); quá hạn → từ chối. DISQUALIFIED dùng cho bài nhập bù sau hạn hoặc vi phạm thể lệ | `SubmissionService`, `EvaluationService` |
 | BR-15 | Mỗi học viên **tối đa 1 bài / 1 cuộc thi** | UNIQUE (`competition_id`, `student_id`) |
 | BR-16..BR-18 | JPG/PNG/WebP (đuôi + MIME + magic bytes + giải mã), ≤ 10 MB/ảnh, 1–5 ảnh/bài, lưu `uploads/submissions/{competitionId}/{uuid}.{ext}`; thêm/bỏ ảnh → ghi file mới rồi mới xóa file cũ; xóa bài → xóa mọi file | `ImageValidator`, `FileStorageService`, `SubmissionService` |
-| BR-19 | Bắt buộc `title` ≤ 150, ảnh, `description` ≤ 2000, `text_content` ≤ 4000 + `text_type` ∈ POEM/QUOTATION/STORY/OTHER | `SubmissionFormVm` (DataAnnotations) + CHECK |
+| BR-19 | Bắt buộc `title` ≤ 150, ảnh, `description` ≤ 2000, `text_content` ≤ 4000 (ký tự chữ, không tính thẻ – BR-50) + `text_type` ∈ POEM/QUOTATION/STORY/OTHER | `SubmissionFormVm` (DataAnnotations) + CHECK |
 | BR-20 | Học viên chỉ xem/sửa/xóa/tải bài của mình; Teacher chỉ bài cuộc thi mình chấm, sau hạn nộp (404 nếu không); ảnh luôn đi qua controller kiểm tra quyền | `SubmissionImagePolicy`, `ImageAccessService`, `StaffSubmissionService(judgeId)`, `EvaluationService.GetPageAsync` |
 | BR-21 | Chỉ chấm khi cuộc thi **CLOSED**; chỉ giám khảo của cuộc thi; sửa/xóa phần chấm khi **chưa GRADED** | `EvaluationService` |
 | BR-22 | **Mỗi giám khảo chấm mỗi bài 1 lần**; kết quả (`evaluation`) chỉ có khi mọi giám khảo đã chấm = trung bình điểm tổng | UNIQUE `judge_evaluation(submission_id, judge_id)`, UNIQUE `evaluation.submission_id`; `JuryResults` |
@@ -712,7 +712,7 @@ Index: `IX_student_profile_class_name`.
 | id | BIGINT IDENTITY | ✘ | **PK** | |
 | code | VARCHAR(20) | ✘ | **UNIQUE** | VD: `CT2026-01` |
 | title | NVARCHAR(200) | ✘ | | |
-| description | NVARCHAR(MAX) | ✔ | | Chi tiết – HTML đã lọc từ trình soạn thảo rich text (BR-30), ≤ 4000 ký tự chữ; dữ liệu cũ có thể là chữ thường |
+| description | NVARCHAR(MAX) | ✔ | | Chi tiết – HTML đã lọc từ trình soạn thảo rich text (BR-50), ≤ 4000 ký tự chữ; dữ liệu cũ có thể là chữ thường |
 | rules | NVARCHAR(MAX) | ✔ | | Thể lệ/điều kiện – như `description` |
 | start_date | DATE | ✘ | | Mở nhận bài từ 00:00 |
 | end_date | DATE | ✘ | CHECK (`end_date >= start_date`) (BR-06) | **Hạn nộp = 23:59:59 ngày này** |
@@ -750,8 +750,8 @@ Index: `IX_competition_status_dates (status, start_date, end_date)`.
 | original_file_name | NVARCHAR(255) | ✘ | | Chỉ để hiển thị/tải xuống |
 | file_size | BIGINT | ✘ | CHECK (> 0) | byte |
 | text_type | VARCHAR(20) | ✘ | CHECK (`POEM`,`QUOTATION`,`STORY`,`OTHER`) | Loại phần chữ kèm (BR-19) |
-| text_content | NVARCHAR(4000) | ✘ | | Thơ/trích dẫn/câu chuyện (≤ 4000) |
-| description | NVARCHAR(2000) | ✘ | | Vì sao sáng tác, vì sao xứng đáng nhất… (≤ 2000) |
+| text_content | NVARCHAR(MAX) | ✘ | | Thơ/trích dẫn/câu chuyện – HTML đã lọc (BR-50), ≤ 4000 ký tự chữ (migration `RichTextFields`) |
+| description | NVARCHAR(MAX) | ✘ | | Vì sao sáng tác, vì sao xứng đáng nhất… – HTML đã lọc (BR-50), ≤ 2000 ký tự chữ |
 | submitted_at | DATETIME2(0) | ✘ | DEFAULT SYSDATETIME() | Ngày đăng |
 | created_at / updated_at | DATETIME2(0) | | | `updated_at` = lần sửa gần nhất |
 
@@ -987,8 +987,8 @@ CREATE TABLE submission (
     file_size          BIGINT        NOT NULL CONSTRAINT CK_submission_size CHECK (file_size > 0),
     text_type          VARCHAR(20)   NOT NULL CONSTRAINT CK_submission_text_type
                            CHECK (text_type IN ('POEM','QUOTATION','STORY','OTHER')),
-    text_content       NVARCHAR(4000) NOT NULL,         -- thơ/trích dẫn/câu chuyện
-    description        NVARCHAR(2000) NOT NULL,         -- vì sao sáng tác tranh này
+    text_content       NVARCHAR(MAX)  NOT NULL,         -- thơ/trích dẫn/câu chuyện (HTML, ≤ 4000 ký tự chữ)
+    description        NVARCHAR(MAX)  NOT NULL,         -- vì sao sáng tác tranh này (HTML, ≤ 2000 ký tự chữ)
     submitted_at       DATETIME2(0)  NOT NULL CONSTRAINT DF_submission_submitted DEFAULT SYSDATETIME(),
     created_at         DATETIME2(0)  NOT NULL CONSTRAINT DF_submission_created DEFAULT SYSDATETIME(),
     updated_at         DATETIME2(0)  NULL,

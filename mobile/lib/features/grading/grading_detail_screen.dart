@@ -45,9 +45,10 @@ class _Body extends ConsumerStatefulWidget {
 }
 
 class _BodyState extends ConsumerState<_Body> {
-  late final TextEditingController _positive;
-  late final TextEditingController _negative;
-  late final TextEditingController _improvement;
+  // Rich text (BR-50): HTML like the web's editor; older grades are plain text
+  late final RichTextController _positive;
+  late final RichTextController _negative;
+  late final RichTextController _improvement;
   late final Map<int, TextEditingController> _scores;
   late final Map<int, TextEditingController> _comments;
   bool _disqualified = false;
@@ -62,9 +63,9 @@ class _BodyState extends ConsumerState<_Body> {
   void initState() {
     super.initState();
     final ev = _d.evaluation;
-    _positive = TextEditingController(text: ev?.positivePoints ?? '');
-    _negative = TextEditingController(text: ev?.negativePoints ?? '');
-    _improvement = TextEditingController(text: ev?.improvementAreas ?? '');
+    _positive = RichTextController(stored: ev?.positivePoints);
+    _negative = RichTextController(stored: ev?.negativePoints);
+    _improvement = RichTextController(stored: ev?.improvementAreas);
     _disqualified = ev?.disqualified ?? false;
     final mine = {for (final s in ev?.scores ?? const <GradingScore>[]) s.criterionId: s};
     _scores = {
@@ -80,7 +81,10 @@ class _BodyState extends ConsumerState<_Body> {
 
   @override
   void dispose() {
-    for (final c in [_positive, _negative, _improvement, ..._scores.values, ..._comments.values]) {
+    for (final c in [_positive, _negative, _improvement]) {
+      c.dispose();
+    }
+    for (final c in [..._scores.values, ..._comments.values]) {
       c.dispose();
     }
     super.dispose();
@@ -104,8 +108,8 @@ class _BodyState extends ConsumerState<_Body> {
       disqualified: _disqualified,
       criteria: _d.criteria,
       scoreTexts: {for (final e in _scores.entries) e.key: e.value.text},
-      positive: _positive.text,
-      negative: _negative.text,
+      positive: _positive.plainText,
+      negative: _negative.plainText,
     );
     if (error != null) {
       _toast(error);
@@ -124,9 +128,9 @@ class _BodyState extends ConsumerState<_Body> {
                 for (final c in _d.criteria)
                   GradingScore(criterionId: c.id, score: parseScore(_scores[c.id]!.text), comment: _comments[c.id]!.text),
               ],
-              positivePoints: _positive.text.trim(),
-              negativePoints: _negative.text.trim(),
-              improvementAreas: _improvement.text.trim(),
+              positivePoints: _positive.html,
+              negativePoints: _negative.html,
+              improvementAreas: _improvement.html,
               rowVersion: _d.evaluation?.rowVersion,
             ),
           );
@@ -252,9 +256,9 @@ class _BodyState extends ConsumerState<_Body> {
         const SizedBox(height: AppSpacing.xs),
         ProgressBarRow(label: 'Graded by you in this competition', value: d.evaluated, total: d.total),
         const SectionHeader('Description', padding: EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.xs)),
-        Text(d.description),
+        RichTextView(d.description),
         SectionHeader(textTypeName(d.textType), padding: const EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.xs)),
-        Text(d.textContent),
+        RichTextView(d.textContent, style: text.bodyMedium!.copyWith(fontStyle: FontStyle.italic)),
     ];
     final right = <Widget>[
         if (!wide) const Divider(height: AppSpacing.xxl),

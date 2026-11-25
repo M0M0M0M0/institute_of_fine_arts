@@ -1,4 +1,5 @@
 @model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Student.Results.MyResultItemVm>
+@using InstituteOfFineArts.Web.Helpers
 @*
     Student – my results (/student/results, F-M06-07, US-10 AC2/AC3): every own entry with rating, strengths,
     weaknesses, areas of improvement and award once the competition is GRADED; "Awaiting results" before (BR-24).
@@ -123,11 +124,11 @@ else
                             <td colspan="4">
                                 <dl class="details">
                                     <dt>Strengths</dt>
-                                    <dd>@(s.PositivePoints ?? "–")</dd>
+                                    <dd>@RichText.Show(s.PositivePoints)</dd>
                                     <dt>Weaknesses</dt>
-                                    <dd>@(s.NegativePoints ?? "–")</dd>
+                                    <dd>@RichText.Show(s.NegativePoints)</dd>
                                     <dt>Areas of improvement</dt>
-                                    <dd>@(s.ImprovementAreas ?? "–")</dd>
+                                    <dd>@RichText.Show(s.ImprovementAreas)</dd>
                                 </dl>
                             </td>
                         </tr>

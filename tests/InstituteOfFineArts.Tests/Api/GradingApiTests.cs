@@ -292,7 +292,7 @@ public class GradingApiTests
         Assert.Equal(85m, d.Evaluation!.TotalScore);
         Assert.Equal(85m, Assert.Single(d.Evaluation.Scores).Score);
         Assert.Equal(Rating.BETTER, d.ResultRating);
-        Assert.Equal("Good light", d.Evaluation.PositivePoints);
+        Assert.Equal("<p>Good light</p>", d.Evaluation.PositivePoints); // rich text (BR-50)
         Assert.Equal("Pham Thu Ha", d.Evaluation.EvaluatedByName);
         Assert.False(string.IsNullOrEmpty(d.Evaluation.RowVersion));
         Assert.True(d.CanDeleteEvaluation);

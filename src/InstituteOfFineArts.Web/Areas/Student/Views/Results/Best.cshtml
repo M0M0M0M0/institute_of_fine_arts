@@ -1,4 +1,5 @@
 @model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Student.Results.BestWorkItemVm>
+@using InstituteOfFineArts.Web.Helpers
 @*
     Student – best works (/student/best, SCR-46, F-M06-08, US-10 AC4): BEST entries of every student in GRADED
     competitions with the staff comments; filter by competition, paged.
@@ -85,11 +86,11 @@ else
                         <summary>Staff comments</summary>
                         <dl>
                             <dt>Strengths</dt>
-                            <dd>@(b.PositivePoints ?? "–")</dd>
+                            <dd>@RichText.Show(b.PositivePoints)</dd>
                             <dt>Weaknesses</dt>
-                            <dd>@(b.NegativePoints ?? "–")</dd>
+                            <dd>@RichText.Show(b.NegativePoints)</dd>
                             <dt>Areas of improvement</dt>
-                            <dd>@(b.ImprovementAreas ?? "–")</dd>
+                            <dd>@RichText.Show(b.ImprovementAreas)</dd>
                         </dl>
                     </details>
                 </figcaption>

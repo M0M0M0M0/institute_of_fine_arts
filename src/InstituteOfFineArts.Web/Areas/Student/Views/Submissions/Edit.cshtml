@@ -71,7 +71,8 @@
 
     <div class="mb-4">
         <label asp-for="NewImages" class="form-label"></label>
-        <input asp-for="NewImages" type="file" multiple accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" class="form-control"
+        @* data-val="false": optional when editing; the non-nullable list would otherwise get an implicit "required" check in the browser *@
+        <input asp-for="NewImages" data-val="false" type="file" multiple accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" class="form-control"
                data-upload-multi="image-list" data-max-files="@left" data-max-total="@max" />
         <div class="form-text">
             Optional. An entry has 1 to @max pictures of the same artwork (JPG, PNG or WebP, up to 10 MB each).

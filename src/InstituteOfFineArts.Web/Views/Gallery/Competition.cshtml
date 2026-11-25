@@ -127,7 +127,7 @@
                 <h2 class="art-title h4 mb-3 mt-5">6. Winners</h2>
                 @if (!string.IsNullOrWhiteSpace(Model.ResultRemarks))
                 {
-                    <p class="text-muted lh-lg">@Model.ResultRemarks</p>
+                    @RichText.Show(Model.ResultRemarks, cssClass: "text-muted lh-lg")
                 }
                 <div class="row row-cols-2 row-cols-md-3 g-4">
                     @foreach (var w in Model.Winners)

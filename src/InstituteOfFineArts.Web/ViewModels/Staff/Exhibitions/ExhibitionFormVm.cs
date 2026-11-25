@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using InstituteOfFineArts.Web.Validation;
 
 namespace InstituteOfFineArts.Web.ViewModels.Staff.Exhibitions;
 
@@ -21,7 +22,7 @@ public class ExhibitionFormVm : IValidatableObject
     public string Name { get; set; } = string.Empty;
 
     /// <summary>Description.</summary>
-    [StringLength(4000, ErrorMessage = "Description must be at most 4000 characters")]
+    [RichTextLength(4000, ErrorMessage = "Description must be at most 4000 characters")]
     [Display(Name = "Description")]
     public string? Description { get; set; }
 

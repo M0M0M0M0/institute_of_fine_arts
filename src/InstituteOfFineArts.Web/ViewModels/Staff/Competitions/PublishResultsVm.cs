@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using InstituteOfFineArts.Web.Validation;
 
 namespace InstituteOfFineArts.Web.ViewModels.Staff.Competitions;
 
@@ -11,7 +12,7 @@ public class PublishResultsVm
     public const int MaxRemarksLength = 2000;
 
     /// <summary>General remarks about the results, stored in competition.result_remarks.</summary>
-    [StringLength(MaxRemarksLength, ErrorMessage = "Result remarks must be at most 2000 characters.")]
+    [RichTextLength(MaxRemarksLength, ErrorMessage = "Result remarks must be at most 2000 characters.")]
     [Display(Name = "Result remarks")]
     public string? ResultRemarks { get; set; }
 }

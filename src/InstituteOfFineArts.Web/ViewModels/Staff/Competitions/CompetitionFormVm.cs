@@ -23,7 +23,7 @@ public class CompetitionFormVm : IValidatableObject
     [Display(Name = "Title")]
     public string Title { get; set; } = string.Empty;
 
-    /// <summary>Description / theme of the competition: HTML from the rich text editor (BR-30). The service checks the
+    /// <summary>Description / theme of the competition: HTML from the rich text editor (BR-50). The service checks the
     /// text length (4000 characters without the tags); this limit is for the HTML.</summary>
     [StringLength(RichText.MaxHtmlLength, ErrorMessage = "Description is too long")]
     [Display(Name = "Description")]

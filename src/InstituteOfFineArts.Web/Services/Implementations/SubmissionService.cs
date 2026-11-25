@@ -247,9 +247,9 @@ public class SubmissionService : ISubmissionService
             CompetitionTitle = s.Competition.Title,
             Deadline = s.Competition.EndDate,
             Title = s.Title,
-            Description = s.Description,
+            Description = RichText.ToHtml(s.Description) ?? string.Empty,
             TextType = s.TextType,
-            TextContent = s.TextContent,
+            TextContent = RichText.ToHtml(s.TextContent) ?? string.Empty,
             OriginalFileName = s.OriginalFileName,
             CurrentImages = await _db.SubmissionImages.AsNoTracking().Where(i => i.SubmissionId == id)
                 .OrderByDescending(i => i.IsCover).ThenBy(i => i.SortOrder).ThenBy(i => i.Id)
@@ -415,10 +415,11 @@ public class SubmissionService : ISubmissionService
         // Required texts within the column lengths
         CheckText(form.Title, SubmissionFieldsVm.TitleMaxLength, "Please enter a title", "Title must be at most 150 characters",
             nameof(SubmissionFieldsVm.Title));
-        CheckText(form.Description, SubmissionFieldsVm.DescriptionMaxLength, "Please enter a description",
-            "Description must be at most 2000 characters", nameof(SubmissionFieldsVm.Description));
-        CheckText(form.TextContent, SubmissionFieldsVm.TextMaxLength, "Please enter the poem, quotation or story",
-            "The text must be at most 4000 characters", nameof(SubmissionFieldsVm.TextContent));
+        // Rich text (BR-50): sanitized HTML; the limits count the text, not the tags
+        form.Description = RichText.CleanChecked(form.Description, SubmissionFieldsVm.DescriptionMaxLength, nameof(SubmissionFieldsVm.Description),
+            "Description must be at most 2000 characters", "Please enter a description")!;
+        form.TextContent = RichText.CleanChecked(form.TextContent, SubmissionFieldsVm.TextMaxLength, nameof(SubmissionFieldsVm.TextContent),
+            "The text must be at most 4000 characters", "Please enter the poem, quotation or story")!;
 
         // Text type: one of POEM / QUOTATION / STORY / OTHER
         if (form.TextType is not { } type || !Enum.IsDefined(type))

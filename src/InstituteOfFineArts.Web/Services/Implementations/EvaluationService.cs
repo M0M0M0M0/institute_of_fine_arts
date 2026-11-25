@@ -138,7 +138,7 @@ public class EvaluationService : IEvaluationService
             page.Form = new EvaluationFormVm
             {
                 Disqualified = mine.Disqualified,
-                PositivePoints = mine.PositivePoints, NegativePoints = mine.NegativePoints, ImprovementAreas = mine.ImprovementAreas,
+                PositivePoints = RichText.ToHtml(mine.PositivePoints), NegativePoints = RichText.ToHtml(mine.NegativePoints), ImprovementAreas = RichText.ToHtml(mine.ImprovementAreas),
                 Scores = criteria.Select(c => new CriterionScoreVm
                 {
                     CompetitionCriterionId = c.CompetitionCriterionId,
@@ -371,12 +371,10 @@ public class EvaluationService : IEvaluationService
     private static (List<(long Id, decimal Score, string? Comment)> Scores, string? Positive, string? Negative, string? Improvement)
         Validate(EvaluationFormVm form, HashSet<long> criteria)
     {
-        var positive = Clean(form.PositivePoints);
-        var negative = Clean(form.NegativePoints);
-        var improvement = Clean(form.ImprovementAreas);
-        CheckLength(positive, nameof(EvaluationFormVm.PositivePoints));
-        CheckLength(negative, nameof(EvaluationFormVm.NegativePoints));
-        CheckLength(improvement, nameof(EvaluationFormVm.ImprovementAreas));
+        // Rich text (BR-50): sanitized HTML, the limit counts the text
+        var positive = CheckComment(form.PositivePoints, nameof(EvaluationFormVm.PositivePoints));
+        var negative = CheckComment(form.NegativePoints, nameof(EvaluationFormVm.NegativePoints));
+        var improvement = CheckComment(form.ImprovementAreas, nameof(EvaluationFormVm.ImprovementAreas));
 
         if (form.Disqualified)
         {
@@ -423,14 +421,9 @@ public class EvaluationService : IEvaluationService
         return (scores, positive, null == negative ? null : negative, improvement);
     }
 
-    /// <summary>Throws on the field when the comment is longer than the form allows.</summary>
-    private static void CheckLength(string? value, string field)
-    {
-        if (value?.Length > EvaluationFormVm.MaxCommentLength)
-        {
-            throw new BusinessException(CommentTooLongMessage, field);
-        }
-    }
+    /// <summary>A general comment from the rich text editor: sanitized, null when empty; throws when it is too long.</summary>
+    private static string? CheckComment(string? posted, string field)
+        => RichText.CleanChecked(posted, EvaluationFormVm.MaxCommentLength, field, CommentTooLongMessage);
 
     /// <summary>Why a grade cannot be created / edited / deleted in this status (null = CLOSED, allowed).</summary>
     private static string? EditBlockedReason(CompetitionStatus status) => status switch

@@ -1,4 +1,5 @@
 @model InstituteOfFineArts.Web.ViewModels.Common.PagedResult<InstituteOfFineArts.Web.ViewModels.Staff.Awards.AwardIssuedListItemVm>
+@using InstituteOfFineArts.Web.Helpers
 @*
     Staff – issued awards, list & search (/staff/awards, SCR-28; F-M08-04).
     Created by BE1 (BE1-11); styled by FE1-07: filters bar and a ledger of the winning paintings.
@@ -95,8 +96,8 @@ else
                         <td><span class="tag tag-award"><i class="bi bi-award-fill" aria-hidden="true"></i>@a.AwardName</span> <span class="text-muted small text-nowrap">(rank @a.Rank)</span></td>
                         <td class="text-end">@a.PrizeValue.ToString("$#,##0.00")</td>
                         <td class="num text-nowrap">@a.IssuedDate.ToString("dd MMM yyyy")<div class="text-muted small">by @a.IssuedByName</div></td>
-                        @* Remarks typed by staff: encoded by Razor, line breaks kept *@
-                        <td style="white-space: pre-line">@(a.Remarks ?? "–")</td>
+                        @* Remarks (rich text, BR-50): plain text in the table, encoded by Razor *@
+                        <td style="white-space: pre-line">@(RichText.Excerpt(a.Remarks, 300) ?? "–")</td>
                         <td class="table-actions"><a asp-action="Edit" asp-route-id="@a.Id" class="btn btn-sm btn-outline-primary">Edit</a></td>
                     </tr>
                 }

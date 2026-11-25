@@ -1,4 +1,5 @@
 @model InstituteOfFineArts.Web.ViewModels.Staff.Evaluations.ScoreSheetVm
+@using InstituteOfFineArts.Web.Helpers
 @*
     The jury's score sheet of one entry (EvaluationService.GetScoreSheetAsync decides who may see it: the student who
     owns the entry and the judges once GRADED, staff once fully graded). Rows = criteria with their weight, columns =
@@ -74,9 +75,9 @@ else
                 {
                     <dt>@c.Name</dt><dd style="white-space: pre-line">@j.Scores[c.CompetitionCriterionId].Comment</dd>
                 }
-                @if (j.PositivePoints != null) { <dt>Positive points</dt><dd style="white-space: pre-line">@j.PositivePoints</dd> }
-                @if (j.NegativePoints != null) { <dt>@(j.Disqualified ? "Reason for disqualification" : "Negative points")</dt><dd style="white-space: pre-line">@j.NegativePoints</dd> }
-                @if (j.ImprovementAreas != null) { <dt>Improvement areas</dt><dd style="white-space: pre-line">@j.ImprovementAreas</dd> }
+                @if (j.PositivePoints != null) { <dt>Positive points</dt><dd>@RichText.Show(j.PositivePoints)</dd> }
+                @if (j.NegativePoints != null) { <dt>@(j.Disqualified ? "Reason for disqualification" : "Negative points")</dt><dd>@RichText.Show(j.NegativePoints)</dd> }
+                @if (j.ImprovementAreas != null) { <dt>Improvement areas</dt><dd>@RichText.Show(j.ImprovementAreas)</dd> }
             </dl>
         </div>
     }

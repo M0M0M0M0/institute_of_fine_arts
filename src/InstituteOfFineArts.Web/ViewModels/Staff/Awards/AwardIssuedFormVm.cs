@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using InstituteOfFineArts.Web.Models.Enums;
 using InstituteOfFineArts.Web.ViewModels.Staff.Submissions;
+using InstituteOfFineArts.Web.Validation;
 
 namespace InstituteOfFineArts.Web.ViewModels.Staff.Awards;
 
@@ -54,7 +55,7 @@ public class AwardIssuedFormVm
     public DateOnly? IssuedDate { get; set; }
 
     /// <summary>Remarks about the award / the competition (A-16).</summary>
-    [StringLength(MaxRemarksLength, ErrorMessage = RemarksTooLongMessage)]
+    [RichTextLength(MaxRemarksLength, ErrorMessage = RemarksTooLongMessage)]
     [Display(Name = "Remarks")]
     public string? Remarks { get; set; }
 

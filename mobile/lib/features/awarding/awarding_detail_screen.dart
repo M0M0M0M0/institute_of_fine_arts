@@ -6,6 +6,7 @@ import '../../app/tokens.dart';
 import '../../core/api_client.dart';
 import '../../core/async_view.dart';
 import '../../core/format.dart';
+import '../../core/rich_text.dart';
 import '../../shared/shared.dart';
 import '../grading/grading.dart';
 import 'awarding.dart';
@@ -454,7 +455,7 @@ class _IssuedTile extends StatelessWidget {
                 ),
                 Text('${a.studentName} (${a.studentCode})', style: text.bodyMedium?.merge(strike)),
                 Text('Awarded ${formatDate(a.issuedDate)}', style: text.bodySmall),
-                if (a.remarks != null && a.remarks!.isNotEmpty) Text('Note: ${a.remarks}', style: text.bodySmall),
+                if (a.remarks != null && a.remarks!.isNotEmpty) Text('Note: ${plainTextOf(a.remarks)}', style: text.bodySmall),
                 const SizedBox(height: AppSpacing.xs),
                 Wrap(
                   spacing: 6,
@@ -541,7 +542,7 @@ class _ReasonDialogState extends State<_ReasonDialog> {
   }
 }
 
-/// Optional remarks of a given award. Returns the trimmed text ("" = none); null = cancelled.
+/// Optional remarks of a given award, with the rich text editor (BR-50). Returns the HTML ("" = none); null = cancelled.
 class _RemarksDialog extends StatefulWidget {
   const _RemarksDialog({required this.title, required this.initial});
 
@@ -553,7 +554,7 @@ class _RemarksDialog extends StatefulWidget {
 }
 
 class _RemarksDialogState extends State<_RemarksDialog> {
-  late final _controller = TextEditingController(text: widget.initial);
+  late final _controller = RichTextController(stored: widget.initial);
 
   @override
   void dispose() {
@@ -564,15 +565,25 @@ class _RemarksDialogState extends State<_RemarksDialog> {
   @override
   Widget build(BuildContext context) => AlertDialog(
         title: Text(widget.title),
-        content: TextField(
-          controller: _controller,
-          maxLength: 1000,
-          maxLines: 3,
-          decoration: const InputDecoration(labelText: 'Remarks'),
+        content: SizedBox(
+          width: 480,
+          child: SingleChildScrollView(
+            child: RichTextFormField(
+              controller: _controller,
+              label: 'Remarks',
+              requiredMessage: '',
+              isRequired: false,
+              maxLength: 1000,
+              minHeight: 120,
+            ),
+          ),
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, _controller.text.trim()), child: const Text('Save')),
+          FilledButton(
+            onPressed: () => _controller.plainText.length > 1000 ? null : Navigator.pop(context, _controller.html),
+            child: const Text('Save'),
+          ),
         ],
       );
 }
