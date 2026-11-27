@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import 'tokens.dart';
@@ -27,6 +28,8 @@ class RoleShell extends StatelessWidget {
   final bool Function(int index)? onSelect;
 
   void _select(int i) {
+    // A light tick when the section changes (motion is not the only feedback)
+    if (i != navigationShell.currentIndex) HapticFeedback.selectionClick();
     if (onSelect?.call(i) ?? false) return;
     // Tapping the active tab returns to its first page.
     navigationShell.goBranch(i, initialLocation: i == navigationShell.currentIndex);

@@ -97,103 +97,113 @@ class _MySubmissionsScreenState extends ConsumerState<MySubmissionsScreen> {
       onChanged: (v) => notifier.set(filter.copyWith(rating: () => v)),
     );
 
+    // Graded competitions the student entered (any filter) → awards section
+    final graded = <int, String>{
+      for (final s in ref.watch(allMySubmissionsProvider).value ?? const <SubmissionListItem>[])
+        if (s.competitionStatus == CompetitionStatus.graded) s.competitionId: s.competitionTitle,
+    };
+
+    // The entries matching the filters; only this part reloads when a filter changes
+    Widget entries(List<SubmissionListItem> items) {
+      if (items.isEmpty) {
+        return Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.xl),
+          child: EmptyState(
+            title: filter.isActive ? 'No entries match your filters' : 'No entries yet',
+            message: filter.isActive ? null : 'Enter an open competition and your work will appear here.',
+            actionLabel: filter.isActive ? null : 'Browse competitions',
+            onAction: filter.isActive ? null : () => context.go('/student/competitions'),
+          ),
+        );
+      }
+      if (wide) {
+        // Two columns of entries (the grid has no side padding of its own here: the list already has it)
+        return Padding(
+          padding: const EdgeInsets.only(top: AppSpacing.lg),
+          child: AdaptiveTileGrid(
+            minTileWidth: 440,
+            maxColumns: 2,
+            spacing: AppSpacing.xl,
+            padding: EdgeInsets.zero,
+            children: [for (final item in items) EntryTile(item: item)],
+          ),
+        );
+      }
+      // Room between the filters and the first entry, like a wall label under the frame
+      return Column(
+        children: [
+          const SizedBox(height: AppSpacing.lg),
+          const Divider(height: 1),
+          for (final item in items) ...[
+            EntryTile(item: item),
+            const Divider(height: 1),
+          ],
+        ],
+      );
+    }
+
     return TabScaffold(
       title: 'My entries',
-      body: AsyncValueView(
-        value: list,
-        onRetry: () => ref.invalidate(mySubmissionsProvider),
-        data: (items) {
-          // Graded competitions the student entered (any filter) → awards section
-          final graded = <int, String>{
-            for (final s in ref.watch(allMySubmissionsProvider).value ?? const <SubmissionListItem>[])
-              if (s.competitionStatus == CompetitionStatus.graded) s.competitionId: s.competitionTitle,
-          };
-          return RefreshIndicator(
-            onRefresh: _refresh,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: EdgeInsets.fromLTRB(gutter, AppSpacing.md, gutter, AppSpacing.xl),
-              children: [
-                // One row of filters on wide screens; on a phone the search sits above the two selectors
-                if (wide)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 3, child: searchField),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(flex: 2, child: competitionField),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(flex: 2, child: ratingField),
-                    ],
-                  )
-                else ...[
-                  searchField,
-                  const SizedBox(height: AppSpacing.md),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(child: competitionField),
-                      const SizedBox(width: AppSpacing.sm),
-                      Expanded(child: ratingField),
-                    ],
-                  ),
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        child: ListView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: EdgeInsets.fromLTRB(gutter, AppSpacing.md, gutter, AppSpacing.xl),
+          children: [
+            // The filters stay put (and keep the keyboard) while the list under them reloads.
+            // One row of filters on wide screens; on a phone the search sits above the two selectors
+            if (wide)
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 3, child: searchField),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(flex: 2, child: competitionField),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(flex: 2, child: ratingField),
                 ],
-                if (filter.isActive)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: () {
-                        _search.clear();
-                        notifier.set(const SubmissionFilter());
-                      },
-                      child: const Text('Clear filters'),
-                    ),
-                  ),
-                if (items.isEmpty)
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.xl),
-                    child: EmptyState(
-                      title: filter.isActive ? 'No entries match your filters' : 'No entries yet',
-                      message: filter.isActive ? null : 'Enter an open competition and your work will appear here.',
-                      actionLabel: filter.isActive ? null : 'Browse competitions',
-                      onAction: filter.isActive ? null : () => context.go('/student/competitions'),
-                    ),
-                  )
-                else if (wide)
-                  // Two columns of entries (the grid has no side padding of its own here: the list already has it)
-                  Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.lg),
-                    child: AdaptiveTileGrid(
-                      minTileWidth: 440,
-                      maxColumns: 2,
-                      spacing: AppSpacing.xl,
-                      padding: EdgeInsets.zero,
-                      children: [for (final item in items) EntryTile(item: item)],
-                    ),
-                  )
-                else ...[
-                  // Room between the filters and the first entry, like a wall label under the frame
-                  const SizedBox(height: AppSpacing.lg),
-                  const Divider(height: 1),
-                  for (final item in items) ...[
-                    EntryTile(item: item),
-                    const Divider(height: 1),
-                  ],
+              )
+            else ...[
+              searchField,
+              const SizedBox(height: AppSpacing.md),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: competitionField),
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(child: ratingField),
                 ],
-                if (graded.isNotEmpty) ...[
-                  const SectionHeader('Awards',
-                      subtitle: 'Prizes of the competitions you entered',
-                      padding: EdgeInsets.fromLTRB(0, AppSpacing.xl, 0, AppSpacing.md)),
-                  for (final e in graded.entries) ...[
-                    Text(e.value, style: Theme.of(context).textTheme.titleSmall),
-                    AwardResultsList(competitionId: e.key),
-                    const SizedBox(height: AppSpacing.sm),
-                  ],
-                ],
-              ],
+              ),
+            ],
+            if (filter.isActive)
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(
+                  onPressed: () {
+                    _search.clear();
+                    notifier.set(const SubmissionFilter());
+                  },
+                  child: const Text('Clear filters'),
+                ),
+              ),
+            AsyncValueView(
+              value: list,
+              onRetry: () => ref.invalidate(mySubmissionsProvider),
+              placeholder: Placeholders.mySubmissions,
+              data: entries,
             ),
-          );
-        },
+            if (graded.isNotEmpty) ...[
+              const SectionHeader('Awards',
+                  subtitle: 'Prizes of the competitions you entered',
+                  padding: EdgeInsets.fromLTRB(0, AppSpacing.xl, 0, AppSpacing.md)),
+              for (final e in graded.entries) ...[
+                Text(e.value, style: Theme.of(context).textTheme.titleSmall),
+                AwardResultsList(competitionId: e.key),
+                const SizedBox(height: AppSpacing.sm),
+              ],
+            ],
+          ],
+        ),
       ),
     );
   }

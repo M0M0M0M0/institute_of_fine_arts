@@ -73,6 +73,7 @@ class _ExhibitionList extends ConsumerWidget {
     return AsyncValueView(
       value: list,
       onRetry: () => ref.invalidate(studentExhibitionsProvider),
+      placeholder: Placeholders.exhibitions,
       data: (items) => RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(studentExhibitionsProvider);
@@ -99,7 +100,7 @@ class _ExhibitionList extends ConsumerWidget {
                     padding: EdgeInsets.fromLTRB(gutter, 0, gutter, AppSpacing.xl),
                     itemCount: items.length,
                     separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
-                    itemBuilder: (context, i) => _ExhibitionCard(exhibition: items[i]),
+                    itemBuilder: (context, i) => StaggerIn(index: i, child: _ExhibitionCard(exhibition: items[i])),
                   ),
       ),
     );
@@ -116,7 +117,8 @@ class _ExhibitionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final e = exhibition;
     final text = Theme.of(context).textTheme;
-    return InkWell(
+    return Pressable(
+      pressedScale: 0.98,
       onTap: () => context.push('/student/exhibitions/${e.id}'),
       child: DecoratedBox(
         decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.line))),
@@ -200,7 +202,8 @@ class _EntryRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final e = entry;
     final text = Theme.of(context).textTheme;
-    return InkWell(
+    return Pressable(
+      pressedScale: 0.98,
       onTap: () => context.push('/student/exhibition-entries/${e.id}'),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),

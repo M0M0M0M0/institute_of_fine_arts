@@ -44,10 +44,9 @@ class _CompetitionCardState extends State<CompetitionCard> {
 
     return SizedBox(
       width: widget.width,
-      child: InkWell(
+      child: Pressable(
         onTap: widget.onTap,
         onHover: (hover) => setState(() => _hover = hover),
-        hoverColor: Colors.transparent,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,

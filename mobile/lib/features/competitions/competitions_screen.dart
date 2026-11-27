@@ -90,6 +90,7 @@ class _CompetitionsBodyState extends ConsumerState<CompetitionsBody> {
           child: AsyncValueView(
             value: competitions,
             onRetry: () => ref.invalidate(competitionListProvider),
+            placeholder: Placeholders.competitions,
             data: (all) {
               final items = _filter(all);
               return RefreshIndicator(
@@ -121,9 +122,12 @@ class _CompetitionsBodyState extends ConsumerState<CompetitionsBody> {
                             padding: EdgeInsets.fromLTRB(gutter, AppSpacing.sm, gutter, AppSpacing.xl),
                             itemCount: items.length,
                             separatorBuilder: (context, i) => const SizedBox(height: AppSpacing.xl),
-                            itemBuilder: (context, i) => CompetitionCard(
-                              competition: items[i],
-                              onTap: () => context.push('/competitions/${items[i].id}'),
+                            itemBuilder: (context, i) => StaggerIn(
+                              index: i,
+                              child: CompetitionCard(
+                                competition: items[i],
+                                onTap: () => context.push('/competitions/${items[i].id}'),
+                              ),
                             ),
                           ),
               );

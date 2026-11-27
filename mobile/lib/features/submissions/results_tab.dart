@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/tokens.dart';
+import '../../core/async_view.dart';
 import '../../core/format.dart';
 import '../awarding/awarding_widgets.dart';
 import 'submissions.dart';
@@ -25,7 +26,7 @@ class AwardResultsList extends ConsumerWidget {
 
   Widget _awardsView(BuildContext context, AsyncValue<List<AwardResult>> awards) {
     return switch (awards) {
-      AsyncData(:final value) => value.isEmpty
+      AsyncValue(:final value?) when showsContent(awards) => value.isEmpty
           // The API only returns awards once the results are published
           ? const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Text('No awards published yet.'))
           : Column(

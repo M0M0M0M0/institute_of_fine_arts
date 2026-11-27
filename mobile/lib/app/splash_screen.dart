@@ -10,6 +10,9 @@ import 'tokens.dart';
 /// of a route because the app navigates with go_router: the router starts and redirects (signed in or not) underneath.
 ///
 /// One AnimationController drives everything (no Timer), so widget tests that call pumpAndSettle simply wait for it.
+///
+/// Nobody has to wait for it: a tap anywhere jumps straight to the fade-out, and with reduced motion
+/// ("Remove animations") the splash is not shown at all.
 class ArtSplashScreen extends StatefulWidget {
   const ArtSplashScreen({super.key, required this.child});
 
@@ -64,7 +67,23 @@ class _ArtSplashScreenState extends State<ArtSplashScreen> with SingleTickerProv
     _controller.addStatusListener((status) {
       if (status == AnimationStatus.completed && mounted) setState(() => _done = true);
     });
-    _controller.forward();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_done || _controller.isAnimating) return;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _done = true;
+    } else {
+      _controller.forward();
+    }
+  }
+
+  /// Tap to skip: go straight to the fade-out (or stay in it if it already started).
+  void _skip() {
+    final fadeStart = 2200 / ArtSplashScreen.total.inMilliseconds;
+    if (_controller.value < fadeStart) _controller.forward(from: fadeStart);
   }
 
   @override
@@ -80,7 +99,10 @@ class _ArtSplashScreenState extends State<ArtSplashScreen> with SingleTickerProv
       children: [
         widget.child,
         Positioned.fill(
-          child: AnimatedBuilder(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _skip,
+            child: AnimatedBuilder(
             animation: _controller,
             builder: (context, _) => Opacity(
               opacity: _splashFadeOut.value,
@@ -114,6 +136,7 @@ class _ArtSplashScreenState extends State<ArtSplashScreen> with SingleTickerProv
                 ),
               ),
             ),
+          ),
           ),
         ),
       ],

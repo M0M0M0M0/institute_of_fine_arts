@@ -96,6 +96,7 @@ class _StudentCompetitionsScreenState extends ConsumerState<StudentCompetitionsS
             child: AsyncValueView(
               value: list,
               onRetry: () => ref.invalidate(competitionListProvider),
+              placeholder: Placeholders.competitions,
               data: (all) {
                 final items = all.where((c) => _segment.includes(c.status)).toList()
                   ..sort((a, b) => _segment == _Segment.results
@@ -141,7 +142,7 @@ class _StudentCompetitionsScreenState extends ConsumerState<StudentCompetitionsS
                               padding: EdgeInsets.fromLTRB(gutter, AppSpacing.sm, gutter, AppSpacing.xl),
                               itemCount: items.length,
                               separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.xl),
-                              itemBuilder: (context, i) => _entry(context, items[i], entryOf),
+                              itemBuilder: (context, i) => StaggerIn(index: i, child: _entry(context, items[i], entryOf)),
                             ),
                 );
               },

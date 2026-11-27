@@ -124,6 +124,7 @@ class _StaffExhibitionListState extends ConsumerState<_StaffExhibitionList> {
           child: AsyncValueView(
             value: list,
             onRetry: () => ref.invalidate(staffExhibitionsProvider),
+            placeholder: Placeholders.exhibitions,
             data: (all) {
               // Filtered in the app: there are few exhibitions and the server already computes the status
               final items = all
@@ -156,7 +157,7 @@ class _StaffExhibitionListState extends ConsumerState<_StaffExhibitionList> {
                             padding: EdgeInsets.fromLTRB(gutter, 0, gutter, AppSpacing.xl),
                             itemCount: items.length,
                             separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.md),
-                            itemBuilder: (context, i) => _StaffExhibitionCard(exhibition: items[i]),
+                            itemBuilder: (context, i) => StaggerIn(index: i, child: _StaffExhibitionCard(exhibition: items[i])),
                           ),
               );
             },
@@ -177,7 +178,8 @@ class _StaffExhibitionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final e = exhibition;
     final text = Theme.of(context).textTheme;
-    return InkWell(
+    return Pressable(
+      pressedScale: 0.98,
       onTap: () => context.push('/staff/exhibitions/${e.id}'),
       child: DecoratedBox(
         decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.line))),
@@ -318,7 +320,8 @@ class EntryListCard extends StatelessWidget {
     final e = item;
     final text = Theme.of(context).textTheme;
     // No card chrome: a hairline above each artwork, like the rows of the student's own entries
-    return InkWell(
+    return Pressable(
+      pressedScale: 0.98,
       onTap: () => context.push('/staff/exhibition-entries/${e.id}'),
       child: DecoratedBox(
         decoration: const BoxDecoration(border: Border(top: BorderSide(color: AppColors.line))),
@@ -520,7 +523,7 @@ class _StaffExhibitionDetailScreenState extends ConsumerState<StaffExhibitionDet
             ]),
             const SectionHeader('Submitted artworks', padding: EdgeInsets.fromLTRB(0, AppSpacing.lg, 0, AppSpacing.sm)),
             switch (entries) {
-              AsyncData(:final value) => value.isEmpty
+              AsyncValue(:final value?) when showsContent(entries) => value.isEmpty
                   ? const EmptyState(title: 'No artworks yet')
                   : Column(children: [for (final it in value) EntryListCard(item: it, showExhibition: false)]),
               AsyncError(:final error) => Text(ApiException.from(error).message),

@@ -231,10 +231,9 @@ class _ArtworkTileState extends State<ArtworkTile> {
       ],
     );
     if (widget.onTap == null) return content;
-    return InkWell(
+    return Pressable(
       onTap: widget.onTap,
       onHover: (hover) => setState(() => _hover = hover),
-      hoverColor: Colors.transparent,
       borderRadius: AppRadius.smAll,
       child: content,
     );

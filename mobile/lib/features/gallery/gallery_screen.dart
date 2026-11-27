@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -56,39 +57,46 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
       body: Column(
         children: [
           _CategoryChips(categories: categories, selected: _category, onSelected: _select),
-          // How many works are on the walls (for the current category)
+          // How many works are on the walls (for the current category); a grey bar in its place while loading,
+          // so the grid below does not move down when the count arrives
           if (list.value case final state? when state.items.isNotEmpty)
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                AppLayout.gutterFor(MediaQuery.sizeOf(context).width),
-                AppSpacing.md,
-                AppLayout.gutterFor(MediaQuery.sizeOf(context).width),
-                0,
-              ),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '${state.totalCount} ${state.totalCount == 1 ? 'work' : 'works'}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-              ),
-            ),
+            _count(state)
+          else if (list.isLoading && !list.hasValue)
+            Skeleton(child: _count(Placeholders.gallery)),
           Expanded(
-            child: switch (list) {
-              AsyncData(:final value) => _grid(value),
-              AsyncError(:final error) => ErrorView(
-                  message: ApiException.from(error).message,
-                  onRetry: () => ref.invalidate(galleryListProvider(_category)),
-                ),
-              _ => const Center(child: CircularProgressIndicator()),
-            },
+            child: StateSwitcher(
+              child: switch (list) {
+                AsyncValue(:final value?) when showsContent(list) => KeyedSubtree(key: const ValueKey('data'), child: _grid(value)),
+                AsyncError(:final error) => ErrorView(
+                    key: const ValueKey('error'),
+                    message: ApiException.from(error).message,
+                    onRetry: () => ref.invalidate(galleryListProvider(_category)),
+                  ),
+                _ => Skeleton(key: const ValueKey('loading'), child: _grid(Placeholders.gallery, skeleton: true)),
+              },
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _grid(GalleryListState state) {
+  Widget _count(GalleryListState state) {
+    final gutter = AppLayout.gutterFor(MediaQuery.sizeOf(context).width);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(gutter, AppSpacing.md, gutter, 0),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          '${state.totalCount} ${state.totalCount == 1 ? 'work' : 'works'}',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ),
+    );
+  }
+
+  /// The wall of works; [skeleton] for the loading stand-in (no scroll controller, no hero, nothing to load).
+  Widget _grid(GalleryListState state, {bool skeleton = false}) {
     if (state.items.isEmpty) {
       return RefreshIndicator(
         onRefresh: () => ref.refresh(galleryListProvider(_category).future),
@@ -111,7 +119,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
 
     final tiles = [
       for (final a in state.items)
-        galleryTile(a, hero: true, onTap: () => context.push('/gallery/artworks/${a.submissionId}')),
+        galleryTile(a, hero: !skeleton, onTap: () => context.push('/gallery/artworks/${a.submissionId}')),
     ];
     final width = MediaQuery.sizeOf(context).width;
     final columns = AppLayout.columnsFor(width);
@@ -120,7 +128,7 @@ class _GalleryScreenState extends ConsumerState<GalleryScreen> {
     return RefreshIndicator(
       onRefresh: () => ref.refresh(galleryListProvider(_category).future),
       child: CustomScrollView(
-        controller: _scroll,
+        controller: skeleton ? null : _scroll,
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
@@ -199,7 +207,10 @@ class _Filter extends StatelessWidget {
       button: true,
       selected: active,
       child: InkWell(
-        onTap: onTap,
+        onTap: () {
+          if (!active) HapticFeedback.selectionClick();
+          onTap();
+        },
         child: Container(
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),

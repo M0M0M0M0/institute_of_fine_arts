@@ -39,19 +39,19 @@ abstract final class AppColors {
 
   /// Frame colour for a prize rank: 1 gold, 2 silver, 3 bronze, any other prize the brass accent.
   static Color medalFor(int? rank) => switch (rank) {
-        1 => gold,
-        2 => silver,
-        3 => bronze,
-        _ => brass,
-      };
+    1 => gold,
+    2 => silver,
+    3 => bronze,
+    _ => brass,
+  };
 
   /// Same hues darkened for small text on the wall (passes 4.5:1).
   static Color medalText(int? rank) => switch (rank) {
-        1 => const Color(0xFF7A5B12),
-        2 => const Color(0xFF586166),
-        3 => const Color(0xFF86492A),
-        _ => brassText,
-      };
+    1 => const Color(0xFF7A5B12),
+    2 => const Color(0xFF586166),
+    3 => const Color(0xFF86492A),
+    _ => brassText,
+  };
 
   /// Errors and destructive actions.
   static const danger = Color(0xFFA23B2A);
@@ -75,8 +75,8 @@ abstract final class AppSpacing {
   /// Default horizontal screen gutter.
   static const double gutter = 16;
 
-  /// Minimum touch target.
-  static const double touch = 44;
+  /// Minimum touch target (48 x 48, Flutter accessibility guideline and Material on Android).
+  static const double touch = 48;
 }
 
 /// Layout on wide screens (web / tablet): the page is a centred column, like a catalogue page.
@@ -109,15 +109,41 @@ abstract final class AppFonts {
   static const body = 'GeneralSans';
 }
 
-/// Motion tokens: how long and how fast things move. Use through `motionDuration` (app/motion.dart),
-/// which returns zero when the OS asks to reduce motion.
+/// Motion tokens, taken from Flutter's Material 3 `Durations` and `Easing` instead of made-up numbers
+/// (docs: UX guidelines, section 3). Use the lengths through `motionDuration` (app/motion.dart), which returns zero
+/// when the OS asks to reduce motion. The smaller and more frequent the effect, the shorter it is; leaving is a little
+/// shorter than entering.
 abstract final class AppMotion {
-  /// Small effects (zoom, fades inside a screen).
-  static const fast = Duration(milliseconds: 200);
+  /// Press feedback (a card shrinking under the finger): Durations.short2.
+  static const press = Durations.short2;
 
-  /// Screen transitions (artwork opens from the gallery).
-  static const med = Duration(milliseconds: 320);
+  /// Small state changes and fades inside a screen (zoom, an image fading in, a tab underline): Durations.short4.
+  static const fast = Durations.short4;
 
-  /// Starts quick, settles softly.
-  static const curve = Curves.easeOutCubic;
+  /// Elements appearing (list items, skeleton turning into content): Durations.medium1.
+  static const appear = Durations.medium1;
+
+  /// Screen transitions (artwork opens from the gallery): Durations.medium2.
+  static const med = Durations.medium2;
+
+  /// Leaving a screen, a little shorter than entering it: Durations.medium1.
+  static const exit = Durations.medium1;
+
+  /// A screen's content arriving in place of its loading skeleton (a large element: Durations.medium4).
+  static const handOverIn = Durations.medium4;
+
+  /// The skeleton fading away before the content arrives (Durations.short4).
+  static const handOverOut = Durations.short4;
+
+  /// Delay between list items that appear one after the other (30 to 50 ms; only the first few are staggered).
+  static const stagger = Duration(milliseconds: 40);
+
+  /// Moving or changing inside the screen: Easing.standard.
+  static const curve = Easing.standard;
+
+  /// Entering the screen (fast, then settling): Easing.emphasizedDecelerate.
+  static const enter = Easing.emphasizedDecelerate;
+
+  /// Leaving the screen (slow, then fast): Easing.emphasizedAccelerate.
+  static const leave = Easing.emphasizedAccelerate;
 }

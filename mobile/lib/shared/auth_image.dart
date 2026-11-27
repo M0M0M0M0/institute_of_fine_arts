@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../app/motion.dart';
 import '../core/api_client.dart';
 import 'public_image.dart';
 
@@ -52,7 +53,9 @@ class AuthImage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final bytes = ref.watch(authImageProvider((submissionId, thumb)));
+    // A loading skeleton fetches nothing: the picture's box stays grey
+    final AsyncValue<Uint8List> bytes =
+        SkeletonScope.of(context) ? const AsyncLoading() : ref.watch(authImageProvider((submissionId, thumb)));
     Widget child = switch (bytes) {
       AsyncData(:final value) => Image.memory(
           value,

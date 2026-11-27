@@ -1,4 +1,3 @@
-import 'package:fine_arts_mobile/app/motion.dart';
 import 'package:fine_arts_mobile/app/theme.dart';
 import 'package:fine_arts_mobile/app/tokens.dart';
 import 'package:fine_arts_mobile/shared/shared.dart';

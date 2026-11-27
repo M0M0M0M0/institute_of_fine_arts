@@ -1,6 +1,8 @@
 /// Barrel file: `import '../../shared/shared.dart';` gives screens every shared widget.
 library;
 
+export '../app/motion.dart';
+
 export 'api_urls.dart';
 export 'app_back_button.dart';
 export 'art_dialog.dart';
@@ -19,3 +21,4 @@ export 'rich_text_view.dart';
 export 'scroll_fade.dart';
 export 'segment_tabs.dart';
 export 'status_chip.dart';
+export 'placeholders.dart';

@@ -18,4 +18,27 @@ void main() {
     expect(find.text('INSTITUTE OF FINE ARTS'), findsNothing);
     expect(find.text('home page'), findsOneWidget);
   });
+
+  testWidgets('a tap skips straight to the fade-out', (tester) async {
+    await tester.pumpWidget(const MaterialApp(home: ArtSplashScreen(child: Text('home page'))));
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.text('INSTITUTE OF FINE ARTS'), warnIfMissed: false);
+    // Only the 0.65 s fade-out is left, not the remaining 2.5 s
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 700));
+    await tester.pump();
+    expect(find.text('INSTITUTE OF FINE ARTS'), findsNothing);
+    expect(find.text('home page'), findsOneWidget);
+  });
+
+  testWidgets('with reduced motion the splash is not shown', (tester) async {
+    await tester.pumpWidget(
+      const MediaQuery(
+        data: MediaQueryData(disableAnimations: true),
+        child: MaterialApp(home: ArtSplashScreen(child: Text('home page'))),
+      ),
+    );
+    expect(find.text('INSTITUTE OF FINE ARTS'), findsNothing);
+    expect(find.text('home page'), findsOneWidget);
+  });
 }

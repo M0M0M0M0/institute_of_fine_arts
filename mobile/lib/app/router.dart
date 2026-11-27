@@ -122,20 +122,18 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/gallery/artworks/:id',
-        // A soft fade; the picture itself flies in from the gallery grid (Hero). Both stop with reduced motion.
-        pageBuilder: (context, state) {
-          final duration = motionDuration(context, AppMotion.med);
-          return CustomTransitionPage<void>(
-            key: state.pageKey,
-            child: ArtworkScreen(id: int.parse(state.pathParameters['id']!)),
-            transitionDuration: duration,
-            reverseTransitionDuration: duration,
-            transitionsBuilder: (context, animation, secondaryAnimation, child) => FadeTransition(
-              opacity: CurvedAnimation(parent: animation, curve: AppMotion.curve),
-              child: child,
-            ),
-          );
-        },
+        // A soft fade; the picture itself flies in from the gallery grid (Hero). Opening settles in (decelerate),
+        // going back is a little shorter and speeds away (accelerate). Both stop with reduced motion.
+        pageBuilder: (context, state) => CustomTransitionPage<void>(
+          key: state.pageKey,
+          child: ArtworkScreen(id: int.parse(state.pathParameters['id']!)),
+          transitionDuration: motionDuration(context, AppMotion.med),
+          reverseTransitionDuration: motionDuration(context, AppMotion.exit),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) => FadeTransition(
+            opacity: CurvedAnimation(parent: animation, curve: AppMotion.enter, reverseCurve: AppMotion.leave),
+            child: child,
+          ),
+        ),
       ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       // Student shell: Home, Competitions, My entries, Exhibitions, Account

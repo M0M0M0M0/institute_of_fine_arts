@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../app/tokens.dart';
 import 'scroll_fade.dart';
@@ -62,7 +63,10 @@ class SegmentTabs<T> extends StatelessWidget {
         button: true,
         selected: active,
         child: InkWell(
-          onTap: () => onSelected(value),
+          onTap: () {
+            if (!active) HapticFeedback.selectionClick();
+            onSelected(value);
+          },
           child: Container(
             height: AppSpacing.touch,
             // Tight side padding when the tabs share the row, and the label shrinks if the window is very narrow
@@ -160,7 +164,10 @@ class _FilterTabsState<T> extends State<FilterTabs<T>> {
                       button: true,
                       selected: v == selected,
                       child: InkWell(
-                        onTap: () => widget.onSelected(v),
+                        onTap: () {
+                          if (v != selected) HapticFeedback.selectionClick();
+                          widget.onSelected(v);
+                        },
                         child: Container(
                           height: AppSpacing.touch,
                           alignment: Alignment.center,

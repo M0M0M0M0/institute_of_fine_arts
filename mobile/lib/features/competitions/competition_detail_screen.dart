@@ -24,7 +24,7 @@ class CompetitionDetailScreen extends ConsumerWidget {
     final user = currentUserOf(ref.watch(authControllerProvider));
 
     return switch (detail) {
-      AsyncData(:final value) => _DetailView(detail: value, user: user),
+      AsyncValue(:final value?) when showsContent(detail) => _DetailView(detail: value, user: user),
       _ => Scaffold(
           appBar: AppBar(leading: const AppBackButton(), leadingWidth: 48, titleSpacing: 0, title: const Text('Competition')),
           body: AsyncValueView(
@@ -447,7 +447,7 @@ class _Winners extends ConsumerWidget {
     final gutter = AppLayout.gutterFor(MediaQuery.sizeOf(context).width);
     return switch (awards) {
       // The grid brings its own side gutter, so it sits outside the padded content
-      AsyncData(:final value) => value.isEmpty
+      AsyncValue(:final value?) when showsContent(awards) => value.isEmpty
           ? Padding(
               padding: EdgeInsets.symmetric(horizontal: gutter),
               child: const Text('Results have not been published yet.'),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../app/motion.dart';
 import '../app/tokens.dart';
 
 /// Section title with a short brass rule above it, and an optional action on the right
@@ -182,6 +183,7 @@ class ProgressBarRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
+    final duration = motionDuration(context, AppMotion.med);
     return Semantics(
       label: '$label: $value of $total',
       excludeSemantics: true,
@@ -191,17 +193,30 @@ class ProgressBarRow extends StatelessWidget {
           Row(
             children: [
               Expanded(child: Text(label, style: text.bodyMedium, overflow: TextOverflow.ellipsis)),
-              Text('$value / $total', style: text.labelMedium),
+              // The count rolls to its new value instead of jumping
+              TweenAnimationBuilder<double>(
+                tween: Tween(end: value.toDouble()),
+                duration: duration,
+                curve: AppMotion.curve,
+                builder: (context, v, _) => Text('${v.round()} / $total', style: text.labelMedium),
+              ),
             ],
           ),
           const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: AppRadius.smAll,
-            child: LinearProgressIndicator(
-              value: fraction,
-              minHeight: 6,
-              color: color ?? AppColors.ink,
-              backgroundColor: AppColors.stone,
+          // When the numbers change (an entry graded, an award issued) the bar slides to its new length; the first
+          // time it is drawn it is simply there
+          TweenAnimationBuilder<double>(
+            tween: Tween(end: fraction),
+            duration: duration,
+            curve: AppMotion.curve,
+            builder: (context, f, _) => ClipRRect(
+              borderRadius: AppRadius.smAll,
+              child: LinearProgressIndicator(
+                value: f,
+                minHeight: 6,
+                color: color ?? AppColors.ink,
+                backgroundColor: AppColors.stone,
+              ),
             ),
           ),
         ],

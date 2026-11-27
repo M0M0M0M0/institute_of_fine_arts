@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:fine_arts_mobile/app/theme.dart';
+import 'package:fine_arts_mobile/app/motion.dart';
+import 'package:fine_arts_mobile/app/tokens.dart';
 import 'package:fine_arts_mobile/features/auth/auth.dart';
 import 'package:fine_arts_mobile/features/awarding/awarding.dart';
 import 'package:fine_arts_mobile/features/awarding/awarding_competitions_screen.dart';
@@ -49,6 +51,8 @@ Future<void> _pump(WidgetTester tester, Widget home, List<Override> overrides,
   await tester.pumpWidget(scope);
   await tester.pump();
   await tester.pump();
+  // Let the loading skeleton finish handing over to the content (it fades out, then the content fades in)
+  await tester.pump(AppMotion.handOverIn);
 }
 
 GoRouter _router(Widget home) => GoRouter(routes: [
@@ -301,6 +305,38 @@ void main() {
       expect(find.text('TO GRADE'), findsNWidgets(2)); // filter word + the entry chip
       expect(find.text('BEST'), findsNWidgets(2)); // rating filter word + the entry chip
       expect(find.text('Student name, code or title'), findsOneWidget);
+    });
+
+    testWidgets('another filter reloads only the list: the name and the progress stay', (tester) async {
+      final list = GradingList(
+        competitionId: 1,
+        competitionTitle: 'Autumn Colours',
+        status: statusFromJson('Closed'),
+        total: 2,
+        evaluated: 1,
+        items: [
+          GradingItem(
+              id: 7, title: 'Still Sea', studentName: 'Le Hoang Nam', studentCode: 'HV001',
+              submittedAt: DateTime(2026, 11, 1), rating: null),
+        ],
+      );
+      // The first filter answers at once; any other one is still loading
+      final pending = Completer<GradingList>();
+      await _pump(tester, const GradingListScreen(competitionId: 1), [
+        gradingListProvider.overrideWith((ref, key) => key.filter == const GradingFilter() ? Future.value(list) : pending.future),
+      ]);
+      expect(find.text('Still Sea'), findsOneWidget);
+
+      await tester.tap(find.text('GRADED').first);
+      await tester.pump();
+      await tester.pump(AppMotion.handOverIn);
+      // The list shows its loading stand-in, but the bar title and the progress are still the real ones
+      expect(find.text('Still Sea'), findsNothing);
+      expect(find.descendant(of: find.byType(AppBar), matching: find.text('Autumn Colours')), findsOneWidget);
+      expect(find.text('1 / 2'), findsOneWidget);
+      expect(find.ancestor(of: find.text('1 / 2'), matching: find.byType(Skeleton)), findsNothing);
+      pending.complete(list);
+      await tester.pump(AppMotion.handOverIn);
     });
   });
 

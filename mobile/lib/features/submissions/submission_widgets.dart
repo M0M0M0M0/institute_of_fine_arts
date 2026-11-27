@@ -99,7 +99,8 @@ class SubmissionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    return InkWell(
+    return Pressable(
+      pressedScale: 0.98,
       onTap: onTap,
       borderRadius: AppRadius.smAll,
       child: Padding(

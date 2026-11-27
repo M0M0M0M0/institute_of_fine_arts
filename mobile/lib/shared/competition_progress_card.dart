@@ -54,10 +54,9 @@ class _CompetitionProgressCardState extends State<CompetitionProgressCard> {
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final duration = motionDuration(context, AppMotion.med);
-    return InkWell(
+    return Pressable(
       onTap: widget.onTap,
       onHover: (hover) => setState(() => _hover = hover),
-      hoverColor: Colors.transparent,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,

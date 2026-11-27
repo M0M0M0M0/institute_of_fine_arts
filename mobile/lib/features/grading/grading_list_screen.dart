@@ -6,6 +6,7 @@ import '../../app/tokens.dart';
 import '../../core/async_view.dart';
 import '../../core/format.dart';
 import '../../shared/shared.dart';
+import '../competitions/competitions.dart';
 import '../submissions/submissions.dart';
 import 'grading.dart';
 
@@ -30,29 +31,51 @@ class _GradingListScreenState extends ConsumerState<GradingListScreen> {
     super.dispose();
   }
 
+  /// The latest list loaded, whatever its filter: the competition's name and grading progress do not depend on the
+  /// filter, so they stay on screen while another filter loads (only the list below reloads).
+  ({String title, int total, int evaluated, CompetitionStatus status})? _header;
+
   void _setFilter(GradingFilter value) => setState(() => _filter = value);
 
   @override
   Widget build(BuildContext context) {
     final key = (competitionId: widget.competitionId, filter: _filter);
     final list = ref.watch(gradingListProvider(key));
+    if (list.value case final data?) {
+      _header = (title: data.competitionTitle, total: data.total, evaluated: data.evaluated, status: data.status);
+    }
+    // First visit: the competition card that was tapped already knows the name and progress
+    if (_header == null) {
+      final known = ref.watch(gradingCompetitionsProvider).value ?? const <GradingCompetition>[];
+      for (final c in known) {
+        if (c.id == widget.competitionId) {
+          _header = (title: c.title, total: c.submissionCount, evaluated: c.evaluatedCount, status: c.status);
+        }
+      }
+    }
+    final header = _header;
 
     return Scaffold(
       appBar: AppBar(
         leading: const AppBackButton(),
         leadingWidth: 48,
         titleSpacing: 0,
-        title: Text(list.value?.competitionTitle ?? 'Entries'),
+        title: header == null ? const SizedBox.shrink() : Text(header.title),
       ),
       body: Column(
         children: [
-          // Progress only shows once data exists; it hides while a new filter loads (the provider key changes)
-          if (list.value case final data?) _Progress(data: data),
+          // Progress of the whole competition (the same for every filter): only the very first load, with nothing
+          // known yet, shows a grey stand-in in its place
+          if (header != null)
+            _Progress(total: header.total, evaluated: header.evaluated, status: header.status)
+          else
+            Skeleton(child: _Progress(total: 12, evaluated: 6, status: CompetitionStatus.ongoing)),
           _Filters(filter: _filter, search: _search, onChanged: _setFilter),
           Expanded(
             child: AsyncValueView(
               value: list,
               onRetry: () => ref.invalidate(gradingListProvider(key)),
+              placeholder: Placeholders.gradingList,
               data: (data) => RefreshIndicator(
                 onRefresh: () async {
                   ref.invalidate(gradingListProvider(key));
@@ -76,7 +99,7 @@ class _GradingListScreenState extends ConsumerState<GradingListScreen> {
                         separatorBuilder: (context, i) =>
                             const Divider(height: AppSpacing.lg),
                         itemBuilder: (context, i) =>
-                            _ItemTile(item: data.items[i]),
+                            StaggerIn(index: i, child: _ItemTile(item: data.items[i])),
                       ),
               ),
             ),
@@ -89,9 +112,11 @@ class _GradingListScreenState extends ConsumerState<GradingListScreen> {
 
 /// Progress of the whole competition, independent of the filter.
 class _Progress extends StatelessWidget {
-  const _Progress({required this.data});
+  const _Progress({required this.total, required this.evaluated, required this.status});
 
-  final GradingList data;
+  final int total;
+  final int evaluated;
+  final CompetitionStatus status;
 
   @override
   Widget build(BuildContext context) {
@@ -103,13 +128,13 @@ class _Progress extends StatelessWidget {
           Expanded(
             child: ProgressBarRow(
               label: 'Graded',
-              value: data.evaluated,
-              total: data.total,
+              value: evaluated,
+              total: total,
               color: AppColors.statusOngoing,
             ),
           ),
           const SizedBox(width: AppSpacing.md),
-          StatusChip(data.status),
+          StatusChip(status),
         ],
       ),
     );
@@ -194,7 +219,8 @@ class _ItemTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
-    return InkWell(
+    return Pressable(
+      pressedScale: 0.98,
       onTap: () => context.push(
         '${gradingBase(context)}/submissions/${item.id}/evaluate',
       ),

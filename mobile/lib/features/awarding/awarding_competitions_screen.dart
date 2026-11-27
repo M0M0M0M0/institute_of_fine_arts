@@ -21,6 +21,7 @@ class AwardingCompetitionsTab extends ConsumerWidget {
     return AsyncValueView(
       value: competitions,
       onRetry: () => ref.invalidate(awardingCompetitionsProvider),
+      placeholder: Placeholders.awardingCompetitions,
       data: (items) => RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(awardingCompetitionsProvider);
@@ -57,7 +58,7 @@ class AwardingCompetitionsTab extends ConsumerWidget {
                     padding: EdgeInsets.fromLTRB(gutter, AppSpacing.md, gutter, AppSpacing.xl),
                     itemCount: items.length,
                     separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.xl),
-                    itemBuilder: (context, i) => _CompetitionTile(item: items[i]),
+                    itemBuilder: (context, i) => StaggerIn(index: i, child: _CompetitionTile(item: items[i])),
                   ),
       ),
     );
