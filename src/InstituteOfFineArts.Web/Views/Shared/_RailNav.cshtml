@@ -88,7 +88,7 @@
         {
             <div class="rail-group" id="rail-@group.Key.ToLowerInvariant()">@L[group.Key]</div>
         }
-        <ul class="rail-nav" aria-labelledby="@(group.Key != "" ? $"rail-{group.Key.ToLowerInvariant()}" : null)">
+        <ul class="rail-nav" aria-label="@(group.Key != "" ? L[group.Key].Value : L["Main menu"].Value)">
             @foreach (var item in group)
             {
                 <li>

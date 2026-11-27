@@ -103,28 +103,18 @@
     </div>
 </section>
 
-@* Links to the read-only pages of the area (also in the rail) *@
-<section class="section" aria-labelledby="pages-heading">
-    <div class="section-head"><h2 id="pages-heading">Pages</h2></div>
-    <ul class="list-inline mb-4">
-        <li class="list-inline-item me-3"><a href="/manager/students">Students</a></li>
-        <li class="list-inline-item me-3"><a href="/manager/staff">Staff</a></li>
-        <li class="list-inline-item me-3"><a href="/manager/competitions">Competitions</a></li>
-        <li class="list-inline-item me-3"><a href="/manager/submissions">Submissions</a></li>
-        <li class="list-inline-item me-3"><a href="/manager/awards">Awards</a></li>
-        <li class="list-inline-item me-3"><a href="/manager/exhibitions">Exhibitions</a></li>
-        <li class="list-inline-item me-3"><a href="/manager/exhibition-entries">Exhibition entries</a></li>
-        <li class="list-inline-item me-3"><a href="/manager/customers">Customers</a></li>
-        <li class="list-inline-item me-3"><a href="/manager/reports">Reports</a></li>
-        <li class="list-inline-item me-3"><a href="/profile">My profile</a></li>
-        <li class="list-inline-item me-3"><a href="/profile/change-password">Change password</a></li>
+@* Keep the dashboard focused on the institute overview; navigation and account actions
+   are already available in the persistent rail and account menu. *@
+<section class="section" aria-labelledby="manager-focus-heading">
+    <div class="section-head">
+        <h2 id="manager-focus-heading">Explore the institute</h2>
+        <a href="/reports">Open reports</a>
+    </div>
+    <ul class="quick-links">
+        <li><a href="/manager/submissions"><i class="bi bi-images" aria-hidden="true"></i><span class="ql-title">Submission records</span><span class="ql-text">Review entries and their evaluation history across competitions.</span></a></li>
+        <li><a href="/manager/exhibition-entries"><i class="bi bi-easel2" aria-hidden="true"></i><span class="ql-title">Exhibition activity</span><span class="ql-text">Follow accepted artworks, sales and payment status.</span></a></li>
+        <li><a href="/manager/competitions"><i class="bi bi-easel" aria-hidden="true"></i><span class="ql-title">Competition overview</span><span class="ql-text">Compare competition status, participation and awards.</span></a></li>
     </ul>
-
-    @* Log out with POST plus the anti-forgery token *@
-    <form method="post" action="/logout">
-        @Html.AntiForgeryToken()
-        <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-box-arrow-right" aria-hidden="true"></i>Log out</button>
-    </form>
 </section>
 
 @section Scripts {

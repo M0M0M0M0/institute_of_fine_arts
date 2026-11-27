@@ -10,13 +10,13 @@
     ViewData["Title"] = "Staff";
     var links = new (string Href, string Icon, string Title, string Text)[]
     {
-        ("/staff/submissions", "bi-pencil-square", "Submissions", "Review the entries of each competition and grade them."),
-        ("/staff/competitions", "bi-easel", "Competitions", "Create competitions, define their awards and publish results."),
-        ("/staff/awards", "bi-trophy", "Issued awards", "Issue, edit or revoke awards for BEST entries."),
-        ("/staff/submissions/by-rating", "bi-funnel", "Search by rating", "Find graded paintings, for example the BEST ones for an exhibition."),
+        ("/staff/submissions?evaluated=false", "bi-pencil-square", "Grade submissions", "Start with entries that have not yet been evaluated; open a submission to review its artwork and record feedback."),
+        ("/staff/competitions", "bi-easel", "Manage competitions", "Create and update competitions, define awards, and publish results when grading is complete."),
+        ("/staff/submissions/by-rating", "bi-funnel", "Find eligible artwork", "Filter evaluated paintings by rating to identify BEST and BETTER works for exhibitions."),
+        ("/staff/awards", "bi-trophy", "Issue awards", "Create, review or revoke awards for eligible BEST entries."),
         ("/staff/students", "bi-people", "Students", "Look up a student and their study history."),
-        ("/staff/exhibitions", "bi-bank", "Exhibitions", "Plan exhibitions and send paintings to them."),
-        ("/staff/exhibition-entries", "bi-easel2", "Artworks", "Follow paintings on show: proposed, accepted, sold and paid."),
+        ("/staff/exhibitions", "bi-bank", "Plan exhibitions", "Create exhibitions and manage their dates, location and details."),
+        ("/staff/exhibition-entries", "bi-easel2", "Manage artwork sales", "Review student proposals, record sales and track payments to students."),
         ("/staff/customers", "bi-person-vcard", "Customers", "Keep the buyers of exhibited paintings."),
     };
 }
@@ -24,7 +24,7 @@
 <div class="page-head">
     <div>
         <h1>Welcome, @User.GetFullName()</h1>
-        <p class="page-sub">You are on the home page of the Staff area (role STAFF). Pick up where the work is.</p>
+        <p class="page-sub">Manage competitions from entry review through grading, awards and exhibitions. Choose a task below to continue.</p>
     </div>
     <div class="page-actions">
         <a class="btn btn-primary" href="/staff/submissions?evaluated=false"><i class="bi bi-pencil-square" aria-hidden="true"></i>Entries to grade</a>
@@ -34,7 +34,10 @@
 <partial name="_Alerts" />
 
 <section aria-labelledby="work-title">
-    <div class="section-head"><h2 id="work-title">Your work</h2></div>
+    <div class="section-head">
+        <h2 id="work-title">Your work</h2>
+        <span class="text-muted small">Suggested workflow: grade → publish → award → exhibit</span>
+    </div>
     <ul class="quick-links">
         @foreach (var l in links)
         {
