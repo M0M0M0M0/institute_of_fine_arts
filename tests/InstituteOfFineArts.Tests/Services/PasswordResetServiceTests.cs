@@ -356,4 +356,21 @@ public class PasswordResetServiceTests
         Assert.Equal("NewPassword", ex.Field);
         Assert.True(await service.IsTokenValidAsync(token));
     }
+
+    /// <summary>
+    /// The e-mail shows a "Reset my password" button that opens the reset page, the same link as text for mail apps
+    /// without buttons, and the account's name HTML-encoded.
+    /// </summary>
+    [Fact]
+    public void EmailBody_HasAButtonAndTheLinkAsText()
+    {
+        const string link = "https://ifa.example/reset-password?token=abc_DEF-123";
+        var body = PasswordResetService.BuildEmailBody("Anna <b>", "student01", link);
+
+        Assert.Matches(@"<a href=""https://ifa\.example/reset-password\?token=abc_DEF-123""[^>]*>\s*Reset my password\s*</a>", body);
+        Assert.Equal(3, body.Split("https://ifa.example/reset-password?token=abc_DEF-123").Length - 1);
+        Assert.Contains("Anna &lt;b&gt;", body);
+        Assert.DoesNotContain("Anna <b>", body);
+        Assert.Contains("30 minutes", body);
+    }
 }

@@ -203,18 +203,51 @@ public class PasswordResetService : IPasswordResetService
     private string ResolveBaseUrl(string requestBaseUrl)
         => (string.IsNullOrWhiteSpace(_emailOptions.AppBaseUrl) ? requestBaseUrl : _emailOptions.AppBaseUrl).TrimEnd('/');
 
-    /// <summary>HTML body of the reset e-mail; user data is HTML-encoded.</summary>
-    private static string BuildEmailBody(string fullName, string userName, string link)
+    /// <summary>
+    /// HTML body of the reset e-mail: a short note and a "Reset my password" button that opens the reset page, plus the
+    /// same link as text for mail apps that hide buttons. Built with a table and inline styles, which every mail app
+    /// (Gmail, Outlook, phones) shows the same way; user data is HTML-encoded.
+    /// </summary>
+    public static string BuildEmailBody(string fullName, string userName, string link)
     {
         var html = HtmlEncoder.Default;
+        var href = html.Encode(link);
         var minutes = (int)TokenLifetime.TotalMinutes;
         return $"""
-            <p>Hello {html.Encode(fullName)},</p>
-            <p>We received a request to reset the password of your account <strong>{html.Encode(userName)}</strong>
-            at the Institute of Fine Arts.</p>
-            <p><a href="{html.Encode(link)}">Reset my password</a></p>
-            <p>The link is valid for {minutes} minutes and can be used once. If you did not ask for it, ignore this
-            e-mail: your password stays unchanged.</p>
+            <div style="margin:0;padding:24px 0;background:#f4f2ee;font-family:Arial,Helvetica,sans-serif;color:#1f1f1f">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                <tr><td align="center">
+                  <table role="presentation" width="560" cellspacing="0" cellpadding="0" border="0"
+                         style="max-width:560px;width:100%;background:#ffffff;border:1px solid #e4e0d8">
+                    <tr><td style="padding:28px 32px 8px;font-family:Georgia,'Times New Roman',serif;font-size:22px;letter-spacing:.5px">
+                      Institute of Fine Arts
+                    </td></tr>
+                    <tr><td style="padding:8px 32px 0;font-size:15px;line-height:1.6">
+                      <p style="margin:0 0 14px">Hello {html.Encode(fullName)},</p>
+                      <p style="margin:0 0 22px">We received a request to reset the password of your account
+                        <strong>{html.Encode(userName)}</strong>. Click the button below to choose a new password.</p>
+                    </td></tr>
+                    <tr><td align="center" style="padding:0 32px 22px">
+                      <table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr>
+                        <td bgcolor="#111111" style="background:#111111">
+                          <a href="{href}" target="_blank"
+                             style="display:inline-block;padding:14px 34px;font-size:15px;font-weight:bold;color:#ffffff;text-decoration:none;letter-spacing:.3px">
+                            Reset my password
+                          </a>
+                        </td>
+                      </tr></table>
+                    </td></tr>
+                    <tr><td style="padding:0 32px 8px;font-size:13px;line-height:1.6;color:#555555">
+                      <p style="margin:0 0 10px">The button works once and expires in {minutes} minutes. Asking for a new
+                        link makes this one stop working.</p>
+                      <p style="margin:0 0 10px">If the button does not open, copy this address into your browser:<br />
+                        <a href="{href}" target="_blank" style="color:#111111;word-break:break-all">{href}</a></p>
+                      <p style="margin:0 0 22px">If you did not ask for it, ignore this e-mail: your password stays unchanged.</p>
+                    </td></tr>
+                  </table>
+                </td></tr>
+              </table>
+            </div>
             """;
     }
 }

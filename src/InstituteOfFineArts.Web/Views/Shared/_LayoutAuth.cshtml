@@ -1,0 +1,43 @@
+@*
+    Frame of the sign-in pages (log in, forgot password, set a new password) in the FE101 design (branch FE101,
+    "Cac trang Fe"), inside the public layout so the site header and menu stay: the sculpture on the left fading into
+    white, the page's form on the right. Picture and form fill exactly the rest of one screen below the header; on
+    phones only the form shows. Styles: .auth-page and auth-* in wwwroot/css/public-fe101.css.
+    A page using it renders only its form block; its own Scripts section is kept.
+*@
+@{
+    Layout = "_Layout";
+    ViewData["FullBleed"] = true;
+}
+
+<section class="auth-page container-fluid p-0">
+    <div class="row g-0">
+        @* The picture: hidden on phones, where the form takes the whole width *@
+        <div class="col-lg-7 col-xl-8 d-none d-md-block auth-image-col" aria-hidden="true">
+            <img src="~/img/authen.jpg" alt="" class="auth-bg-img" />
+            <div class="auth-fade-right"></div>
+        </div>
+
+        <div class="col-md col-lg-5 col-xl-4 d-flex align-items-center justify-content-center bg-white py-4 auth-form-col">
+            <div class="auth-form-container w-100 px-4 px-xl-5">
+                @RenderBody()
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // The picture and the form fill the rest of the screen below the header (see .auth-page in public-fe101.css):
+        // the header's height depends on the window width, so measure where the section starts
+        (function () {
+            const page = document.querySelector('.auth-page');
+            if (!page) return;
+            const fit = () => page.style.setProperty('--auth-top', page.getBoundingClientRect().top + window.scrollY + 'px');
+            fit();
+            window.addEventListener('resize', fit);
+        })();
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+}

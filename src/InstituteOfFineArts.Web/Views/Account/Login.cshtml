@@ -1,88 +1,56 @@
 @model InstituteOfFineArts.Web.ViewModels.Account.LoginVm
 @inject Microsoft.Extensions.Localization.IStringLocalizer<InstituteOfFineArts.Web.SharedResource> L
 @*
-    Login page (/login) – used by every role.
-    Look: the FE101 design (branch FE101, "Cac trang Fe") inside the public layout, so the site header and menu stay:
-    the sculpture on the left fading into white, the form on the right with floating labels and a square black button
-    (styles in wwwroot/css/public-fe101.css: auth-image-col, auth-bg-img, auth-fade-right, auth-form-container).
-    Behaviour: unchanged from develop – sign in with the user name (not the e-mail), anti-forgery token, server-side
-    validation, "Remember me", ReturnUrl, the error and success messages, the real "Forgot password?" link
+    Login page (/login) – used by every role, in the FE101 sign-in frame (Views/Shared/_LayoutAuth.cshtml).
+    Behaviour: sign in with the user name (not the e-mail), anti-forgery token, server-side validation,
+    "Remember me", ReturnUrl, the error and success messages, the real "Forgot password?" link
     (AccountController, F-M01-01, F-M16-01). FE101's "Create account" popup is left out: accounts are created by the
     institute, there is no self-registration.
 *@
 @{
+    Layout = "_LayoutAuth";
     ViewData["Title"] = L["Log in"].Value;
-    ViewData["FullBleed"] = true;
 }
 
-<section class="auth-page container-fluid p-0">
-    <div class="row g-0">
-        @* The picture: hidden on phones, where the form takes the whole width *@
-        <div class="col-lg-7 col-xl-8 d-none d-md-block auth-image-col" aria-hidden="true">
-            <img src="~/img/authen.jpg" alt="" class="auth-bg-img" />
-            <div class="auth-fade-right"></div>
-        </div>
+<h1 class="art-title fw-normal mb-2 h2">Welcome Back</h1>
+<p class="text-muted small mb-4">Please enter your details to sign in.</p>
 
-        <div class="col-md col-lg-5 col-xl-4 d-flex align-items-center justify-content-center bg-white py-4 auth-form-col">
-            <div class="auth-form-container w-100 px-4 px-xl-5">
-                <h1 class="art-title fw-normal mb-2 h2">Welcome Back</h1>
-                <p class="text-muted small mb-4">Please enter your details to sign in.</p>
+@* Success message after a password reset (F-M16-01) *@
+<partial name="_Alerts" />
 
-                @* Success message after a password reset (F-M16-01) *@
-                <partial name="_Alerts" />
+@* POST /login; the tag helpers add the anti-forgery token and the validation attributes *@
+<form asp-controller="Account" asp-action="Login" method="post" novalidate>
+    @* General errors: wrong username/password, locked account, too many attempts *@
+    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+    <input type="hidden" asp-for="ReturnUrl" />
 
-                @* POST /login; the tag helpers add the anti-forgery token and the validation attributes *@
-                <form asp-controller="Account" asp-action="Login" method="post" novalidate>
-                    @* General errors: wrong username/password, locked account, too many attempts *@
-                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
-                    <input type="hidden" asp-for="ReturnUrl" />
-
-                    @* placeholder=" " keeps Bootstrap's floating label working without showing a second text *@
-                    <div class="form-floating mb-4">
-                        <input asp-for="Username" class="form-control auth-input shadow-none" placeholder=" "
-                               autocomplete="username" autofocus />
-                        <label asp-for="Username" class="text-muted"></label>
-                        <span asp-validation-for="Username" class="text-danger small"></span>
-                    </div>
-
-                    <div class="form-floating mb-4">
-                        <input asp-for="Password" class="form-control auth-input shadow-none" placeholder=" "
-                               autocomplete="current-password" />
-                        <label asp-for="Password" class="text-muted"></label>
-                        <span asp-validation-for="Password" class="text-danger small"></span>
-                    </div>
-
-                    <div class="d-flex justify-content-between align-items-center mb-4 small">
-                        <div class="form-check">
-                            <input asp-for="RememberMe" class="form-check-input shadow-none auth-checkbox" />
-                            <label asp-for="RememberMe" class="form-check-label text-muted"></label>
-                        </div>
-                        <a asp-controller="PasswordReset" asp-action="ForgotPassword"
-                           class="text-dark text-decoration-none border-bottom border-dark pb-1">@L["Forgot password?"]</a>
-                    </div>
-
-                    <button class="btn btn-dark w-100 py-3 mb-4 rounded-0 auth-btn" type="submit">Sign In</button>
-
-                    <p class="text-center small text-muted mb-0">
-                        Accounts are created by the institute. Ask the office if you do not have one yet.
-                    </p>
-                </form>
-            </div>
-        </div>
+    @* placeholder=" " keeps Bootstrap's floating label working without showing a second text *@
+    <div class="form-floating mb-4">
+        <input asp-for="Username" class="form-control auth-input shadow-none" placeholder=" "
+               autocomplete="username" autofocus />
+        <label asp-for="Username" class="text-muted"></label>
+        <span asp-validation-for="Username" class="text-danger small"></span>
     </div>
-</section>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-    <script>
-        // The picture and the form fill the rest of the screen below the header (see .auth-page in public-fe101.css):
-        // the header's height depends on the window width, so measure where the section starts
-        (function () {
-            const page = document.querySelector('.auth-page');
-            if (!page) return;
-            const fit = () => page.style.setProperty('--auth-top', page.getBoundingClientRect().top + window.scrollY + 'px');
-            fit();
-            window.addEventListener('resize', fit);
-        })();
-    </script>
-}
+    <div class="form-floating mb-4">
+        <input asp-for="Password" class="form-control auth-input shadow-none" placeholder=" "
+               autocomplete="current-password" />
+        <label asp-for="Password" class="text-muted"></label>
+        <span asp-validation-for="Password" class="text-danger small"></span>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mb-4 small">
+        <div class="form-check">
+            <input asp-for="RememberMe" class="form-check-input shadow-none auth-checkbox" />
+            <label asp-for="RememberMe" class="form-check-label text-muted"></label>
+        </div>
+        <a asp-controller="PasswordReset" asp-action="ForgotPassword"
+           class="text-dark text-decoration-none border-bottom border-dark pb-1">@L["Forgot password?"]</a>
+    </div>
+
+    <button class="btn btn-dark w-100 py-3 mb-4 rounded-0 auth-btn" type="submit">Sign In</button>
+
+    <p class="text-center small text-muted mb-0">
+        Accounts are created by the institute. Ask the office if you do not have one yet.
+    </p>
+</form>
