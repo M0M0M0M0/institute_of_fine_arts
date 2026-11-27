@@ -46,6 +46,7 @@ dependencies:
   html: ^0.15.7
   firebase_core: ^5.2.0
   firebase_messaging: ^17.1.0
+  flutter_secure_storage: ^11.2.0
 
 dev_dependencies:
   flutter_test:

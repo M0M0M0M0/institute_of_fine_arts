@@ -26,6 +26,9 @@ public class AuditLogService : IAuditLogService
     /// <summary>Action of a failed log in (wrong user name / password or locked account).</summary>
     public const string LoginFailedAction = "LOGIN_FAILED";
 
+    /// <summary>Action of a log in refused without checking the password, after too many failures (not counted as one).</summary>
+    public const string LoginBlockedAction = "LOGIN_BLOCKED";
+
     /// <summary>Action of a log out.</summary>
     public const string LogoutAction = "LOGOUT";
 
@@ -207,13 +210,14 @@ public class AuditLogService : IAuditLogService
 
     /// <summary>Kind of work of the log in / log out actions written by the account pages.</summary>
     private static AuditCategory CategoryOfAction(string action)
-        => action is LoginAction or LoginFailedAction or LogoutAction ? AuditCategory.LOGIN : AuditCategory.OTHER;
+        => action is LoginAction or LoginFailedAction or LoginBlockedAction or LogoutAction ? AuditCategory.LOGIN : AuditCategory.OTHER;
 
     /// <summary>Sentence of the log in / log out actions.</summary>
     private static string? SummaryOfAction(string action) => action switch
     {
         LoginAction => "Signed in",
         LoginFailedAction => "Sign-in refused",
+        LoginBlockedAction => "Sign-in blocked after too many failed attempts",
         LogoutAction => "Signed out",
         _ => null,
     };

@@ -9,6 +9,17 @@ import 'token_storage.dart';
 /// Nơi lưu token, dùng chung toàn app.
 final tokenStorageProvider = Provider<TokenStorage>((ref) => TokenStorage());
 
+/// Counts the times the server answered 401 to a signed-in request: the session ended on the server (account locked,
+/// role or password changed, token expired). The auth controller listens and signs the user out.
+final sessionEndedProvider = NotifierProvider<SessionEndedSignal, int>(SessionEndedSignal.new);
+
+class SessionEndedSignal extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void signal() => state++;
+}
+
 /// Dio dùng chung: base URL của API + tự gắn header Authorization nếu đã đăng nhập.
 final dioProvider = Provider<Dio>((ref) {
   final storage = ref.watch(tokenStorageProvider);
@@ -25,6 +36,12 @@ final dioProvider = Provider<Dio>((ref) {
         options.headers['Authorization'] = 'Bearer $token';
       }
       handler.next(options);
+    },
+    // A signed-in request refused with 401 means the session is over: sign out instead of showing errors everywhere
+    onError: (error, handler) {
+      final signedIn = error.requestOptions.headers.containsKey('Authorization');
+      if (error.response?.statusCode == 401 && signedIn) ref.read(sessionEndedProvider.notifier).signal();
+      handler.next(error);
     },
   ));
   return dio;

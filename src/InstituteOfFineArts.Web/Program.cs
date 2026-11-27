@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authentication;
 using System.Globalization;
 using System.Text.Encodings.Web;
 using System.Text.Unicode;
@@ -59,7 +60,54 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.Name = "IFA.Auth";
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
+
+        // Every request: the account must still be active with the same security stamp. Locking it, changing its
+        // role or its password ends this session at once (BR-05), "Remember me" included
+        options.Events.OnValidatePrincipal = async context =>
+        {
+            var db = context.HttpContext.RequestServices.GetRequiredService<InstituteOfFineArts.Web.Data.AppDbContext>();
+            if (!await InstituteOfFineArts.Web.Infrastructure.Security.SessionValidator.IsCurrentAsync(
+                    db, context.Principal, context.HttpContext.RequestAborted))
+            {
+                context.RejectPrincipal();
+                await context.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            }
+        };
     });
+
+// Sign-in attempts per IP address (review B7): at most 20 a minute on the web and app login. Together with the
+// per-user-name block in AuthService (5 wrong passwords → 15 minutes) this keeps password guessing slow.
+// Web: an empty 429 shows the friendly error page; API: ProblemDetails JSON like the other errors.
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy(InstituteOfFineArts.Web.Infrastructure.Security.LoginRateLimit.PolicyName, context =>
+        System.Threading.RateLimiting.RateLimitPartition.GetFixedWindowLimiter(
+            context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new System.Threading.RateLimiting.FixedWindowRateLimiterOptions
+            {
+                PermitLimit = InstituteOfFineArts.Web.Infrastructure.Security.LoginRateLimit.PermitsPerMinute,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+            }));
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+        if (context.HttpContext.Request.Path.StartsWithSegments("/api"))
+        {
+            await context.HttpContext.Response.WriteAsJsonAsync(new Microsoft.AspNetCore.Mvc.ProblemDetails
+            {
+                Status = StatusCodes.Status429TooManyRequests,
+                Title = InstituteOfFineArts.Web.Infrastructure.Security.LoginRateLimit.Message,
+            }, cancellationToken);
+        }
+    };
+});
+
+// Every page needs a signed-in user unless it says [AllowAnonymous] (review C5): a controller that forgets
+// [Authorize] is closed by default instead of open to everyone. Public pages (home, competitions, gallery, files,
+// errors, login, password reset) and the static files are marked anonymous explicitly.
+builder.Services.AddAuthorizationBuilder()
+    .SetFallbackPolicy(new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
 
 // Upload size limit (BR-17, task BE1-03; widened 16/11/2026): an entry has up to 5 pictures of ≤ Upload:MaxFileSizeBytes
 // (10 MB) each, plus 1 MB for the other form fields. Applied to every request body (Kestrel and IIS) and to multipart
@@ -92,6 +140,17 @@ builder.Services.Configure<UploadOptions>(builder.Configuration.GetSection(Uploa
 
 // E-mail settings (SMTP or .eml pickup folder) used by EmailService – task BE1-OPT
 builder.Services.Configure<InstituteOfFineArts.Web.Infrastructure.Email.EmailOptions>(builder.Configuration.GetSection("Email"));
+
+// Links in e-mails (password reset) must point to the real site. Outside Development the address is never taken from
+// the request (its Host header is chosen by whoever sends it, so a reset link could point to another site and leak
+// the token): Email:AppBaseUrl is required and the application refuses to start without it.
+if (!builder.Environment.IsDevelopment()
+    && string.IsNullOrWhiteSpace(builder.Configuration["Email:AppBaseUrl"]))
+{
+    throw new InvalidOperationException(
+        "Email:AppBaseUrl is not configured. Set it to the public address of the site (e.g. https://ifa.example.com) "
+        + "so that links in e-mails cannot be redirected through the Host header.");
+}
 
 // Push notifications to the mobile app (Firebase Cloud Messaging): off until Push:ServiceAccountPath points to the
 // Firebase service account key, which is kept out of git (User Secrets / environment). One sender for the whole app.
@@ -169,6 +228,8 @@ app.UseRequestLocalization(new RequestLocalizationOptions
 
 app.UseHttpsRedirection();
 app.UseRouting();
+// Limits sign-in attempts per IP address (endpoints marked [EnableRateLimiting(LoginRateLimit.PolicyName)])
+app.UseRateLimiter();
 // CORS for the mobile app's API calls (policy used by Infrastructure/Api/ApiControllerBase only)
 app.UseCors();
 
@@ -177,8 +238,8 @@ app.UseAuthentication();
 // Enforce [Authorize(Roles = ...)] on controllers
 app.UseAuthorization();
 
-// Static files in wwwroot (css, js, lib, img)
-app.MapStaticAssets();
+// Static files in wwwroot (css, js, lib, img): open to everyone (the login page needs its stylesheets)
+app.MapStaticAssets().AllowAnonymous();
 
 // Route for the areas (Admin, Staff, Teacher, Student) – must come before the default route
 app.MapControllerRoute(

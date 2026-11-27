@@ -122,6 +122,14 @@ public class AuditTargetService : IAuditTargetService
                 Summary = segments[^1] == "change-password" ? "Changed their own password" : "Edited their own profile",
             };
         }
+        if (segments.Length == 1 && segments[0] is "forgot-password" or "reset-password")
+        {
+            return new AuditTarget
+            {
+                Category = AuditCategory.ACCOUNT,
+                Summary = segments[0] == "forgot-password" ? "Asked for a password reset link" : "Set a new password with a reset link",
+            };
+        }
 
         // "collection/id" pairs; the last one is the object
         var pairs = new List<(int Index, string Word, long Id)>();

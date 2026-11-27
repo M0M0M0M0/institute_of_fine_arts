@@ -1,6 +1,7 @@
 using InstituteOfFineArts.Web.Exceptions;
 using InstituteOfFineArts.Web.Services.Interfaces;
 using InstituteOfFineArts.Web.ViewModels.Public;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace InstituteOfFineArts.Web.Controllers;
@@ -17,6 +18,7 @@ namespace InstituteOfFineArts.Web.Controllers;
 /// Only public paintings are listed (BR-20); /gallery itself (awarded paintings) stays in HomeController.
 /// Entries are submitted through the real student page (/student/submissions/new), which applies every rule.
 /// </summary>
+[AllowAnonymous]
 [Route("gallery")]
 public class GalleryController : Controller
 {

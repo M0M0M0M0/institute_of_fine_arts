@@ -30,6 +30,8 @@ public class AuditLogConfiguration : IEntityTypeConfiguration<AuditLog>
 
         // The log page is read newest first and filtered by user / action
         b.HasIndex(x => x.CreatedAt).HasDatabaseName("IX_audit_log_created_at");
+        // Counting the recent failed logins of a user name (AuthService, too many attempts)
+        b.HasIndex(x => new { x.Username, x.Action, x.CreatedAt }).HasDatabaseName("IX_audit_log_username_action");
         b.HasIndex(x => new { x.AccountId, x.CreatedAt }).HasDatabaseName("IX_audit_log_account");
 
         // History tabs: one competition / exhibition / entry / account, newest first

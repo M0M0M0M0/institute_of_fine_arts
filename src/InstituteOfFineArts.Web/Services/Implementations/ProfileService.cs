@@ -90,7 +90,7 @@ public class ProfileService : IProfileService
     }
 
     /// <inheritdoc />
-    public async Task ChangePasswordAsync(long accountId, string currentPassword, string newPassword)
+    public async Task<string> ChangePasswordAsync(long accountId, string currentPassword, string newPassword)
     {
         var account = await FindAccountAsync(accountId);
 
@@ -118,6 +118,8 @@ public class ProfileService : IProfileService
         await _db.SaveChangesAsync();
 
         _logger.LogInformation("Password changed: {Username}", account.Username);
+        // The new password gave the account a new security stamp (AppDbContext): the caller keeps its own session
+        return account.SecurityStamp;
     }
 
     /// <summary>Loads a tracked account for updating, or throws NotFoundException.</summary>

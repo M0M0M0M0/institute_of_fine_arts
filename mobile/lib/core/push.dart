@@ -91,6 +91,20 @@ class PushController {
     }
   }
 
+  /// The session ended without a chance to tell the server (token refused, account locked): delete this phone's
+  /// push token at Firebase, so whatever the server still sends to it is not delivered.
+  Future<void> sessionEnded() async {
+    _signedIn = false;
+    _token = null;
+    final messaging = _messaging;
+    if (messaging == null) return;
+    try {
+      await messaging.deleteToken();
+    } catch (e) {
+      debugPrint('Push token deletion failed: $e');
+    }
+  }
+
   Future<void> _send(String token) async {
     try {
       final platform = defaultTargetPlatform == TargetPlatform.iOS ? 'ios' : 'android';

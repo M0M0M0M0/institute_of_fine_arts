@@ -20,6 +20,7 @@ public interface IProfileService
     /// Changes the password after checking the current one.
     /// Throws BusinessException when the current password is wrong, the new password breaks BR-02
     /// or equals the current one; NotFoundException when the account does not exist.
+    /// Returns the account's new security stamp: every other session of the account ends, the caller renews its own.
     /// </summary>
-    Task ChangePasswordAsync(long accountId, string currentPassword, string newPassword);
+    Task<string> ChangePasswordAsync(long accountId, string currentPassword, string newPassword);
 }

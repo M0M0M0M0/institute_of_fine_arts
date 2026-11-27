@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.RateLimiting;
 using InstituteOfFineArts.Web.Infrastructure.Security;
 using InstituteOfFineArts.Web.Services.Implementations;
 using InstituteOfFineArts.Web.Services.Interfaces;
@@ -21,6 +22,9 @@ public class AccountController : Controller
 
     /// <summary>Message shown when the account is locked.</summary>
     public const string LockedMessage = "Your account has been locked. Please contact the administrator.";
+
+    /// <summary>Error after too many wrong passwords (review B7).</summary>
+    public const string TooManyAttemptsMessage = "Too many failed sign-in attempts. Please wait 15 minutes and try again.";
 
     /// <summary>How long the user stays signed in when "Remember me" is checked.</summary>
     private static readonly TimeSpan RememberMeDuration = TimeSpan.FromDays(7);
@@ -65,6 +69,7 @@ public class AccountController : Controller
     /// <param name="form">Data entered by the user</param>
     [HttpPost("/login")]
     [AllowAnonymous]
+    [EnableRateLimiting(LoginRateLimit.PolicyName)]
     public async Task<IActionResult> Login(LoginVm form)
     {
         // Missing username / password → show the form again with errors
@@ -79,12 +84,24 @@ public class AccountController : Controller
         // Login failed: show a generic error and never send the typed password back
         if (result.Status != LoginStatus.Success || result.Principal == null)
         {
-            var message = result.Status == LoginStatus.Locked ? LockedMessage : InvalidCredentialsMessage;
+            var message = result.Status switch
+            {
+                LoginStatus.Locked => LockedMessage,
+                LoginStatus.TooManyAttempts => TooManyAttemptsMessage,
+                _ => InvalidCredentialsMessage,
+            };
             ModelState.AddModelError(string.Empty, _localizer[message].Value);
 
-            // Audit (F-M17-01): the user name that was tried and why, never the password
-            await _audit.LogAsAsync(null, form.Username, AuditLogService.LoginFailedAction,
-                result.Status == LoginStatus.Locked ? "Account locked" : "Invalid username or password");
+            // Audit (F-M17-01): the user name that was tried and why, never the password. A blocked attempt is logged
+            // apart: it does not count as one more failure
+            await _audit.LogAsAsync(null, form.Username,
+                result.Status == LoginStatus.TooManyAttempts ? AuditLogService.LoginBlockedAction : AuditLogService.LoginFailedAction,
+                result.Status switch
+                {
+                    LoginStatus.Locked => "Account locked",
+                    LoginStatus.TooManyAttempts => "Too many failed attempts",
+                    _ => "Invalid username or password",
+                });
             form.Password = string.Empty;
             return View(form);
         }

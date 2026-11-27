@@ -37,6 +37,14 @@ public class AuthService : IAuthService
     {
         // Trim the username; the LINQ query is parameterized (protects against SQL injection)
         var name = (username ?? string.Empty).Trim();
+
+        // Too many wrong passwords for this user name lately: refuse without checking, so guessing stays slow. Same
+        // answer whether or not the account exists (no user name enumeration)
+        if (await TooManyFailuresAsync(name))
+        {
+            _logger.LogWarning("Login blocked: too many failed attempts for {Username}", name);
+            return new LoginResult(LoginStatus.TooManyAttempts);
+        }
         var account = await _db.Accounts
             .Include(a => a.StaffProfile)
             .Include(a => a.StudentProfile)
@@ -78,6 +86,8 @@ public class AuthService : IAuthService
             new(ClaimTypes.Name, account.Username),
             new(ClaimTypes.GivenName, account.FullName),
             new(ClaimTypes.Role, account.Role.ToString()),
+            // Ends this session when the account is locked, its role or its password changes (SessionValidator)
+            new(ClaimsPrincipalExtensions.SecurityStampClaim, account.SecurityStamp),
         };
         if (profileId.HasValue)
         {
@@ -87,6 +97,29 @@ public class AuthService : IAuthService
         _logger.LogInformation("Login succeeded: {Username} ({Role})", account.Username, account.Role);
         var identity = new ClaimsIdentity(claims, authenticationScheme);
         return new LoginResult(LoginStatus.Success, new ClaimsPrincipal(identity));
+    }
+
+    /// <summary>Wrong passwords allowed for one user name within <see cref="FailedLoginWindow"/>.</summary>
+    public const int MaxFailedLogins = 5;
+
+    /// <summary>How long failed attempts count, and so how long sign-in stays blocked after the last one.</summary>
+    public static readonly TimeSpan FailedLoginWindow = TimeSpan.FromMinutes(15);
+
+    /// <summary>
+    /// True when <paramref name="name"/> had <see cref="MaxFailedLogins"/> failed logins (web or app, read from the
+    /// audit log) within the last <see cref="FailedLoginWindow"/> and since its last successful login.
+    /// </summary>
+    private async Task<bool> TooManyFailuresAsync(string name)
+    {
+        if (name.Length == 0) return false;
+        var since = DateTimeHelper.Now - FailedLoginWindow;
+        var lastSuccess = await _db.AuditLogs.AsNoTracking()
+            .Where(l => l.Username == name && l.Action == AuditLogService.LoginAction && l.CreatedAt >= since)
+            .MaxAsync(l => (DateTime?)l.CreatedAt);
+        if (lastSuccess > since) since = lastSuccess.Value;
+        var failures = await _db.AuditLogs.AsNoTracking()
+            .CountAsync(l => l.Username == name && l.Action == AuditLogService.LoginFailedAction && l.CreatedAt > since);
+        return failures >= MaxFailedLogins;
     }
 
     /// <inheritdoc />

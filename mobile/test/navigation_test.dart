@@ -2,6 +2,7 @@ import 'package:fine_arts_mobile/features/notifications/notifications.dart';
 import 'package:fine_arts_mobile/features/auth/auth.dart';
 import 'package:fine_arts_mobile/main.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -18,6 +19,7 @@ class _FakeAuth extends AuthController {
 
 Future<void> _pump(WidgetTester tester, AppUser? user) async {
   SharedPreferences.setMockInitialValues({});
+  FlutterSecureStorage.setMockInitialValues({});
   tester.view.physicalSize = const Size(412, 915);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);

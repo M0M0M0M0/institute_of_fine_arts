@@ -31,6 +31,9 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
         b.Property(x => x.Gender).HasConversion<string>().HasColumnType("char(1)");
         b.Property(x => x.Role).HasConversion<string>().HasMaxLength(20).IsUnicode(false);
         b.Property(x => x.LastLoginAt).HasPrecision(0);
+        // Existing accounts get a random stamp when the column is added
+        b.Property(x => x.SecurityStamp).HasMaxLength(36).IsUnicode(false)
+            .HasDefaultValueSql("LOWER(REPLACE(CONVERT(varchar(36), NEWID()), '-', ''))");
 
         // Indexes: unique username and email (BR-01); filter by role
         b.HasIndex(x => x.Username).IsUnique().HasDatabaseName("UX_account_username");

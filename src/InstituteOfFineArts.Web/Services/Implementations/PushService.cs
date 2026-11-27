@@ -70,7 +70,21 @@ public class PushService : IPushService
             row.Platform = platform;
             row.LastSeenAt = now;
         }
-        await _db.SaveChangesAsync();
+        try
+        {
+            await _db.SaveChangesAsync();
+        }
+        catch (DbUpdateException) when (row == null)
+        {
+            // The app registered the same phone twice at the same moment (sign-in and app start): the other request
+            // inserted it first, so this one only takes it over and refreshes it
+            _db.ChangeTracker.Clear();
+            var existing = await _db.DeviceTokens.FirstAsync(d => d.Token == token);
+            existing.AccountId = accountId;
+            existing.Platform = platform;
+            existing.LastSeenAt = now;
+            await _db.SaveChangesAsync();
+        }
     }
 
     /// <inheritdoc />
@@ -97,7 +111,8 @@ public class PushService : IPushService
         {
             var since = DateTimeHelper.Now.AddDays(-_staleAfterDays);
             var tokens = await _db.DeviceTokens.AsNoTracking()
-                .Where(d => accountIds.Contains(d.AccountId) && d.LastSeenAt >= since)
+                // A locked account gets nothing (its phone may still be registered until it is used again)
+                .Where(d => accountIds.Contains(d.AccountId) && d.Account.Active && d.LastSeenAt >= since)
                 .Select(d => d.Token)
                 .ToListAsync(cancellationToken);
             if (tokens.Count == 0)

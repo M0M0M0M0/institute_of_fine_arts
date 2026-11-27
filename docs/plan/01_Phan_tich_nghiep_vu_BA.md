@@ -340,7 +340,7 @@ Ký hiệu: **C** = Create, **R** = Read/xem, **U** = Update, **D** = Delete, **
 | BR-02 | Mật khẩu ≥ 8 ký tự, có chữ và số; lưu dạng băm **BCrypt**, không bao giờ hiển thị/ghi log. |
 | BR-03 | Mỗi Account có đúng **1 role** (ADMIN, STAFF, TEACHER, STUDENT). Không ai tự đổi role của mình. Không xóa/khóa được tài khoản ADMIN cuối cùng và không tự xóa chính mình. Người vừa vận hành vừa chấm bài dùng hai tài khoản (STAFF + TEACHER); truy vết bằng nhật ký (BR-48). |
 | BR-04 | Xóa Account/Profile: nếu đã phát sinh dữ liệu nghiệp vụ (Submission, Evaluation, Competition, AwardIssued, ExhibitionEntry) → **không xóa cứng**, chỉ vô hiệu hóa (`active = false`). Nếu chưa phát sinh → được xóa cứng (sau xác nhận). |
-| BR-05 | Account bị khóa không đăng nhập được; dữ liệu lịch sử vẫn hiển thị trong báo cáo. |
+| BR-05 | Account bị khóa không đăng nhập được; dữ liệu lịch sử vẫn hiển thị trong báo cáo. Khóa/mở khóa, đổi role hoặc đổi mật khẩu (kể cả đặt lại qua "Quên mật khẩu") **chấm dứt ngay mọi phiên đang mở** của tài khoản – cookie web (kể cả "Ghi nhớ đăng nhập") và JWT của app – qua `security_stamp`; người tự đổi mật khẩu giữ lại phiên hiện tại. Tài khoản bị khóa không nhận push. Sai mật khẩu 5 lần trong 15 phút (tính từ lần đăng nhập đúng gần nhất) thì tạm chặn đăng nhập tên đó 15 phút, cả web và app; mỗi IP tối đa 20 lần thử đăng nhập/phút. (Rà soát 26/11/2026) |
 
 ### 4.2 Cuộc thi (Competition)
 
@@ -680,7 +680,7 @@ Trạng thái thanh toán (`paymentStatus`, suy ra): `N/A` (chưa bán) → `UNP
 | NFR-02 | Bảo mật – phân quyền | Kiểm tra quyền ở URL + service (ownership); mặc định từ chối | `[Authorize(Roles = ...)]` theo Area + kiểm tra chủ sở hữu trong Service; test 403 |
 | NFR-03 | Bảo mật – web | CSRF token cho mọi form POST; chống XSS (Razor tự mã hóa HTML); chống SQL injection (EF Core/LINQ tham số hóa) | Anti-forgery token của ASP.NET Core, Razor encode; không nối chuỗi SQL |
 | NFR-04 | Bảo mật – file | Chỉ JPG/PNG/WebP thật (magic bytes + giải mã), ≤ 10 MB/ảnh, ≤ 5 ảnh/bài, tên file Guid, chặn path traversal, phục vụ ảnh qua controller có kiểm tra quyền (cả với giám khảo trước hạn nộp) | BR-16..18, BR-20 |
-| NFR-05 | Session | Hết hạn sau 30 phút không hoạt động; đăng xuất hủy session | Cookie đăng nhập `ExpireTimeSpan = 30 phút`, `SlidingExpiration` |
+| NFR-05 | Session | Hết hạn sau 30 phút không hoạt động ("Ghi nhớ đăng nhập": 7 ngày; JWT app: 7 ngày); đăng xuất hủy session; khóa / đổi role / đổi mật khẩu hủy mọi session ngay (BR-05) | Cookie `ExpireTimeSpan = 30 phút`, `SlidingExpiration`; mỗi request kiểm tra `account.active` + `security_stamp` (cookie `OnValidatePrincipal`, JWT `OnTokenValidated`) |
 | NFR-06 | Validate | Validate cả client (HTML5/Bootstrap) và server (DataAnnotations `[Required]`, `[StringLength]`, `[EmailAddress]`, `[Range]`…); thông báo lỗi **tiếng Anh** tại từng trường | Test nhập sai |
 | NFR-07 | Toàn vẹn dữ liệu | Ràng buộc FK, UNIQUE (BR-01, BR-15, BR-31), CHECK (giá ≥ 0, ngày); thao tác ghi nhiều bảng trong một lần `SaveChangesAsync` của EF Core (một transaction), hoặc transaction EF Core tường minh khi có nhiều bước; file và DB nhất quán: file mới bị xóa nếu lưu DB lỗi, file cũ chỉ xóa sau khi lưu thành công | Script DDL Phần 2 |
 | NFR-08 | Hiệu năng | Trang danh sách < 2 giây với 1.000 bài nộp; phân trang 10–20 dòng; index các cột lọc (competitionId, studentId, submittedAt, rating) | Test với dữ liệu mẫu |

@@ -30,10 +30,22 @@ public class AuditActionFilter : IAsyncActionFilter
         "Admin", "Staff", "Teacher", "Student",
     };
 
-    /// <summary>Controllers that write their own rows (log in / out) or are not worth logging (marking a notification read).</summary>
+    /// <summary>
+    /// Controllers that write their own rows (log in / out) or are not worth logging: marking a notification read,
+    /// and the phone registering for push on every app start (NotificationsApi).
+    /// </summary>
     private static readonly HashSet<string> SkippedControllers = new(StringComparer.OrdinalIgnoreCase)
     {
-        "Account", "AuthApi", "Notifications",
+        "Account", "AuthApi", "Notifications", "NotificationsApi",
+    };
+
+    /// <summary>
+    /// Controllers outside the Areas whose POST actions are logged too (BR-48): editing one's own profile, changing
+    /// one's password, asking for and using a password reset link.
+    /// </summary>
+    private static readonly HashSet<string> LoggedControllers = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Profile", "PasswordReset",
     };
 
     /// <summary>Form fields that may name the parent of a new object (ids only).</summary>
@@ -70,7 +82,9 @@ public class AuditActionFilter : IAsyncActionFilter
 
         var isChange = !HttpMethods.IsGet(request.Method) && !HttpMethods.IsHead(request.Method)
                        && !SkippedControllers.Contains(controller)
-                       && ((area != null && LoggedAreas.Contains(area)) || (signedIn && path.StartsWith("/api/", StringComparison.OrdinalIgnoreCase)));
+                       && ((area != null && LoggedAreas.Contains(area))
+                           || LoggedControllers.Contains(controller)
+                           || (signedIn && path.StartsWith("/api/", StringComparison.OrdinalIgnoreCase)));
         var view = HttpMethods.IsGet(request.Method) ? ViewMarker(context) : null;
         var isView = view != null && signedIn
                      && (http.User.IsInRole(RoleNames.Staff) || http.User.IsInRole(RoleNames.Teacher) || http.User.IsInRole(RoleNames.Admin))

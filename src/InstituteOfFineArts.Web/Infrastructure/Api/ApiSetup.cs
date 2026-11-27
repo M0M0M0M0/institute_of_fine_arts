@@ -1,3 +1,4 @@
+using InstituteOfFineArts.Web.Infrastructure.Security;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -57,11 +58,12 @@ public static class ApiSetup
                     // A token of a locked or deleted account stops working at once (BR-05), not when it expires
                     OnTokenValidated = async context =>
                     {
+                        // Active account with the security stamp of the token: locking the account, changing its role
+                        // or its password makes every token issued before stop working at once (BR-05)
                         var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
-                        var id = long.TryParse(context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier), out var x) ? x : 0;
-                        if (!await db.Accounts.AnyAsync(a => a.Id == id && a.Active))
+                        if (!await SessionValidator.IsCurrentAsync(db, context.Principal, context.HttpContext.RequestAborted))
                         {
-                            context.Fail("The account is locked or no longer exists.");
+                            context.Fail("The session has ended: the account was locked or changed. Sign in again.");
                         }
                     },
                     // JSON instead of the HTML login redirect / error page

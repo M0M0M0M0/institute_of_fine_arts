@@ -1,3 +1,6 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
 using InstituteOfFineArts.Web.Exceptions;
 using InstituteOfFineArts.Web.Infrastructure.Security;
 using InstituteOfFineArts.Web.Services.Interfaces;
@@ -92,7 +95,9 @@ public class ProfileController : Controller
         {
             try
             {
-                await _profileService.ChangePasswordAsync(User.GetAccountId(), form.CurrentPassword, form.NewPassword);
+                var stamp = await _profileService.ChangePasswordAsync(User.GetAccountId(), form.CurrentPassword, form.NewPassword);
+                // The new password ended every session of the account (other browsers, the phone); this one goes on
+                await RenewSessionAsync(stamp);
                 TempData["Success"] = PasswordChangedMessage;
                 return RedirectToAction(nameof(Index));
             }
@@ -109,5 +114,15 @@ public class ProfileController : Controller
 
         // Password inputs never render the typed value, so the form comes back empty
         return View(new ChangePasswordVm());
+    }
+
+    /// <summary>Signs this browser in again with the account's new security stamp, keeping "Remember me".</summary>
+    private async Task RenewSessionAsync(string stamp)
+    {
+        var current = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        var claims = User.Claims.Where(c => c.Type != ClaimsPrincipalExtensions.SecurityStampClaim)
+            .Append(new Claim(ClaimsPrincipalExtensions.SecurityStampClaim, stamp));
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme));
+        await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal, current.Properties);
     }
 }

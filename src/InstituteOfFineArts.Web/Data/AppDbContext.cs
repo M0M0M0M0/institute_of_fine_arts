@@ -112,6 +112,7 @@ public class AppDbContext : DbContext
     /// </summary>
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        RenewSecurityStamps();
         ApplyAuditTimes();
         return base.SaveChangesAsync(cancellationToken);
     }
@@ -119,8 +120,27 @@ public class AppDbContext : DbContext
     /// <summary>Synchronous SaveChanges, also sets the audit times.</summary>
     public override int SaveChanges()
     {
+        RenewSecurityStamps();
         ApplyAuditTimes();
         return base.SaveChanges();
+    }
+
+    /// <summary>
+    /// Locking or unlocking an account, changing its role or its password gives it a new security stamp, so every
+    /// session opened before (web cookie, mobile JWT) stops working at its next request (BR-05, A1 of the review).
+    /// Done here so that no screen or API that changes these fields can forget it.
+    /// </summary>
+    private void RenewSecurityStamps()
+    {
+        foreach (var entry in ChangeTracker.Entries<Account>().Where(e => e.State == EntityState.Modified))
+        {
+            if (entry.Property(a => a.Active).IsModified
+                || entry.Property(a => a.Role).IsModified
+                || entry.Property(a => a.PasswordHash).IsModified)
+            {
+                entry.Entity.SecurityStamp = Guid.NewGuid().ToString("N");
+            }
+        }
     }
 
     /// <summary>Sets created/updated times (institute local time) for added or modified entities.</summary>

@@ -13,6 +13,9 @@ public static class ClaimsPrincipalExtensions
     /// <summary>Name of the claim holding the profile id (staff_profile.id or student_profile.id).</summary>
     public const string ProfileIdClaim = "ProfileId";
 
+    /// <summary>Name of the claim holding account.security_stamp at sign-in (see SessionValidator).</summary>
+    public const string SecurityStampClaim = "SecurityStamp";
+
     /// <summary>Returns account.id of the signed-in user; throws if the user is not signed in.</summary>
     public static long GetAccountId(this ClaimsPrincipal user)
     {

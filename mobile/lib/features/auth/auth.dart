@@ -78,8 +78,12 @@ class AuthRepository {
         return AppUser.fromJson(body['user'] as Map<String, dynamic>);
       });
 
+  /// True when the last [restore] found a saved session that the server refused (401).
+  bool restoreRefused = false;
+
   /// Khôi phục phiên khi mở app: có token thì gọi /api/auth/me để kiểm tra còn hạn.
   Future<AppUser?> restore() async {
+    restoreRefused = false;
     final token = await _storage.read();
     if (token == null) return null;
     try {
@@ -87,7 +91,10 @@ class AuthRepository {
       return AppUser.fromJson(res.data!);
     } on DioException catch (e) {
       // Token hết hạn / tài khoản bị khóa → xóa token. Lỗi mạng → coi như chưa đăng nhập, giữ token.
-      if (e.response?.statusCode == 401) await _storage.clear();
+      if (e.response?.statusCode == 401) {
+        restoreRefused = true;
+        await _storage.clear();
+      }
       return null;
     }
   }
@@ -107,7 +114,22 @@ final authControllerProvider =
 
 class AuthController extends AsyncNotifier<AppUser?> {
   @override
-  Future<AppUser?> build() => ref.read(authRepositoryProvider).restore();
+  Future<AppUser?> build() async {
+    // The server ended the session while the app was open (account locked, role or password changed)
+    ref.listen(sessionEndedProvider, (_, _) => _sessionEnded());
+    final repo = ref.read(authRepositoryProvider);
+    final user = await repo.restore();
+    // The saved session was refused: this phone must not keep getting the previous user's pushes
+    if (user == null && repo.restoreRefused) await ref.read(pushProvider).sessionEnded();
+    return user;
+  }
+
+  Future<void> _sessionEnded() async {
+    if (currentUserOf(state) == null) return;
+    await ref.read(pushProvider).sessionEnded();
+    await ref.read(authRepositoryProvider).logout();
+    state = const AsyncData(null);
+  }
 
   Future<void> login(String username, String password) async {
     state = const AsyncLoading();

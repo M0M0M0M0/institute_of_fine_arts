@@ -42,7 +42,8 @@ public class PasswordResetController : Controller
             return View(form);
         }
 
-        // Address of this site, used for the link only when Email:AppBaseUrl is not configured
+        // Address of this request, used for the link only in Development when Email:AppBaseUrl is not configured
+        // (outside Development the application does not start without Email:AppBaseUrl, see Program.cs)
         var requestBaseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
         await _passwordResetService.RequestResetAsync(form.UserNameOrEmail, requestBaseUrl, cancellationToken);
 

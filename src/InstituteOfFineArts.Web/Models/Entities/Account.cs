@@ -40,6 +40,13 @@ public class Account : BaseEntity
     /// <summary>Time of the latest successful login.</summary>
     public DateTime? LastLoginAt { get; set; }
 
+    /// <summary>
+    /// Random value kept in every sign-in (web cookie, mobile JWT). It changes whenever the account is locked or
+    /// unlocked, its role changes or its password changes (AppDbContext does it on save), which ends every session
+    /// opened before: the cookie and the JWT are checked against it on each request (SessionValidator).
+    /// </summary>
+    public string SecurityStamp { get; set; } = Guid.NewGuid().ToString("N");
+
     /// <summary>Staff profile (when the role is ADMIN, STAFF or TEACHER).</summary>
     public StaffProfile? StaffProfile { get; set; }
 

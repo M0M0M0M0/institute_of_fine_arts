@@ -54,3 +54,6 @@ src/InstituteOfFineArts.Web/App_Data/
 firebase-service-account*.json
 mobile/android/app/google-services.json
 mobile/ios/Runner/GoogleService-Info.plist
+
+# Flutter Android build output
+mobile/android/build/

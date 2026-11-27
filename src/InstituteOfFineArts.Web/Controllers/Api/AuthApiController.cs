@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.RateLimiting;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using InstituteOfFineArts.Web.Data;
@@ -48,6 +49,7 @@ public class AuthApiController : ApiControllerBase
     /// <summary>POST /api/auth/login → { token, expiresAt, user }; 401 for a wrong username/password, 403 for a locked account.</summary>
     [HttpPost("login")]
     [AllowAnonymous]
+    [EnableRateLimiting(LoginRateLimit.PolicyName)]
     public async Task<IActionResult> Login(LoginRequest request)
     {
         var result = await _auth.LoginAsync(request.Username, request.Password, JwtBearerDefaults.AuthenticationScheme);
@@ -62,8 +64,14 @@ public class AuthApiController : ApiControllerBase
             }
             else
             {
-                await _audit.LogAsAsync(null, request.Username, AuditLogService.LoginFailedAction,
-                    "Mobile app: " + (result.Status == LoginStatus.Locked ? "Account locked" : "Invalid username or password"));
+                await _audit.LogAsAsync(null, request.Username,
+                    result.Status == LoginStatus.TooManyAttempts ? AuditLogService.LoginBlockedAction : AuditLogService.LoginFailedAction,
+                    "Mobile app: " + result.Status switch
+                    {
+                        LoginStatus.Locked => "Account locked",
+                        LoginStatus.TooManyAttempts => "Too many failed attempts",
+                        _ => "Invalid username or password",
+                    });
             }
         }
 
@@ -71,6 +79,8 @@ public class AuthApiController : ApiControllerBase
         {
             case LoginStatus.Locked:
                 return Problem(StatusCodes.Status403Forbidden, "Your account is locked. Please contact the administrator.");
+            case LoginStatus.TooManyAttempts:
+                return Problem(StatusCodes.Status429TooManyRequests, AccountController.TooManyAttemptsMessage);
             case LoginStatus.Success when result.Principal != null:
                 var (token, expiresAt) = _tokens.Issue(result.Principal);
                 return Ok(new { token, expiresAt, user = ToDto(result.Principal) });

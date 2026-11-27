@@ -15,6 +15,12 @@ public enum LoginStatus
 
     /// <summary>Correct password but the account is locked (BR-05).</summary>
     Locked,
+
+    /// <summary>
+    /// Too many failed attempts for this user name in a short time: refused without checking the password, so a
+    /// password cannot be guessed by trying many (review 26/11/2026, B7).
+    /// </summary>
+    TooManyAttempts,
 }
 
 /// <summary>
