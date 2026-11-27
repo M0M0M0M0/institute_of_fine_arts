@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/api_client.dart';
+import '../../core/push.dart';
 import '../../core/token_storage.dart';
 
 // ---------------- Model ----------------
@@ -116,6 +117,8 @@ class AuthController extends AsyncNotifier<AppUser?> {
   }
 
   Future<void> logout() async {
+    // While the session still works: this phone stops getting the user's push notifications
+    await ref.read(pushProvider).signingOut();
     await ref.read(authRepositoryProvider).logout();
     state = const AsyncData(null);
   }

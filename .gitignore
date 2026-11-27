@@ -48,3 +48,9 @@ database/seed-images/nga/images/
 
 # JWT signing key generated for the mobile API (Infrastructure/Api/ApiSetup.cs) – never commit
 src/InstituteOfFineArts.Web/App_Data/
+
+# Firebase secrets (push notifications): server service account key, app config files – never commit
+*firebase-adminsdk*.json
+firebase-service-account*.json
+mobile/android/app/google-services.json
+mobile/ios/Runner/GoogleService-Info.plist

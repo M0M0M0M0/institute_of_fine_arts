@@ -47,3 +47,9 @@ kotlin {
 flutter {
     source = "../.."
 }
+
+// Push notifications (Firebase Cloud Messaging): the project's google-services.json is a per-project file kept out of
+// git. Without it the app still builds and runs, with push off (lib/core/push.dart).
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../app/tokens.dart';
+import '../features/notifications/notifications_screen.dart';
 
 /// Scaffold with the navy app bar for a tab page. Screens that already render only a body
 /// (the old tab widgets) are wrapped in this; screens with a hero or custom bar build their own `Scaffold`.
@@ -52,6 +53,7 @@ class TabScaffold extends StatelessWidget {
                     ),
                   ),
                   ...?actions,
+                  const NotificationBell(),
                 ],
               ),
             ),
@@ -62,10 +64,22 @@ class TabScaffold extends StatelessWidget {
     }
     // A page with its own big greeting needs no bar on a phone: the bar would only repeat "Home" above it
     if (!showHeading) {
-      return Scaffold(body: SafeArea(bottom: false, child: body), floatingActionButton: floatingActionButton);
+      // The bell sits in the top corner, above the page's own greeting
+      return Scaffold(
+        body: SafeArea(
+          bottom: false,
+          child: Stack(
+            children: [
+              body,
+              const Positioned(top: AppSpacing.xs, right: AppSpacing.xs, child: NotificationBell()),
+            ],
+          ),
+        ),
+        floatingActionButton: floatingActionButton,
+      );
     }
     return Scaffold(
-      appBar: AppBar(title: Text(title), actions: actions),
+      appBar: AppBar(title: Text(title), actions: [...?actions, const NotificationBell()]),
       body: body,
       floatingActionButton: floatingActionButton,
     );

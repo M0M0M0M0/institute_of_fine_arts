@@ -51,6 +51,9 @@ public class AppDbContext : DbContext
     /// <summary>In-app notifications (optional feature M12).</summary>
     public DbSet<Notification> Notifications => Set<Notification>();
 
+    /// <summary>Phones of the mobile app that receive push notifications.</summary>
+    public DbSet<DeviceToken> DeviceTokens => Set<DeviceToken>();
+
     /// <summary>Activity log (optional feature M17).</summary>
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 

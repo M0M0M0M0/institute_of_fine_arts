@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:fine_arts_mobile/features/notifications/notifications.dart';
 import 'package:fine_arts_mobile/app/theme.dart';
 import 'package:fine_arts_mobile/app/motion.dart';
 import 'package:fine_arts_mobile/app/tokens.dart';
@@ -43,7 +44,12 @@ Future<void> _pump(WidgetTester tester, Widget home, List<Override> overrides,
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   final scope = ProviderScope(
-    overrides: [authControllerProvider.overrideWith(_FakeAuth.new), _imageOverride, ...overrides],
+    overrides: [
+      authControllerProvider.overrideWith(_FakeAuth.new),
+      _imageOverride,
+      unreadCountProvider.overrideWith((ref) async => 0),
+      ...overrides,
+    ],
     child: router != null
         ? MaterialApp.router(theme: buildTheme(), routerConfig: router)
         : MaterialApp(theme: buildTheme(), home: home),

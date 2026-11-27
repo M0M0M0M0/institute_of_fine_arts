@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:fine_arts_mobile/features/notifications/notifications.dart';
 import 'package:fine_arts_mobile/app/theme.dart';
 import 'package:fine_arts_mobile/features/account/account_screen.dart';
 import 'package:fine_arts_mobile/features/auth/auth.dart';
@@ -104,6 +105,7 @@ Future<void> _pump(WidgetTester tester, Widget home, {List<Override> overrides =
     overrides: [
       authControllerProvider.overrideWith(_FakeAuth.new),
       authImageProvider.overrideWith((ref, key) => _png),
+      unreadCountProvider.overrideWith((ref) async => 0),
       ...overrides,
     ],
     child: MaterialApp(theme: buildTheme(), home: home),

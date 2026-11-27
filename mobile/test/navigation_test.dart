@@ -1,3 +1,4 @@
+import 'package:fine_arts_mobile/features/notifications/notifications.dart';
 import 'package:fine_arts_mobile/features/auth/auth.dart';
 import 'package:fine_arts_mobile/main.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +22,10 @@ Future<void> _pump(WidgetTester tester, AppUser? user) async {
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(ProviderScope(
-    overrides: [authControllerProvider.overrideWith(() => _FakeAuth(user))],
+    overrides: [
+      authControllerProvider.overrideWith(() => _FakeAuth(user)),
+      unreadCountProvider.overrideWith((ref) async => 0),
+    ],
     child: const FineArtsApp(),
   ));
   await tester.pumpAndSettle();

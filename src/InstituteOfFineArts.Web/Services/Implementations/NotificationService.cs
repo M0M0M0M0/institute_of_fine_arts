@@ -19,6 +19,8 @@ namespace InstituteOfFineArts.Web.Services.Implementations;
 /// paintings, reject reasons) is HTML-encoded in e-mails. A user only sees and changes his own notifications.
 /// Decision: the e-mail service is optional in Dependency Injection, so the in-app part keeps working when no
 /// <see cref="IEmailService"/> is registered (e-mails are then skipped and logged).
+/// Every notification is also pushed to the phones of the receiving accounts (<see cref="IPushService"/>, mobile app),
+/// which does nothing until push is configured.
 /// </summary>
 public class NotificationService : INotificationService
 {
@@ -73,17 +75,22 @@ public class NotificationService : INotificationService
     /// <summary>Site address for absolute links in e-mails (from <see cref="BaseUrlKey"/>), or null.</summary>
     private readonly string? _baseUrl;
 
+    /// <summary>Pushes notifications to the mobile app; null when no push service is registered.</summary>
+    private readonly IPushService? _push;
+
     /// <summary>Receives the required services through Dependency Injection.</summary>
     /// <param name="db">Database</param>
     /// <param name="logger">Logger</param>
     /// <param name="email">E-mail sender (optional: e-mails are skipped when it is not registered)</param>
     /// <param name="configuration">Configuration holding the optional site address</param>
+    /// <param name="push">Push to the mobile app (optional: no push when it is not registered)</param>
     public NotificationService(AppDbContext db, ILogger<NotificationService> logger, IEmailService? email = null,
-        IConfiguration? configuration = null)
+        IConfiguration? configuration = null, IPushService? push = null)
     {
         _db = db;
         _logger = logger;
         _email = email;
+        _push = push;
         _baseUrl = configuration?[BaseUrlKey]?.TrimEnd('/');
     }
 
@@ -142,6 +149,11 @@ public class NotificationService : INotificationService
         if (sendEmail)
         {
             await SendEmailsAsync(ids, title, message, link, cancellationToken);
+        }
+        if (_push != null)
+        {
+            // Same text on the phones (never throws; nothing happens while push is not configured)
+            await _push.SendAsync(ids, title, message, link, cancellationToken);
         }
         return rows.Count;
     }

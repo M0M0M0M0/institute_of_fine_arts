@@ -21,6 +21,7 @@
     <PackageReference Include="ClosedXML" Version="0.105.1" />
     <!-- Keep table/column names in snake_case as in the database design -->
     <PackageReference Include="EFCore.NamingConventions" Version="10.0.1" />
+    <PackageReference Include="FirebaseAdmin" Version="3.7.1" />
     <PackageReference Include="HtmlSanitizer" Version="11.0.26" />
     <!-- Sending e-mail: forgot password and notifications (optional features M12, M16) -->
     <PackageReference Include="MailKit" Version="4.18.2" />

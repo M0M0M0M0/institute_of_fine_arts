@@ -44,6 +44,8 @@ dependencies:
   vsc_quill_delta_to_html: ^1.0.5
   flutter_widget_from_html_core: ^0.17.4
   html: ^0.15.7
+  firebase_core: ^5.2.0
+  firebase_messaging: ^17.1.0
 
 dev_dependencies:
   flutter_test:

@@ -23,6 +23,8 @@ import '../features/grading/grading_competitions_screen.dart';
 import '../features/grading/grading_detail_screen.dart';
 import '../features/grading/grading_list_screen.dart';
 import '../features/home/home_screen.dart';
+import '../features/notifications/notifications.dart';
+import '../features/notifications/notifications_screen.dart';
 import '../features/staff/dashboard.dart';
 import '../features/staff/staff_home_screen.dart';
 import '../features/staff/staff_shell.dart';
@@ -57,6 +59,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       resetExhibitionData(ref);
       resetAwardingData(ref);
       resetAuthImages(ref);
+      resetNotificationData(ref);
       ref.invalidate(studentDashboardProvider);
       ref.invalidate(staffDashboardProvider);
     }
@@ -78,6 +81,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           location.startsWith('/student') ||
           location.startsWith('/staff') ||
           location.startsWith('/teacher') ||
+          location == '/notifications' ||
           location == '/unsupported';
 
       if (user == null) return needsLogin ? '/login' : null;
@@ -136,6 +140,8 @@ final routerProvider = Provider<GoRouter>((ref) {
         ),
       ),
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      // Notifications of any signed-in user (bell in the app bar, or a tapped push)
+      GoRoute(path: '/notifications', builder: (context, state) => const NotificationsScreen()),
       // Student shell: Home, Competitions, My entries, Exhibitions, Account
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => StudentShell(navigationShell: shell),

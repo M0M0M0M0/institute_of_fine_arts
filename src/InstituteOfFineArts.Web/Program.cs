@@ -93,6 +93,13 @@ builder.Services.Configure<UploadOptions>(builder.Configuration.GetSection(Uploa
 // E-mail settings (SMTP or .eml pickup folder) used by EmailService – task BE1-OPT
 builder.Services.Configure<InstituteOfFineArts.Web.Infrastructure.Email.EmailOptions>(builder.Configuration.GetSection("Email"));
 
+// Push notifications to the mobile app (Firebase Cloud Messaging): off until Push:ServiceAccountPath points to the
+// Firebase service account key, which is kept out of git (User Secrets / environment). One sender for the whole app.
+builder.Services.Configure<InstituteOfFineArts.Web.Infrastructure.Push.PushOptions>(
+    builder.Configuration.GetSection(InstituteOfFineArts.Web.Infrastructure.Push.PushOptions.SectionName));
+builder.Services.AddSingleton<InstituteOfFineArts.Web.Infrastructure.Push.IPushSender,
+    InstituteOfFineArts.Web.Infrastructure.Push.FcmPushSender>();
+
 // QuestPDF (report PDF export, F-M14-01): free Community license, set once for the whole application
 QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
 
