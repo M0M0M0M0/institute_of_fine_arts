@@ -416,6 +416,40 @@ footer {
   margin: 0 auto;
 }
 
+/* Login page inside the site layout: the header and menu stay above and the picture + form fill exactly what is left
+   of one screen (--auth-top = where the section starts, measured by Views/Account/Login.cshtml; 205px until then).
+   The picture is cropped to the frame instead of growing with its own size on wide screens. */
+.auth-page {
+  height: max(480px, calc(100dvh - var(--auth-top, 205px)));
+  overflow: hidden;
+}
+
+  .auth-page > .row {
+    height: 100%;
+  }
+
+  .auth-page .auth-image-col {
+    height: 100%;
+  }
+
+  .auth-page .auth-bg-img {
+    position: absolute;
+    inset: 0;
+    object-position: left 20%;
+  }
+
+  .auth-page .auth-form-col {
+    height: 100%;
+    overflow-y: auto;
+  }
+
+/* Phones: no picture, the form simply follows the header */
+@media (max-width: 767.98px) {
+  .auth-page {
+    height: auto;
+  }
+}
+
 
 /* ==========================================================================
    REGISTER POPUP STYLING
