@@ -674,3 +674,11 @@ footer {
     transition: none !important;
   }
 }
+
+/* Paragraphs are limited to a readable line length (site.css: p { max-width: 70ch }). Inside a centred block (the cream
+   heroes of the gallery and competition pages, centred intros) the paragraph box itself must be centred too,
+   otherwise the text sits left of the title. */
+.text-center p {
+  margin-left: auto;
+  margin-right: auto;
+}
